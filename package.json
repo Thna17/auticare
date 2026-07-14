@@ -1,0 +1,49 @@
+{
+  "name": "auticare",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.1",
+  "scripts": {
+    "dev": "pnpm --filter @auticare/contracts build && concurrently -n web,api -c blue,green \"pnpm dev:web\" \"pnpm dev:api\"",
+    "dev:web": "pnpm --filter @auticare/web start",
+    "dev:api": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api dev",
+    "build": "pnpm --filter @auticare/contracts build && pnpm build:api && pnpm build:web",
+    "build:web": "pnpm --filter @auticare/web build",
+    "build:api": "pnpm --filter @auticare/api build",
+    "lint": "pnpm --filter @auticare/api lint && pnpm --filter @auticare/web lint",
+    "lint:fix": "pnpm --filter @auticare/api lint:fix && pnpm --filter @auticare/web lint:fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/contracts typecheck && pnpm --filter @auticare/api typecheck && pnpm --filter @auticare/web typecheck",
+    "test": "pnpm test:unit && pnpm test:integration",
+    "test:unit": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api test:unit",
+    "test:integration": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api test:integration",
+    "test:e2e": "pnpm --filter @auticare/web e2e",
+    "db:generate": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api db:generate",
+    "db:shadow": "dotenv -e .env -- node scripts/ensure-shadow-db.mjs",
+    "db:migrate": "pnpm --filter @auticare/contracts build && pnpm db:shadow && pnpm --filter @auticare/api db:migrate",
+    "db:deploy": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api db:deploy",
+    "db:seed": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api db:seed",
+    "db:studio": "pnpm --filter @auticare/api db:studio",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "prepare": "husky",
+    "validate": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@eslint/js": "^9.39.1",
+    "concurrently": "^9.2.1",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^9.39.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.46.3"
+  },
+  "lint-staged": {
+    "*.{ts,js,html,scss,json,md,yml,yaml}": "prettier --write"
+  },
+  "type": "module"
+}

@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@auticare/contracts": ["packages/contracts/dist/index.js"]
+    }
+  }
+}

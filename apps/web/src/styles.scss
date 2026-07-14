@@ -1,0 +1,25 @@
+@use './app/design-system/styles/tokens.scss';
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: var(--ac-font-family);
+  background: var(--ac-color-background);
+  color: var(--ac-color-text);
+}
+a {
+  color: var(--ac-color-text-dark);
+}
+:focus-visible {
+  outline: 3px solid var(--ac-color-warning);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}

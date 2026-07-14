@@ -1,0 +1,369 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+enum UserRole {
+  PARENT
+  ADMIN
+  SCHOOL
+}
+
+enum ScreeningStatus {
+  DRAFT
+  SUBMITTED
+  ANALYZED
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+}
+
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum NotificationType {
+  SYSTEM
+  APPOINTMENT
+  ADMISSION
+  SCREENING
+  ACTIVITY
+  SCHOOL_REPORT
+}
+
+enum SchoolEnrollmentStatus {
+  ACTIVE
+  ENDED
+}
+
+model Parent {
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  passwordHash        String
+  firstName           String
+  lastName            String
+  role                UserRole             @default(PARENT)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  preference          ParentPreference?
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  children            Child[]
+  favoriteSchools     FavoriteSchool[]
+  reviews             Review[]
+  admissionRequests   AdmissionRequest[]
+  appointments        Appointment[]
+  notifications       Notification[]
+  schoolStaffProfiles SchoolStaff[]
+  schoolActivityReports SchoolActivityReport[]
+
+  @@index([email])
+}
+
+model RefreshToken {
+  id                String         @id @default(cuid())
+  parentId          String
+  tokenHash         String         @unique
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  replacedByTokenId String?
+  createdAt         DateTime       @default(now())
+  parent            Parent         @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  replacedByToken   RefreshToken?  @relation("RefreshTokenRotation", fields: [replacedByTokenId], references: [id])
+  replacedTokens    RefreshToken[] @relation("RefreshTokenRotation")
+
+  @@index([parentId])
+  @@index([replacedByTokenId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  parentId  String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  parent    Parent    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+}
+
+model ParentPreference {
+  id                String   @id @default(cuid())
+  parentId          String   @unique
+  preferredLanguage String   @default("en")
+  reducedMotion     Boolean  @default(false)
+  highContrast      Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  parent            Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+}
+
+model Child {
+  id               String             @id @default(cuid())
+  parentId         String
+  firstName        String
+  dateOfBirth      DateTime
+  notes            String?            @db.Text
+  archivedAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  parent           Parent             @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  screenings       Screening[]
+  appointments     Appointment[]
+  activityProgress ActivityProgress[]
+  schoolEnrollments SchoolChildEnrollment[]
+  schoolActivityReports SchoolActivityReport[]
+
+  @@index([parentId, archivedAt])
+}
+
+model ScreeningQuestion {
+  id           String            @id @default(cuid())
+  questionText String
+  category     String
+  displayOrder Int
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  answers      ScreeningAnswer[]
+
+  @@index([isActive, displayOrder])
+}
+
+model Screening {
+  id          String            @id @default(cuid())
+  childId     String
+  status      ScreeningStatus   @default(DRAFT)
+  startedAt   DateTime          @default(now())
+  submittedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  child       Child             @relation(fields: [childId], references: [id], onDelete: Cascade)
+  answers     ScreeningAnswer[]
+  result      ScreeningResult?
+
+  @@index([childId, status])
+}
+
+model ScreeningAnswer {
+  id          String            @id @default(cuid())
+  screeningId String
+  questionId  String
+  answerValue Int
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  screening   Screening         @relation(fields: [screeningId], references: [id], onDelete: Cascade)
+  question    ScreeningQuestion @relation(fields: [questionId], references: [id])
+
+  @@unique([screeningId, questionId])
+}
+
+model ScreeningResult {
+  id              String    @id @default(cuid())
+  screeningId     String    @unique
+  score           Int
+  riskLevel       RiskLevel
+  recommendation  String    @db.Text
+  disclaimer      String    @db.Text
+  analysisVersion String
+  analyzedAt      DateTime  @default(now())
+  screening       Screening @relation(fields: [screeningId], references: [id], onDelete: Cascade)
+}
+
+model School {
+  id                String             @id @default(cuid())
+  name              String
+  city              String
+  address           String
+  description       String?            @db.Text
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  favorites         FavoriteSchool[]
+  reviews           Review[]
+  admissionRequests AdmissionRequest[]
+  staff SchoolStaff[]
+  childEnrollments SchoolChildEnrollment[]
+  activityReports SchoolActivityReport[]
+
+  @@index([city, name])
+}
+
+model SchoolStaff {
+  id        String   @id @default(cuid())
+  parentId  String
+  schoolId  String
+  title     String?
+  createdAt DateTime @default(now())
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, schoolId])
+  @@index([schoolId])
+}
+
+model SchoolChildEnrollment {
+  id        String                 @id @default(cuid())
+  schoolId  String
+  childId   String
+  status    SchoolEnrollmentStatus @default(ACTIVE)
+  startedAt DateTime               @default(now())
+  endedAt   DateTime?
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  school    School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  child     Child                  @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, childId])
+  @@index([childId, status])
+  @@index([schoolId, status])
+}
+
+model FavoriteSchool {
+  id        String   @id @default(cuid())
+  parentId  String
+  schoolId  String
+  createdAt DateTime @default(now())
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, schoolId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  parentId  String
+  schoolId  String
+  rating    Int
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+}
+
+model AdmissionRequest {
+  id        String   @id @default(cuid())
+  parentId  String
+  schoolId  String
+  childId   String?
+  message   String?  @db.Text
+  status    String   @default("REQUESTED")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+}
+
+model Hospital {
+  id           String        @id @default(cuid())
+  name         String
+  city         String
+  address      String
+  services     String        @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  doctors      Doctor[]
+  appointments Appointment[]
+
+  @@index([city, name])
+}
+
+model Doctor {
+  id           String        @id @default(cuid())
+  hospitalId   String
+  fullName     String
+  specialty    String
+  bio          String?       @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  hospital     Hospital      @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  parentId    String
+  childId     String?
+  hospitalId  String
+  doctorId    String?
+  scheduledAt DateTime
+  status      AppointmentStatus @default(REQUESTED)
+  reason      String?           @db.Text
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  parent      Parent            @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  child       Child?            @relation(fields: [childId], references: [id])
+  hospital    Hospital          @relation(fields: [hospitalId], references: [id])
+  doctor      Doctor?           @relation(fields: [doctorId], references: [id])
+}
+
+model Activity {
+  id           String             @id @default(cuid())
+  title        String
+  category     String
+  minAgeMonths Int
+  maxAgeMonths Int
+  summary      String             @db.Text
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  progress     ActivityProgress[]
+
+  @@index([category, minAgeMonths, maxAgeMonths])
+}
+
+model ActivityProgress {
+  id                String    @id @default(cuid())
+  childId           String
+  activityId        String
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
+  parentObservation String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  child             Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  activity          Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([childId, activityId])
+}
+
+model SchoolActivityReport {
+  id         String   @id @default(cuid())
+  schoolId   String
+  childId    String
+  reporterId String
+  title      String
+  summary    String   @db.Text
+  activityDate DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  school     School   @relation(fields: [schoolId], references: [id])
+  child      Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  reporter   Parent   @relation(fields: [reporterId], references: [id])
+
+  @@index([childId, activityDate])
+  @@index([schoolId, activityDate])
+  @@index([reporterId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  parentId  String
+  type      NotificationType
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  parent    Parent           @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, readAt])
+}

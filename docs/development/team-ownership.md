@@ -1,0 +1,3 @@
+# Team Ownership
+
+Member 1 owns platform, auth, parent and child profiles, root tooling, navigation, global error format, CI, and design-system coordination. Member 2 owns screening questions, sessions, scoring, results, recommendations, and history. Member 3 owns schools, hospitals, doctors, favorites, reviews, and search. Member 4 owns activities, progress, appointments, admission requests, and notifications; complete in this order: activities, progress, appointments, admission requests, notifications. Shared contracts are owned by the module owner plus one reviewer. Database schema changes are owned by the backend module owner plus Member 1 review.

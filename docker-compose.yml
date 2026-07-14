@@ -1,0 +1,19 @@
+services:
+  mysql:
+    image: mysql:8.4
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-auticare}
+      MYSQL_USER: ${MYSQL_USER:-auticare}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-auticare_dev_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-auticare_root_dev_password}
+    volumes:
+      - auticare_mysql:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+volumes:
+  auticare_mysql:
