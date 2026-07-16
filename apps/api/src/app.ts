@@ -14,6 +14,7 @@ import { generalRateLimit } from './common/security/rate-limits.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { childrenRoutes } from './modules/children/children.routes.js';
 import { healthRoutes } from './modules/health/health.routes.js';
+import { hospitalsRoutes } from './modules/hospitals/hospitals.routes.js';
 import { schoolsRoutes } from './modules/schools/index.js';
 export const createApp = () => {
   const app = express();
@@ -30,6 +31,7 @@ export const createApp = () => {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/v1/children', childrenRoutes);
+  app.use('/api/v1/hospitals', hospitalsRoutes);
   app.use('/api/v1/schools', schoolsRoutes);
   app.use(errorHandler);
   return app;

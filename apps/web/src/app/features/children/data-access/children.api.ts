@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { ChildResponse, UpdateChildRequest } from '@auticare/contracts';
+import type { ChildResponse, CreateChildRequest, UpdateChildRequest } from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
 @Injectable({ providedIn: 'root' })
@@ -15,6 +15,11 @@ export class ChildrenApi {
   getChild(childId: string) {
     return this.http
       .get<{ data: ChildResponse }>(`${this.apiBaseUrl}/children/${childId}`)
+      .pipe(map((response) => response.data));
+  }
+  createChild(input: CreateChildRequest) {
+    return this.http
+      .post<{ data: ChildResponse }>(`${this.apiBaseUrl}/children`, input)
       .pipe(map((response) => response.data));
   }
   updateChild(childId: string, input: UpdateChildRequest) {

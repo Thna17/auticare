@@ -103,6 +103,25 @@ export const updateChildRequestSchema = createChildRequestSchema
   );
 export type UpdateChildRequest = z.infer<typeof updateChildRequestSchema>;
 
+export const hospitalResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  city: z.string(),
+  address: z.string(),
+  services: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type HospitalResponse = z.infer<typeof hospitalResponseSchema>;
+
+export const createHospitalRequestSchema = z.object({
+  name: z.string().min(1).max(160),
+  city: z.string().min(1).max(120),
+  address: z.string().min(1).max(300),
+  services: z.string().min(1).max(2000),
+});
+export type CreateHospitalRequest = z.infer<typeof createHospitalRequestSchema>;
+
 export const screeningDisclaimer =
   'AutiCare screening is informational support only and is not a medical diagnosis. Please consult a qualified clinician for diagnosis or treatment decisions.';
 

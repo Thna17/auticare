@@ -7,6 +7,10 @@ export const openApiDocument = {
     '/auth/login': { post: { summary: 'Login parent' } },
     '/auth/forgot-password': { post: { summary: 'Request password reset' } },
     '/auth/reset-password': { post: { summary: 'Reset password' } },
+    '/hospitals': {
+      get: { summary: 'List hospitals' },
+      post: { summary: 'Create hospital (admin)' },
+    },
     '/auth/logout': { post: { summary: 'Logout parent' } },
     '/auth/me': { get: { summary: 'Current parent' } },
     '/children': { get: { summary: 'List current parent children' } },

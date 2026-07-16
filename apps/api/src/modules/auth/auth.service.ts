@@ -13,6 +13,7 @@ import { env, isProduction } from '../../config/env.js';
 import { AuthRepository } from './auth.repository.js';
 import { toParentResponse } from './auth.mapper.js';
 import { PasswordService } from './password.service.js';
+import { PasswordResetMailer } from './password-reset-mailer.js';
 import { TokenService } from './token.service.js';
 
 export type AuthSession = AuthResponse & { accessToken: string; refreshToken: string };
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly repository = new AuthRepository(),
     private readonly passwordService = new PasswordService(),
     private readonly tokenService = new TokenService(),
+    private readonly passwordResetMailer = new PasswordResetMailer(),
   ) {}
 
   async register(input: RegisterRequest): Promise<AuthSession> {
@@ -97,10 +99,21 @@ export class AuthService {
       expiresAt: this.tokenService.passwordResetTokenExpiresAt(),
     });
 
-    if (isProduction) return { message };
-
     const resetUrl = new URL('/reset-password', env.APP_ORIGIN);
     resetUrl.searchParams.set('token', resetToken);
+
+    const isTestRun = env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+
+    if (!isTestRun && this.passwordResetMailer.isConfigured()) {
+      await this.passwordResetMailer.sendPasswordReset({
+        recipient: parent.email,
+        firstName: parent.firstName,
+        resetUrl: resetUrl.toString(),
+      });
+    }
+
+    if (isProduction || (!isTestRun && this.passwordResetMailer.isConfigured())) return { message };
+
     return { message, resetToken, resetUrl: resetUrl.toString() };
   }
 

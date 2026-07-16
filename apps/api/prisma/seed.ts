@@ -93,16 +93,22 @@ async function main() {
     update: { status: 'ACTIVE', endedAt: null },
     create: { schoolId: school.id, childId: 'demo-child-1' },
   });
-  const hospital = await prisma.hospital.create({
-    data: {
+  const hospital = await prisma.hospital.upsert({
+    where: { id: 'demo-hospital-1' },
+    update: {},
+    create: {
+      id: 'demo-hospital-1',
       name: 'Family Development Clinic',
       city: 'Phnom Penh',
       address: 'Care Street 4',
       services: 'Developmental pediatrics, occupational therapy',
     },
   });
-  await prisma.doctor.create({
-    data: {
+  await prisma.doctor.upsert({
+    where: { id: 'demo-doctor-1' },
+    update: {},
+    create: {
+      id: 'demo-doctor-1',
       hospitalId: hospital.id,
       fullName: 'Dr. Lina Sok',
       specialty: 'Developmental Pediatrics',

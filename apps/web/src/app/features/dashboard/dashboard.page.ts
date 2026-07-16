@@ -37,20 +37,27 @@ const quickActions: readonly QuickAction[] = [
       <div>
         <h1>Good {{ dayPart() }}, {{ parentFirstName() }}</h1>
         <p>
-          Welcome back to AutiCare.
-          @if (selectedChild()) {
-            Here's what's happening with {{ selectedChild()!.firstName }} today.
+          @if (isParent()) {
+            Welcome back to AutiCare.
+            @if (selectedChild()) {
+              Here's what's happening with {{ selectedChild()!.firstName }} today.
+            } @else {
+              Create a child profile to personalize your care dashboard.
+            }
           } @else {
-            Create a child profile to personalize your care dashboard.
+            Manage the care directory and review family support records from one place.
           }
         </p>
       </div>
 
-      @if (selectedChild()) {
+      @if (isParent() && selectedChild()) {
         <a class="child-switcher" [routerLink]="['/children', selectedChild()!.id]">
           <span class="child-avatar" aria-hidden="true">{{ childInitials(selectedChild()!) }}</span>
           <span>
-            <strong>{{ selectedChild()!.firstName }}, {{ ageLabel(selectedChild()!.dateOfBirth) }}</strong>
+            <strong
+              >{{ selectedChild()!.firstName }},
+              {{ ageLabel(selectedChild()!.dateOfBirth) }}</strong
+            >
             <small>Open profile</small>
           </span>
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -64,7 +71,7 @@ const quickActions: readonly QuickAction[] = [
             />
           </svg>
         </a>
-      } @else {
+      } @else if (isParent()) {
         <a class="child-switcher empty" routerLink="/children">
           <span class="child-avatar" aria-hidden="true">+</span>
           <span>
@@ -79,157 +86,201 @@ const quickActions: readonly QuickAction[] = [
       <p class="error" role="alert">{{ childrenError() }}</p>
     }
 
-    <section class="bento-grid" aria-label="Parent dashboard overview">
-      <article class="card screening-card">
-        <div class="progress-wrap" aria-label="Screening progress 65 percent">
-          <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-            <circle cx="60" cy="60" r="48" class="progress-track"></circle>
-            <circle cx="60" cy="60" r="48" class="progress-value"></circle>
-          </svg>
-          <div>
-            <strong>65%</strong>
-            <span>Progress</span>
+    @if (isParent()) {
+      <section class="bento-grid" aria-label="Parent dashboard overview">
+        <article class="card screening-card">
+          <div class="progress-wrap" aria-label="Screening progress 65 percent">
+            <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+              <circle cx="60" cy="60" r="48" class="progress-track"></circle>
+              <circle cx="60" cy="60" r="48" class="progress-value"></circle>
+            </svg>
+            <div>
+              <strong>65%</strong>
+              <span>Progress</span>
+            </div>
           </div>
-        </div>
 
-        <div class="screening-copy">
-          <span class="status-pill">Status: Active Review</span>
-          <h2>Moderate support recommended</h2>
+          <div class="screening-copy">
+            <span class="status-pill">Status: Active Review</span>
+            <h2>Moderate support recommended</h2>
+            <p>
+              Last screening completed on January 15, 2024. Your care team is currently reviewing
+              these results for a personalized roadmap.
+            </p>
+            <a class="primary-button" routerLink="/screening">View results</a>
+          </div>
+        </article>
+
+        <article class="card weekly-card">
+          <div class="section-title">
+            <h2>Weekly Progress</h2>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                d="M4 17 9 12l3 3 7-8M16 7h3v3"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.2"
+              />
+            </svg>
+          </div>
+          <div class="bar-chart" aria-label="3 activities completed this week">
+            @for (height of weeklyBars; track $index) {
+              <span [style.--bar-height.%]="height" [class.active]="height === 100">
+                @if (height === 100) {
+                  <strong>3</strong>
+                }
+              </span>
+            }
+          </div>
+          <p><strong>3 activities</strong> completed this week. You're on track for your goal!</p>
+        </article>
+
+        <article class="card action-card">
+          <div class="soft-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path
+                d="M5 6h14v9H8l-3 3V6Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-linejoin="round"
+                stroke-width="2"
+              />
+              <path
+                d="M8 10h8M8 13h5"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-width="2"
+              />
+            </svg>
+          </div>
+          <h2>Next Recommended Action</h2>
           <p>
-            Last screening completed on January 15, 2024. Your care team is currently reviewing
-            these results for a personalized roadmap.
+            Based on {{ selectedChild()?.firstName || 'your child' }}'s latest screening, explore
+            new communication activities tailored for social engagement.
           </p>
-          <a class="primary-button" routerLink="/screening">View results</a>
-        </div>
-      </article>
+          <a class="text-link" routerLink="/activities">
+            Explore communication activities
+            <span aria-hidden="true">-&gt;</span>
+          </a>
+        </article>
 
-      <article class="card weekly-card">
-        <div class="section-title">
-          <h2>Weekly Progress</h2>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path
-              d="M4 17 9 12l3 3 7-8M16 7h3v3"
-              fill="none"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2.2"
-            />
-          </svg>
-        </div>
-        <div class="bar-chart" aria-label="3 activities completed this week">
-          @for (height of weeklyBars; track $index) {
-            <span [style.--bar-height.%]="height" [class.active]="height === 100">
-              @if (height === 100) {
-                <strong>3</strong>
-              }
+        <article class="card appointment-card">
+          <div class="appointment-top">
+            <span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                />
+              </svg>
+              Upcoming Appointment
             </span>
+            <strong>Confirmed</strong>
+          </div>
+          <h2>Angkor Children's Hospital</h2>
+          <p>Developmental Assessment with Dr. Somat</p>
+          <div class="appointment-meta">
+            <span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                />
+              </svg>
+              Feb 1, 2024
+            </span>
+            <span>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                />
+              </svg>
+              09:30 AM
+            </span>
+          </div>
+        </article>
+      </section>
+
+      @if (!selectedChild() && !childrenLoading()) {
+        <section class="empty-state">
+          <h2>Personalize your dashboard</h2>
+          <p>
+            Add your first child profile to connect screenings, activities, school reports, and care
+            notes.
+          </p>
+          <a class="primary-button" routerLink="/children">Open child profiles</a>
+        </section>
+      }
+
+      <section class="quick-actions" aria-labelledby="quick-actions-title">
+        <h2 id="quick-actions-title">Quick Actions</h2>
+        <div>
+          @for (action of quickActions; track action.path) {
+            <a class="quick-card" [routerLink]="action.path">
+              <span class="quick-icon" [class]="action.icon" aria-hidden="true"></span>
+              <span>
+                <strong>{{ action.title }}</strong>
+                <small>{{ action.description }}</small>
+              </span>
+            </a>
           }
         </div>
-        <p><strong>3 activities</strong> completed this week. You're on track for your goal!</p>
-      </article>
-
-      <article class="card action-card">
-        <div class="soft-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false">
-            <path
-              d="M5 6h14v9H8l-3 3V6Z"
-              fill="none"
-              stroke="currentColor"
-              stroke-linejoin="round"
-              stroke-width="2"
-            />
-            <path d="M8 10h8M8 13h5" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
-          </svg>
-        </div>
-        <h2>Next Recommended Action</h2>
-        <p>
-          Based on {{ selectedChild()?.firstName || 'your child' }}'s latest screening, explore new
-          communication activities tailored for social engagement.
-        </p>
-        <a class="text-link" routerLink="/activities">
-          Explore communication activities
-          <span aria-hidden="true">-&gt;</span>
-        </a>
-      </article>
-
-      <article class="card appointment-card">
-        <div class="appointment-top">
-          <span>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path
-                d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-              />
-            </svg>
-            Upcoming Appointment
-          </span>
-          <strong>Confirmed</strong>
-        </div>
-        <h2>Angkor Children's Hospital</h2>
-        <p>Developmental Assessment with Dr. Somat</p>
-        <div class="appointment-meta">
-          <span>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path
-                d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-              />
-            </svg>
-            Feb 1, 2024
-          </span>
-          <span>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path
-                d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-              />
-            </svg>
-            09:30 AM
-          </span>
-        </div>
-      </article>
-    </section>
-
-    @if (!selectedChild() && !childrenLoading()) {
-      <section class="empty-state">
-        <h2>Personalize your dashboard</h2>
-        <p>Add your first child profile to connect screenings, activities, school reports, and care notes.</p>
-        <a class="primary-button" routerLink="/children">Open child profiles</a>
+      </section>
+    } @else {
+      <section class="admin-overview" aria-label="Administrator overview">
+        <article>
+          <span class="admin-icon directory" aria-hidden="true"></span>
+          <p class="admin-label">Care directory</p>
+          <h2>Keep hospitals current</h2>
+          <p>
+            Publish hospitals and specialist services so families can make informed care choices.
+          </p>
+          <a class="primary-button" routerLink="/hospitals">Manage hospitals</a>
+        </article>
+        <article>
+          <span class="admin-icon family" aria-hidden="true"></span>
+          <p class="admin-label">Family records</p>
+          <h2>{{ children().length }} active child profiles</h2>
+          <p>
+            Review child profiles across the service to support the care team with accurate records.
+          </p>
+          <a class="text-link" routerLink="/children"
+            >Review child profiles <span aria-hidden="true">-&gt;</span></a
+          >
+        </article>
+        <article>
+          <span class="admin-icon school" aria-hidden="true"></span>
+          <p class="admin-label">School reporting</p>
+          <h2>Coordinate activity updates</h2>
+          <p>Review school participation and keep the support network aligned around each child.</p>
+          <a class="text-link" routerLink="/schools"
+            >Open schools <span aria-hidden="true">-&gt;</span></a
+          >
+        </article>
       </section>
     }
-
-    <section class="quick-actions" aria-labelledby="quick-actions-title">
-      <h2 id="quick-actions-title">Quick Actions</h2>
-      <div>
-        @for (action of quickActions; track action.path) {
-          <a class="quick-card" [routerLink]="action.path">
-            <span class="quick-icon" [class]="action.icon" aria-hidden="true"></span>
-            <span>
-              <strong>{{ action.title }}</strong>
-              <small>{{ action.description }}</small>
-            </span>
-          </a>
-        }
-      </div>
-    </section>
 
     <footer class="dashboard-footer">
       <section>
         <h2>AutiCare</h2>
-        <p>Supporting neurodiverse families with personalized care paths and professional resources.</p>
+        <p>
+          Supporting neurodiverse families with personalized care paths and professional resources.
+        </p>
       </section>
       <section>
         <h3>Support</h3>
@@ -375,6 +426,105 @@ const quickActions: readonly QuickAction[] = [
         display: grid;
         grid-template-columns: repeat(12, minmax(0, 1fr));
         gap: 26px;
+      }
+
+      .admin-overview {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .admin-overview article {
+        min-height: 280px;
+        border: 1px solid rgb(221 229 228 / 0.72);
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 12px 34px rgb(41 74 90 / 0.07);
+        display: grid;
+        align-content: start;
+        gap: 14px;
+        padding: 24px;
+      }
+
+      .admin-overview article:first-child {
+        border-color: #b9d6e5;
+        background: #e8f6ff;
+      }
+
+      .admin-overview h2 {
+        color: #001e2b;
+        font-size: 25px;
+        line-height: 1.3;
+      }
+
+      .admin-overview p:not(.admin-label) {
+        color: #41484b;
+        line-height: 1.55;
+      }
+
+      .admin-label {
+        color: #546343;
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .admin-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
+        background: #d7e9c0;
+        position: relative;
+      }
+
+      .admin-icon::before,
+      .admin-icon::after {
+        content: '';
+        position: absolute;
+        box-sizing: border-box;
+      }
+
+      .admin-icon.directory::before {
+        left: 19px;
+        top: 11px;
+        width: 8px;
+        height: 24px;
+        background: #3d4b2d;
+      }
+
+      .admin-icon.directory::after {
+        left: 11px;
+        top: 19px;
+        width: 24px;
+        height: 8px;
+        background: #3d4b2d;
+      }
+
+      .admin-icon.family::before {
+        left: 10px;
+        top: 10px;
+        width: 26px;
+        height: 26px;
+        border: 3px solid #3d4b2d;
+        border-radius: 50% 50% 10px 10px;
+      }
+
+      .admin-icon.school::before {
+        left: 11px;
+        top: 15px;
+        width: 24px;
+        height: 18px;
+        border: 3px solid #3d4b2d;
+      }
+
+      .admin-icon.school::after {
+        left: 10px;
+        top: 8px;
+        width: 26px;
+        height: 26px;
+        border-top: 3px solid #3d4b2d;
+        border-left: 3px solid #3d4b2d;
+        transform: rotate(45deg);
       }
 
       .card {
@@ -913,6 +1063,11 @@ const quickActions: readonly QuickAction[] = [
           gap: 18px;
         }
 
+        .admin-overview {
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+
         .card {
           border-radius: 18px;
           padding: 22px;
@@ -993,7 +1148,10 @@ export class DashboardPage implements OnInit {
   protected readonly childrenLoading = signal(false);
   protected readonly childrenError = signal<string | null>(null);
   protected readonly parent = this.auth.parent;
-  protected readonly selectedChild = computed(() => this.children().find((child) => !child.archivedAt) ?? null);
+  protected readonly isParent = computed(() => this.parent()?.role === 'PARENT');
+  protected readonly selectedChild = computed(
+    () => this.children().find((child) => !child.archivedAt) ?? null,
+  );
   protected readonly parentFirstName = computed(() => this.parent()?.firstName || 'there');
 
   ngOnInit() {

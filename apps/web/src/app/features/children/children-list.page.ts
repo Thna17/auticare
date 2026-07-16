@@ -1,7 +1,8 @@
 import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { ChildResponse } from '@auticare/contracts';
+import { AuthService } from '../../core/auth/auth.service';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { ChildrenFacade } from './state/children.facade';
 
@@ -15,6 +16,9 @@ import { ChildrenFacade } from './state/children.facade';
         <h1>Children</h1>
         <p>Review each child profile, support notes, and care details in one calm place.</p>
       </div>
+      @if (canCreateChildren()) {
+        <a class="create-child" routerLink="/children/new">Add child</a>
+      }
     </section>
 
     @if (facade.loading()) {
@@ -26,6 +30,9 @@ import { ChildrenFacade } from './state/children.facade';
         title="No child profiles yet"
         message="Create a profile when you are ready to track support plans."
       />
+      @if (canCreateChildren()) {
+        <a class="empty-action" routerLink="/children/new">Create child profile</a>
+      }
     } @else {
       <section class="child-grid" aria-label="Child profiles">
         @for (child of facade.children(); track child.id) {
@@ -75,6 +82,30 @@ import { ChildrenFacade } from './state/children.facade';
 
       .page-header div {
         max-width: 720px;
+      }
+
+      .create-child,
+      .empty-action {
+        align-self: center;
+        border-radius: 12px;
+        background: #3d6375;
+        color: #ffffff;
+        min-height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 18px;
+        text-decoration: none;
+        font-weight: 800;
+      }
+
+      .create-child:hover,
+      .empty-action:hover {
+        background: #244b5d;
+      }
+
+      .empty-action {
+        margin-top: 16px;
       }
 
       .eyebrow {
@@ -198,6 +229,14 @@ import { ChildrenFacade } from './state/children.facade';
       }
 
       @media (max-width: 640px) {
+        .page-header {
+          flex-direction: column;
+        }
+
+        .create-child {
+          align-self: stretch;
+        }
+
         h1 {
           font-size: 32px;
         }
@@ -208,6 +247,8 @@ import { ChildrenFacade } from './state/children.facade';
 })
 export class ChildrenListPage implements OnInit {
   readonly facade = inject(ChildrenFacade);
+  private readonly auth = inject(AuthService);
+  readonly canCreateChildren = computed(() => this.auth.parent()?.role === 'PARENT');
 
   ngOnInit() {
     this.facade.load();
