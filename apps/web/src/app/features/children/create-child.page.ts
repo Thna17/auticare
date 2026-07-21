@@ -70,7 +70,7 @@ import { ChildrenApi } from './data-access/children.api';
         color: #164f68;
         display: inline-flex;
         margin-bottom: 22px;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         text-decoration: none;
       }
       .back-link:hover,
@@ -84,18 +84,18 @@ import { ChildrenApi } from './data-access/children.api';
       }
       .eyebrow {
         color: #546343;
-        font-size: 14px;
-        font-weight: 800;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
       }
       h1 {
         color: #001e2b;
-        font-size: 40px;
+        font-size: var(--ac-type-page-title);
         line-height: 1.2;
       }
       .page-header p:last-child {
         color: #41484b;
-        font-size: 17px;
+        font-size: var(--ac-type-page-subtitle);
         line-height: 1.55;
       }
       .child-form {
@@ -110,13 +110,13 @@ import { ChildrenApi } from './data-access/children.api';
       .field {
         color: #001e2b;
         display: grid;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         gap: 10px;
       }
       em {
         color: #71787c;
         font-style: normal;
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
       }
       input,
       textarea {
@@ -127,7 +127,7 @@ import { ChildrenApi } from './data-access/children.api';
         background: #f8fcff;
         color: #001e2b;
         font: inherit;
-        font-weight: 400;
+        font-weight: var(--ac-font-weight-regular);
         padding: 14px 16px;
       }
       input {
@@ -160,7 +160,7 @@ import { ChildrenApi } from './data-access/children.api';
       }
       .form-actions a {
         color: #164f68;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         text-decoration: none;
       }
       button {
@@ -171,7 +171,7 @@ import { ChildrenApi } from './data-access/children.api';
         color: #ffffff;
         cursor: pointer;
         font: inherit;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         padding: 0 20px;
       }
       button:hover:not(:disabled) {

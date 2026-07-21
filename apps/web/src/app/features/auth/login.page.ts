@@ -10,7 +10,10 @@ import { AuthService } from '../../core/auth/auth.service';
     <main class="login-page">
       <section class="login-card" aria-labelledby="login-title">
         <header class="login-header">
-          <a class="brand" routerLink="/" aria-label="AutiCare home">AutiCare</a>
+          <a class="brand" routerLink="/" aria-label="AutiCare home">
+            <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" />
+            <span>AutiCare</span>
+          </a>
           <h1 id="login-title">Welcome back</h1>
           <p>Let's continue supporting your child.</p>
         </header>
@@ -197,12 +200,23 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .brand {
         color: #315d72;
-        font-size: 44px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: var(--ac-type-page-title);
         line-height: 1;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         letter-spacing: 0;
         text-decoration: none;
         margin-bottom: 48px;
+      }
+
+      .brand img {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        object-fit: cover;
+        box-shadow: 0 0 0 1px #9bc6d8;
       }
 
       h1,
@@ -214,7 +228,7 @@ import { AuthService } from '../../core/auth/auth.service';
         color: #001e2b;
         font-size: 32px;
         line-height: 1.25;
-        font-weight: 700;
+        font-weight: var(--ac-font-weight-semibold);
         letter-spacing: 0;
         margin-bottom: 14px;
       }
@@ -239,9 +253,9 @@ import { AuthService } from '../../core/auth/auth.service';
       .password-label-row label,
       .password-label-row a {
         color: #001e2b;
-        font-size: 16px;
+        font-size: var(--ac-type-body);
         line-height: 1.2;
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
         letter-spacing: 0;
       }
 
@@ -340,7 +354,7 @@ import { AuthService } from '../../core/auth/auth.service';
       .field-error,
       .form-error {
         color: #ba1a1a;
-        font-size: 14px;
+        font-size: var(--ac-type-label);
         line-height: 1.4;
         margin-top: -14px;
       }
@@ -366,7 +380,7 @@ import { AuthService } from '../../core/auth/auth.service';
         justify-content: center;
         gap: 14px;
         font-size: 20px;
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
         line-height: 1;
         box-shadow: 0 10px 28px rgb(41 74 90 / 0.06);
         transition:
@@ -414,8 +428,8 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .divider strong {
         color: #68737a;
-        font-size: 16px;
-        font-weight: 700;
+        font-size: var(--ac-type-body);
+        font-weight: var(--ac-font-weight-semibold);
         letter-spacing: 5px;
       }
 
@@ -428,7 +442,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .create-account a {
         color: #164f68;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         text-decoration: none;
         margin-left: 6px;
       }
@@ -446,7 +460,7 @@ import { AuthService } from '../../core/auth/auth.service';
         justify-content: center;
         gap: 18px;
         color: #41484b;
-        font-size: 14px;
+        font-size: var(--ac-type-label);
         line-height: 1.4;
       }
 
@@ -476,7 +490,7 @@ import { AuthService } from '../../core/auth/auth.service';
         gap: 34px;
         padding: 18px 24px 30px;
         color: rgb(65 72 75 / 0.66);
-        font-size: 14px;
+        font-size: var(--ac-type-label);
         line-height: 1.4;
       }
 
@@ -521,7 +535,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
         .login-header p,
         .create-account {
-          font-size: 16px;
+          font-size: var(--ac-type-body);
         }
 
         input,
@@ -532,7 +546,7 @@ import { AuthService } from '../../core/auth/auth.service';
         input {
           padding-left: 22px;
           padding-right: 22px;
-          font-size: 16px;
+          font-size: var(--ac-type-body);
         }
 
         .password-field input {

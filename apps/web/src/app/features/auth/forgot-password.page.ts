@@ -10,7 +10,10 @@ import { AuthService } from '../../core/auth/auth.service';
   template: `
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="forgot-title">
-        <a class="brand" routerLink="/" aria-label="AutiCare home">AutiCare</a>
+        <a class="brand" routerLink="/" aria-label="AutiCare home">
+          <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" />
+          <span>AutiCare</span>
+        </a>
         <header>
           <h1 id="forgot-title">Reset your password</h1>
           <p>Enter your account email and we'll prepare a secure reset link.</p>
@@ -107,12 +110,23 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .brand {
         color: #315d72;
-        text-align: center;
-        font-size: 42px;
+        justify-self: center;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: var(--ac-type-page-title);
         line-height: 1;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         letter-spacing: 0;
         text-decoration: none;
+      }
+
+      .brand img {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        object-fit: cover;
+        box-shadow: 0 0 0 1px #9bc6d8;
       }
 
       header {
@@ -129,13 +143,13 @@ import { AuthService } from '../../core/auth/auth.service';
       h1 {
         font-size: 31px;
         line-height: 1.25;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         letter-spacing: 0;
       }
 
       header p {
         color: #41484b;
-        font-size: 17px;
+        font-size: var(--ac-type-page-subtitle);
         line-height: 1.55;
       }
 
@@ -147,8 +161,8 @@ import { AuthService } from '../../core/auth/auth.service';
       .field {
         display: grid;
         gap: 10px;
-        font-size: 16px;
-        font-weight: 700;
+        font-size: var(--ac-type-body);
+        font-weight: var(--ac-font-weight-semibold);
       }
 
       input {
@@ -159,7 +173,7 @@ import { AuthService } from '../../core/auth/auth.service';
         background: #f2f9ff;
         color: #001e2b;
         font: inherit;
-        font-weight: 400;
+        font-weight: var(--ac-font-weight-regular);
         padding: 0 24px;
       }
 
@@ -184,7 +198,7 @@ import { AuthService } from '../../core/auth/auth.service';
         gap: 12px;
         text-decoration: none;
         font-size: 18px;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
       }
 
       .submit-button {
@@ -236,7 +250,7 @@ import { AuthService } from '../../core/auth/auth.service';
       .field-error,
       .form-error {
         color: #ba1a1a;
-        font-size: 14px;
+        font-size: var(--ac-type-label);
         line-height: 1.4;
         margin-top: -14px;
       }
@@ -257,7 +271,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
       footer a {
         color: #164f68;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         text-decoration: none;
       }
 

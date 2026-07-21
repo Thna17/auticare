@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import type { UserRole } from '@auticare/contracts';
 import { AuthService } from '../auth/auth.service';
 
@@ -7,6 +7,7 @@ type NavItem = {
   readonly label: string;
   readonly path: string;
   readonly icon: string;
+  readonly badge?: string;
 };
 
 const primaryNav: readonly NavItem[] = [
@@ -21,25 +22,25 @@ const primaryNav: readonly NavItem[] = [
 ];
 
 const adminNav: readonly NavItem[] = [
-  { label: 'Admin Dashboard', path: '/dashboard', icon: 'grid' },
-  { label: 'Families', path: '/children', icon: 'family' },
-  { label: 'Manage Schools', path: '/schools/admin', icon: 'school' },
-  { label: 'Create School Account', path: '/schools/admin/new', icon: 'plus' },
-  { label: 'Manage Hospitals', path: '/hospitals', icon: 'hospital' },
+  { label: 'Dashboard', path: '/dashboard', icon: 'grid' },
+  { label: 'Family Records', path: '/children', icon: 'children' },
+  { label: 'Schools', path: '/schools/admin', icon: 'school' },
+  { label: 'Hospitals', path: '/hospitals', icon: 'hospital' },
   { label: 'School Reports', path: '/schools/reports', icon: 'checklist' },
 ];
 
 const schoolNav: readonly NavItem[] = [
-  { label: 'School Dashboard', path: '/dashboard', icon: 'grid' },
-  { label: 'Enrolled Children', path: '/schools/enrollments', icon: 'family' },
-  { label: 'Activity Reports', path: '/schools/reports', icon: 'checklist' },
-  { label: 'Create Report', path: '/schools/reports/new', icon: 'plus' },
+  { label: 'Dashboard', path: '/dashboard', icon: 'grid' },
   { label: 'School Profile', path: '/schools/profile', icon: 'school' },
+  { label: 'Students', path: '/schools/enrollments', icon: 'children' },
+  { label: 'Activities', path: '/schools/reports/new', icon: 'activity' },
+  { label: 'Reports', path: '/schools/reports', icon: 'report' },
+  { label: 'Notifications', path: '/notifications', icon: 'bell' },
 ];
 
 const secondaryNav: readonly NavItem[] = [
-  { label: 'Saved', path: '/activities', icon: 'bookmark' },
   { label: 'Settings', path: '/settings', icon: 'settings' },
+  { label: 'Help Center', path: '/support', icon: 'help' },
 ];
 
 const mobileNav: readonly NavItem[] = [
@@ -70,7 +71,24 @@ const schoolMobileNav: readonly NavItem[] = [
   template: `<a class="skip" href="#main">Skip to content</a>
 
     <aside class="sidebar" aria-label="Primary navigation">
-      <a class="brand" routerLink="/dashboard">AutiCare</a>
+      <header class="sidebar-header">
+        <a class="brand" routerLink="/dashboard">
+          <img class="brand-mark" src="/images/auticare-logo.jpg" alt="" aria-hidden="true" />
+          <span>AutiCare</span>
+        </a>
+        <button class="menu-button" type="button" aria-label="Open navigation menu">
+          <span aria-hidden="true"></span>
+        </button>
+      </header>
+
+      <section class="account-card" aria-label="Current account">
+        <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="account-copy">
+          <strong>{{ accountName() }}</strong>
+          <span>{{ roleLabel() }}</span>
+        </span>
+        <span class="chevron" aria-hidden="true"></span>
+      </section>
 
       <nav class="nav-list">
         @for (item of primaryNav(); track item.path) {
@@ -81,16 +99,17 @@ const schoolMobileNav: readonly NavItem[] = [
           >
             <span class="nav-icon" [class]="item.icon" aria-hidden="true"></span>
             <span>{{ item.label }}</span>
+            @if (item.badge) {
+              <span class="badge">{{ item.badge }}</span>
+            }
           </a>
         }
       </nav>
 
-      @if (canStartScreening()) {
-        <a class="new-screening" routerLink="/screening">
-          <span class="plus-icon" aria-hidden="true"></span>
-          <span>New Screening</span>
-        </a>
-      }
+      <a class="role-action" [routerLink]="primaryAction().path">
+        <span class="plus-icon" aria-hidden="true"></span>
+        <span>{{ primaryAction().label }}</span>
+      </a>
 
       <nav class="nav-list secondary" aria-label="Secondary navigation">
         @for (item of secondaryNav(); track item.path) {
@@ -99,6 +118,11 @@ const schoolMobileNav: readonly NavItem[] = [
             <span>{{ item.label }}</span>
           </a>
         }
+
+        <button class="logout-button" type="button" (click)="logout()">
+          <span class="plus-icon" aria-hidden="true"></span>
+          <span>Logout</span>
+        </button>
       </nav>
     </aside>
 
@@ -136,7 +160,7 @@ const schoolMobileNav: readonly NavItem[] = [
       :host {
         display: block;
         min-height: 100svh;
-        background: #f4faff;
+        background: #f2f9fd;
         color: #001e2b;
       }
 
@@ -159,22 +183,131 @@ const schoolMobileNav: readonly NavItem[] = [
         position: fixed;
         inset: 0 auto 0 0;
         z-index: 20;
-        width: 260px;
-        background: #e8f6ff;
-        border-right: 1px solid #d4e6ef;
+        width: 292px;
+        background: #e5f6ff;
+        border-right: 1px solid #c9e5f1;
         display: flex;
         flex-direction: column;
-        padding: 32px 8px 24px;
+        padding: 28px 18px 24px;
+        overflow-y: auto;
+      }
+
+      .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 28px;
       }
 
       .brand {
         color: #315d72;
         text-decoration: none;
-        font-size: 32px;
-        line-height: 1;
-        font-weight: 700;
+        font-size: 24px;
+        line-height: 1.1;
+        font-weight: var(--ac-font-weight-semibold);
         letter-spacing: 0;
-        margin: 0 16px 54px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .brand-mark {
+        width: 31px;
+        height: 31px;
+        border-radius: 999px;
+        flex: 0 0 auto;
+        object-fit: cover;
+        box-shadow: 0 0 0 1px #9bc6d8;
+      }
+
+      .menu-button {
+        width: 34px;
+        height: 34px;
+        border: 0;
+        background: transparent;
+        color: #759bad;
+        display: grid;
+        place-items: center;
+      }
+
+      .menu-button span,
+      .menu-button span::before,
+      .menu-button span::after {
+        width: 16px;
+        height: 2px;
+        border-radius: 999px;
+        background: currentColor;
+        display: block;
+        content: '';
+      }
+
+      .menu-button span::before {
+        transform: translateY(-6px);
+      }
+
+      .menu-button span::after {
+        transform: translateY(4px);
+      }
+
+      .account-card {
+        min-height: 68px;
+        border: 1px solid #c8e1ed;
+        border-radius: 14px;
+        background: #eefaff;
+        display: grid;
+        grid-template-columns: 44px 1fr 20px;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        margin: 0 8px 24px;
+      }
+
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #47758b, #9cc5d6);
+        color: #ffffff;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-semibold);
+      }
+
+      .account-copy {
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+      }
+
+      .account-copy strong {
+        color: #19465b;
+        font-size: var(--ac-type-label);
+        line-height: 1.15;
+        font-weight: var(--ac-font-weight-semibold);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .account-copy span {
+        width: fit-content;
+        border-radius: 999px;
+        background: #d5eaf3;
+        color: #315d72;
+        font-size: 11px;
+        font-weight: var(--ac-font-weight-medium);
+        line-height: 1;
+        padding: 5px 8px;
+      }
+
+      .chevron {
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid #315d72;
+        border-bottom: 2px solid #315d72;
+        transform: rotate(45deg) translateY(-2px);
       }
 
       .nav-list {
@@ -182,35 +315,56 @@ const schoolMobileNav: readonly NavItem[] = [
         gap: 6px;
       }
 
-      .nav-list a {
-        min-height: 50px;
-        border-radius: 12px;
-        color: #263238;
+      .nav-list a,
+      .logout-button {
+        position: relative;
+        min-height: 54px;
+        border: 0;
+        border-radius: 14px;
+        background: transparent;
+        color: #34434a;
         display: flex;
         align-items: center;
-        gap: 14px;
-        margin: 0 0;
-        padding: 0 18px;
+        gap: 13px;
+        padding: 0 14px;
         text-decoration: none;
-        font-size: 16px;
+        font: inherit;
+        font-size: var(--ac-type-label);
         line-height: 1.2;
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-medium);
+        text-align: left;
         transition:
           background 160ms ease,
           color 160ms ease;
       }
 
       .nav-list a:hover,
+      .logout-button:hover {
+        background: rgb(255 255 255 / 0.55);
+      }
+
       .nav-list a.active {
         background: #8db4c8;
         color: #103443;
+        font-weight: var(--ac-font-weight-semibold);
+      }
+
+      .nav-list a.active::before {
+        content: '';
+        position: absolute;
+        left: -10px;
+        top: 14px;
+        bottom: 14px;
+        width: 4px;
+        border-radius: 999px;
+        background: #315d72;
       }
 
       .nav-icon,
       .plus-icon {
         position: relative;
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
         flex: 0 0 auto;
         color: currentColor;
       }
@@ -240,6 +394,19 @@ const schoolMobileNav: readonly NavItem[] = [
         background: currentColor;
       }
 
+      .badge {
+        margin-left: auto;
+        min-width: 22px;
+        border-radius: 999px;
+        background: #3d6375;
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-semibold);
+        line-height: 1;
+        padding: 5px 7px;
+        text-align: center;
+      }
+
       .grid::before {
         inset: 3px;
         border: 2px solid currentColor;
@@ -264,6 +431,27 @@ const schoolMobileNav: readonly NavItem[] = [
         bottom: 3px;
         width: 22px;
         height: 10px;
+        border: 2px solid currentColor;
+        border-radius: 10px 10px 3px 3px;
+      }
+
+      .children::before {
+        left: 3px;
+        top: 4px;
+        width: 6px;
+        height: 6px;
+        border: 2px solid currentColor;
+        border-radius: 999px;
+        box-shadow:
+          10px 0 0 -1px currentColor,
+          5px 8px 0 -1px currentColor;
+      }
+
+      .children::after {
+        left: 1px;
+        bottom: 2px;
+        width: 20px;
+        height: 8px;
         border: 2px solid currentColor;
         border-radius: 10px 10px 3px 3px;
       }
@@ -367,6 +555,60 @@ const schoolMobileNav: readonly NavItem[] = [
         transform: rotate(-45deg);
       }
 
+      .activity::before {
+        left: 9px;
+        top: 2px;
+        width: 6px;
+        height: 18px;
+        background: currentColor;
+        border-radius: 2px;
+      }
+
+      .activity::after {
+        left: 2px;
+        top: 8px;
+        width: 18px;
+        height: 6px;
+        background: currentColor;
+        border-radius: 2px;
+      }
+
+      .report::before {
+        left: 3px;
+        bottom: 3px;
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 2px solid currentColor;
+        clip-path: polygon(50% 50%, 100% 50%, 100% 100%, 50% 100%);
+      }
+
+      .report::after {
+        left: 11px;
+        top: 2px;
+        width: 2px;
+        height: 20px;
+        background: currentColor;
+      }
+
+      .bell::before {
+        left: 5px;
+        top: 4px;
+        width: 12px;
+        height: 13px;
+        border: 2px solid currentColor;
+        border-radius: 9px 9px 4px 4px;
+      }
+
+      .bell::after {
+        left: 9px;
+        bottom: 1px;
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
       .bookmark::before {
         inset: 3px 6px;
         border: 2px solid currentColor;
@@ -386,20 +628,26 @@ const schoolMobileNav: readonly NavItem[] = [
 
       .settings::before {
         inset: 5px;
-        border: 3px solid currentColor;
+        border: 2px solid currentColor;
         border-radius: 999px;
+        box-shadow:
+          0 -5px 0 -3px currentColor,
+          0 5px 0 -3px currentColor,
+          5px 0 0 -3px currentColor,
+          -5px 0 0 -3px currentColor,
+          4px 4px 0 -3px currentColor,
+          -4px 4px 0 -3px currentColor,
+          4px -4px 0 -3px currentColor,
+          -4px -4px 0 -3px currentColor;
       }
 
       .settings::after {
-        left: 11px;
-        top: 1px;
-        width: 2px;
-        height: 22px;
+        left: 9px;
+        top: 9px;
+        width: 4px;
+        height: 4px;
         background: currentColor;
-        box-shadow:
-          0 0 0 0 currentColor,
-          0 0 0 0 currentColor;
-        transform: rotate(45deg);
+        border-radius: 999px;
       }
 
       .person::before {
@@ -420,6 +668,22 @@ const schoolMobileNav: readonly NavItem[] = [
         border-radius: 12px 12px 4px 4px;
       }
 
+      .help::before {
+        inset: 3px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .help::after {
+        content: '?';
+        inset: 0;
+        color: #e5f6ff;
+        display: grid;
+        place-items: center;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-bold);
+      }
+
       .plus-icon::before {
         left: 11px;
         top: 5px;
@@ -436,31 +700,57 @@ const schoolMobileNav: readonly NavItem[] = [
         background: currentColor;
       }
 
-      .new-screening {
-        min-height: 56px;
-        border-radius: 12px;
+      .role-action {
+        min-height: 54px;
+        border-radius: 14px;
         background: #3d6375;
         color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 12px;
-        margin: auto 10px 18px;
+        margin: 28px 8px 24px;
         text-decoration: none;
-        font-weight: 700;
-        box-shadow: 0 10px 26px rgb(61 99 117 / 0.18);
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-semibold);
+        box-shadow: 0 10px 22px rgb(61 99 117 / 0.22);
       }
 
       .secondary {
         border-top: 1px solid #c1d3dc;
-        padding-top: 18px;
+        padding-top: 20px;
+        margin-top: auto;
+      }
+
+      .logout-button {
+        color: #c64c4c;
+        cursor: pointer;
+      }
+
+      .logout-button .plus-icon::before {
+        left: 4px;
+        top: 6px;
+        width: 10px;
+        height: 10px;
+        border: 2px solid currentColor;
+        border-right: 0;
+        background: transparent;
+      }
+
+      .logout-button .plus-icon::after {
+        left: 9px;
+        top: 10px;
+        width: 12px;
+        height: 2px;
+        background: currentColor;
+        box-shadow: 6px 0 0 -2px currentColor;
       }
 
       .shell {
         min-height: 100svh;
-        margin-left: 260px;
+        margin-left: 292px;
         padding: 48px 56px 56px;
-        background: #f4faff;
+        background: #f2f9fd;
       }
 
       .mobile-nav {
@@ -500,7 +790,7 @@ const schoolMobileNav: readonly NavItem[] = [
           gap: 4px;
           text-decoration: none;
           font-size: 11px;
-          font-weight: 800;
+          font-weight: var(--ac-font-weight-bold);
           line-height: 1.1;
         }
 
@@ -525,8 +815,8 @@ const schoolMobileNav: readonly NavItem[] = [
 })
 export class AppShellComponent {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly role = computed<UserRole | undefined>(() => this.auth.parent()?.role);
-  protected readonly canStartScreening = computed(() => this.role() === 'PARENT');
   protected readonly primaryNav = computed(() => {
     if (this.role() === 'ADMIN') return adminNav;
     if (this.role() === 'SCHOOL') return schoolNav;
@@ -545,4 +835,35 @@ export class AppShellComponent {
       return { label: 'Create activity report', path: '/schools/reports/new' };
     return { label: 'Start new screening', path: '/screening' };
   });
+  protected readonly primaryAction = computed(() => {
+    if (this.role() === 'ADMIN')
+      return { label: 'Create School Account', path: '/schools/admin/new' };
+    if (this.role() === 'SCHOOL') return { label: 'Add Activity', path: '/schools/reports/new' };
+    return { label: 'New Screening', path: '/screening' };
+  });
+  protected readonly accountName = computed(() => {
+    const parent = this.auth.parent();
+    if (!parent) return 'AutiCare user';
+    if (parent.role === 'ADMIN') return 'Admin Panel';
+    if (parent.role === 'SCHOOL') return `${parent.firstName} ${parent.lastName}`.trim();
+    return `${parent.firstName} ${parent.lastName}`.trim();
+  });
+  protected readonly roleLabel = computed(() => {
+    if (this.role() === 'ADMIN') return 'System administrator';
+    if (this.role() === 'SCHOOL') return 'School account';
+    return 'Parent account';
+  });
+  protected readonly initials = computed(() => {
+    const name = this.accountName();
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('');
+  });
+
+  protected logout() {
+    this.auth.logout().subscribe({ next: () => void this.router.navigateByUrl('/login') });
+  }
 }

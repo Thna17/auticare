@@ -1,21 +1,72 @@
 @use './app/design-system/styles/tokens.scss';
+
 * {
   box-sizing: border-box;
 }
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   font-family: var(--ac-font-family);
+  font-size: var(--ac-type-body);
+  font-weight: var(--ac-font-weight-medium);
+  line-height: 1.5;
+  letter-spacing: 0;
   background: var(--ac-color-background);
   color: var(--ac-color-text);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  font-family: var(--ac-font-family);
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-top: 0;
+  letter-spacing: 0;
+}
+
+strong,
+b,
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ac-color-text);
+  font-weight: var(--ac-font-weight-bold);
+}
+
 a {
   color: var(--ac-color-text-dark);
 }
+
 :focus-visible {
   outline: 3px solid var(--ac-color-warning);
   outline-offset: 2px;
 }
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {

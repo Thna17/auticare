@@ -96,7 +96,7 @@ import { ChildrenFacade } from './state/children.facade';
         justify-content: center;
         padding: 0 18px;
         text-decoration: none;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
       }
 
       .create-child:hover,
@@ -111,8 +111,8 @@ import { ChildrenFacade } from './state/children.facade';
       .eyebrow {
         margin: 0 0 8px;
         color: #546343;
-        font-size: 14px;
-        font-weight: 800;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
         letter-spacing: 0;
       }
@@ -125,7 +125,7 @@ import { ChildrenFacade } from './state/children.facade';
 
       h1 {
         color: #001e2b;
-        font-size: 40px;
+        font-size: var(--ac-type-page-title);
         line-height: 1.25;
         letter-spacing: 0;
       }
@@ -133,7 +133,7 @@ import { ChildrenFacade } from './state/children.facade';
       .page-header p:last-child {
         margin-top: 10px;
         color: #41484b;
-        font-size: 17px;
+        font-size: var(--ac-type-page-subtitle);
         line-height: 1.55;
       }
 
@@ -176,7 +176,7 @@ import { ChildrenFacade } from './state/children.facade';
         display: grid;
         place-items: center;
         font-size: 22px;
-        font-weight: 900;
+        font-weight: var(--ac-font-weight-bold);
       }
 
       .card-content {
@@ -216,7 +216,7 @@ import { ChildrenFacade } from './state/children.facade';
         justify-content: center;
         gap: 10px;
         text-decoration: none;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
       }
 
       .profile-link svg {

@@ -350,16 +350,16 @@ const quickActions: readonly QuickAction[] = [
 
       .dashboard-header h1 {
         color: #315d72;
-        font-size: 44px;
+        font-size: 40px;
         line-height: 1.15;
-        font-weight: 800;
+        font-weight: 700;
         letter-spacing: 0;
       }
 
       .dashboard-header p {
         margin-top: 12px;
         color: #263238;
-        font-size: 17px;
+        font-size: 16px;
         line-height: 1.55;
       }
 
@@ -389,7 +389,7 @@ const quickActions: readonly QuickAction[] = [
         color: #3d4b2d;
         display: grid;
         place-items: center;
-        font-weight: 900;
+        font-weight: 700;
         font-size: 20px;
       }
 
@@ -399,14 +399,15 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .child-switcher strong {
-        font-size: 16px;
+        font-size: 15px;
         line-height: 1.2;
       }
 
       .child-switcher small {
         margin-top: 4px;
         color: #164f68;
-        font-weight: 700;
+        font-size: 13px;
+        font-weight: 600;
       }
 
       .child-switcher svg {
@@ -453,7 +454,7 @@ const quickActions: readonly QuickAction[] = [
 
       .admin-overview h2 {
         color: #001e2b;
-        font-size: 25px;
+        font-size: 24px;
         line-height: 1.3;
       }
 
@@ -465,7 +466,7 @@ const quickActions: readonly QuickAction[] = [
       .admin-label {
         color: #546343;
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 700;
         text-transform: uppercase;
       }
 
@@ -591,7 +592,7 @@ const quickActions: readonly QuickAction[] = [
         margin-top: 6px;
         text-transform: uppercase;
         font-size: 11px;
-        font-weight: 800;
+        font-weight: 700;
       }
 
       .screening-copy {
@@ -607,16 +608,16 @@ const quickActions: readonly QuickAction[] = [
         padding: 6px 14px;
         font-size: 13px;
         line-height: 1.1;
-        font-weight: 800;
+        font-weight: 700;
       }
 
       .screening-copy h2,
       .action-card h2,
       .appointment-card h2 {
         color: #001e2b;
-        font-size: 30px;
-        line-height: 1.34;
-        font-weight: 700;
+        font-size: 26px;
+        line-height: 1.3;
+        font-weight: 600;
         letter-spacing: 0;
       }
 
@@ -639,7 +640,7 @@ const quickActions: readonly QuickAction[] = [
         justify-content: center;
         padding: 0 26px;
         text-decoration: none;
-        font-weight: 700;
+        font-weight: 600;
       }
 
       .weekly-card {
@@ -659,9 +660,9 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .section-title h2 {
-        font-size: 18px;
+        font-size: 16px;
         line-height: 1.3;
-        font-weight: 700;
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0;
       }
@@ -752,7 +753,7 @@ const quickActions: readonly QuickAction[] = [
         align-items: center;
         gap: 10px;
         text-decoration: none;
-        font-weight: 800;
+        font-weight: 700;
       }
 
       .text-link:hover {
@@ -783,7 +784,7 @@ const quickActions: readonly QuickAction[] = [
         align-items: center;
         gap: 8px;
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 700;
         text-transform: uppercase;
       }
 
@@ -826,7 +827,7 @@ const quickActions: readonly QuickAction[] = [
 
       .empty-state h2 {
         color: #001e2b;
-        font-size: 24px;
+        font-size: 22px;
       }
 
       .empty-state p {
@@ -840,7 +841,7 @@ const quickActions: readonly QuickAction[] = [
 
       .quick-actions h2 {
         color: #001e2b;
-        font-size: 30px;
+        font-size: 26px;
         line-height: 1.25;
         margin-bottom: 28px;
       }
@@ -876,9 +877,9 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .quick-card strong {
-        font-size: 18px;
+        font-size: 16px;
         line-height: 1.3;
-        font-weight: 700;
+        font-weight: 600;
       }
 
       .quick-card small {
@@ -969,13 +970,13 @@ const quickActions: readonly QuickAction[] = [
 
       .dashboard-footer h2 {
         color: #315d72;
-        font-size: 30px;
+        font-size: 26px;
         line-height: 1.2;
       }
 
       .dashboard-footer h3 {
         color: #001e2b;
-        font-size: 17px;
+        font-size: 16px;
         line-height: 1.2;
         margin-bottom: 18px;
       }
@@ -1048,7 +1049,7 @@ const quickActions: readonly QuickAction[] = [
         }
 
         .dashboard-header h1 {
-          font-size: 34px;
+          font-size: 32px;
         }
 
         .dashboard-header p {
@@ -1102,7 +1103,7 @@ const quickActions: readonly QuickAction[] = [
         .screening-copy h2,
         .action-card h2,
         .appointment-card h2 {
-          font-size: 26px;
+          font-size: 24px;
         }
 
         .appointment-top {
@@ -1115,7 +1116,7 @@ const quickActions: readonly QuickAction[] = [
         }
 
         .quick-actions h2 {
-          font-size: 27px;
+          font-size: 24px;
         }
 
         .quick-actions > div,

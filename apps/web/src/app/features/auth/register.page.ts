@@ -21,31 +21,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       <section class="form-panel" aria-labelledby="register-title">
         <div class="form-shell">
           <a class="brand" routerLink="/" aria-label="AutiCare home">
-            <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-              <path
-                d="M20 33c-8.1 0-14-5.9-14-14.2V8.6l7.2 4.1C17.5 15.2 20 19.4 20 24.4V33Z"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2.6"
-              />
-              <path
-                d="M20 33c8.1 0 14-5.9 14-14.2V8.6l-7.2 4.1C22.5 15.2 20 19.4 20 24.4V33Z"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2.6"
-              />
-              <path
-                d="M20 24.5c0-6.4-3.7-11.6-9.2-14.1M20 24.5c0-6.4 3.7-11.6 9.2-14.1"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-width="2.2"
-              />
-            </svg>
+            <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" />
             <span>AutiCare</span>
           </a>
 
@@ -249,16 +225,19 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         text-decoration: none;
       }
 
-      .brand svg {
+      .brand img {
         width: 34px;
         height: 34px;
+        border-radius: 999px;
         flex: 0 0 auto;
+        object-fit: cover;
+        box-shadow: 0 0 0 1px #9bc6d8;
       }
 
       .brand span {
-        font-size: 40px;
+        font-size: var(--ac-type-page-title);
         line-height: 1;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         letter-spacing: 0;
       }
 
@@ -276,7 +255,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         color: #001e2b;
         font-size: 32px;
         line-height: 1.25;
-        font-weight: 700;
+        font-weight: var(--ac-font-weight-semibold);
         letter-spacing: 0;
         margin-bottom: 16px;
       }
@@ -297,8 +276,8 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         display: grid;
         gap: 12px;
         color: #001e2b;
-        font-size: 16px;
-        font-weight: 700;
+        font-size: var(--ac-type-body);
+        font-weight: var(--ac-font-weight-semibold);
       }
 
       .field input {
@@ -310,7 +289,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         background: #ffffff;
         color: #001e2b;
         font: inherit;
-        font-weight: 400;
+        font-weight: var(--ac-font-weight-regular);
         line-height: 1.3;
         padding: 0 22px;
         transition:
@@ -362,7 +341,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .password-note p {
-        font-size: 14px;
+        font-size: var(--ac-type-label);
         line-height: 1.45;
       }
 
@@ -372,7 +351,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         gap: 14px;
         align-items: start;
         color: #41484b;
-        font-size: 16px;
+        font-size: var(--ac-type-body);
         line-height: 1.5;
       }
 
@@ -420,7 +399,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
       .terms a {
         color: #164f68;
-        font-weight: 700;
+        font-weight: var(--ac-font-weight-semibold);
         text-decoration: none;
       }
 
@@ -431,7 +410,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       .field-error,
       .form-error {
         color: #ba1a1a;
-        font-size: 14px;
+        font-size: var(--ac-type-label);
         line-height: 1.4;
         margin-top: -14px;
       }
@@ -457,7 +436,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         justify-content: center;
         gap: 12px;
         font-size: 18px;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         line-height: 1;
         box-shadow: 0 14px 28px rgb(61 99 117 / 0.12);
         transition:
@@ -510,7 +489,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         padding: 0 32px;
         text-decoration: none;
         font-size: 18px;
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
         transition:
           background 160ms ease,
           color 160ms ease;
@@ -584,7 +563,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         color: #001e2b;
         font-size: 34px;
         line-height: 1.25;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         letter-spacing: 0;
       }
 
@@ -663,7 +642,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         }
 
         .intro p {
-          font-size: 16px;
+          font-size: var(--ac-type-body);
         }
 
         .password-grid {

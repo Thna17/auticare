@@ -124,8 +124,8 @@ import { HospitalsApi } from './data-access/hospitals.api';
       .city,
       .services span {
         color: #546343;
-        font-size: 14px;
-        font-weight: 800;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
       }
       .eyebrow {
@@ -133,12 +133,12 @@ import { HospitalsApi } from './data-access/hospitals.api';
       }
       h1 {
         color: #001e2b;
-        font-size: 40px;
+        font-size: var(--ac-type-page-title);
         line-height: 1.2;
       }
       .page-header p:last-child {
         color: #41484b;
-        font-size: 17px;
+        font-size: var(--ac-type-page-subtitle);
         line-height: 1.55;
         margin-top: 10px;
       }
@@ -146,8 +146,8 @@ import { HospitalsApi } from './data-access/hospitals.api';
         border-radius: 999px;
         background: #d7e9c0;
         color: #3d4b2d;
-        font-size: 14px;
-        font-weight: 800;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-bold);
         padding: 9px 13px;
         white-space: nowrap;
       }
@@ -187,7 +187,7 @@ import { HospitalsApi } from './data-access/hospitals.api';
       .field {
         color: #001e2b;
         display: grid;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         gap: 9px;
       }
       input,
@@ -199,7 +199,7 @@ import { HospitalsApi } from './data-access/hospitals.api';
         background: #ffffff;
         color: #001e2b;
         font: inherit;
-        font-weight: 400;
+        font-weight: var(--ac-font-weight-regular);
         padding: 13px 14px;
       }
       input {
@@ -224,7 +224,7 @@ import { HospitalsApi } from './data-access/hospitals.api';
         color: #ffffff;
         cursor: pointer;
         font: inherit;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         padding: 0 18px;
       }
       button:hover:not(:disabled) {

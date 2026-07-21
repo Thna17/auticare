@@ -139,7 +139,7 @@ import { ChildrenApi } from './data-access/children.api';
         display: inline-flex;
         margin-bottom: 22px;
         text-decoration: none;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
       }
 
       .back-link:hover {
@@ -175,7 +175,7 @@ import { ChildrenApi } from './data-access/children.api';
         display: grid;
         place-items: center;
         font-size: 28px;
-        font-weight: 900;
+        font-weight: var(--ac-font-weight-bold);
         flex: 0 0 auto;
       }
 
@@ -188,8 +188,8 @@ import { ChildrenApi } from './data-access/children.api';
 
       .eyebrow {
         color: #546343;
-        font-size: 13px;
-        font-weight: 800;
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
         letter-spacing: 0;
         margin-bottom: 6px;
@@ -197,7 +197,7 @@ import { ChildrenApi } from './data-access/children.api';
 
       h1 {
         color: #001e2b;
-        font-size: 40px;
+        font-size: var(--ac-type-page-title);
         line-height: 1.2;
         letter-spacing: 0;
       }
@@ -218,7 +218,7 @@ import { ChildrenApi } from './data-access/children.api';
         border-radius: 999px;
         cursor: pointer;
         font: inherit;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
         padding: 0 18px;
       }
 
@@ -278,7 +278,7 @@ import { ChildrenApi } from './data-access/children.api';
       .summary-grid span,
       .snapshot-row span {
         color: #71787c;
-        font-size: 14px;
+        font-size: var(--ac-type-label);
         line-height: 1.3;
       }
 
@@ -323,7 +323,7 @@ import { ChildrenApi } from './data-access/children.api';
         display: grid;
         gap: 10px;
         color: #001e2b;
-        font-weight: 800;
+        font-weight: var(--ac-font-weight-bold);
       }
 
       input,
@@ -334,7 +334,7 @@ import { ChildrenApi } from './data-access/children.api';
         background: #f8fcff;
         color: #001e2b;
         font: inherit;
-        font-weight: 400;
+        font-weight: var(--ac-font-weight-regular);
         padding: 14px 16px;
       }
 
