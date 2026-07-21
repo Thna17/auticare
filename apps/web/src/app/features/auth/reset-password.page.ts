@@ -128,8 +128,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         min-height: 100svh;
         background:
           linear-gradient(115deg, rgb(231 238 223 / 0.52), transparent 36%),
-          linear-gradient(245deg, rgb(232 246 255 / 0.65), transparent 34%),
-          #faf8f2;
+          linear-gradient(245deg, rgb(232 246 255 / 0.65), transparent 34%), #faf8f2;
         color: #001e2b;
       }
 

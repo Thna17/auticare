@@ -38,7 +38,9 @@ import { AuthService } from '../../core/auth/auth.service';
       <section class="profile-panel" aria-labelledby="account-title">
         <header>
           <h2 id="account-title">Account details</h2>
-          <p>Your profile information is used across child profiles, screening, and school reports.</p>
+          <p>
+            Your profile information is used across child profiles, screening, and school reports.
+          </p>
         </header>
 
         <div class="field-grid">

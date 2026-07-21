@@ -93,7 +93,10 @@ export class AuthRepository {
   findPasswordResetTokenWithParent(
     tokenHash: string,
   ): Promise<PasswordResetTokenWithParent | null> {
-    return prisma.passwordResetToken.findUnique({ where: { tokenHash }, include: { parent: true } });
+    return prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: { parent: true },
+    });
   }
 
   async completePasswordReset(input: {

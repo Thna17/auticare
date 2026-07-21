@@ -26,7 +26,9 @@ import { ChildrenApi } from './data-access/children.api';
           </div>
         </div>
         <div class="hero-actions">
-          <button type="button" class="secondary-button" (click)="resetForm()">Discard changes</button>
+          <button type="button" class="secondary-button" (click)="resetForm()">
+            Discard changes
+          </button>
           <button type="button" class="danger-button" (click)="archive()">Archive profile</button>
         </div>
       </section>
@@ -50,7 +52,9 @@ import { ChildrenApi } from './data-access/children.api';
         <form class="profile-form" [formGroup]="form" (ngSubmit)="save()" novalidate>
           <header>
             <h2>Profile details</h2>
-            <p>Keep the core information current for screening, school reports, and support plans.</p>
+            <p>
+              Keep the core information current for screening, school reports, and support plans.
+            </p>
           </header>
 
           <label class="field">
@@ -59,7 +63,9 @@ import { ChildrenApi } from './data-access/children.api';
               type="text"
               formControlName="firstName"
               autocomplete="off"
-              [attr.aria-invalid]="form.controls.firstName.touched && form.controls.firstName.invalid"
+              [attr.aria-invalid]="
+                form.controls.firstName.touched && form.controls.firstName.invalid
+              "
             />
           </label>
           @if (form.controls.firstName.touched && form.controls.firstName.invalid) {

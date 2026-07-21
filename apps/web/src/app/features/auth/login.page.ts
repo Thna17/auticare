@@ -41,9 +41,7 @@ import { AuthService } from '../../core/auth/auth.service';
               formControlName="password"
               autocomplete="current-password"
               placeholder="••••••••"
-              [attr.aria-invalid]="
-                form.controls.password.touched && form.controls.password.invalid
-              "
+              [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
             />
             <button
               type="button"

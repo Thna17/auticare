@@ -123,7 +123,14 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
             <div class="password-note" id="password-help">
               <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-                <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                <circle
+                  cx="10"
+                  cy="10"
+                  r="7.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
                 <path
                   d="M10 9.1v4.5M10 6.4h.01"
                   fill="none"
@@ -133,8 +140,8 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
                 />
               </svg>
               <p>
-                Password must be at least 12 characters long and include a mix of uppercase
-                letters, numbers, and symbols.
+                Password must be at least 12 characters long and include a mix of uppercase letters,
+                numbers, and symbols.
               </p>
             </div>
 
