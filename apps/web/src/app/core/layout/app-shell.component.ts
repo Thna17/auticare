@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import type { UserRole } from '@auticare/contracts';
+import { AuthService } from '../auth/auth.service';
 
 type NavItem = {
   readonly label: string;
@@ -18,6 +20,23 @@ const primaryNav: readonly NavItem[] = [
   { label: 'Messages', path: '/support', icon: 'mail' },
 ];
 
+const adminNav: readonly NavItem[] = [
+  { label: 'Admin Dashboard', path: '/dashboard', icon: 'grid' },
+  { label: 'Families', path: '/children', icon: 'family' },
+  { label: 'Manage Schools', path: '/schools/admin', icon: 'school' },
+  { label: 'Create School Account', path: '/schools/admin/new', icon: 'plus' },
+  { label: 'Manage Hospitals', path: '/hospitals', icon: 'hospital' },
+  { label: 'School Reports', path: '/schools/reports', icon: 'checklist' },
+];
+
+const schoolNav: readonly NavItem[] = [
+  { label: 'School Dashboard', path: '/dashboard', icon: 'grid' },
+  { label: 'Enrolled Children', path: '/schools/enrollments', icon: 'family' },
+  { label: 'Activity Reports', path: '/schools/reports', icon: 'checklist' },
+  { label: 'Create Report', path: '/schools/reports/new', icon: 'plus' },
+  { label: 'School Profile', path: '/schools/profile', icon: 'school' },
+];
+
 const secondaryNav: readonly NavItem[] = [
   { label: 'Saved', path: '/activities', icon: 'bookmark' },
   { label: 'Settings', path: '/settings', icon: 'settings' },
@@ -30,6 +49,20 @@ const mobileNav: readonly NavItem[] = [
   { label: 'Profile', path: '/settings', icon: 'person' },
 ];
 
+const adminMobileNav: readonly NavItem[] = [
+  { label: 'Home', path: '/dashboard', icon: 'grid' },
+  { label: 'Families', path: '/children', icon: 'family' },
+  { label: 'Schools', path: '/schools/admin', icon: 'school' },
+  { label: 'Settings', path: '/settings', icon: 'settings' },
+];
+
+const schoolMobileNav: readonly NavItem[] = [
+  { label: 'Home', path: '/dashboard', icon: 'grid' },
+  { label: 'Children', path: '/schools/enrollments', icon: 'family' },
+  { label: 'Reports', path: '/schools/reports', icon: 'checklist' },
+  { label: 'Profile', path: '/schools/profile', icon: 'person' },
+];
+
 @Component({
   selector: 'ac-app-shell',
   standalone: true,
@@ -40,7 +73,7 @@ const mobileNav: readonly NavItem[] = [
       <a class="brand" routerLink="/dashboard">AutiCare</a>
 
       <nav class="nav-list">
-        @for (item of primaryNav; track item.path) {
+        @for (item of primaryNav(); track item.path) {
           <a
             [routerLink]="item.path"
             routerLinkActive="active"
@@ -52,13 +85,15 @@ const mobileNav: readonly NavItem[] = [
         }
       </nav>
 
-      <a class="new-screening" routerLink="/screening">
-        <span class="plus-icon" aria-hidden="true"></span>
-        <span>New Screening</span>
-      </a>
+      @if (canStartScreening()) {
+        <a class="new-screening" routerLink="/screening">
+          <span class="plus-icon" aria-hidden="true"></span>
+          <span>New Screening</span>
+        </a>
+      }
 
       <nav class="nav-list secondary" aria-label="Secondary navigation">
-        @for (item of secondaryNav; track item.path) {
+        @for (item of secondaryNav(); track item.path) {
           <a [routerLink]="item.path" routerLinkActive="active">
             <span class="nav-icon" [class]="item.icon" aria-hidden="true"></span>
             <span>{{ item.label }}</span>
@@ -70,7 +105,7 @@ const mobileNav: readonly NavItem[] = [
     <main id="main" class="shell"><router-outlet /></main>
 
     <nav class="mobile-nav" aria-label="Mobile navigation">
-      @for (item of mobileNav.slice(0, 2); track item.path) {
+      @for (item of mobileNav().slice(0, 2); track item.path) {
         <a
           [routerLink]="item.path"
           routerLinkActive="active"
@@ -81,11 +116,15 @@ const mobileNav: readonly NavItem[] = [
         </a>
       }
 
-      <a class="mobile-action" routerLink="/screening" aria-label="Start new screening">
+      <a
+        class="mobile-action"
+        [routerLink]="mobileAction().path"
+        [attr.aria-label]="mobileAction().label"
+      >
         <span class="plus-icon" aria-hidden="true"></span>
       </a>
 
-      @for (item of mobileNav.slice(2); track item.path) {
+      @for (item of mobileNav().slice(2); track item.path) {
         <a [routerLink]="item.path" routerLinkActive="active">
           <span class="nav-icon" [class]="item.icon" aria-hidden="true"></span>
           <span>{{ item.label }}</span>
@@ -183,6 +222,22 @@ const mobileNav: readonly NavItem[] = [
         content: '';
         position: absolute;
         box-sizing: border-box;
+      }
+
+      .plus::before {
+        left: 11px;
+        top: 5px;
+        width: 2px;
+        height: 14px;
+        background: currentColor;
+      }
+
+      .plus::after {
+        left: 5px;
+        top: 11px;
+        width: 14px;
+        height: 2px;
+        background: currentColor;
       }
 
       .grid::before {
@@ -469,7 +524,25 @@ const mobileNav: readonly NavItem[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppShellComponent {
-  protected readonly primaryNav = primaryNav;
-  protected readonly secondaryNav = secondaryNav;
-  protected readonly mobileNav = mobileNav;
+  private readonly auth = inject(AuthService);
+  private readonly role = computed<UserRole | undefined>(() => this.auth.parent()?.role);
+  protected readonly canStartScreening = computed(() => this.role() === 'PARENT');
+  protected readonly primaryNav = computed(() => {
+    if (this.role() === 'ADMIN') return adminNav;
+    if (this.role() === 'SCHOOL') return schoolNav;
+    return primaryNav;
+  });
+  protected readonly secondaryNav = computed(() => secondaryNav);
+  protected readonly mobileNav = computed(() => {
+    if (this.role() === 'ADMIN') return adminMobileNav;
+    if (this.role() === 'SCHOOL') return schoolMobileNav;
+    return mobileNav;
+  });
+  protected readonly mobileAction = computed(() => {
+    if (this.role() === 'ADMIN')
+      return { label: 'Create school account', path: '/schools/admin/new' };
+    if (this.role() === 'SCHOOL')
+      return { label: 'Create activity report', path: '/schools/reports/new' };
+    return { label: 'Start new screening', path: '/screening' };
+  });
 }

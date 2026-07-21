@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { AppShellComponent } from './core/layout/app-shell.component';
 import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 export const routes: Routes = [
   {
     path: '',
@@ -22,11 +23,15 @@ export const routes: Routes = [
       },
       {
         path: 'children',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT', 'ADMIN'] },
         loadChildren: () =>
           import('./features/children/children.routes').then((m) => m.CHILDREN_ROUTES),
       },
       {
         path: 'screening',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
         loadChildren: () =>
           import('./features/screening/screening.routes').then((m) => m.SCREENING_ROUTES),
       },
@@ -37,21 +42,29 @@ export const routes: Routes = [
       },
       {
         path: 'hospitals',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT', 'ADMIN'] },
         loadChildren: () =>
           import('./features/hospitals/hospitals.routes').then((m) => m.HOSPITALS_ROUTES),
       },
       {
         path: 'appointments',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
         loadChildren: () =>
           import('./features/appointments/appointments.routes').then((m) => m.APPOINTMENTS_ROUTES),
       },
       {
         path: 'activities',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
         loadChildren: () =>
           import('./features/activities/activities.routes').then((m) => m.ACTIVITIES_ROUTES),
       },
       {
         path: 'progress',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
         loadChildren: () =>
           import('./features/progress/progress.routes').then((m) => m.PROGRESS_ROUTES),
       },

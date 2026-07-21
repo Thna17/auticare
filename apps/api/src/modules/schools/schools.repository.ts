@@ -1,7 +1,77 @@
-import type { SchoolActivityReport, SchoolChildEnrollment, SchoolStaff } from '@prisma/client';
+import type {
+  Parent,
+  Prisma,
+  School,
+  SchoolActivityReport,
+  SchoolChildEnrollment,
+  SchoolStaff,
+} from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
+import type { SchoolAccountRecord } from './schools.mapper.js';
 
 export class SchoolsRepository {
+  listSchools(): Promise<School[]> {
+    return prisma.school.findMany({ orderBy: [{ city: 'asc' }, { name: 'asc' }] });
+  }
+
+  updateSchool(
+    schoolId: string,
+    input: { name?: string; city?: string; address?: string; description?: string | null },
+  ): Promise<School> {
+    return prisma.school.update({ where: { id: schoolId }, data: input });
+  }
+
+  findParentByEmail(email: string): Promise<Parent | null> {
+    return prisma.parent.findUnique({ where: { email } });
+  }
+
+  async createSchoolAccount(input: {
+    school: { name: string; city: string; address: string; description: string | null };
+    account: {
+      email: string;
+      passwordHash: string;
+      firstName: string;
+      lastName: string;
+      title: string | null;
+    };
+  }): Promise<SchoolAccountRecord> {
+    return prisma.$transaction(
+      async (tx) => {
+        const school = await tx.school.create({
+          data: {
+            name: input.school.name,
+            city: input.school.city,
+            address: input.school.address,
+            description: input.school.description,
+          },
+        });
+        const account = await tx.parent.create({
+          data: {
+            email: input.account.email,
+            passwordHash: input.account.passwordHash,
+            firstName: input.account.firstName,
+            lastName: input.account.lastName,
+            role: 'SCHOOL',
+            preference: { create: {} },
+          },
+        });
+        const staff = await tx.schoolStaff.create({
+          data: { parentId: account.id, schoolId: school.id, title: input.account.title },
+        });
+        return { school, account, staff };
+      },
+      { isolationLevel: 'ReadCommitted' as Prisma.TransactionIsolationLevel },
+    );
+  }
+
+  async listSchoolAccounts(): Promise<SchoolAccountRecord[]> {
+    const staff = await prisma.schoolStaff.findMany({
+      include: { school: true, parent: true },
+      orderBy: [{ school: { city: 'asc' } }, { school: { name: 'asc' } }],
+    });
+    return staff.map((item) => ({ school: item.school, staff: item, account: item.parent }));
+  }
+
   findStaffForParent(parentId: string): Promise<SchoolStaff | null> {
     return prisma.schoolStaff.findFirst({ where: { parentId } });
   }
@@ -87,5 +157,9 @@ export class SchoolsRepository {
       where: { schoolId },
       orderBy: { activityDate: 'desc' },
     });
+  }
+
+  listAllReports(): Promise<SchoolActivityReport[]> {
+    return prisma.schoolActivityReport.findMany({ orderBy: { activityDate: 'desc' } });
   }
 }

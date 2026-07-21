@@ -12,6 +12,18 @@ const requiredParam = (value: string | readonly string[] | undefined): string =>
 export const getSchoolStaffMe = async (req: Request, res: Response) =>
   ok(res, await service.me(req.auth!));
 
+export const listSchools = async (req: Request, res: Response) =>
+  ok(res, await service.listSchools(req.auth!));
+
+export const createSchoolAccount = async (req: Request, res: Response) =>
+  created(res, await service.createSchoolAccount(req.auth!, req.body));
+
+export const listSchoolAccounts = async (req: Request, res: Response) =>
+  ok(res, await service.listSchoolAccounts(req.auth!));
+
+export const updateSchool = async (req: Request, res: Response) =>
+  ok(res, await service.updateSchool(req.auth!, requiredParam(req.params.schoolId), req.body));
+
 export const createEnrollment = async (req: Request, res: Response) =>
   created(
     res,

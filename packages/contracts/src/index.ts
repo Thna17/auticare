@@ -128,6 +128,17 @@ export const screeningDisclaimer =
 export const schoolEnrollmentStatuses = ['ACTIVE', 'ENDED'] as const;
 export type SchoolEnrollmentStatus = (typeof schoolEnrollmentStatuses)[number];
 
+export const schoolResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  city: z.string(),
+  address: z.string(),
+  description: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type SchoolResponse = z.infer<typeof schoolResponseSchema>;
+
 export const schoolStaffResponseSchema = z.object({
   id: z.string(),
   schoolId: z.string(),
@@ -152,6 +163,40 @@ export const createSchoolChildEnrollmentRequestSchema = z.object({
 export type CreateSchoolChildEnrollmentRequest = z.infer<
   typeof createSchoolChildEnrollmentRequestSchema
 >;
+
+export const createSchoolAccountRequestSchema = z.object({
+  school: z.object({
+    name: z.string().min(1).max(160),
+    city: z.string().min(1).max(120),
+    address: z.string().min(1).max(300),
+    description: z.string().max(2000).optional(),
+  }),
+  account: z.object({
+    email: z.string().email(),
+    password: z.string().min(12),
+    firstName: z.string().min(1).max(80),
+    lastName: z.string().min(1).max(80),
+    title: z.string().max(120).optional(),
+  }),
+});
+export type CreateSchoolAccountRequest = z.infer<typeof createSchoolAccountRequestSchema>;
+
+export const updateSchoolRequestSchema = z
+  .object({
+    name: z.string().min(1).max(160).optional(),
+    city: z.string().min(1).max(120).optional(),
+    address: z.string().min(1).max(300).optional(),
+    description: z.string().max(2000).nullable().optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, 'At least one school field is required.');
+export type UpdateSchoolRequest = z.infer<typeof updateSchoolRequestSchema>;
+
+export const adminSchoolAccountResponseSchema = z.object({
+  school: schoolResponseSchema,
+  staff: schoolStaffResponseSchema,
+  account: parentResponseSchema,
+});
+export type AdminSchoolAccountResponse = z.infer<typeof adminSchoolAccountResponseSchema>;
 
 export const schoolActivityReportResponseSchema = z.object({
   id: z.string(),

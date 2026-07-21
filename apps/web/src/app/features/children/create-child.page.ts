@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
 import { ChildrenApi } from './data-access/children.api';
 
 @Component({
@@ -202,6 +204,7 @@ import { ChildrenApi } from './data-access/children.api';
 })
 export class CreateChildPage {
   private readonly api = inject(ChildrenApi);
+  private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   readonly today = new Date().toISOString().slice(0, 10);
@@ -215,19 +218,61 @@ export class CreateChildPage {
 
   submit() {
     this.error.set(null);
+    if (this.auth.parent()?.role !== 'PARENT') {
+      this.error.set(
+        'Only parent accounts can create child profiles. Log in with a parent account.',
+      );
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.error.set('Fix the highlighted fields before creating the child profile.');
       return;
     }
 
     const value = this.form.getRawValue();
+    const dateOfBirth = this.normalizeDateOfBirth(value.dateOfBirth);
+    if (!dateOfBirth) {
+      this.form.controls.dateOfBirth.markAsTouched();
+      this.error.set('Use a valid date of birth.');
+      return;
+    }
+
     this.saving.set(true);
-    this.api.createChild({ ...value, notes: value.notes.trim() || undefined }).subscribe({
-      next: (child) => void this.router.navigate(['/children', child.id]),
-      error: () => {
-        this.error.set('Child profile could not be created. Please try again.');
-        this.saving.set(false);
-      },
-    });
+    this.api
+      .createChild({
+        firstName: value.firstName.trim(),
+        dateOfBirth,
+        notes: value.notes.trim() || undefined,
+      })
+      .subscribe({
+        next: (child) => void this.router.navigate(['/children', child.id]),
+        error: (error: unknown) => {
+          this.error.set(this.errorMessage(error));
+          this.saving.set(false);
+        },
+      });
+  }
+
+  private normalizeDateOfBirth(value: string): string | null {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+
+    const localDate = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(trimmed);
+    if (!localDate) return null;
+
+    const [, day, month, year] = localDate;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  private errorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 403) {
+        return 'Only parent accounts can create child profiles. Log in with a parent account.';
+      }
+      const message = (error.error as { error?: { message?: string } } | null)?.error?.message;
+      if (message) return message;
+    }
+    return 'Child profile could not be created. Please try again.';
   }
 }

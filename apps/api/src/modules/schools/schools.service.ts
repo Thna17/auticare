@@ -1,13 +1,18 @@
 import type {
+  CreateSchoolAccountRequest,
   CreateSchoolActivityReportRequest,
   CreateSchoolChildEnrollmentRequest,
+  UpdateSchoolRequest,
   UserRole,
 } from '@auticare/contracts';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
+import { PasswordService } from '../auth/password.service.js';
 import { SchoolsRepository } from './schools.repository.js';
 import {
+  toSchoolAccountResponse,
   toSchoolActivityReportResponse,
   toSchoolChildEnrollmentResponse,
+  toSchoolResponse,
   toSchoolStaffResponse,
 } from './schools.mapper.js';
 
@@ -22,7 +27,62 @@ const parseActivityDate = (activityDate: string): Date => {
 };
 
 export class SchoolsService {
-  constructor(private readonly repository = new SchoolsRepository()) {}
+  constructor(
+    private readonly repository = new SchoolsRepository(),
+    private readonly passwordService = new PasswordService(),
+  ) {}
+
+  async listSchools(actor: Actor) {
+    if (actor.role === 'SCHOOL') throw forbidden();
+    const schools = await this.repository.listSchools();
+    return schools.map(toSchoolResponse);
+  }
+
+  async createSchoolAccount(actor: Actor, input: CreateSchoolAccountRequest) {
+    if (actor.role !== 'ADMIN') throw forbidden();
+    const email = input.account.email.toLowerCase();
+    const existing = await this.repository.findParentByEmail(email);
+    if (existing) throw new AppError('CONFLICT', 'An account with this email already exists.', 409);
+    const passwordHash = await this.passwordService.hash(input.account.password);
+    const record = await this.repository.createSchoolAccount({
+      school: {
+        name: input.school.name.trim(),
+        city: input.school.city.trim(),
+        address: input.school.address.trim(),
+        description: input.school.description?.trim() || null,
+      },
+      account: {
+        email,
+        passwordHash,
+        firstName: input.account.firstName.trim(),
+        lastName: input.account.lastName.trim(),
+        title: input.account.title?.trim() || null,
+      },
+    });
+    return toSchoolAccountResponse(record);
+  }
+
+  async listSchoolAccounts(actor: Actor) {
+    if (actor.role !== 'ADMIN') throw forbidden();
+    const accounts = await this.repository.listSchoolAccounts();
+    return accounts.map(toSchoolAccountResponse);
+  }
+
+  async updateSchool(actor: Actor, schoolId: string, input: UpdateSchoolRequest) {
+    if (actor.role !== 'ADMIN') throw forbidden();
+    const update: {
+      name?: string;
+      city?: string;
+      address?: string;
+      description?: string | null;
+    } = {};
+    if (input.name !== undefined) update.name = input.name.trim();
+    if (input.city !== undefined) update.city = input.city.trim();
+    if (input.address !== undefined) update.address = input.address.trim();
+    if (input.description !== undefined) update.description = input.description?.trim() || null;
+    const school = await this.repository.updateSchool(schoolId, update);
+    return toSchoolResponse(school);
+  }
 
   async me(actor: Actor) {
     if (actor.role !== 'SCHOOL') throw forbidden();
@@ -99,6 +159,10 @@ export class SchoolsService {
       const staff = await this.repository.findStaffForParent(actor.parentId);
       if (!staff) throw forbidden();
       const reports = await this.repository.listReportsForSchool(staff.schoolId);
+      return reports.map(toSchoolActivityReportResponse);
+    }
+    if (actor.role === 'ADMIN') {
+      const reports = await this.repository.listAllReports();
       return reports.map(toSchoolActivityReportResponse);
     }
     throw forbidden();
