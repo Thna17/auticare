@@ -26,6 +26,17 @@ enum RiskLevel {
   HIGH
 }
 
+// Direction of a screening question relative to autism-likelihood risk.
+// DIRECT  = a higher raw answer value (closer to "Always") indicates HIGHER risk
+//           (e.g. sensory sensitivity / repetitive behaviour items).
+// REVERSE = a higher raw answer value indicates LOWER risk
+//           (e.g. social / communication / play skill items, where doing the
+//            healthy behaviour "Always" is a good sign).
+enum QuestionPolarity {
+  DIRECT
+  REVERSE
+}
+
 enum AppointmentStatus {
   REQUESTED
   CONFIRMED
@@ -132,6 +143,7 @@ model ScreeningQuestion {
   questionText String
   category     String
   displayOrder Int
+  polarity     QuestionPolarity  @default(REVERSE)
   isActive     Boolean           @default(true)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
@@ -172,6 +184,10 @@ model ScreeningResult {
   id              String    @id @default(cuid())
   screeningId     String    @unique
   score           Int
+  // Normalized 0-100 risk indicator (polarity-corrected). Nullable so pre-v2
+  // results scored by the old raw-sum engine remain valid without a misleading
+  // backfilled value.
+  riskPercentage  Int?
   riskLevel       RiskLevel
   recommendation  String    @db.Text
   disclaimer      String    @db.Text

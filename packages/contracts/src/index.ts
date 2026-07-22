@@ -4,6 +4,11 @@ export const riskLevels = ['LOW', 'MODERATE', 'HIGH'] as const;
 export type RiskLevel = (typeof riskLevels)[number];
 export const screeningStatuses = ['DRAFT', 'SUBMITTED', 'ANALYZED'] as const;
 export type ScreeningStatus = (typeof screeningStatuses)[number];
+// Scoring direction of a screening question. DIRECT: higher answer value = higher
+// risk. REVERSE: higher answer value = lower risk. Risk correction is applied only
+// at scoring time; the raw 0-4 answer value is always stored unmodified.
+export const questionPolarities = ['DIRECT', 'REVERSE'] as const;
+export type QuestionPolarity = (typeof questionPolarities)[number];
 export const userRoles = ['PARENT', 'ADMIN', 'SCHOOL'] as const;
 export type UserRole = (typeof userRoles)[number];
 export const errorCodes = [
@@ -219,3 +224,70 @@ export const createSchoolActivityReportRequestSchema = z.object({
 export type CreateSchoolActivityReportRequest = z.infer<
   typeof createSchoolActivityReportRequestSchema
 >;
+
+export const screeningSessionResponseSchema = z.object({
+  id: z.string(),
+  childId: z.string(),
+  status: z.enum(screeningStatuses),
+  startedAt: z.string(),
+  submittedAt: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type ScreeningSessionResponse = z.infer<typeof screeningSessionResponseSchema>;
+
+export const screeningQuestionResponseSchema = z.object({
+  id: z.string(),
+  questionText: z.string(),
+  category: z.string(),
+  displayOrder: z.number().int(),
+  polarity: z.enum(questionPolarities),
+});
+export type ScreeningQuestionResponse = z.infer<typeof screeningQuestionResponseSchema>;
+
+export const screeningAnswerResponseSchema = z.object({
+  id: z.string(),
+  sessionId: z.string(),
+  questionId: z.string(),
+  answerValue: z.number().int(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type ScreeningAnswerResponse = z.infer<typeof screeningAnswerResponseSchema>;
+
+export const screeningResultResponseSchema = z.object({
+  id: z.string(),
+  score: z.number().int(),
+  // Normalized 0-100 polarity-corrected risk indicator. Nullable for legacy
+  // (pre-v2) results scored by the raw-sum engine.
+  riskPercentage: z.number().int().nullable(),
+  riskLevel: z.enum(riskLevels),
+  recommendation: z.string(),
+  disclaimer: z.string(),
+  analysisVersion: z.string(),
+  analyzedAt: z.string(),
+});
+export type ScreeningResultResponse = z.infer<typeof screeningResultResponseSchema>;
+
+export const screeningSessionDetailResponseSchema = screeningSessionResponseSchema.extend({
+  answers: z.array(screeningAnswerResponseSchema),
+  result: screeningResultResponseSchema.nullable(),
+});
+export type ScreeningSessionDetailResponse = z.infer<typeof screeningSessionDetailResponseSchema>;
+
+export const createScreeningSessionRequestSchema = z.object({
+  childId: z.string().min(1),
+});
+export type CreateScreeningSessionRequest = z.infer<typeof createScreeningSessionRequestSchema>;
+
+export const createScreeningSessionResponseSchema = z.object({
+  session: screeningSessionResponseSchema,
+  questions: z.array(screeningQuestionResponseSchema),
+});
+export type CreateScreeningSessionResponse = z.infer<typeof createScreeningSessionResponseSchema>;
+
+export const upsertScreeningAnswerRequestSchema = z.object({
+  questionId: z.string().min(1),
+  answerValue: z.number().int().min(0).max(4),
+});
+export type UpsertScreeningAnswerRequest = z.infer<typeof upsertScreeningAnswerRequestSchema>;

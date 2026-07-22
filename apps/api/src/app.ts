@@ -16,6 +16,7 @@ import { childrenRoutes } from './modules/children/children.routes.js';
 import { healthRoutes } from './modules/health/health.routes.js';
 import { hospitalsRoutes } from './modules/hospitals/hospitals.routes.js';
 import { schoolsRoutes } from './modules/schools/index.js';
+import { screeningRoutes } from './modules/screening/index.js';
 export const createApp = () => {
   const app = express();
   app.disable('x-powered-by');
@@ -33,6 +34,7 @@ export const createApp = () => {
   app.use('/api/v1/children', childrenRoutes);
   app.use('/api/v1/hospitals', hospitalsRoutes);
   app.use('/api/v1/schools', schoolsRoutes);
+  app.use('/api/v1/screening', screeningRoutes);
   app.use(errorHandler);
   return app;
 };
