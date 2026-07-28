@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import type { RiskLevel, ScreeningSessionDetailResponse } from '@auticare/contracts';
+import type { ChildResponse, RiskLevel, ScreeningSessionResultResponse } from '@auticare/contracts';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ScreeningApi } from './data-access/screening.api';
 import { ScreeningBadgeComponent } from './components/screening-badge.component';
 import type { BadgeTone } from './components/screening-badge.component';
 import { ScreeningInfoBannerComponent } from './components/screening-info-banner.component';
+import { observationFor } from './screening-observations';
 
 const MAX_ANSWER_VALUE = 4;
 
@@ -16,12 +17,12 @@ const riskTones: Record<RiskLevel, BadgeTone> = {
   MODERATE: 'caution',
   HIGH: 'alert',
 };
-
 const riskLabels: Record<RiskLevel, string> = {
   LOW: 'Low Risk',
   MODERATE: 'Moderate Risk',
   HIGH: 'High Risk',
 };
+const riskShort: Record<RiskLevel, string> = { LOW: 'Low', MODERATE: 'Moderate', HIGH: 'High' };
 
 type ActionCard = {
   readonly title: string;
@@ -30,26 +31,86 @@ type ActionCard = {
   readonly icon: 'calendar' | 'hospital' | 'activities';
 };
 
-const nextStepCards: readonly ActionCard[] = [
-  {
-    title: 'Book an appointment',
-    subtitle: 'Arrange a professional evaluation',
-    path: '/appointments',
-    icon: 'calendar',
+// Next-step copy varies by overall risk. HIGH lists "Book an appointment" first.
+const nextStepsByRisk: Record<RiskLevel, { lead: string; cards: readonly ActionCard[] }> = {
+  LOW: {
+    lead: "Your child's responses look broadly on track for their age. There's no urgency — keep supporting their development.",
+    cards: [
+      {
+        title: 'View activities',
+        subtitle: 'Play ideas that support development',
+        path: '/activities',
+        icon: 'activities',
+      },
+      {
+        title: 'Browse hospitals',
+        subtitle: 'Good to know your options, just in case',
+        path: '/hospitals',
+        icon: 'hospital',
+      },
+    ],
   },
-  {
-    title: 'Browse hospitals',
-    subtitle: 'Find nearby specialist clinics',
-    path: '/hospitals',
-    icon: 'hospital',
+  MODERATE: {
+    lead: "A few areas stood out. There's no need to worry, but it's worth raising these results at your child's next pediatrician visit.",
+    cards: [
+      {
+        title: 'Discuss at next visit',
+        subtitle: 'Share these results with your pediatrician',
+        path: '/appointments',
+        icon: 'calendar',
+      },
+      {
+        title: 'Browse hospitals',
+        subtitle: 'Find specialist clinics near you',
+        path: '/hospitals',
+        icon: 'hospital',
+      },
+      {
+        title: 'View activities',
+        subtitle: 'Supportive activities for your child',
+        path: '/activities',
+        icon: 'activities',
+      },
+    ],
   },
-  {
-    title: 'View activities',
-    subtitle: 'Supportive activities for your child',
-    path: '/activities',
-    icon: 'activities',
+  HIGH: {
+    lead: 'Several areas suggest it would help to seek a professional evaluation soon. A specialist can give you a clearer picture.',
+    cards: [
+      {
+        title: 'Book an appointment',
+        subtitle: 'We recommend a professional evaluation soon',
+        path: '/appointments',
+        icon: 'calendar',
+      },
+      {
+        title: 'Browse hospitals',
+        subtitle: 'Find specialist clinics near you',
+        path: '/hospitals',
+        icon: 'hospital',
+      },
+      {
+        title: 'View activities',
+        subtitle: 'Supportive activities in the meantime',
+        path: '/activities',
+        icon: 'activities',
+      },
+    ],
   },
-];
+};
+
+const formatAge = (dateOfBirth: string): string => {
+  const birth = new Date(`${dateOfBirth}T00:00:00Z`);
+  if (Number.isNaN(birth.getTime())) return '';
+  const now = new Date();
+  let months =
+    (now.getUTCFullYear() - birth.getUTCFullYear()) * 12 +
+    (now.getUTCMonth() - birth.getUTCMonth());
+  if (now.getUTCDate() < birth.getUTCDate()) months -= 1;
+  months = Math.max(months, 0);
+  const years = Math.floor(months / 12);
+  if (years < 1) return `${months} month${months === 1 ? '' : 's'} old`;
+  return `${years} year${years === 1 ? '' : 's'} old`;
+};
 
 @Component({
   standalone: true,
@@ -66,38 +127,108 @@ const nextStepCards: readonly ActionCard[] = [
           </button>
         </div>
       } @else if (result(); as res) {
-        <header class="head">
-          <p class="eyebrow">Screening result</p>
-          <h1>Here's what we found</h1>
-        </header>
+        <!-- 1. HEADER CARD -->
+        <article class="header-card">
+          <div class="header-top">
+            <div class="who">
+              <p class="child-name">{{ childName() ?? 'Your child' }}</p>
+              <p class="child-meta">
+                @if (childAge()) {
+                  <span>{{ childAge() }}</span> ·
+                }
+                Completed {{ completedDate() }}
+              </p>
+            </div>
+            <ac-screening-badge [tone]="overallTone()">{{ overallLabel() }}</ac-screening-badge>
+          </div>
 
-        <article class="result-card">
           <div class="score-block">
             @if (res.riskPercentage !== null) {
-              <span class="score">{{ res.riskPercentage }}<span class="score-max">%</span></span>
+              <span class="score">{{ res.riskPercentage }}<span class="score-unit">%</span></span>
             } @else {
               <span class="score"
-                >{{ res.score }}<span class="score-max">/{{ maxScore() }}</span></span
+                >{{ res.score }}<span class="score-unit">/{{ maxScore() }}</span></span
               >
             }
-            <ac-screening-badge [tone]="tone()">{{ label() }}</ac-screening-badge>
+            <span class="score-caption">overall indicator</span>
           </div>
-          <p class="recommendation">{{ res.recommendation }}</p>
-          <p class="meta">Completed {{ completedDate() }} · {{ childName() ?? 'Your child' }}</p>
+
+          @if (trend(); as t) {
+            @if (t.comparable) {
+              <p class="trend" [class]="t.direction">
+                <span class="trend-arrow" aria-hidden="true">{{ t.arrow }}</span>
+                {{ t.text }}
+              </p>
+            } @else {
+              <p class="trend-note">
+                Your child moved to a new age group since their last screening, so results aren't
+                directly comparable.
+              </p>
+            }
+          }
         </article>
 
+        <!-- 2. DISCLAIMER -->
         <ac-screening-info-banner>{{ res.disclaimer }}</ac-screening-info-banner>
-        <!-- Original, heuristic instrument disclosure (not clinically validated). -->
+        <!-- Heuristic + age-band disclosure (not clinically validated). -->
         <p class="heuristic-note">
-          These questions and risk bands are original and heuristic — a supportive indicator to help
-          you decide whether to seek a professional evaluation, not a clinically validated screening
-          instrument.
+          These questions and risk bands are original and heuristic — a supportive indicator, not a
+          clinically validated screening instrument. The age-band split (toddler vs. preschool
+          question sets) follows general screening-tool conventions but has not been clinically
+          validated for this app specifically.
         </p>
 
-        <section class="next-steps" aria-label="Next steps">
-          <p class="section-label">Next steps</p>
+        <!-- 3. BREAKDOWN BY CATEGORY -->
+        @if (res.categoryBreakdown.length) {
+          <section class="breakdown" aria-label="Breakdown by category">
+            <p class="section-label">Breakdown by category</p>
+            <div class="cat-list">
+              @for (cat of res.categoryBreakdown; track cat.category) {
+                <article class="cat-card">
+                  <div class="cat-head">
+                    <span class="cat-name">{{ cat.category }}</span>
+                    <span class="cat-level" [class]="cat.riskLevel.toLowerCase()">
+                      {{ shortLabel(cat.riskLevel) }}
+                    </span>
+                  </div>
+                  <div
+                    class="bar-track"
+                    role="progressbar"
+                    [attr.aria-valuenow]="cat.riskPercentage"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    [attr.aria-label]="cat.category + ' risk'"
+                  >
+                    <span
+                      class="bar-fill"
+                      [class]="cat.riskLevel.toLowerCase()"
+                      [style.width.%]="cat.riskPercentage"
+                    ></span>
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- 4. WHAT WE NOTICED -->
+        @if (observations().length) {
+          <section class="noticed" aria-label="What we noticed">
+            <p class="section-label">What we noticed</p>
+            <ul class="obs-list">
+              @for (obs of observations(); track obs.category) {
+                <li>{{ obs.sentence }}</li>
+              }
+            </ul>
+          </section>
+        }
+
+        <!-- 5. RECOMMENDED NEXT STEPS -->
+        <section class="next-steps" aria-label="Recommended next steps">
+          <p class="section-label">Recommended next steps</p>
+          <p class="next-lead">{{ nextSteps().lead }}</p>
           <div class="cards">
-            @for (card of nextSteps; track card.path) {
+            @for (card of nextSteps().cards; track card.path) {
               <a class="action" [routerLink]="card.path">
                 <ac-ui-card>
                   <span class="action-icon" aria-hidden="true">
@@ -203,9 +334,7 @@ const nextStepCards: readonly ActionCard[] = [
   `,
   styles: [
     `
-      /* Named constants for this feature. Values mirror the app shell's existing
-         hardcoded hex/px exactly (no token system). NOTE: duplicated across
-         screening pages — candidate for extraction into a shared theme file. */
+      /* Named constants mirroring the shell's hardcoded hex/px (no token system). */
       :host {
         --scr-teal: #3d6375;
         --scr-teal-ink: #103443;
@@ -217,9 +346,11 @@ const nextStepCards: readonly ActionCard[] = [
         --scr-avatar-bg: #8db4c8;
         --scr-divider: #c1d3dc;
         --scr-radius: 12px;
-        --scr-shadow-btn: 0 10px 26px rgb(61 99 117 / 0.18);
         --scr-shadow-card: 0 12px 30px rgb(41 74 90 / 0.08);
         --scr-error: #a23434;
+        --scr-low: #72a675;
+        --scr-moderate: #d9a441;
+        --scr-high: #c96e62;
         display: block;
       }
 
@@ -228,9 +359,8 @@ const nextStepCards: readonly ActionCard[] = [
         margin: 0 auto;
         display: flex;
         flex-direction: column;
-        gap: 24px;
+        gap: 22px;
       }
-
       .status {
         text-align: center;
         color: var(--scr-text-muted);
@@ -247,68 +377,85 @@ const nextStepCards: readonly ActionCard[] = [
         align-items: center;
       }
 
-      .head {
-        text-align: center;
-      }
-      .eyebrow {
-        margin: 0 0 6px;
-        color: var(--scr-text-muted);
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-      .head h1 {
-        margin: 0;
-        color: var(--scr-teal);
-        font-size: 30px;
-        font-weight: 800;
-      }
-
-      .result-card {
+      /* Header card */
+      .header-card {
         background: var(--scr-surface);
         border: 1px solid var(--scr-banner-border);
         border-radius: var(--scr-radius);
         box-shadow: var(--scr-shadow-card);
-        padding: 28px;
-        text-align: center;
+        padding: 26px 28px;
         display: flex;
         flex-direction: column;
         gap: 14px;
-        align-items: center;
+      }
+      .header-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .child-name {
+        margin: 0;
+        color: var(--scr-teal);
+        font-size: 24px;
+        font-weight: 800;
+      }
+      .child-meta {
+        margin: 4px 0 0;
+        color: var(--scr-text-muted);
+        font-size: 14px;
+        font-weight: 600;
       }
       .score-block {
         display: flex;
-        align-items: center;
-        gap: 16px;
+        align-items: baseline;
+        gap: 12px;
       }
       .score {
         color: var(--scr-teal);
-        font-size: 44px;
+        font-size: 52px;
         font-weight: 800;
         line-height: 1;
       }
-      .score-max {
+      .score-unit {
+        font-size: 26px;
         color: var(--scr-text-muted);
-        font-size: 24px;
         font-weight: 700;
       }
-      .recommendation {
-        margin: 0;
-        color: var(--scr-text);
-        font-size: 16px;
-        line-height: 1.5;
-        max-width: 520px;
-      }
-      .meta {
-        margin: 0;
+      .score-caption {
         color: var(--scr-text-muted);
         font-size: 13px;
         font-weight: 600;
       }
+      .trend {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .trend-arrow {
+        font-size: 15px;
+      }
+      .trend.up {
+        color: var(--scr-high);
+      }
+      .trend.down {
+        color: var(--scr-low);
+      }
+      .trend.flat {
+        color: var(--scr-text-muted);
+      }
+      .trend-note {
+        margin: 0;
+        color: var(--scr-text-muted);
+        font-size: 13px;
+        font-style: italic;
+      }
 
       .heuristic-note {
-        margin: -8px 4px 0;
+        margin: -6px 4px 0;
         color: var(--scr-text-muted);
         font-size: 12px;
         line-height: 1.5;
@@ -321,6 +468,87 @@ const nextStepCards: readonly ActionCard[] = [
         font-weight: 800;
         letter-spacing: 0.08em;
         text-transform: uppercase;
+      }
+
+      /* Category breakdown */
+      .cat-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .cat-card {
+        background: var(--scr-surface);
+        border: 1px solid var(--scr-banner-border);
+        border-radius: var(--scr-radius);
+        box-shadow: var(--scr-shadow-card);
+        padding: 16px 18px;
+      }
+      .cat-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .cat-name {
+        color: var(--scr-text);
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .cat-level {
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .cat-level.low {
+        color: var(--scr-low);
+      }
+      .cat-level.moderate {
+        color: var(--scr-moderate);
+      }
+      .cat-level.high {
+        color: var(--scr-high);
+      }
+      .bar-track {
+        height: 10px;
+        border-radius: 999px;
+        background: var(--scr-banner-bg);
+        overflow: hidden;
+      }
+      .bar-fill {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        transition: width 240ms ease;
+      }
+      .bar-fill.low {
+        background: var(--scr-low);
+      }
+      .bar-fill.moderate {
+        background: var(--scr-moderate);
+      }
+      .bar-fill.high {
+        background: var(--scr-high);
+      }
+
+      /* What we noticed */
+      .obs-list {
+        margin: 0;
+        padding-left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        color: var(--scr-text);
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      /* Next steps */
+      .next-lead {
+        margin: 0 0 14px;
+        color: var(--scr-text);
+        font-size: 15px;
+        line-height: 1.5;
       }
       .cards {
         display: grid;
@@ -359,7 +587,6 @@ const nextStepCards: readonly ActionCard[] = [
         color: var(--scr-text-muted);
         font-size: 13px;
       }
-
       .link {
         border: 0;
         background: none;
@@ -370,6 +597,12 @@ const nextStepCards: readonly ActionCard[] = [
       }
       .link.center {
         align-self: center;
+      }
+
+      @media (max-width: 560px) {
+        .header-top {
+          flex-direction: column;
+        }
       }
     `,
   ],
@@ -383,19 +616,23 @@ export class ScreeningResultPage implements OnInit {
 
   private sessionId = '';
 
-  readonly nextSteps = nextStepCards;
-  readonly session = signal<ScreeningSessionDetailResponse | null>(null);
-  readonly childName = signal<string | null>(null);
+  readonly session = signal<ScreeningSessionResultResponse | null>(null);
+  readonly child = signal<ChildResponse | null>(null);
   readonly loading = signal(true);
   readonly fatalError = signal<string | null>(null);
 
   readonly result = computed(() => this.session()?.result ?? null);
+  readonly childName = computed(() => this.child()?.firstName ?? null);
+  readonly childAge = computed(() => {
+    const child = this.child();
+    return child ? formatAge(child.dateOfBirth) : '';
+  });
   readonly maxScore = computed(() => (this.session()?.answers.length ?? 0) * MAX_ANSWER_VALUE);
-  readonly tone = computed<BadgeTone>(() => {
+  readonly overallTone = computed<BadgeTone>(() => {
     const res = this.result();
     return res ? riskTones[res.riskLevel] : 'neutral';
   });
-  readonly label = computed(() => {
+  readonly overallLabel = computed(() => {
     const res = this.result();
     return res ? riskLabels[res.riskLevel] : '';
   });
@@ -405,6 +642,46 @@ export class ScreeningResultPage implements OnInit {
     const iso = session.submittedAt ?? session.result?.analyzedAt ?? session.createdAt;
     return new Date(iso).toLocaleDateString();
   });
+  readonly nextSteps = computed(() => {
+    const res = this.result();
+    return nextStepsByRisk[res ? res.riskLevel : 'LOW'];
+  });
+  readonly observations = computed(() => {
+    const session = this.session();
+    const res = this.result();
+    if (!session || !res) return [];
+    return res.categoryBreakdown
+      .filter((cat) => cat.riskLevel === 'MODERATE' || cat.riskLevel === 'HIGH')
+      .map((cat) => ({
+        category: cat.category,
+        sentence: observationFor(session.ageBand, cat.category, cat.riskLevel),
+      }))
+      .filter((entry): entry is { category: string; sentence: string } => entry.sentence !== null);
+  });
+  readonly trend = computed(() => {
+    const comparison = this.session()?.previousComparison;
+    if (!comparison) return null;
+    if (!comparison.comparable) return { comparable: false as const };
+    const delta = comparison.delta ?? 0;
+    const previousDate = comparison.previousCompletedAt
+      ? new Date(comparison.previousCompletedAt).toLocaleDateString()
+      : '';
+    const magnitude = Math.abs(delta);
+    const text =
+      delta === 0
+        ? `No change from your last screening (${previousDate})`
+        : `${magnitude}% ${delta > 0 ? 'higher' : 'lower'} than your last screening (${previousDate})`;
+    return {
+      comparable: true as const,
+      direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
+      arrow: delta > 0 ? '▲' : delta < 0 ? '▼' : '■',
+      text,
+    };
+  });
+
+  shortLabel(riskLevel: RiskLevel): string {
+    return riskShort[riskLevel];
+  }
 
   ngOnInit() {
     this.sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';
@@ -424,8 +701,8 @@ export class ScreeningResultPage implements OnInit {
         this.session.set(session);
         this.loading.set(false);
         this.childrenApi.getChild(session.childId).subscribe({
-          next: (child) => this.childName.set(child.firstName),
-          error: () => this.childName.set(null),
+          next: (child) => this.child.set(child),
+          error: () => this.child.set(null),
         });
       },
       error: () => {

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import type {
   ScreeningQuestionResponse,
   ScreeningSessionDetailResponse,
@@ -325,20 +324,31 @@ export class ScreeningSessionPage implements OnInit {
     }
 
     // Fast-path only: if the creating flow handed the questions over via navigation
-    // state, paint them immediately. This is not required — the list is re-fetched
-    // authoritatively below, so a cold load / refresh / direct link works too.
+    // state, paint them immediately. Not required — the list is re-fetched (filtered
+    // to the session's age band) below, so cold load / refresh / direct link works too.
     const state = history.state as { questions?: ScreeningQuestionResponse[] } | null;
     if (Array.isArray(state?.questions) && state.questions.length > 0) {
       this.setQuestions(state.questions);
     }
 
-    forkJoin({
-      session: this.api.getSession(this.sessionId),
-      questions: this.api.listQuestions(),
-    }).subscribe({
-      next: ({ session, questions }) => {
-        this.setQuestions(questions);
-        this.hydrate(session);
+    // Load the session first so we know its age band, then fetch only that band's
+    // questions (a session serves a single band, not the full 45-question set).
+    this.api.getSession(this.sessionId).subscribe({
+      next: (session) => {
+        if (session.status !== 'DRAFT') {
+          this.router.navigate(['/screening/result', this.sessionId], { replaceUrl: true });
+          return;
+        }
+        this.api.listQuestions(session.ageBand ?? undefined).subscribe({
+          next: (questions) => {
+            this.setQuestions(questions);
+            this.hydrate(session);
+          },
+          error: () => {
+            this.loading.set(false);
+            this.fatalError.set('This screening session could not be loaded.');
+          },
+        });
       },
       error: () => {
         this.loading.set(false);

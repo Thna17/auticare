@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+import { ageBands } from '@auticare/contracts';
+import type { AgeBand } from '@auticare/contracts';
 import { created, ok } from '../../common/http/response.js';
 import { ScreeningService } from './screening.service.js';
 
@@ -9,8 +11,13 @@ const requiredParam = (value: string | readonly string[] | undefined): string =>
   return value;
 };
 
-export const listScreeningQuestions = async (_req: Request, res: Response) =>
-  ok(res, await service.listQuestions());
+const parseAgeBand = (value: unknown): AgeBand | undefined =>
+  typeof value === 'string' && (ageBands as readonly string[]).includes(value)
+    ? (value as AgeBand)
+    : undefined;
+
+export const listScreeningQuestions = async (req: Request, res: Response) =>
+  ok(res, await service.listQuestions(parseAgeBand(req.query.ageBand)));
 
 export const createScreeningSession = async (req: Request, res: Response) =>
   created(res, await service.createSession(req.auth!, req.body));

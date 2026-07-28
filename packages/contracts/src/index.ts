@@ -9,6 +9,10 @@ export type ScreeningStatus = (typeof screeningStatuses)[number];
 // at scoring time; the raw 0-4 answer value is always stored unmodified.
 export const questionPolarities = ['DIRECT', 'REVERSE'] as const;
 export type QuestionPolarity = (typeof questionPolarities)[number];
+// Age band a screening session/question belongs to. Under 4 years => TODDLER,
+// 4 years and older => PRESCHOOL (decided from the child's age at session start).
+export const ageBands = ['TODDLER', 'PRESCHOOL'] as const;
+export type AgeBand = (typeof ageBands)[number];
 export const userRoles = ['PARENT', 'ADMIN', 'SCHOOL'] as const;
 export type UserRole = (typeof userRoles)[number];
 export const errorCodes = [
@@ -229,6 +233,9 @@ export const screeningSessionResponseSchema = z.object({
   id: z.string(),
   childId: z.string(),
   status: z.enum(screeningStatuses),
+  // Age band used for this session's question set. Nullable for legacy sessions
+  // created before age banding existed.
+  ageBand: z.enum(ageBands).nullable(),
   startedAt: z.string(),
   submittedAt: z.string().nullable(),
   createdAt: z.string(),
@@ -255,6 +262,13 @@ export const screeningAnswerResponseSchema = z.object({
 });
 export type ScreeningAnswerResponse = z.infer<typeof screeningAnswerResponseSchema>;
 
+export const screeningCategoryScoreResponseSchema = z.object({
+  category: z.string(),
+  riskPercentage: z.number().int(),
+  riskLevel: z.enum(riskLevels),
+});
+export type ScreeningCategoryScoreResponse = z.infer<typeof screeningCategoryScoreResponseSchema>;
+
 export const screeningResultResponseSchema = z.object({
   id: z.string(),
   score: z.number().int(),
@@ -266,6 +280,8 @@ export const screeningResultResponseSchema = z.object({
   disclaimer: z.string(),
   analysisVersion: z.string(),
   analyzedAt: z.string(),
+  // Per-category risk breakdown (empty for legacy results scored before v3).
+  categoryBreakdown: z.array(screeningCategoryScoreResponseSchema),
 });
 export type ScreeningResultResponse = z.infer<typeof screeningResultResponseSchema>;
 
@@ -274,6 +290,24 @@ export const screeningSessionDetailResponseSchema = screeningSessionResponseSche
   result: screeningResultResponseSchema.nullable(),
 });
 export type ScreeningSessionDetailResponse = z.infer<typeof screeningSessionDetailResponseSchema>;
+
+// Trend comparison against the child's most recent OTHER completed session.
+// comparable=true  => same age band; previousRiskPercentage/previousCompletedAt/delta set.
+// comparable=false => a previous session exists but used a different age band; reason set.
+// The whole object is null when there is no earlier completed session.
+export const previousScreeningComparisonSchema = z.object({
+  comparable: z.boolean(),
+  previousRiskPercentage: z.number().int().nullable(),
+  previousCompletedAt: z.string().nullable(),
+  delta: z.number().int().nullable(),
+  reason: z.string().nullable(),
+});
+export type PreviousScreeningComparison = z.infer<typeof previousScreeningComparisonSchema>;
+
+export const screeningSessionResultResponseSchema = screeningSessionDetailResponseSchema.extend({
+  previousComparison: previousScreeningComparisonSchema.nullable(),
+});
+export type ScreeningSessionResultResponse = z.infer<typeof screeningSessionResultResponseSchema>;
 
 export const createScreeningSessionRequestSchema = z.object({
   childId: z.string().min(1),

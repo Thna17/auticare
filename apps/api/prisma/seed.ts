@@ -57,150 +57,361 @@ async function main() {
   // a polarity so the scoring engine can correct for opposite concern-directions:
   //   REVERSE = doing the healthy behaviour more often is a GOOD sign.
   //   DIRECT  = doing the behaviour more often indicates MORE concern.
+  // Questions are split into two age bands; a session serves only its band's set.
   const screeningQuestions: {
     questionText: string;
     category: string;
+    ageBand: 'TODDLER' | 'PRESCHOOL';
     polarity: 'DIRECT' | 'REVERSE';
     displayOrder: number;
   }[] = [
-    // SOCIAL INTERACTION (reverse)
+    // ===== TODDLER BAND (21) =====
+    // Social Interaction (reverse)
     {
       questionText: 'Does your child make eye contact when you speak to them?',
-      category: 'social',
+      category: 'Social Interaction',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 1,
     },
     {
       questionText: 'Does your child smile back when you smile at them?',
-      category: 'social',
+      category: 'Social Interaction',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 2,
     },
     {
       questionText: 'Does your child show interest in playing with other children?',
-      category: 'social',
+      category: 'Social Interaction',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 3,
     },
     {
       questionText: 'Does your child seem to enjoy being held or cuddled?',
-      category: 'social',
+      category: 'Social Interaction',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 4,
     },
-    // COMMUNICATION (reverse)
+    // Communication (reverse)
     {
       questionText: 'Does your child respond when you call their name?',
-      category: 'communication',
+      category: 'Communication',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 5,
     },
     {
       questionText: 'Does your child use gestures (like pointing or waving) to communicate?',
-      category: 'communication',
+      category: 'Communication',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 6,
     },
     {
       questionText: "Does your child try to show you an object they're interested in?",
-      category: 'communication',
+      category: 'Communication',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 7,
     },
     {
       questionText: 'Does your child use words or phrases to ask for things they want?',
-      category: 'communication',
+      category: 'Communication',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 8,
     },
     {
       questionText: 'Does your child imitate sounds, words, or actions that you make?',
-      category: 'communication',
+      category: 'Communication',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 9,
     },
-    // PLAY & IMAGINATION (reverse)
+    // Play & Imagination (reverse)
     {
       questionText:
         'Does your child engage in pretend play (e.g. feeding a doll, talking on a toy phone)?',
-      category: 'play',
+      category: 'Play & Imagination',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 10,
     },
     {
       questionText:
         "Does your child play with toys in the way they're meant to be used, rather than lining them up or spinning them?",
-      category: 'play',
+      category: 'Play & Imagination',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 11,
     },
     {
       questionText: 'Does your child show curiosity about new toys or objects?',
-      category: 'play',
+      category: 'Play & Imagination',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 12,
     },
     {
       questionText:
         'Does your child copy activities they see you doing (like sweeping or stirring)?',
-      category: 'play',
+      category: 'Play & Imagination',
+      ageBand: 'TODDLER',
       polarity: 'REVERSE',
       displayOrder: 13,
     },
-    // SENSORY RESPONSE (direct)
+    // Sensory Response (direct)
     {
       questionText:
         'Does your child react strongly (covering ears, crying) to loud or unexpected sounds?',
-      category: 'sensory',
+      category: 'Sensory Response',
+      ageBand: 'TODDLER',
       polarity: 'DIRECT',
       displayOrder: 14,
     },
     {
       questionText:
         'Does your child seem unusually sensitive to certain textures, tastes, or smells?',
-      category: 'sensory',
+      category: 'Sensory Response',
+      ageBand: 'TODDLER',
       polarity: 'DIRECT',
       displayOrder: 15,
     },
     {
       questionText: 'Does your child seek out spinning, rocking, or other repetitive movement?',
-      category: 'sensory',
+      category: 'Sensory Response',
+      ageBand: 'TODDLER',
       polarity: 'DIRECT',
       displayOrder: 16,
     },
     {
       questionText: 'Does your child get unusually upset by small changes in routine?',
-      category: 'sensory',
+      category: 'Sensory Response',
+      ageBand: 'TODDLER',
       polarity: 'DIRECT',
       displayOrder: 17,
     },
-    // MOTOR & REPETITIVE BEHAVIORS (direct)
+    // Motor & Repetitive Behaviors (direct)
     {
       questionText:
         'Does your child make repetitive hand or finger movements (flapping, wiggling near the eyes)?',
-      category: 'motor',
+      category: 'Motor & Repetitive Behaviors',
+      ageBand: 'TODDLER',
       polarity: 'DIRECT',
       displayOrder: 18,
     },
     {
       questionText: 'Does your child walk on their toes frequently?',
-      category: 'motor',
+      category: 'Motor & Repetitive Behaviors',
+      ageBand: 'TODDLER',
       polarity: 'DIRECT',
       displayOrder: 19,
     },
     {
       questionText:
         'Does your child repeat words or phrases without an apparent communicative purpose (echoing)?',
-      category: 'motor',
+      category: 'Motor & Repetitive Behaviors',
+      ageBand: 'TODDLER',
       polarity: 'DIRECT',
       displayOrder: 20,
     },
     {
       questionText:
         'Does your child insist on things being done in exactly the same way each time?',
-      category: 'motor',
+      category: 'Motor & Repetitive Behaviors',
+      ageBand: 'TODDLER',
       polarity: 'DIRECT',
       displayOrder: 21,
+    },
+
+    // ===== PRESCHOOL BAND (24) =====
+    // Social Interaction (reverse)
+    {
+      questionText: 'Does your child seek out other children to play with?',
+      category: 'Social Interaction',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 22,
+    },
+    {
+      questionText: 'Does your child join in group games or activities with peers?',
+      category: 'Social Interaction',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 23,
+    },
+    {
+      questionText: 'Does your child notice when someone else is upset or hurt?',
+      category: 'Social Interaction',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 24,
+    },
+    {
+      questionText: 'Does your child make friends easily at school or in group settings?',
+      category: 'Social Interaction',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 25,
+    },
+    {
+      questionText:
+        'Does your child enjoy sharing something exciting with you (a drawing, a toy, a discovery)?',
+      category: 'Social Interaction',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 26,
+    },
+    // Communication (reverse, except #31 direct)
+    {
+      questionText: 'Does your child hold a back-and-forth conversation about a topic?',
+      category: 'Communication',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 27,
+    },
+    {
+      questionText:
+        "Does your child ask questions to learn more about something they're curious about?",
+      category: 'Communication',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 28,
+    },
+    {
+      questionText: "Does your child understand jokes or teasing in the way they're intended?",
+      category: 'Communication',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 29,
+    },
+    {
+      questionText:
+        "Does your child use facial expressions that match what they're saying or feeling?",
+      category: 'Communication',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 30,
+    },
+    {
+      questionText: 'Does your child struggle to explain their own feelings in words?',
+      category: 'Communication',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 31,
+    },
+    // Play & Imagination (reverse, except #34/#35 direct)
+    {
+      questionText:
+        'Does your child engage in imaginative or make-believe play with other children?',
+      category: 'Play & Imagination',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 32,
+    },
+    {
+      questionText: 'Does your child act out different characters or roles during play?',
+      category: 'Play & Imagination',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 33,
+    },
+    {
+      questionText:
+        'Does your child prefer playing the same game or activity in exactly the same way each time?',
+      category: 'Play & Imagination',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 34,
+    },
+    {
+      questionText:
+        'Does your child show interest in a very narrow topic to the exclusion of most others?',
+      category: 'Play & Imagination',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 35,
+    },
+    {
+      questionText:
+        'Does your child build or create things in a flexible, varied way, or does it stay very repetitive?',
+      category: 'Play & Imagination',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 36,
+    },
+    // Sensory Response (direct)
+    {
+      questionText:
+        'Does your child cover their ears or become distressed around loud environments (parties, assemblies)?',
+      category: 'Sensory Response',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 37,
+    },
+    {
+      questionText:
+        "Does your child avoid certain clothing, food textures, or physical sensations that don't bother other children their age?",
+      category: 'Sensory Response',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 38,
+    },
+    {
+      questionText:
+        'Does your child seek out intense sensory input (spinning, crashing into things, seeking pressure)?',
+      category: 'Sensory Response',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 39,
+    },
+    {
+      questionText: 'Does your child get overwhelmed in busy or crowded places?',
+      category: 'Sensory Response',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 40,
+    },
+    // Flexibility & Routine (direct, except #45 reverse)
+    {
+      questionText: 'Does your child become very upset by minor changes to a plan or routine?',
+      category: 'Flexibility & Routine',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 41,
+    },
+    {
+      questionText: 'Does your child insist on doing things in a particular order or sequence?',
+      category: 'Flexibility & Routine',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 42,
+    },
+    {
+      questionText:
+        'Does your child have difficulty moving from one activity to the next without distress?',
+      category: 'Flexibility & Routine',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 43,
+    },
+    {
+      questionText:
+        'Does your child show unusual or repetitive body movements (hand-flapping, rocking, spinning)?',
+      category: 'Flexibility & Routine',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 44,
+    },
+    {
+      questionText: 'Does your child adapt reasonably well when plans change unexpectedly?',
+      category: 'Flexibility & Routine',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 45,
     },
   ];
 

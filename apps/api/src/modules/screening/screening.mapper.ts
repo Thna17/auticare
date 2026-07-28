@@ -1,15 +1,14 @@
+import type { Screening, ScreeningAnswer, ScreeningQuestion } from '@prisma/client';
 import type {
-  Screening,
-  ScreeningAnswer,
-  ScreeningQuestion,
-  ScreeningResult,
-} from '@prisma/client';
-import type { ScreeningSessionRecord } from './screening.repository.js';
+  ScreeningResultWithCategories,
+  ScreeningSessionRecord,
+} from './screening.repository.js';
 
 export type ScreeningSessionResponse = {
   id: string;
   childId: string;
   status: Screening['status'];
+  ageBand: Screening['ageBand'];
   startedAt: string;
   submittedAt: string | null;
   createdAt: string;
@@ -33,15 +32,22 @@ export type ScreeningAnswerResponse = {
   updatedAt: string;
 };
 
+export type ScreeningCategoryScoreResponse = {
+  category: string;
+  riskPercentage: number;
+  riskLevel: ScreeningResultWithCategories['riskLevel'];
+};
+
 export type ScreeningResultResponse = {
   id: string;
   score: number;
   riskPercentage: number | null;
-  riskLevel: ScreeningResult['riskLevel'];
+  riskLevel: ScreeningResultWithCategories['riskLevel'];
   recommendation: string;
   disclaimer: string;
   analysisVersion: string;
   analyzedAt: string;
+  categoryBreakdown: ScreeningCategoryScoreResponse[];
 };
 
 export type ScreeningSessionDetailResponse = ScreeningSessionResponse & {
@@ -49,10 +55,23 @@ export type ScreeningSessionDetailResponse = ScreeningSessionResponse & {
   result: ScreeningResultResponse | null;
 };
 
+export type PreviousScreeningComparison = {
+  comparable: boolean;
+  previousRiskPercentage: number | null;
+  previousCompletedAt: string | null;
+  delta: number | null;
+  reason: string | null;
+};
+
+export type ScreeningSessionResultResponse = ScreeningSessionDetailResponse & {
+  previousComparison: PreviousScreeningComparison | null;
+};
+
 export const toScreeningSessionResponse = (session: Screening): ScreeningSessionResponse => ({
   id: session.id,
   childId: session.childId,
   status: session.status,
+  ageBand: session.ageBand,
   startedAt: session.startedAt.toISOString(),
   submittedAt: session.submittedAt?.toISOString() ?? null,
   createdAt: session.createdAt.toISOString(),
@@ -78,7 +97,9 @@ export const toScreeningAnswerResponse = (answer: ScreeningAnswer): ScreeningAns
   updatedAt: answer.updatedAt.toISOString(),
 });
 
-export const toScreeningResultResponse = (result: ScreeningResult): ScreeningResultResponse => ({
+export const toScreeningResultResponse = (
+  result: ScreeningResultWithCategories,
+): ScreeningResultResponse => ({
   id: result.id,
   score: result.score,
   riskPercentage: result.riskPercentage,
@@ -87,6 +108,13 @@ export const toScreeningResultResponse = (result: ScreeningResult): ScreeningRes
   disclaimer: result.disclaimer,
   analysisVersion: result.analysisVersion,
   analyzedAt: result.analyzedAt.toISOString(),
+  categoryBreakdown: [...result.categoryScores]
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .map((score) => ({
+      category: score.category,
+      riskPercentage: score.riskPercentage,
+      riskLevel: score.riskLevel,
+    })),
 });
 
 export const toScreeningSessionDetailResponse = (
@@ -97,4 +125,12 @@ export const toScreeningSessionDetailResponse = (
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
     .map(toScreeningAnswerResponse),
   result: session.result ? toScreeningResultResponse(session.result) : null,
+});
+
+export const toScreeningSessionResultResponse = (
+  session: ScreeningSessionRecord,
+  previousComparison: PreviousScreeningComparison | null,
+): ScreeningSessionResultResponse => ({
+  ...toScreeningSessionDetailResponse(session),
+  previousComparison,
 });

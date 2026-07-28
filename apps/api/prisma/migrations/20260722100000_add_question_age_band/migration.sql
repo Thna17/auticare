@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `ScreeningQuestion` ADD COLUMN `ageBand` ENUM('TODDLER', 'PRESCHOOL') NOT NULL DEFAULT 'TODDLER';

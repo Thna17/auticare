@@ -1,10 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type {
+  AgeBand,
   CreateScreeningSessionResponse,
   ScreeningAnswerResponse,
   ScreeningQuestionResponse,
   ScreeningSessionDetailResponse,
+  ScreeningSessionResultResponse,
   UpsertScreeningAnswerRequest,
 } from '@auticare/contracts';
 import { map } from 'rxjs';
@@ -15,9 +17,12 @@ export class ScreeningApi {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
 
-  listQuestions() {
+  listQuestions(ageBand?: AgeBand) {
+    const params = ageBand ? { ageBand } : undefined;
     return this.http
-      .get<{ data: ScreeningQuestionResponse[] }>(`${this.apiBaseUrl}/screening/questions`)
+      .get<{ data: ScreeningQuestionResponse[] }>(`${this.apiBaseUrl}/screening/questions`, {
+        params,
+      })
       .pipe(map((response) => response.data));
   }
 
@@ -39,7 +44,7 @@ export class ScreeningApi {
 
   getSession(sessionId: string) {
     return this.http
-      .get<{ data: ScreeningSessionDetailResponse }>(
+      .get<{ data: ScreeningSessionResultResponse }>(
         `${this.apiBaseUrl}/screening/sessions/${sessionId}`,
       )
       .pipe(map((response) => response.data));

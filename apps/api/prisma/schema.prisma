@@ -37,6 +37,14 @@ enum QuestionPolarity {
   REVERSE
 }
 
+// Age band a screening question belongs to. Sessions are served only the questions
+// matching the child's age at session-creation time (under 4 => TODDLER, 4+ =>
+// PRESCHOOL). See ageBand on ScreeningQuestion and (Phase 3) on Screening.
+enum AgeBand {
+  TODDLER
+  PRESCHOOL
+}
+
 enum AppointmentStatus {
   REQUESTED
   CONFIRMED
@@ -141,9 +149,13 @@ model Child {
 model ScreeningQuestion {
   id           String            @id @default(cuid())
   questionText String
+  // Free-form category label, e.g. "Social Interaction", "Play & Imagination",
+  // "Flexibility & Routine". No enum constraint — the toddler and preschool bands
+  // use overlapping-but-different category sets.
   category     String
   displayOrder Int
   polarity     QuestionPolarity  @default(REVERSE)
+  ageBand      AgeBand           @default(TODDLER)
   isActive     Boolean           @default(true)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
@@ -156,6 +168,10 @@ model Screening {
   id          String            @id @default(cuid())
   childId     String
   status      ScreeningStatus   @default(DRAFT)
+  // Age band chosen from the child's age at session-creation time. Frozen here so
+  // later scoring/history stays correct even if the child ages into another band.
+  // Nullable for sessions created before age banding existed.
+  ageBand     AgeBand?
   startedAt   DateTime          @default(now())
   submittedAt DateTime?
   createdAt   DateTime          @default(now())
@@ -194,6 +210,22 @@ model ScreeningResult {
   analysisVersion String
   analyzedAt      DateTime  @default(now())
   screening       Screening @relation(fields: [screeningId], references: [id], onDelete: Cascade)
+  categoryScores  ScreeningCategoryScore[]
+}
+
+// Per-category (polarity-corrected) risk breakdown for a completed screening.
+// Stored as a related table (matching the schema's convention for nested data)
+// so history/comparison can read a session's category profile.
+model ScreeningCategoryScore {
+  id             String          @id @default(cuid())
+  resultId       String
+  category       String
+  riskPercentage Int
+  riskLevel      RiskLevel
+  displayOrder   Int
+  result         ScreeningResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@unique([resultId, category])
 }
 
 model School {
