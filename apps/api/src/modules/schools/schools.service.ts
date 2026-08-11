@@ -2,6 +2,8 @@ import type {
   CreateSchoolAccountRequest,
   CreateSchoolActivityReportRequest,
   CreateSchoolChildEnrollmentRequest,
+  SchoolAvailabilityStatus,
+  UpdateSchoolProfileRequest,
   UpdateSchoolRequest,
   UserRole,
 } from '@auticare/contracts';
@@ -12,6 +14,7 @@ import {
   toSchoolAccountResponse,
   toSchoolActivityReportResponse,
   toSchoolChildEnrollmentResponse,
+  toSchoolDetailResponse,
   toSchoolResponse,
   toSchoolStaffResponse,
 } from './schools.mapper.js';
@@ -35,7 +38,86 @@ export class SchoolsService {
   async listSchools(actor: Actor) {
     if (actor.role === 'SCHOOL') throw forbidden();
     const schools = await this.repository.listSchools();
-    return schools.map(toSchoolResponse);
+    const ratings = await this.repository.getRatingsForSchools(schools.map((school) => school.id));
+    return schools.map((school) =>
+      toSchoolResponse(school, ratings.get(school.id) ?? { average: null, count: 0 }),
+    );
+  }
+
+  /** Public read-only detail available to any authenticated account (read-only). */
+  async getSchoolById(actor: Actor, schoolId: string) {
+    if (actor.role !== 'PARENT' && actor.role !== 'ADMIN' && actor.role !== 'SCHOOL') {
+      throw forbidden();
+    }
+    const school = await this.repository.findSchoolById(schoolId);
+    if (!school) throw notFound('School was not found.');
+    const rating = await this.repository.getSchoolRating(schoolId);
+    return toSchoolDetailResponse(school, rating);
+  }
+
+  /** The authenticated SCHOOL account's own school (scoped via SchoolStaff, never by id). */
+  async getMySchool(actor: Actor) {
+    const staff = await this.requireSchoolStaff(actor);
+    const school = await this.repository.findSchoolById(staff.schoolId);
+    if (!school) throw notFound('School was not found.');
+    const rating = await this.repository.getSchoolRating(staff.schoolId);
+    return toSchoolDetailResponse(school, rating);
+  }
+
+  /** School-owned self-update. isVerified and rating are not accepted by the schema. */
+  async updateMySchool(actor: Actor, input: UpdateSchoolProfileRequest) {
+    const staff = await this.requireSchoolStaff(actor);
+    const update: {
+      name?: string;
+      city?: string;
+      address?: string;
+      description?: string | null;
+      email?: string | null;
+      website?: string | null;
+      logoUrl?: string | null;
+      coverImageUrl?: string | null;
+      studentTeacherRatio?: string | null;
+      availabilityStatus?: SchoolAvailabilityStatus;
+      waitlistEstimate?: string | null;
+      admissionRequirements?: string | null;
+      operatingHours?: string | null;
+      facilities?: string[];
+      specializations?: string[];
+    } = {};
+    if (input.name !== undefined) update.name = input.name.trim();
+    if (input.city !== undefined) update.city = input.city.trim();
+    if (input.address !== undefined) update.address = input.address.trim();
+    if (input.description !== undefined) update.description = input.description?.trim() || null;
+    if (input.email !== undefined) update.email = input.email?.trim().toLowerCase() || null;
+    if (input.website !== undefined) update.website = input.website?.trim() || null;
+    if (input.logoUrl !== undefined) update.logoUrl = input.logoUrl?.trim() || null;
+    if (input.coverImageUrl !== undefined)
+      update.coverImageUrl = input.coverImageUrl?.trim() || null;
+    if (input.studentTeacherRatio !== undefined)
+      update.studentTeacherRatio = input.studentTeacherRatio?.trim() || null;
+    if (input.availabilityStatus !== undefined)
+      update.availabilityStatus = input.availabilityStatus;
+    if (input.waitlistEstimate !== undefined)
+      update.waitlistEstimate = input.waitlistEstimate?.trim() || null;
+    if (input.admissionRequirements !== undefined)
+      update.admissionRequirements = input.admissionRequirements?.trim() || null;
+    if (input.operatingHours !== undefined)
+      update.operatingHours = input.operatingHours?.trim() || null;
+    if (input.facilities !== undefined)
+      update.facilities = input.facilities.map((item) => item.trim()).filter(Boolean);
+    if (input.specializations !== undefined)
+      update.specializations = input.specializations.map((item) => item.trim()).filter(Boolean);
+
+    const school = await this.repository.updateSchoolProfile(staff.schoolId, update);
+    const rating = await this.repository.getSchoolRating(staff.schoolId);
+    return toSchoolDetailResponse(school, rating);
+  }
+
+  private async requireSchoolStaff(actor: Actor) {
+    if (actor.role !== 'SCHOOL') throw forbidden();
+    const staff = await this.repository.findStaffForParent(actor.parentId);
+    if (!staff) throw forbidden();
+    return staff;
   }
 
   async createSchoolAccount(actor: Actor, input: CreateSchoolAccountRequest) {

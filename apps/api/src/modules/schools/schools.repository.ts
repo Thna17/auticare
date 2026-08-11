@@ -3,20 +3,76 @@ import type {
   Prisma,
   School,
   SchoolActivityReport,
+  SchoolAvailabilityStatus,
   SchoolChildEnrollment,
   SchoolStaff,
 } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
-import type { SchoolAccountRecord } from './schools.mapper.js';
+import type { SchoolAccountRecord, SchoolRating } from './schools.mapper.js';
 
 export class SchoolsRepository {
   listSchools(): Promise<School[]> {
     return prisma.school.findMany({ orderBy: [{ city: 'asc' }, { name: 'asc' }] });
   }
 
+  findSchoolById(schoolId: string): Promise<School | null> {
+    return prisma.school.findUnique({ where: { id: schoolId } });
+  }
+
+  /** Average review rating + count for a single school (computed, read-only). */
+  async getSchoolRating(schoolId: string): Promise<SchoolRating> {
+    const aggregate = await prisma.review.aggregate({
+      where: { schoolId },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+    return { average: aggregate._avg.rating, count: aggregate._count._all };
+  }
+
+  /** Ratings for many schools in one query (avoids N+1 on the list endpoint). */
+  async getRatingsForSchools(schoolIds: readonly string[]): Promise<Map<string, SchoolRating>> {
+    if (schoolIds.length === 0) return new Map();
+    const grouped = await prisma.review.groupBy({
+      by: ['schoolId'],
+      where: { schoolId: { in: [...schoolIds] } },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+    return new Map(
+      grouped.map((row) => [row.schoolId, { average: row._avg.rating, count: row._count._all }]),
+    );
+  }
+
   updateSchool(
     schoolId: string,
     input: { name?: string; city?: string; address?: string; description?: string | null },
+  ): Promise<School> {
+    return prisma.school.update({ where: { id: schoolId }, data: input });
+  }
+
+  /**
+   * School-owned profile update. Note: isVerified and rating are intentionally
+   * absent from this input type, so they can never be written through this path.
+   */
+  updateSchoolProfile(
+    schoolId: string,
+    input: {
+      name?: string;
+      city?: string;
+      address?: string;
+      description?: string | null;
+      email?: string | null;
+      website?: string | null;
+      logoUrl?: string | null;
+      coverImageUrl?: string | null;
+      studentTeacherRatio?: string | null;
+      availabilityStatus?: SchoolAvailabilityStatus;
+      waitlistEstimate?: string | null;
+      admissionRequirements?: string | null;
+      operatingHours?: string | null;
+      facilities?: string[];
+      specializations?: string[];
+    },
   ): Promise<School> {
     return prisma.school.update({ where: { id: schoolId }, data: input });
   }
