@@ -13,7 +13,7 @@ export type QuestionPolarity = (typeof questionPolarities)[number];
 // 4 years and older => PRESCHOOL (decided from the child's age at session start).
 export const ageBands = ['TODDLER', 'PRESCHOOL'] as const;
 export type AgeBand = (typeof ageBands)[number];
-export const userRoles = ['PARENT', 'ADMIN', 'SCHOOL'] as const;
+export const userRoles = ['PARENT', 'ADMIN', 'SCHOOL', 'HOSPITAL'] as const;
 export type UserRole = (typeof userRoles)[number];
 export const errorCodes = [
   'VALIDATION_ERROR',
@@ -130,6 +130,71 @@ export const createHospitalRequestSchema = z.object({
   services: z.string().min(1).max(2000),
 });
 export type CreateHospitalRequest = z.infer<typeof createHospitalRequestSchema>;
+
+export const appointmentStatuses = ['REQUESTED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'] as const;
+export type AppointmentStatus = (typeof appointmentStatuses)[number];
+export const doctorResponseSchema = z.object({
+  id: z.string(),
+  hospitalId: z.string(),
+  fullName: z.string(),
+  specialty: z.string(),
+  bio: z.string().nullable(),
+});
+export type DoctorResponse = z.infer<typeof doctorResponseSchema>;
+export const appointmentResponseSchema = z.object({
+  id: z.string(),
+  parentId: z.string(),
+  childId: z.string().nullable(),
+  childName: z.string().nullable(),
+  hospitalId: z.string(),
+  hospitalName: z.string(),
+  doctorId: z.string().nullable(),
+  doctorName: z.string().nullable(),
+  scheduledAt: z.string(),
+  status: z.enum(appointmentStatuses),
+  reason: z.string().nullable(),
+});
+export type AppointmentResponse = z.infer<typeof appointmentResponseSchema>;
+export const createAppointmentRequestSchema = z.object({
+  childId: z.string().min(1),
+  hospitalId: z.string().min(1),
+  doctorId: z.string().min(1),
+  scheduledAt: z.string().datetime(),
+  reason: z.string().max(2000).optional(),
+});
+export type CreateAppointmentRequest = z.infer<typeof createAppointmentRequestSchema>;
+export const updateAppointmentStatusRequestSchema = z.object({
+  status: z.enum(appointmentStatuses),
+});
+export type UpdateAppointmentStatusRequest = z.infer<typeof updateAppointmentStatusRequestSchema>;
+export const doctorRequestSchema = z.object({
+  fullName: z.string().min(1).max(160),
+  specialty: z.string().min(1).max(160),
+  bio: z.string().max(4000).nullable().optional(),
+});
+export type DoctorRequest = z.infer<typeof doctorRequestSchema>;
+export const createHospitalAccountRequestSchema = z.object({
+  hospital: createHospitalRequestSchema,
+  account: z.object({
+    email: z.string().email(),
+    password: z.string().min(12),
+    firstName: z.string().min(1).max(80),
+    lastName: z.string().min(1).max(80),
+    title: z.string().max(120).optional(),
+  }),
+});
+export type CreateHospitalAccountRequest = z.infer<typeof createHospitalAccountRequestSchema>;
+export const hospitalStaffResponseSchema = z.object({
+  id: z.string(),
+  hospitalId: z.string(),
+  parentId: z.string(),
+  title: z.string().nullable(),
+});
+export const adminHospitalAccountResponseSchema = z.object({
+  hospital: hospitalResponseSchema,
+  staff: hospitalStaffResponseSchema,
+  account: parentResponseSchema,
+});
 
 export const screeningDisclaimer =
   'AutiCare screening is informational support only and is not a medical diagnosis. Please consult a qualified clinician for diagnosis or treatment decisions.';
