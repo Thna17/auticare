@@ -81,9 +81,11 @@ export const routes: Routes = [
           import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
       },
       {
+        // Sidebar "Help Center" (and "Messages") point at /support; serve the
+        // Help Center here without modifying the shell or the support feature.
         path: 'support',
         loadChildren: () =>
-          import('./features/support/support.routes').then((m) => m.SUPPORT_ROUTES),
+          import('./features/help-center/help-center.routes').then((m) => m.HELP_CENTER_ROUTES),
       },
     ],
   },
