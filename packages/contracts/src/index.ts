@@ -202,16 +202,66 @@ export const screeningDisclaimer =
 export const schoolEnrollmentStatuses = ['ACTIVE', 'ENDED'] as const;
 export type SchoolEnrollmentStatus = (typeof schoolEnrollmentStatuses)[number];
 
+export const schoolAvailabilityStatuses = ['IMMEDIATE', 'WAITLIST', 'CLOSED'] as const;
+export type SchoolAvailabilityStatus = (typeof schoolAvailabilityStatuses)[number];
+
+// List-item / card shape. `rating` is computed (average of reviews, read-only) and
+// `isVerified` is admin-controlled — neither is editable through the profile form.
 export const schoolResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
   city: z.string(),
   address: z.string(),
   description: z.string().nullable(),
+  logoUrl: z.string().nullable(),
+  coverImageUrl: z.string().nullable(),
+  availabilityStatus: z.enum(schoolAvailabilityStatuses),
+  waitlistEstimate: z.string().nullable(),
+  studentTeacherRatio: z.string().nullable(),
+  specializations: z.array(z.string()),
+  isVerified: z.boolean(),
+  rating: z.number().nullable(),
+  reviewCount: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 export type SchoolResponse = z.infer<typeof schoolResponseSchema>;
+
+// Full public profile (GET /schools/:id and GET /schools/me) — card fields plus
+// the extended detail fields. Read-only for parents; no account-internal fields
+// (login credentials live on the Parent/SchoolStaff records, never here).
+export const schoolDetailResponseSchema = schoolResponseSchema.extend({
+  email: z.string().nullable(),
+  website: z.string().nullable(),
+  admissionRequirements: z.string().nullable(),
+  operatingHours: z.string().nullable(),
+  facilities: z.array(z.string()),
+});
+export type SchoolDetailResponse = z.infer<typeof schoolDetailResponseSchema>;
+
+// School-owned self-update (PATCH /schools/me). Deliberately OMITS isVerified and
+// rating so they cannot be set here — unknown keys are stripped by zod on parse.
+export const updateSchoolProfileRequestSchema = z
+  .object({
+    name: z.string().min(1).max(160).optional(),
+    city: z.string().min(1).max(120).optional(),
+    address: z.string().min(1).max(300).optional(),
+    description: z.string().max(2000).nullable().optional(),
+    email: z.string().email().max(160).nullable().optional(),
+    website: z.string().url().max(500).nullable().optional(),
+    logoUrl: z.string().url().max(1000).nullable().optional(),
+    coverImageUrl: z.string().url().max(1000).nullable().optional(),
+    studentTeacherRatio: z.string().max(40).nullable().optional(),
+    availabilityStatus: z.enum(schoolAvailabilityStatuses).optional(),
+    waitlistEstimate: z.string().max(120).nullable().optional(),
+    admissionRequirements: z.string().max(4000).nullable().optional(),
+    operatingHours: z.string().max(200).nullable().optional(),
+    facilities: z.array(z.string().min(1).max(120)).max(50).optional(),
+    specializations: z.array(z.string().min(1).max(120)).max(50).optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, 'At least one school field is required.');
+export type UpdateSchoolProfileRequest = z.infer<typeof updateSchoolProfileRequestSchema>;
 
 export const schoolStaffResponseSchema = z.object({
   id: z.string(),
