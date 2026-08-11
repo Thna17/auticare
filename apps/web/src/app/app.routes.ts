@@ -55,6 +55,15 @@ export const routes: Routes = [
           import('./features/appointments/appointments.routes').then((m) => m.APPOINTMENTS_ROUTES),
       },
       {
+        path: 'hospital',
+        canActivate: [roleGuard],
+        data: { roles: ['HOSPITAL'] },
+        loadChildren: () =>
+          import('./features/hospital-management/hospital-management.routes').then(
+            (m) => m.HOSPITAL_MANAGEMENT_ROUTES,
+          ),
+      },
+      {
         path: 'activities',
         canActivate: [roleGuard],
         data: { roles: ['PARENT'] },

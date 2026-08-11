@@ -31,6 +31,19 @@ async function main() {
       preference: { create: { preferredLanguage: 'en' } },
     },
   });
+  const hospitalPasswordHash = await passwordService.hash('AutiCareHospitalPassword123');
+  const hospitalUser = await prisma.parent.upsert({
+    where: { email: 'hospital@auticare.local' },
+    update: {},
+    create: {
+      email: 'hospital@auticare.local',
+      firstName: 'Hospital',
+      lastName: 'Manager',
+      role: 'HOSPITAL',
+      passwordHash: hospitalPasswordHash,
+      preference: { create: { preferredLanguage: 'en' } },
+    },
+  });
   const parent = await prisma.parent.upsert({
     where: { email: 'demo.parent@auticare.local' },
     update: {},
@@ -462,6 +475,39 @@ async function main() {
       hospitalId: hospital.id,
       fullName: 'Dr. Lina Sok',
       specialty: 'Developmental Pediatrics',
+    },
+  });
+  await prisma.hospitalStaff.upsert({
+    where: { parentId_hospitalId: { parentId: hospitalUser.id, hospitalId: hospital.id } },
+    update: {},
+    create: { parentId: hospitalUser.id, hospitalId: hospital.id, title: 'Hospital Manager' },
+  });
+  await prisma.appointment.upsert({
+    where: { id: 'demo-appointment-requested' },
+    update: {},
+    create: {
+      id: 'demo-appointment-requested',
+      parentId: parent.id,
+      childId: 'demo-child-1',
+      hospitalId: hospital.id,
+      doctorId: 'demo-doctor-1',
+      scheduledAt: new Date('2027-01-15T09:00:00.000Z'),
+      status: 'REQUESTED',
+      reason: 'Development consultation',
+    },
+  });
+  await prisma.appointment.upsert({
+    where: { id: 'demo-appointment-confirmed' },
+    update: {},
+    create: {
+      id: 'demo-appointment-confirmed',
+      parentId: parent.id,
+      childId: 'demo-child-1',
+      hospitalId: hospital.id,
+      doctorId: 'demo-doctor-1',
+      scheduledAt: new Date('2027-02-15T10:00:00.000Z'),
+      status: 'CONFIRMED',
+      reason: 'Follow-up consultation',
     },
   });
   await prisma.activity.createMany({

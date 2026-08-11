@@ -12,6 +12,7 @@ enum UserRole {
   PARENT
   ADMIN
   SCHOOL
+  HOSPITAL
 }
 
 enum ScreeningStatus {
@@ -86,6 +87,7 @@ model Parent {
   notifications       Notification[]
   schoolStaffProfiles SchoolStaff[]
   schoolActivityReports SchoolActivityReport[]
+  hospitalStaffProfiles HospitalStaff[]
 
   @@index([email])
 }
@@ -322,8 +324,23 @@ model Hospital {
   updatedAt    DateTime      @updatedAt
   doctors      Doctor[]
   appointments Appointment[]
+  staff        HospitalStaff[]
 
   @@index([city, name])
+}
+
+model HospitalStaff {
+  id         String   @id @default(cuid())
+  parentId   String
+  hospitalId String
+  title      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  parent     Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, hospitalId])
+  @@index([hospitalId])
 }
 
 model Doctor {
