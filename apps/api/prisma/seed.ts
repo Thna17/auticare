@@ -1,11 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { screeningDisclaimer } from '@auticare/contracts';
 import { PasswordService } from '../src/modules/auth/password.service.js';
+
 const prisma = new PrismaClient();
 const passwordService = new PasswordService();
+
 async function main() {
   const passwordHash = await passwordService.hash('AutiCareDemoPassword123');
   const adminPasswordHash = await passwordService.hash('AutiCareAdminPassword123');
+
   await prisma.parent.upsert({
     where: { email: 'admin@auticare.local' },
     update: {},
@@ -18,6 +21,7 @@ async function main() {
       preference: { create: { preferredLanguage: 'en' } },
     },
   });
+
   const schoolPasswordHash = await passwordService.hash('AutiCareSchoolPassword123');
   const schoolUser = await prisma.parent.upsert({
     where: { email: 'school@auticare.local' },
@@ -31,6 +35,7 @@ async function main() {
       preference: { create: { preferredLanguage: 'en' } },
     },
   });
+
   const parent = await prisma.parent.upsert({
     where: { email: 'demo.parent@auticare.local' },
     update: {},
@@ -42,6 +47,7 @@ async function main() {
       preference: { create: { preferredLanguage: 'en' } },
     },
   });
+
   await prisma.child.upsert({
     where: { id: 'demo-child-1' },
     update: {},
@@ -52,6 +58,7 @@ async function main() {
       dateOfBirth: new Date('2020-05-01'),
     },
   });
+
   // ORIGINAL, HEURISTIC screening items (not copied from any copyrighted
   // instrument, and not a clinically validated screening tool). Each item carries
   // a polarity so the scoring engine can correct for opposite concern-directions:
@@ -422,6 +429,7 @@ async function main() {
   await prisma.screeningQuestion.updateMany({ data: { isActive: false } });
   await prisma.screeningQuestion.deleteMany({ where: { answers: { none: {} } } });
   await prisma.screeningQuestion.createMany({ data: screeningQuestions });
+
   const school = await prisma.school.upsert({
     where: { id: 'demo-school-1' },
     update: {},
@@ -433,16 +441,19 @@ async function main() {
       description: 'Inclusive learning support.',
     },
   });
+
   await prisma.schoolStaff.upsert({
     where: { parentId_schoolId: { parentId: schoolUser.id, schoolId: school.id } },
     update: {},
     create: { parentId: schoolUser.id, schoolId: school.id, title: 'Activity Reporter' },
   });
+
   await prisma.schoolChildEnrollment.upsert({
     where: { schoolId_childId: { schoolId: school.id, childId: 'demo-child-1' } },
     update: { status: 'ACTIVE', endedAt: null },
     create: { schoolId: school.id, childId: 'demo-child-1' },
   });
+
   const hospital = await prisma.hospital.upsert({
     where: { id: 'demo-hospital-1' },
     update: {},
@@ -454,6 +465,7 @@ async function main() {
       services: 'Developmental pediatrics, occupational therapy',
     },
   });
+
   await prisma.doctor.upsert({
     where: { id: 'demo-doctor-1' },
     update: {},
@@ -464,6 +476,7 @@ async function main() {
       specialty: 'Developmental Pediatrics',
     },
   });
+
   await prisma.activity.createMany({
     data: [
       {
@@ -476,6 +489,8 @@ async function main() {
     ],
     skipDuplicates: true,
   });
+
   console.log(screeningDisclaimer);
 }
+
 main().finally(async () => prisma.$disconnect());

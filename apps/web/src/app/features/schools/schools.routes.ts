@@ -45,4 +45,11 @@ export const SCHOOLS_ROUTES: Routes = [
     data: { roles: ['SCHOOL'] },
     loadComponent: () => import('./school-profile.page').then((m) => m.SchoolProfilePage),
   },
+  // Keep this parameter route last so named school-user pages are not mistaken for school IDs.
+  {
+    path: ':id',
+    canActivate: [roleGuard],
+    data: { roles: ['PARENT'] },
+    loadComponent: () => import('./school-detail.page').then((m) => m.SchoolDetailPage),
+  },
 ];

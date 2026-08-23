@@ -5,6 +5,9 @@
     "types": ["node"],
     "rootDir": "src",
     "baseUrl": "../..",
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@auticare/contracts": ["packages/contracts/dist/index.d.ts"]
     }

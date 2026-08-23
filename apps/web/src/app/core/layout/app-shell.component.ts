@@ -31,11 +31,10 @@ const adminNav: readonly NavItem[] = [
 
 const schoolNav: readonly NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: 'grid' },
-  { label: 'School Profile', path: '/schools/profile', icon: 'school' },
   { label: 'Students', path: '/schools/enrollments', icon: 'children' },
-  { label: 'Activities', path: '/schools/reports/new', icon: 'activity' },
   { label: 'Reports', path: '/schools/reports', icon: 'report' },
   { label: 'Notifications', path: '/notifications', icon: 'bell' },
+  { label: 'School Profile', path: '/schools/profile', icon: 'school' },
 ];
 
 const secondaryNav: readonly NavItem[] = [
