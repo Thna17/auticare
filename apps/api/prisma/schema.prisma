@@ -12,6 +12,7 @@ enum UserRole {
   PARENT
   ADMIN
   SCHOOL
+  HOSPITAL
 }
 
 enum ScreeningStatus {
@@ -86,6 +87,7 @@ model Parent {
   notifications       Notification[]
   schoolStaffProfiles SchoolStaff[]
   schoolActivityReports SchoolActivityReport[]
+  hospitalStaffProfiles HospitalStaff[]
 
   @@index([email])
 }
@@ -228,20 +230,41 @@ model ScreeningCategoryScore {
   @@unique([resultId, category])
 }
 
+enum SchoolAvailabilityStatus {
+  IMMEDIATE
+  WAITLIST
+  CLOSED
+}
+
 model School {
-  id                String             @id @default(cuid())
-  name              String
-  city              String
-  address           String
-  description       String?            @db.Text
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  favorites         FavoriteSchool[]
-  reviews           Review[]
-  admissionRequests AdmissionRequest[]
-  staff SchoolStaff[]
-  childEnrollments SchoolChildEnrollment[]
-  activityReports SchoolActivityReport[]
+  id                    String                   @id @default(cuid())
+  name                  String
+  city                  String
+  address               String
+  description           String?                  @db.Text
+  // Public contact / media
+  email                 String?
+  website               String?                  @db.Text
+  logoUrl               String?                  @db.Text
+  coverImageUrl         String?                  @db.Text
+  // Profile detail
+  studentTeacherRatio   String?
+  availabilityStatus    SchoolAvailabilityStatus @default(IMMEDIATE)
+  waitlistEstimate      String?
+  admissionRequirements String?                  @db.Text
+  operatingHours        String?
+  facilities            Json? // string[] of facility names
+  specializations       Json? // string[] of specialization tags
+  // Admin-controlled trust flag; NOT editable by the school account itself.
+  isVerified            Boolean                  @default(false)
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  favorites             FavoriteSchool[]
+  reviews               Review[]
+  admissionRequests     AdmissionRequest[]
+  staff                 SchoolStaff[]
+  childEnrollments      SchoolChildEnrollment[]
+  activityReports       SchoolActivityReport[]
 
   @@index([city, name])
 }
@@ -322,8 +345,23 @@ model Hospital {
   updatedAt    DateTime      @updatedAt
   doctors      Doctor[]
   appointments Appointment[]
+  staff        HospitalStaff[]
 
   @@index([city, name])
+}
+
+model HospitalStaff {
+  id         String   @id @default(cuid())
+  parentId   String
+  hospitalId String
+  title      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  parent     Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, hospitalId])
+  @@index([hospitalId])
 }
 
 model Doctor {

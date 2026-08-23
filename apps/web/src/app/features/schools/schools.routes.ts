@@ -45,11 +45,13 @@ export const SCHOOLS_ROUTES: Routes = [
     data: { roles: ['SCHOOL'] },
     loadComponent: () => import('./school-profile.page').then((m) => m.SchoolProfilePage),
   },
-  // Keep this parameter route last so named school-user pages are not mistaken for school IDs.
+  // Read-only public detail. Registered last so it never shadows the fixed
+  // paths above. Any authenticated role may VIEW (read-only, no edit controls);
+  // matches the API (GET /schools/:id).
   {
     path: ':id',
     canActivate: [roleGuard],
-    data: { roles: ['PARENT'] },
+    data: { roles: ['PARENT', 'ADMIN', 'SCHOOL'] },
     loadComponent: () => import('./school-detail.page').then((m) => m.SchoolDetailPage),
   },
 ];

@@ -15,6 +15,11 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { childrenRoutes } from './modules/children/children.routes.js';
 import { healthRoutes } from './modules/health/health.routes.js';
 import { hospitalsRoutes } from './modules/hospitals/hospitals.routes.js';
+import {
+  appointmentsRoutes,
+  hospitalDoctorsRoutes,
+} from './modules/appointments/appointments.routes.js';
+import { hospitalManagementRoutes } from './modules/hospital-management/hospital-management.routes.js';
 import { schoolsRoutes } from './modules/schools/index.js';
 import { screeningRoutes } from './modules/screening/index.js';
 export const createApp = () => {
@@ -33,6 +38,9 @@ export const createApp = () => {
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/v1/children', childrenRoutes);
   app.use('/api/v1/hospitals', hospitalsRoutes);
+  app.use('/api/v1/hospitals', hospitalDoctorsRoutes);
+  app.use('/api/v1/appointments', appointmentsRoutes);
+  app.use('/api/v1/hospital-management', hospitalManagementRoutes);
   app.use('/api/v1/schools', schoolsRoutes);
   app.use('/api/v1/screening', screeningRoutes);
   app.use(errorHandler);

@@ -13,7 +13,7 @@ export type QuestionPolarity = (typeof questionPolarities)[number];
 // 4 years and older => PRESCHOOL (decided from the child's age at session start).
 export const ageBands = ['TODDLER', 'PRESCHOOL'] as const;
 export type AgeBand = (typeof ageBands)[number];
-export const userRoles = ['PARENT', 'ADMIN', 'SCHOOL'] as const;
+export const userRoles = ['PARENT', 'ADMIN', 'SCHOOL', 'HOSPITAL'] as const;
 export type UserRole = (typeof userRoles)[number];
 export const errorCodes = [
   'VALIDATION_ERROR',
@@ -131,22 +131,137 @@ export const createHospitalRequestSchema = z.object({
 });
 export type CreateHospitalRequest = z.infer<typeof createHospitalRequestSchema>;
 
+export const appointmentStatuses = ['REQUESTED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'] as const;
+export type AppointmentStatus = (typeof appointmentStatuses)[number];
+export const doctorResponseSchema = z.object({
+  id: z.string(),
+  hospitalId: z.string(),
+  fullName: z.string(),
+  specialty: z.string(),
+  bio: z.string().nullable(),
+});
+export type DoctorResponse = z.infer<typeof doctorResponseSchema>;
+export const appointmentResponseSchema = z.object({
+  id: z.string(),
+  parentId: z.string(),
+  childId: z.string().nullable(),
+  childName: z.string().nullable(),
+  hospitalId: z.string(),
+  hospitalName: z.string(),
+  doctorId: z.string().nullable(),
+  doctorName: z.string().nullable(),
+  scheduledAt: z.string(),
+  status: z.enum(appointmentStatuses),
+  reason: z.string().nullable(),
+});
+export type AppointmentResponse = z.infer<typeof appointmentResponseSchema>;
+export const createAppointmentRequestSchema = z.object({
+  childId: z.string().min(1),
+  hospitalId: z.string().min(1),
+  doctorId: z.string().min(1),
+  scheduledAt: z.string().datetime(),
+  reason: z.string().max(2000).optional(),
+});
+export type CreateAppointmentRequest = z.infer<typeof createAppointmentRequestSchema>;
+export const updateAppointmentStatusRequestSchema = z.object({
+  status: z.enum(appointmentStatuses),
+});
+export type UpdateAppointmentStatusRequest = z.infer<typeof updateAppointmentStatusRequestSchema>;
+export const doctorRequestSchema = z.object({
+  fullName: z.string().min(1).max(160),
+  specialty: z.string().min(1).max(160),
+  bio: z.string().max(4000).nullable().optional(),
+});
+export type DoctorRequest = z.infer<typeof doctorRequestSchema>;
+export const createHospitalAccountRequestSchema = z.object({
+  hospital: createHospitalRequestSchema,
+  account: z.object({
+    email: z.string().email(),
+    password: z.string().min(12),
+    firstName: z.string().min(1).max(80),
+    lastName: z.string().min(1).max(80),
+    title: z.string().max(120).optional(),
+  }),
+});
+export type CreateHospitalAccountRequest = z.infer<typeof createHospitalAccountRequestSchema>;
+export const hospitalStaffResponseSchema = z.object({
+  id: z.string(),
+  hospitalId: z.string(),
+  parentId: z.string(),
+  title: z.string().nullable(),
+});
+export const adminHospitalAccountResponseSchema = z.object({
+  hospital: hospitalResponseSchema,
+  staff: hospitalStaffResponseSchema,
+  account: parentResponseSchema,
+});
+
 export const screeningDisclaimer =
   'AutiCare screening is informational support only and is not a medical diagnosis. Please consult a qualified clinician for diagnosis or treatment decisions.';
 
 export const schoolEnrollmentStatuses = ['ACTIVE', 'ENDED'] as const;
 export type SchoolEnrollmentStatus = (typeof schoolEnrollmentStatuses)[number];
 
+export const schoolAvailabilityStatuses = ['IMMEDIATE', 'WAITLIST', 'CLOSED'] as const;
+export type SchoolAvailabilityStatus = (typeof schoolAvailabilityStatuses)[number];
+
+// List-item / card shape. `rating` is computed (average of reviews, read-only) and
+// `isVerified` is admin-controlled — neither is editable through the profile form.
 export const schoolResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
   city: z.string(),
   address: z.string(),
   description: z.string().nullable(),
+  logoUrl: z.string().nullable(),
+  coverImageUrl: z.string().nullable(),
+  availabilityStatus: z.enum(schoolAvailabilityStatuses),
+  waitlistEstimate: z.string().nullable(),
+  studentTeacherRatio: z.string().nullable(),
+  specializations: z.array(z.string()),
+  isVerified: z.boolean(),
+  rating: z.number().nullable(),
+  reviewCount: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 export type SchoolResponse = z.infer<typeof schoolResponseSchema>;
+
+// Full public profile (GET /schools/:id and GET /schools/me) — card fields plus
+// the extended detail fields. Read-only for parents; no account-internal fields
+// (login credentials live on the Parent/SchoolStaff records, never here).
+export const schoolDetailResponseSchema = schoolResponseSchema.extend({
+  email: z.string().nullable(),
+  website: z.string().nullable(),
+  admissionRequirements: z.string().nullable(),
+  operatingHours: z.string().nullable(),
+  facilities: z.array(z.string()),
+});
+export type SchoolDetailResponse = z.infer<typeof schoolDetailResponseSchema>;
+
+// School-owned self-update (PATCH /schools/me). Deliberately OMITS isVerified and
+// rating so they cannot be set here — unknown keys are stripped by zod on parse.
+export const updateSchoolProfileRequestSchema = z
+  .object({
+    name: z.string().min(1).max(160).optional(),
+    city: z.string().min(1).max(120).optional(),
+    address: z.string().min(1).max(300).optional(),
+    description: z.string().max(2000).nullable().optional(),
+    email: z.string().email().max(160).nullable().optional(),
+    website: z.string().url().max(500).nullable().optional(),
+    logoUrl: z.string().url().max(1000).nullable().optional(),
+    coverImageUrl: z.string().url().max(1000).nullable().optional(),
+    studentTeacherRatio: z.string().max(40).nullable().optional(),
+    availabilityStatus: z.enum(schoolAvailabilityStatuses).optional(),
+    waitlistEstimate: z.string().max(120).nullable().optional(),
+    admissionRequirements: z.string().max(4000).nullable().optional(),
+    operatingHours: z.string().max(200).nullable().optional(),
+    facilities: z.array(z.string().min(1).max(120)).max(50).optional(),
+    specializations: z.array(z.string().min(1).max(120)).max(50).optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, 'At least one school field is required.');
+export type UpdateSchoolProfileRequest = z.infer<typeof updateSchoolProfileRequestSchema>;
 
 export const schoolStaffResponseSchema = z.object({
   id: z.string(),

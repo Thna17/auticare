@@ -1,758 +1,524 @@
-// school-enrollments.page.ts
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import type { OnInit } from '@angular/core';
-import type { SchoolStaffResponse } from '@auticare/contracts';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import type {
+  SchoolAvailabilityStatus,
+  SchoolDetailResponse,
+  UpdateSchoolProfileRequest,
+} from '@auticare/contracts';
+import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
-import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
+import { SchoolProfileViewComponent } from './components/school-profile-view.component';
 
-interface Specialization {
-  name: string;
-  lead: string;
-  status: 'Active' | 'Pending Staff' | 'Inactive';
-  icon: string;
-}
+// Defined locally (not imported from @auticare/contracts as a runtime value) so the
+// web bundle keeps contracts a type-only dependency and never pulls zod client-side.
+const availabilityOptions: readonly { value: SchoolAvailabilityStatus; label: string }[] = [
+  { value: 'IMMEDIATE', label: 'Immediate' },
+  { value: 'WAITLIST', label: 'Waitlist' },
+  { value: 'CLOSED', label: 'Closed' },
+];
+
+const specializationOptions: readonly string[] = [
+  'ABA',
+  'Speech Therapy',
+  'Occupational Therapy',
+  'Sensory Integration',
+  'Social Skills',
+  'Music Therapy',
+  'Life Skills',
+  'Behavioral Therapy',
+  'Physical Therapy',
+];
 
 @Component({
   standalone: true,
-  imports: [SchoolTopbarComponent],
-  selector: 'ac-school-profile-page',
+  imports: [ReactiveFormsModule, UiCardComponent, SchoolProfileViewComponent],
   template: `
-    <div class="page-layout">
-      <main class="main-content">
-        <ac-school-topbar />
+    <section class="page-header">
+      <p class="eyebrow">School workspace</p>
+      <h1>School profile</h1>
+      <p>Keep your public profile up to date so families can find and choose your school.</p>
+    </section>
 
-        <!-- Cover Image Section -->
-        <div class="cover-section">
-          <div class="cover-image">
-            <img
-              src="https://images.unsplash.com/photo-1562774053-801e4e208e4e?w=1200&h=400&fit=crop"
-              alt="School Campus"
-            />
-            <button class="edit-cover-btn">
-              <span>✏</span>
-              <span>Edit Cover</span>
-            </button>
+    @if (loading()) {
+      <ac-ui-card><p>Loading profile...</p></ac-ui-card>
+    } @else if (loadError()) {
+      <p class="error" role="alert">{{ loadError() }}</p>
+    } @else if (school(); as current) {
+      @if (mode() === 'view') {
+        @if (savedFlash()) {
+          <div class="save-banner ok" role="status" aria-live="polite">
+            <span class="save-icon" aria-hidden="true">✓</span>
+            <span>Profile saved — your public profile is now up to date.</span>
           </div>
-
-          <!-- School Logo & Basic Info -->
-          <div class="school-identity">
-            <div class="school-logo">🏫</div>
-            <div class="school-basic-info">
-              <h1>Serenity Academy for Autism</h1>
-              <p class="tagline">Excellence in Neurodivergent Education & Clinical Support</p>
-              <span class="verified-badge">✓ Verified</span>
-            </div>
+        }
+        <ac-school-profile-view [school]="current" [editable]="true" (edit)="startEditing()" />
+      } @else {
+        @if (!hasProfileContent(current)) {
+          <div class="prompt" role="note">
+            Complete your school profile so parents can find and choose your school.
           </div>
-        </div>
-
-        <!-- Main Content Grid -->
-        <div class="content-grid">
-          <!-- Left Column -->
-          <div class="left-column">
-            <!-- General Information -->
-            <div class="info-card">
-              <div class="card-header">
-                <div class="section-title">
-                  <span class="icon">ℹ</span>
-                  <h2>General Information</h2>
-                </div>
-                <button class="edit-btn">✏</button>
-              </div>
-              <p class="mission-text">
-                Our mission is to provide a holistic, evidence-based learning environment that
-                celebrates neurodiversity. We empower students through individualized education
-                programs (IEPs) that integrate clinical excellence with compassionate teaching,
-                ensuring every child reaches their unique potential in a supportive atmosphere.
-              </p>
-
-              <!-- Stats Grid -->
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <span class="stat-label">STUDENT-TEACHER</span>
-                  <span class="stat-value">3:1</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">AGE RANGE</span>
-                  <span class="stat-value">4 - 18</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">CURRENT CAPACITY</span>
-                  <div class="stat-with-progress">
-                    <span class="stat-value">85%</span>
-                    <div class="progress-bar">
-                      <div class="progress-fill" style="width: 85%"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Clinical Specializations -->
-            <div class="info-card">
-              <div class="card-header">
-                <div class="section-title">
-                  <h2>Clinical Specializations</h2>
-                </div>
-                <button class="add-new-btn">
-                  <span>+</span>
-                  <span>Add New</span>
-                </button>
-              </div>
-
-              <div class="specializations-list">
-                @for (spec of specializations(); track spec.name) {
-                  <div class="specialization-item">
-                    <div class="spec-icon">{{ spec.icon }}</div>
-                    <div class="spec-info">
-                      <span class="spec-name">{{ spec.name }}</span>
-                      <span class="spec-lead">Lead: {{ spec.lead }}</span>
-                    </div>
-                    <span
-                      class="status-badge"
-                      [class]="spec.status.toLowerCase().replace(' ', '-')"
-                    >
-                      {{ spec.status }}
-                    </span>
-                  </div>
+        }
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <!-- BASIC INFO -->
+          <fieldset>
+            <legend>Basic info</legend>
+            <label>
+              School name
+              <input type="text" formControlName="name" />
+              @if (showError('name')) {
+                <span class="field-error">School name is required.</span>
+              }
+            </label>
+            <label>
+              Description
+              <textarea
+                rows="4"
+                formControlName="description"
+                placeholder="A short bio families will see."
+              ></textarea>
+            </label>
+            <label>
+              Logo image URL
+              <input type="url" formControlName="logoUrl" placeholder="https://…" />
+            </label>
+            <label>
+              Cover image URL
+              <input type="url" formControlName="coverImageUrl" placeholder="https://…" />
+            </label>
+            @if (form.controls.logoUrl.value || form.controls.coverImageUrl.value) {
+              <div class="previews" aria-label="Image previews">
+                @if (form.controls.logoUrl.value) {
+                  <figure>
+                    <figcaption>Logo</figcaption>
+                    <img [src]="form.controls.logoUrl.value" alt="Logo preview" />
+                  </figure>
+                }
+                @if (form.controls.coverImageUrl.value) {
+                  <figure>
+                    <figcaption>Cover</figcaption>
+                    <img [src]="form.controls.coverImageUrl.value" alt="Cover preview" />
+                  </figure>
                 }
               </div>
+            }
+          </fieldset>
+
+          <!-- LOCATION & CONTACT -->
+          <fieldset>
+            <legend>Location &amp; contact</legend>
+            <label>
+              City / Province
+              <input type="text" formControlName="city" />
+              @if (showError('city')) {
+                <span class="field-error">City is required.</span>
+              }
+            </label>
+            <label>
+              Address
+              <input type="text" formControlName="address" />
+              @if (showError('address')) {
+                <span class="field-error">Address is required.</span>
+              }
+            </label>
+            <label>
+              Email
+              <input type="email" formControlName="email" placeholder="contact@school.example" />
+              @if (showError('email')) {
+                <span class="field-error">Enter a valid email address.</span>
+              }
+            </label>
+            <label>
+              Website
+              <input type="url" formControlName="website" placeholder="https://…" />
+            </label>
+          </fieldset>
+
+          <!-- ENROLLMENT DETAILS -->
+          <fieldset>
+            <legend>Enrollment details</legend>
+            <label>
+              Student : teacher ratio
+              <input type="text" formControlName="studentTeacherRatio" placeholder="e.g. 5:1" />
+            </label>
+            <label>
+              Availability status
+              <select formControlName="availabilityStatus">
+                @for (option of availabilityOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </label>
+            @if (form.controls.availabilityStatus.value === 'WAITLIST') {
+              <label>
+                Estimated waitlist
+                <input
+                  type="text"
+                  formControlName="waitlistEstimate"
+                  placeholder="e.g. ~2 months"
+                />
+              </label>
+            }
+            <label>
+              Admission requirements
+              <textarea
+                rows="4"
+                formControlName="admissionRequirements"
+                placeholder="What families need to apply."
+              ></textarea>
+            </label>
+          </fieldset>
+
+          <!-- SPECIALIZATIONS & THERAPIES -->
+          <fieldset>
+            <legend>Specializations &amp; therapies</legend>
+            <p class="hint">Select all that your school provides.</p>
+            <div class="pills" role="group" aria-label="Specializations">
+              @for (option of allSpecializations(); track option) {
+                <button
+                  type="button"
+                  class="pill"
+                  [class.active]="isSpecializationSelected(option)"
+                  [attr.aria-pressed]="isSpecializationSelected(option)"
+                  (click)="toggleSpecialization(option)"
+                >
+                  {{ option }}
+                </button>
+              }
             </div>
+          </fieldset>
+
+          <!-- OPERATING INFO -->
+          <fieldset>
+            <legend>Operating info</legend>
+            <label>
+              Operating hours
+              <input
+                type="text"
+                formControlName="operatingHours"
+                placeholder="e.g. Mon–Fri, 8am–4pm"
+              />
+            </label>
+            <label>
+              Facilities &amp; amenities
+              <textarea
+                rows="4"
+                formControlName="facilities"
+                placeholder="One per line (e.g. Sensory room)"
+              ></textarea>
+              <span class="hint">One facility per line.</span>
+            </label>
+          </fieldset>
+
+          <!-- READ-ONLY STATUS -->
+          <fieldset class="readonly">
+            <legend>Status <span class="ro-badge">Read-only</span></legend>
+            <p class="hint">
+              These are set by AutiCare and parent reviews — they can't be edited from this form.
+            </p>
+            <div class="ro-grid">
+              <div class="ro-field">
+                <span class="ro-label">Rating</span>
+                <span class="ro-value">
+                  @if (current.rating !== null) {
+                    {{ current.rating }} / 5 · {{ current.reviewCount }} review{{
+                      current.reviewCount === 1 ? '' : 's'
+                    }}
+                  } @else {
+                    No reviews yet
+                  }
+                </span>
+              </div>
+              <div class="ro-field">
+                <span class="ro-label">Verification</span>
+                <span class="ro-value">
+                  <span class="verify-badge" [class.verified]="current.isVerified">
+                    {{ current.isVerified ? 'Verified' : 'Not verified' }}
+                  </span>
+                </span>
+              </div>
+            </div>
+          </fieldset>
+
+          @if (error()) {
+            <div class="save-banner bad" role="alert" aria-live="assertive">
+              <span>{{ error() }}</span>
+            </div>
+          }
+
+          <div class="form-actions">
+            <button type="submit" [disabled]="saving()">
+              {{ saving() ? 'Saving…' : 'Save profile' }}
+            </button>
+            @if (hasProfileContent(current)) {
+              <button
+                type="button"
+                class="cancel-btn"
+                [disabled]="saving()"
+                (click)="cancelEditing()"
+              >
+                Cancel
+              </button>
+            }
           </div>
-
-          <!-- Right Column -->
-          <div class="right-column">
-            <!-- Community Rating Card -->
-            <div class="rating-card">
-              <div class="rating-header">
-                <span>Community Rating</span>
-                <span class="public-badge">Public</span>
-              </div>
-              <div class="rating-content">
-                <span class="rating-score">4.9</span>
-                <div class="stars">★★★★★</div>
-                <span class="rating-count">Based on 124 parent reviews</span>
-              </div>
-              <button class="view-reviews-btn">View All Reviews</button>
-            </div>
-
-            <!-- Facility Information -->
-            <div class="info-card">
-              <div class="card-header">
-                <div class="section-title">
-                  <h2>Facility Information</h2>
-                </div>
-              </div>
-
-              <div class="facility-details">
-                <div class="detail-row">
-                  <span class="detail-icon">📍</span>
-                  <div class="detail-content">
-                    <span class="detail-label">Address</span>
-                    <span class="detail-text"
-                      >4228 Willow Creek Way, Suite 100<br />Palo Alto, CA 94301</span
-                    >
-                  </div>
-                </div>
-
-                <div class="detail-row">
-                  <span class="detail-icon">🕐</span>
-                  <div class="detail-content">
-                    <span class="detail-label">Office Hours</span>
-                    <div class="hours-grid">
-                      <span>Mon - Fri: 8:00 AM - 5:30 PM</span>
-                      <span>Sat: 9:00 AM - 1:00 PM</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="detail-row">
-                  <span class="detail-icon">📞</span>
-                  <div class="detail-content">
-                    <span class="detail-label">Contact</span>
-                    <span class="detail-text">(555) 123-4567</span>
-                    <span class="detail-text">hello&#64;serenityacademy.org</span>
-                  </div>
-                  <button class="update-details-btn">Update Details</button>
-                </div>
-              </div>
-
-              <!-- Document Preview -->
-              <div class="document-preview">
-                <div class="doc-thumbnail"></div>
-                <div class="doc-thumbnail"></div>
-                <div class="doc-thumbnail"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <footer class="page-footer">
-          <span>© 2024 AutiCare Global Inc.</span>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <span class="system-status">
-            <span class="status-dot"></span>
-            Systems Operational
-          </span>
-        </footer>
-      </main>
-    </div>
+        </form>
+      }
+    }
   `,
   styles: [
     `
-      .page-layout {
-        display: flex;
-        gap: 24px;
-        padding: 24px;
-        background: #f8fafc;
-        min-height: 100vh;
+      /* Center the whole page column, matching the parent detail page (school-detail.page.ts).
+         Without this the host is full-width and the 760px children left-align, leaving dead
+         space on the right. */
+      :host {
+        display: block;
+        max-width: 760px;
+        margin: 0 auto;
       }
-
-      .main-content {
-        flex: 1;
-        min-width: 0;
-        width: 100%;
-        max-width: 100%;
+      .page-header {
+        max-width: 760px;
+        margin-bottom: 28px;
       }
-
-      /* Cover Section */
-      .cover-section {
-        position: relative;
-        margin-bottom: 24px;
+      .eyebrow {
+        color: #3d6375;
+        font-weight: var(--ac-font-weight-bold);
       }
-
-      .cover-image {
-        position: relative;
-        border-radius: 16px;
-        overflow: hidden;
-        height: 320px;
+      h1 {
+        margin: 0;
+        font-size: var(--ac-type-page-title);
       }
-
-      .cover-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      .edit-cover-btn {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 14px;
-        background: rgba(0, 0, 0, 0.6);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 13px;
-        cursor: pointer;
-        backdrop-filter: blur(4px);
-        transition: background 0.2s;
-      }
-
-      .edit-cover-btn:hover {
-        background: rgba(0, 0, 0, 0.8);
-      }
-
-      .school-identity {
-        position: relative;
-        display: flex;
-        align-items: center;
+      form {
+        display: grid;
         gap: 20px;
-        padding: 0 24px;
-        margin-top: -60px;
+        max-width: 760px;
       }
-
-      .school-logo {
-        width: 120px;
-        height: 120px;
-        background: white;
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 60px;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
-        z-index: 1;
+      fieldset {
+        display: grid;
+        gap: 16px;
+        border: 1px solid #d4e6ef;
+        border-radius: 8px;
+        padding: 18px;
+        background: #ffffff;
       }
-
-      .school-basic-info {
-        flex: 1;
-        padding-bottom: 16px;
-      }
-
-      .school-basic-info h1 {
-        margin: 0 0 6px 0;
-        font-size: 28px;
-        font-weight: 700;
-        color: #0f172a;
-      }
-
-      .tagline {
-        margin: 0 0 8px 0;
-        color: #64748b;
-        font-size: 14px;
-      }
-
-      .verified-badge {
+      legend {
+        font-weight: var(--ac-font-weight-bold);
+        padding: 0 8px;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        padding: 4px 10px;
-        background: #d1fae5;
-        color: #059669;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      /* Content Grid */
-      .content-grid {
-        display: grid;
-        grid-template-columns: 1fr 380px;
-        gap: 24px;
-        margin-bottom: 24px;
-      }
-
-      .left-column,
-      .right-column {
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-      }
-
-      /* Info Cards */
-      .info-card {
-        background: white;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-      }
-
-      .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 16px;
-      }
-
-      .section-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .section-title .icon {
-        font-size: 18px;
-      }
-
-      .section-title h2 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: #0f172a;
-      }
-
-      .edit-btn {
-        background: none;
-        border: none;
-        font-size: 18px;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 6px;
-        color: #64748b;
-        transition: all 0.2s;
-      }
-
-      .edit-btn:hover {
-        background: #f1f5f9;
-        color: #2d6a7a;
-      }
-
-      .mission-text {
-        color: #475569;
-        line-height: 1.7;
-        margin-bottom: 24px;
-        font-size: 14px;
-      }
-
-      /* Stats Grid */
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        padding-top: 16px;
-        border-top: 1px solid #e2e8f0;
-      }
-
-      .stat-item {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .stat-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .stat-value {
-        font-size: 20px;
-        font-weight: 700;
-        color: #0f172a;
-      }
-
-      .stat-with-progress {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .progress-bar {
-        flex: 1;
-        height: 6px;
-        background: #e2e8f0;
-        border-radius: 3px;
-        overflow: hidden;
-      }
-
-      .progress-fill {
-        height: 100%;
-        background: #10b981;
-        border-radius: 3px;
-      }
-
-      /* Add New Button */
-      .add-new-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        background: #10b981;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-
-      .add-new-btn:hover {
-        background: #059669;
-      }
-
-      /* Specializations List */
-      .specializations-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .specialization-item {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 14px;
-        background: #f8fafc;
-        border-radius: 10px;
-      }
-
-      .spec-icon {
-        font-size: 24px;
-      }
-
-      .spec-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-
-      .spec-name {
-        font-weight: 600;
-        color: #0f172a;
-        font-size: 14px;
-      }
-
-      .spec-lead {
-        font-size: 12px;
-        color: #64748b;
-      }
-
-      .status-badge {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-      }
-
-      .status-badge.active {
-        background: #d1fae5;
-        color: #059669;
-      }
-
-      .status-badge.pending-staff {
-        background: #fef3c7;
-        color: #d97706;
-      }
-
-      .status-badge.inactive {
-        background: #fee2e2;
-        color: #dc2626;
-      }
-
-      /* Rating Card */
-      .rating-card {
-        background: linear-gradient(135deg, #2d6a7a 0%, #1e4a5a 100%);
-        border-radius: 12px;
-        padding: 24px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(45, 106, 122, 0.3);
-      }
-
-      .rating-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-        font-size: 13px;
-        opacity: 0.9;
-      }
-
-      .public-badge {
-        padding: 4px 10px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 600;
-      }
-
-      .rating-content {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      .rating-score {
-        display: block;
-        font-size: 56px;
-        font-weight: 700;
-        line-height: 1;
-        margin-bottom: 8px;
-      }
-
-      .stars {
-        font-size: 24px;
-        letter-spacing: 4px;
-        margin-bottom: 8px;
-      }
-
-      .rating-count {
-        font-size: 13px;
-        opacity: 0.9;
-      }
-
-      .view-reviews-btn {
-        width: 100%;
-        padding: 12px;
-        background: rgba(255, 255, 255, 0.15);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .view-reviews-btn:hover {
-        background: rgba(255, 255, 255, 0.25);
-      }
-
-      /* Facility Details */
-      .facility-details {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .detail-row {
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-      }
-
-      .detail-icon {
-        font-size: 18px;
-        margin-top: 2px;
-      }
-
-      .detail-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .detail-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .detail-text {
-        font-size: 13px;
-        color: #0f172a;
-        line-height: 1.5;
-      }
-
-      .hours-grid {
-        display: grid;
-        gap: 2px;
-        font-size: 13px;
-        color: #0f172a;
-      }
-
-      .update-details-btn {
-        align-self: flex-start;
-        padding: 6px 12px;
-        background: white;
-        border: 1px solid #2d6a7a;
-        color: #2d6a7a;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .update-details-btn:hover {
-        background: #2d6a7a;
-        color: white;
-      }
-
-      /* Document Preview */
-      .document-preview {
-        display: flex;
         gap: 8px;
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid #e2e8f0;
       }
-
-      .doc-thumbnail {
-        width: 80px;
-        height: 100px;
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      label {
+        display: grid;
+        gap: 8px;
+        font-weight: var(--ac-font-weight-semibold);
+      }
+      input,
+      textarea,
+      select {
+        border: 1px solid #c1d3dc;
         border-radius: 8px;
-        border: 2px solid white;
-        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+        padding: 12px;
+        font: inherit;
+        background: #ffffff;
       }
-
-      /* Footer */
-      .page-footer {
+      input:focus-visible,
+      textarea:focus-visible,
+      select:focus-visible {
+        outline: 3px solid #3d6375;
+        outline-offset: 1px;
+      }
+      .hint {
+        margin: 0;
+        color: #66747a;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-semibold);
+      }
+      .previews {
         display: flex;
-        align-items: center;
         gap: 16px;
-        padding: 20px 24px;
-        border-top: 1px solid #e2e8f0;
-        font-size: 13px;
-        color: #64748b;
+        flex-wrap: wrap;
       }
-
-      .page-footer a {
-        color: #64748b;
-        text-decoration: none;
-      }
-
-      .page-footer a:hover {
-        color: #2d6a7a;
-      }
-
-      .system-status {
-        margin-left: auto;
-        display: flex;
-        align-items: center;
+      .previews figure {
+        margin: 0;
+        display: grid;
         gap: 6px;
       }
-
-      .status-dot {
-        width: 8px;
-        height: 8px;
-        background: #10b981;
-        border-radius: 50%;
+      .previews figcaption {
+        color: #66747a;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-semibold);
+      }
+      .previews img {
+        width: 120px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #d4e6ef;
+        background: #f4faff;
+      }
+      .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .pill {
+        min-height: 38px;
+        padding: 0 16px;
+        border-radius: 999px;
+        border: 2px solid #d4e6ef;
+        background: #ffffff;
+        color: #263238;
+        font-weight: var(--ac-font-weight-bold);
+        cursor: pointer;
+      }
+      .pill:hover:not(.active) {
+        border-color: #8db4c8;
+      }
+      .pill.active {
+        border-color: #3d6375;
+        background: #3d6375;
+        color: #ffffff;
+      }
+      .pill:focus-visible {
+        outline: 3px solid #3d6375;
+        outline-offset: 2px;
       }
 
-      /* Responsive Design */
-      @media (max-width: 1024px) {
-        .content-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .right-column {
-          order: -1;
-        }
-
-        .rating-card,
-        .info-card {
-          margin-bottom: 0;
-        }
+      /* Read-only status block — visually distinct from editable fields. */
+      .readonly {
+        background: #f4faff;
+        border-style: dashed;
+      }
+      .ro-badge {
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-bold);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #66747a;
+        background: #e8f6ff;
+        border: 1px solid #d4e6ef;
+        border-radius: 999px;
+        padding: 2px 10px;
+      }
+      .ro-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+      .ro-field {
+        display: grid;
+        gap: 6px;
+      }
+      .ro-label {
+        color: #66747a;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-bold);
+      }
+      .ro-value {
+        color: #263238;
+        font-weight: var(--ac-font-weight-semibold);
+      }
+      .verify-badge {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-weight: var(--ac-font-weight-bold);
+        font-size: var(--ac-type-label);
+        background: #eef1f2;
+        color: #66747a;
+      }
+      .verify-badge.verified {
+        background: #72a675;
+        color: #ffffff;
       }
 
-      @media (max-width: 768px) {
-        .page-layout {
-          flex-direction: column;
-          gap: 0;
-          padding: 0;
-        }
-
-        .main-content {
-          max-width: 100%;
-          padding: 16px;
-        }
-
-        .cover-image {
-          height: 200px;
-        }
-
-        .school-identity {
-          flex-direction: column;
-          margin-top: -40px;
-          padding: 0;
-        }
-
-        .school-logo {
-          width: 80px;
-          height: 80px;
-          font-size: 40px;
-        }
-
-        .school-basic-info h1 {
-          font-size: 22px;
-        }
-
-        .stats-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .page-footer {
-          flex-direction: column;
-          gap: 8px;
-          text-align: center;
-        }
-
-        .system-status {
-          margin-left: 0;
-        }
+      button[type='submit'] {
+        width: fit-content;
+        border: 0;
+        border-radius: 8px;
+        background: #3d6375;
+        color: #ffffff;
+        padding: 12px 22px;
+        font-weight: var(--ac-font-weight-bold);
+        cursor: pointer;
+      }
+      button[type='submit']:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .error {
+        color: #a23434;
+        font-weight: var(--ac-font-weight-semibold);
+      }
+      .field-error {
+        color: #a23434;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-semibold);
+      }
+      .success {
+        color: #236b43;
+        font-weight: var(--ac-font-weight-semibold);
+      }
+      /* Prominent save confirmation / error banner (hard to miss). */
+      .save-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: 10px;
+        padding: 14px 18px;
+        font-weight: var(--ac-font-weight-bold);
+        font-size: 1rem;
+      }
+      .save-banner.ok {
+        background: #e2efe3;
+        color: #236b43;
+        border: 1px solid #b7d8bd;
+      }
+      .save-banner.bad {
+        background: #fbe9e9;
+        color: #a23434;
+        border: 1px solid #eec2c2;
+      }
+      .save-icon {
+        font-size: 1.15rem;
+      }
+      .prompt {
+        max-width: 760px;
+        margin-bottom: 20px;
+        background: #e8f6ff;
+        border: 1px solid #d4e6ef;
+        border-radius: 10px;
+        padding: 14px 18px;
+        color: #263238;
+        font-weight: var(--ac-font-weight-semibold);
+      }
+      .form-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .cancel-btn {
+        border: 1px solid #c1d3dc;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #263238;
+        padding: 12px 22px;
+        font-weight: var(--ac-font-weight-bold);
+        cursor: pointer;
+      }
+      .cancel-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .save-banner {
+        max-width: 760px;
       }
     `,
   ],
@@ -760,32 +526,190 @@ interface Specialization {
 })
 export class SchoolProfilePage implements OnInit {
   private readonly api = inject(SchoolsApi);
-  readonly profile = signal<SchoolStaffResponse | null>(null);
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
+  private readonly fb = inject(FormBuilder);
+  private readonly el = inject(ElementRef<HTMLElement>);
 
-  readonly specializations = signal<Specialization[]>([
-    { name: 'ABA Therapy', lead: 'Dr. Marcus Thorne', status: 'Active', icon: '🧩' },
-    { name: 'Speech Therapy', lead: 'Sarah Jenkins, SLP', status: 'Active', icon: '💬' },
-    {
-      name: 'Occupational Therapy',
-      lead: 'Alex Rivera, OTR/L',
-      status: 'Pending Staff',
-      icon: '✋',
-    },
-  ]);
+  protected readonly availabilityOptions = availabilityOptions;
+
+  readonly school = signal<SchoolDetailResponse | null>(null);
+  readonly specializations = signal<readonly string[]>([]);
+  readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
+  readonly saving = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly mode = signal<'view' | 'edit'>('edit');
+  readonly savedFlash = signal(false);
+
+  // Predefined options plus any already-saved values not in the list (so custom
+  // specializations remain visible/removable).
+  readonly allSpecializations = computed(() => {
+    const selected = this.specializations();
+    const extras = selected.filter((item) => !specializationOptions.includes(item));
+    return [...specializationOptions, ...extras];
+  });
+
+  readonly form = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.maxLength(160)]],
+    description: ['', [Validators.maxLength(2000)]],
+    logoUrl: ['', [Validators.maxLength(1000)]],
+    coverImageUrl: ['', [Validators.maxLength(1000)]],
+    city: ['', [Validators.required, Validators.maxLength(120)]],
+    address: ['', [Validators.required, Validators.maxLength(300)]],
+    email: ['', [Validators.email, Validators.maxLength(160)]],
+    website: ['', [Validators.maxLength(500)]],
+    studentTeacherRatio: ['', [Validators.maxLength(40)]],
+    availabilityStatus: ['IMMEDIATE' as SchoolAvailabilityStatus],
+    waitlistEstimate: ['', [Validators.maxLength(120)]],
+    admissionRequirements: ['', [Validators.maxLength(4000)]],
+    operatingHours: ['', [Validators.maxLength(200)]],
+    facilities: [''],
+  });
 
   ngOnInit() {
-    this.loading.set(true);
-    this.api.getMySchoolStaffProfile().subscribe({
-      next: (profile) => {
-        this.profile.set(profile);
+    this.api.getMySchool().subscribe({
+      next: (school) => {
+        this.hydrate(school);
+        // Completed profile => polished view by default; empty profile => form directly.
+        this.mode.set(this.hasProfileContent(school) ? 'view' : 'edit');
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('School profile could not be loaded. Please refresh the page.');
+        this.loadError.set('Your school profile could not be loaded. Please refresh the page.');
         this.loading.set(false);
       },
+    });
+  }
+
+  /** True once the school has saved any real profile content beyond the bare account. */
+  hasProfileContent(school: SchoolDetailResponse): boolean {
+    return Boolean(
+      school.description?.trim() ||
+      school.email?.trim() ||
+      school.website?.trim() ||
+      school.studentTeacherRatio?.trim() ||
+      school.operatingHours?.trim() ||
+      school.admissionRequirements?.trim() ||
+      school.specializations.length ||
+      school.facilities.length,
+    );
+  }
+
+  startEditing() {
+    const school = this.school();
+    if (school) this.hydrate(school); // form matches current saved values
+    this.error.set(null);
+    this.savedFlash.set(false);
+    this.mode.set('edit');
+  }
+
+  cancelEditing() {
+    const school = this.school();
+    if (school) this.hydrate(school); // discard unsaved edits
+    this.error.set(null);
+    this.mode.set('view');
+  }
+
+  submit() {
+    this.error.set(null);
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.error.set('Fix the highlighted fields before saving.');
+      return;
+    }
+
+    const value = this.form.getRawValue();
+    const availabilityStatus = value.availabilityStatus;
+    const facilities = value.facilities
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    const payload: UpdateSchoolProfileRequest = {
+      name: value.name.trim(),
+      city: value.city.trim(),
+      address: value.address.trim(),
+      description: value.description.trim() || null,
+      email: value.email.trim() || null,
+      website: value.website.trim() || null,
+      logoUrl: value.logoUrl.trim() || null,
+      coverImageUrl: value.coverImageUrl.trim() || null,
+      studentTeacherRatio: value.studentTeacherRatio.trim() || null,
+      availabilityStatus,
+      waitlistEstimate:
+        availabilityStatus === 'WAITLIST' ? value.waitlistEstimate.trim() || null : null,
+      admissionRequirements: value.admissionRequirements.trim() || null,
+      operatingHours: value.operatingHours.trim() || null,
+      facilities,
+      specializations: [...this.specializations()],
+    };
+
+    this.saving.set(true);
+    this.api.updateMySchool(payload).subscribe({
+      next: (school) => {
+        this.saving.set(false);
+        try {
+          this.hydrate(school);
+        } catch {
+          // The save succeeded even if re-populating the form failed.
+        }
+        // Switch to the polished view so the saved data is visibly shown (the fix
+        // for "nothing happens on save").
+        this.mode.set('view');
+        this.savedFlash.set(true);
+        this.revealFeedback();
+      },
+      error: () => {
+        this.saving.set(false);
+        this.error.set(
+          'Your profile could not be saved. Check the highlighted fields (URLs must start with https://) and try again.',
+        );
+        this.revealFeedback();
+      },
+    });
+  }
+
+  /** Scroll the save confirmation/error banner into view so it's never missed. */
+  private revealFeedback() {
+    setTimeout(() => {
+      this.el.nativeElement
+        .querySelector('.save-banner')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 0);
+  }
+
+  toggleSpecialization(name: string) {
+    this.specializations.update((list) =>
+      list.includes(name) ? list.filter((item) => item !== name) : [...list, name],
+    );
+  }
+
+  isSpecializationSelected(name: string): boolean {
+    return this.specializations().includes(name);
+  }
+
+  protected showError(path: string) {
+    const control = this.form.get(path);
+    return Boolean(control?.invalid && (control.touched || control.dirty));
+  }
+
+  private hydrate(school: SchoolDetailResponse) {
+    this.school.set(school);
+    this.specializations.set([...school.specializations]);
+    this.form.reset({
+      name: school.name,
+      description: school.description ?? '',
+      logoUrl: school.logoUrl ?? '',
+      coverImageUrl: school.coverImageUrl ?? '',
+      city: school.city,
+      address: school.address,
+      email: school.email ?? '',
+      website: school.website ?? '',
+      studentTeacherRatio: school.studentTeacherRatio ?? '',
+      availabilityStatus: school.availabilityStatus,
+      waitlistEstimate: school.waitlistEstimate ?? '',
+      admissionRequirements: school.admissionRequirements ?? '',
+      operatingHours: school.operatingHours ?? '',
+      facilities: school.facilities.join('\n'),
     });
   }
 }

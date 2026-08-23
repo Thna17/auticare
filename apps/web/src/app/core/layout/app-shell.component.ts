@@ -36,6 +36,11 @@ const schoolNav: readonly NavItem[] = [
   { label: 'Notifications', path: '/notifications', icon: 'bell' },
   { label: 'School Profile', path: '/schools/profile', icon: 'school' },
 ];
+const hospitalNav: readonly NavItem[] = [
+  { label: 'Dashboard', path: '/hospital/dashboard', icon: 'grid' },
+  { label: 'Appointments', path: '/hospital/appointments', icon: 'calendar' },
+  { label: 'Doctors', path: '/hospital/doctors', icon: 'hospital' },
+];
 
 const secondaryNav: readonly NavItem[] = [
   { label: 'Settings', path: '/settings', icon: 'settings' },
@@ -819,12 +824,14 @@ export class AppShellComponent {
   protected readonly primaryNav = computed(() => {
     if (this.role() === 'ADMIN') return adminNav;
     if (this.role() === 'SCHOOL') return schoolNav;
+    if (this.role() === 'HOSPITAL') return hospitalNav;
     return primaryNav;
   });
   protected readonly secondaryNav = computed(() => secondaryNav);
   protected readonly mobileNav = computed(() => {
     if (this.role() === 'ADMIN') return adminMobileNav;
     if (this.role() === 'SCHOOL') return schoolMobileNav;
+    if (this.role() === 'HOSPITAL') return hospitalNav;
     return mobileNav;
   });
   protected readonly mobileAction = computed(() => {
@@ -832,12 +839,16 @@ export class AppShellComponent {
       return { label: 'Create school account', path: '/schools/admin/new' };
     if (this.role() === 'SCHOOL')
       return { label: 'Create activity report', path: '/schools/reports/new' };
+    if (this.role() === 'HOSPITAL')
+      return { label: 'Appointments', path: '/hospital/appointments' };
     return { label: 'Start new screening', path: '/screening' };
   });
   protected readonly primaryAction = computed(() => {
     if (this.role() === 'ADMIN')
       return { label: 'Create School Account', path: '/schools/admin/new' };
     if (this.role() === 'SCHOOL') return { label: 'Add Activity', path: '/schools/reports/new' };
+    if (this.role() === 'HOSPITAL')
+      return { label: 'Manage Appointments', path: '/hospital/appointments' };
     return { label: 'New Screening', path: '/screening' };
   });
   protected readonly accountName = computed(() => {
@@ -845,11 +856,13 @@ export class AppShellComponent {
     if (!parent) return 'AutiCare user';
     if (parent.role === 'ADMIN') return 'Admin Panel';
     if (parent.role === 'SCHOOL') return `${parent.firstName} ${parent.lastName}`.trim();
+    if (parent.role === 'HOSPITAL') return `${parent.firstName} ${parent.lastName}`.trim();
     return `${parent.firstName} ${parent.lastName}`.trim();
   });
   protected readonly roleLabel = computed(() => {
     if (this.role() === 'ADMIN') return 'System administrator';
     if (this.role() === 'SCHOOL') return 'School account';
+    if (this.role() === 'HOSPITAL') return 'Hospital account';
     return 'Parent account';
   });
   protected readonly initials = computed(() => {

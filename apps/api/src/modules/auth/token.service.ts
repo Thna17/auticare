@@ -60,7 +60,7 @@ export class TokenService {
     if (
       typeof decoded === 'string' ||
       typeof decoded.sub !== 'string' ||
-      !['PARENT', 'ADMIN', 'SCHOOL'].includes(String(decoded.role))
+      !['PARENT', 'ADMIN', 'SCHOOL', 'HOSPITAL'].includes(String(decoded.role))
     ) {
       throw new Error('Invalid token');
     }

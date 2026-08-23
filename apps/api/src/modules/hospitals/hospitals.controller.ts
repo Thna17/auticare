@@ -8,3 +8,8 @@ export const listHospitals = async (_req: Request, res: Response) => ok(res, awa
 
 export const createHospital = async (req: Request, res: Response) =>
   created(res, await service.create(req.auth!, req.body));
+
+export const createHospitalAccount = async (req: Request, res: Response) =>
+  created(res, await service.createAccount(req.auth!, req.body));
+export const listHospitalAccounts = async (req: Request, res: Response) =>
+  ok(res, await service.listAccounts(req.auth!));
