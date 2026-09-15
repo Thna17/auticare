@@ -15,6 +15,15 @@ export const getSchoolStaffMe = async (req: Request, res: Response) =>
 export const listSchools = async (req: Request, res: Response) =>
   ok(res, await service.listSchools(req.auth!));
 
+export const getMySchool = async (req: Request, res: Response) =>
+  ok(res, await service.getMySchool(req.auth!));
+
+export const updateMySchool = async (req: Request, res: Response) =>
+  ok(res, await service.updateMySchool(req.auth!, req.body));
+
+export const getSchoolById = async (req: Request, res: Response) =>
+  ok(res, await service.getSchoolById(req.auth!, requiredParam(req.params.id)));
+
 export const createSchoolAccount = async (req: Request, res: Response) =>
   created(res, await service.createSchoolAccount(req.auth!, req.body));
 

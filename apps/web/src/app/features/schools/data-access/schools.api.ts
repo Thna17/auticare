@@ -6,8 +6,10 @@ import type {
   CreateSchoolActivityReportRequest,
   SchoolActivityReportResponse,
   SchoolChildEnrollmentResponse,
+  SchoolDetailResponse,
   SchoolResponse,
   SchoolStaffResponse,
+  UpdateSchoolProfileRequest,
   UpdateSchoolRequest,
 } from '@auticare/contracts';
 import { map } from 'rxjs';
@@ -21,6 +23,12 @@ export class SchoolsApi {
   listSchools() {
     return this.http
       .get<{ data: SchoolResponse[] }>(`${this.apiBaseUrl}/schools`)
+      .pipe(map((response) => response.data));
+  }
+
+  getSchoolById(schoolId: string) {
+    return this.http
+      .get<{ data: SchoolDetailResponse }>(`${this.apiBaseUrl}/schools/${schoolId}`)
       .pipe(map((response) => response.data));
   }
 
@@ -69,6 +77,18 @@ export class SchoolsApi {
   getMySchoolStaffProfile() {
     return this.http
       .get<{ data: SchoolStaffResponse }>(`${this.apiBaseUrl}/schools/staff/me`)
+      .pipe(map((response) => response.data));
+  }
+
+  getMySchool() {
+    return this.http
+      .get<{ data: SchoolDetailResponse }>(`${this.apiBaseUrl}/schools/me`)
+      .pipe(map((response) => response.data));
+  }
+
+  updateMySchool(input: UpdateSchoolProfileRequest) {
+    return this.http
+      .patch<{ data: SchoolDetailResponse }>(`${this.apiBaseUrl}/schools/me`, input)
       .pipe(map((response) => response.data));
   }
 }

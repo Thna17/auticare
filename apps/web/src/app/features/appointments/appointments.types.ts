@@ -1,4 +1,9 @@
-import type { HospitalResponse } from '@auticare/contracts';
+import type {
+  AppointmentResponse,
+  AppointmentStatus,
+  DoctorResponse,
+  HospitalResponse,
+} from '@auticare/contracts';
 
 /**
  * NOTE: `Doctor` and `Appointment` exist as Prisma models (see
@@ -10,38 +15,9 @@ import type { HospitalResponse } from '@auticare/contracts';
  * feature expects.
  */
 
-export const appointmentStatuses = ['REQUESTED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'] as const;
-export type AppointmentStatus = (typeof appointmentStatuses)[number];
+export type { AppointmentResponse, AppointmentStatus, DoctorResponse };
 
-export type DoctorResponse = {
-  readonly id: string;
-  readonly hospitalId: string;
-  readonly fullName: string;
-  readonly specialty: string;
-  readonly bio: string | null;
-};
-
-export type AppointmentResponse = {
-  readonly id: string;
-  readonly parentId: string;
-  readonly childId: string | null;
-  readonly childName: string | null;
-  readonly hospitalId: string;
-  readonly hospitalName: string;
-  readonly doctorId: string | null;
-  readonly doctorName: string | null;
-  readonly scheduledAt: string;
-  readonly status: AppointmentStatus;
-  readonly reason: string | null;
-};
-
-export type CreateAppointmentRequest = {
-  readonly childId: string;
-  readonly hospitalId: string;
-  readonly doctorId: string;
-  readonly scheduledAt: string;
-  readonly reason?: string;
-};
+export type { CreateAppointmentRequest } from '@auticare/contracts';
 
 export type StatusPresentation = {
   readonly label: string;
@@ -54,6 +30,20 @@ export const statusPresentation: Record<AppointmentStatus, StatusPresentation> =
   CONFIRMED: { label: 'Confirmed', foreground: '#15803d', background: '#dcfce7' },
   COMPLETED: { label: 'Completed', foreground: '#1d4ed8', background: '#dbeafe' },
   CANCELLED: { label: 'Cancelled', foreground: '#b91c1c', background: '#fee2e2' },
+};
+
+/**
+ * Maps appointment status to the shared `ac-ui-badge` tone (see
+ * design-system/components/ui-badge.component.ts). This is the tone
+ * source of truth going forward — `statusPresentation` above stays
+ * only for the label text until every call site has migrated off its
+ * hardcoded hex colors.
+ */
+export const statusTone: Record<AppointmentStatus, 'positive' | 'caution' | 'alert' | 'neutral'> = {
+  REQUESTED: 'caution',
+  CONFIRMED: 'positive',
+  COMPLETED: 'neutral',
+  CANCELLED: 'alert',
 };
 
 export const specialtyCategories = [

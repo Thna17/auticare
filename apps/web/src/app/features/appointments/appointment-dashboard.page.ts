@@ -2,15 +2,23 @@ import type { OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiBadgeComponent } from '../../design-system/components/ui-badge.component';
 import { AppointmentsFacade } from './state/appointments.facade';
 import type { AppointmentStatus } from './appointments.types';
-import { statusPresentation } from './appointments.types';
+import { statusPresentation, statusTone } from './appointments.types';
 
 type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
 
+const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: string }> = [
+  { value: 'REQUESTED', label: 'Pending' },
+  { value: 'CONFIRMED', label: 'Confirmed' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
+
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent],
+  imports: [RouterLink, UiEmptyStateComponent, UiBadgeComponent],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
       <span>Dashboard</span>
@@ -54,10 +62,28 @@ type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
             </button>
           }
         </div>
-        <button type="button" class="filters-toggle" (click)="showCancelled.set(!showCancelled())">
-          {{ showCancelled() ? 'Hide cancelled' : 'Filters' }}
+        <button
+          type="button"
+          class="filters-toggle"
+          (click)="showStatusFilters.set(!showStatusFilters())"
+        >
+          {{ showStatusFilters() ? 'Hide filters' : 'Filters' }}
         </button>
       </div>
+
+      @if (showStatusFilters()) {
+        <div class="status-pills" role="group" aria-label="Filter by status">
+          @for (option of statusOptions; track option.value) {
+            <button
+              type="button"
+              [class.active]="isStatusVisible(option.value)"
+              (click)="toggleStatus(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      }
 
       @if (facade.loading()) {
         <p class="status" aria-live="polite">Loading appointments...</p>
@@ -78,14 +104,13 @@ type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
                   {{ appointment.hospitalName }} · {{ appointment.childName ?? 'Patient TBD' }}
                 </p>
                 <p class="meta">{{ formatDate(appointment.scheduledAt) }}</p>
+                @if (appointment.status === 'CANCELLED' && appointment.reason) {
+                  <p class="meta reason">{{ appointment.reason }}</p>
+                }
               </div>
-              <span
-                class="status-badge"
-                [style.color]="presentation(appointment.status).foreground"
-                [style.background]="presentation(appointment.status).background"
-              >
+              <ac-ui-badge [tone]="statusTone[appointment.status]">
                 {{ presentation(appointment.status).label }}
-              </span>
+              </ac-ui-badge>
             </li>
           }
         </ul>
@@ -239,6 +264,31 @@ type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
         color: #ffffff;
       }
 
+      .status-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: -6px 0 18px;
+      }
+
+      .status-pills button {
+        min-height: 34px;
+        border: 1px solid #dde5e4;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #41484b;
+        padding: 0 12px;
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-medium);
+        cursor: pointer;
+      }
+
+      .status-pills button.active {
+        background: var(--ac-color-sage-light);
+        border-color: var(--ac-color-sage);
+        color: #294a5a;
+      }
+
       .status,
       .error {
         border-radius: 12px;
@@ -282,13 +332,9 @@ type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
         font-size: var(--ac-type-meta);
       }
 
-      .status-badge {
-        flex: 0 0 auto;
-        border-radius: 999px;
-        padding: 6px 12px;
-        font-size: var(--ac-type-meta);
-        font-weight: var(--ac-font-weight-bold);
-        text-transform: uppercase;
+      .meta.reason {
+        margin-top: 4px;
+        font-style: italic;
       }
 
       .banners {
@@ -348,7 +394,12 @@ type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
 export class AppointmentDashboardPage implements OnInit {
   protected readonly facade = inject(AppointmentsFacade);
   protected readonly timeFilter = signal<TimeFilter>('ALL');
-  protected readonly showCancelled = signal(true);
+  protected readonly showStatusFilters = signal(false);
+  protected readonly visibleStatuses = signal<ReadonlySet<AppointmentStatus>>(
+    new Set(statusFilterOptions.map((option) => option.value)),
+  );
+  protected readonly statusOptions = statusFilterOptions;
+  protected readonly statusTone = statusTone;
   protected readonly timeOptions: ReadonlyArray<{ value: TimeFilter; label: string }> = [
     { value: 'ALL', label: 'All Time' },
     { value: 'UPCOMING', label: 'Upcoming' },
@@ -357,9 +408,10 @@ export class AppointmentDashboardPage implements OnInit {
 
   protected readonly visibleAppointments = computed(() => {
     const now = Date.now();
+    const visibleStatuses = this.visibleStatuses();
     return this.facade
       .appointments()
-      .filter((appointment) => this.showCancelled() || appointment.status !== 'CANCELLED')
+      .filter((appointment) => visibleStatuses.has(appointment.status))
       .filter((appointment) => {
         if (this.timeFilter() === 'ALL') return true;
         const scheduledTime = new Date(appointment.scheduledAt).getTime();
@@ -369,6 +421,22 @@ export class AppointmentDashboardPage implements OnInit {
 
   ngOnInit() {
     this.facade.loadAppointments();
+  }
+
+  protected isStatusVisible(status: AppointmentStatus): boolean {
+    return this.visibleStatuses().has(status);
+  }
+
+  protected toggleStatus(status: AppointmentStatus) {
+    this.visibleStatuses.update((current) => {
+      const next = new Set(current);
+      if (next.has(status)) {
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
+      return next;
+    });
   }
 
   protected presentation(status: AppointmentStatus) {

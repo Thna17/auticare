@@ -2,7 +2,7 @@ import type { OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ChildrenFacade } from '../children/state/children.facade';
-import { AppointmentsFacade } from './state/appointments.facade';
+import { AppointmentsFacade, visitReasons } from './state/appointments.facade';
 import { AppointmentConfirmationComponent } from './appointment-confirmation.component';
 
 type CalendarDay = {
@@ -119,6 +119,34 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
                   </button>
                 }
               </div>
+            </section>
+          }
+
+          @if (facade.booking().time) {
+            <section class="section">
+              <p class="section-title">Reason for visit</p>
+              <div class="reason-row">
+                @for (reason of visitReasons; track reason) {
+                  <button
+                    type="button"
+                    class="reason-chip"
+                    [class.selected]="facade.booking().visitReason === reason"
+                    (click)="facade.selectVisitReason(reason)"
+                  >
+                    {{ reason }}
+                  </button>
+                }
+              </div>
+              <label class="notes-label" for="visit-notes">Notes (optional)</label>
+              <textarea
+                id="visit-notes"
+                class="notes-input"
+                rows="3"
+                maxlength="2000"
+                placeholder="Anything the specialist should know ahead of the visit"
+                [value]="facade.booking().notes"
+                (input)="facade.setNotes($any($event.target).value)"
+              ></textarea>
             </section>
           }
 
@@ -358,6 +386,55 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         color: #ffffff;
       }
 
+      .reason-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .reason-chip {
+        min-height: 36px;
+        border: 1.5px solid #dde5e4;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #294a5a;
+        padding: 0 14px;
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-medium);
+        cursor: pointer;
+      }
+
+      .reason-chip.selected {
+        border-color: var(--ac-color-sage);
+        background: var(--ac-color-sage-light);
+        color: #294a5a;
+      }
+
+      .notes-label {
+        display: block;
+        margin-bottom: 6px;
+        color: #66747a;
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-medium);
+      }
+
+      .notes-input {
+        width: 100%;
+        border: 1px solid #dde5e4;
+        border-radius: var(--ac-radius-md);
+        padding: 10px 12px;
+        font-family: inherit;
+        font-size: var(--ac-type-meta);
+        color: var(--ac-color-text);
+        resize: vertical;
+      }
+
+      .notes-input:focus-visible {
+        outline: 3px solid var(--ac-color-warning);
+        outline-offset: 1px;
+      }
+
       .error {
         margin: 0 0 16px;
         border-radius: 10px;
@@ -405,6 +482,7 @@ export class BookAppointmentModalComponent implements OnInit {
   protected readonly facade = inject(AppointmentsFacade);
   protected readonly children = inject(ChildrenFacade);
   protected readonly timeSlots = timeSlots;
+  protected readonly visitReasons = visitReasons;
   protected readonly weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   private readonly viewMonth = signal(startOfMonth(new Date()));
 

@@ -19,8 +19,10 @@ import type { AppointmentResponse } from './appointments.types';
         </svg>
       </span>
 
-      <h2>Appointment confirmed</h2>
-      <p class="lead">A confirmation has been sent to your account.</p>
+      <h2>Hospital appointment requested</h2>
+      <p class="lead">
+        The hospital will review the child's symptoms and confirm or decline this request soon.
+      </p>
 
       <dl class="summary">
         <div>
@@ -39,6 +41,12 @@ import type { AppointmentResponse } from './appointments.types';
           <dt>Provider</dt>
           <dd>{{ appointment().doctorName ?? 'To be assigned' }}</dd>
         </div>
+        @if (appointment().reason) {
+          <div class="symptoms-row">
+            <dt>Symptoms shared</dt>
+            <dd class="symptoms-text">{{ appointment().reason }}</dd>
+          </div>
+        }
       </dl>
 
       <button type="button" class="done-button" (click)="done.emit()">Done</button>
@@ -109,6 +117,20 @@ import type { AppointmentResponse } from './appointments.types';
         color: #001e2b;
         font-weight: var(--ac-font-weight-semibold);
         text-align: right;
+      }
+
+      .symptoms-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding-top: 10px;
+        border-top: 1px dashed #d6e0e2;
+      }
+
+      .symptoms-text {
+        text-align: left;
+        font-weight: var(--ac-font-weight-medium);
+        line-height: var(--ac-line-body);
       }
 
       .done-button {
