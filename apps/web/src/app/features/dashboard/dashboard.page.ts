@@ -1,9 +1,10 @@
 import type { OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { ChildResponse } from '@auticare/contracts';
+import type { ChildResponse, SchoolDashboardResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 import { ChildrenApi } from '../children/data-access/children.api';
+import { SchoolsApi } from '../schools/data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 
 type QuickAction = {
@@ -30,24 +31,6 @@ const quickActions: readonly QuickAction[] = [
   },
 ];
 
-interface RecentReport {
-  id: string;
-  studentName: string;
-  initials: string;
-  activity: string;
-  date: string;
-  status: 'Reported' | 'Draft';
-}
-
-interface ReportReminder {
-  id: string;
-  title: string;
-  student?: string;
-  dueDate: string;
-  dueTime?: string;
-  urgency: 'today' | 'tomorrow' | 'upcoming';
-}
-
 interface StudentActivity {
   id: string;
   studentName: string;
@@ -70,171 +53,207 @@ interface StudentActivity {
         <main class="main-content">
           <ac-school-topbar />
 
-          <!-- Greeting Section -->
-          <section class="greeting-section">
-            <div>
-              <h1>Good {{ dayPart() }}, {{ userFirstName() }}</h1>
-              <p>Here's a summary of your classroom's progress today.</p>
+          @if (dashboardLoading()) {
+            <div class="loading-state">
+              <p>Loading dashboard...</p>
             </div>
-          </section>
-
-          <!-- Stats Grid -->
-          <section class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon students-icon">👥</div>
-              <div class="stat-header">
-                <span class="stat-trend">+2 this term</span>
+          } @else if (dashboardError()) {
+            <div class="error-state" role="alert">
+              <p>{{ dashboardError() }}</p>
+            </div>
+          } @else {
+            <!-- Greeting Section -->
+            <section class="greeting-section">
+              <div>
+                <h1>Good {{ dayPart() }}, {{ greetingName() }}</h1>
+                <p>Here's a summary of your classroom's progress today.</p>
               </div>
-              <div class="stat-label">TOTAL STUDENTS</div>
-              <div class="stat-value">12</div>
-            </div>
+            </section>
 
-            <div class="stat-card">
-              <div class="stat-icon reports-icon">📋</div>
-              <div class="stat-label">REPORTS SUBMITTED</div>
-              <div class="stat-value">45</div>
-              <div class="stat-footer">Submitted this month</div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon pending-icon">⏳</div>
-              <div class="stat-label">PENDING REPORTS</div>
-              <div class="stat-value warning">03</div>
-              <div class="progress-bar-mini">
-                <div class="progress-fill" style="width: 60%"></div>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon activities-icon">✓</div>
-              <div class="stat-header">
-                <span class="stat-trend positive">+12% from last week</span>
-              </div>
-              <div class="stat-label">ACTIVITIES COMPLETED</div>
-              <div class="stat-value">128</div>
-            </div>
-          </section>
-
-          <!-- Main Content Grid -->
-          <div class="dashboard-grid">
-            <!-- Left Column -->
-            <div class="left-column">
-              <!-- Recent Reports -->
-              <div class="content-card">
-                <div class="card-header">
-                  <h2>Recent Reports</h2>
-                  <a href="#" class="view-all">View All</a>
+            @if (dashboardData(); as data) {
+              <!-- Stats Grid -->
+              <section class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-icon students-icon">👥</div>
+                  @if (data.stats.studentsDelta) {
+                    <div class="stat-header">
+                      <span class="stat-trend">+{{ data.stats.studentsDelta }} this term</span>
+                    </div>
+                  }
+                  <div class="stat-label">TOTAL STUDENTS</div>
+                  <div class="stat-value">{{ data.stats.totalStudents }}</div>
                 </div>
-                <table class="reports-table">
-                  <thead>
-                    <tr>
-                      <th>Student Name</th>
-                      <th>Activity</th>
-                      <th>Date</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (report of recentReports(); track report.id) {
-                      <tr>
-                        <td>
-                          <div class="student-cell">
-                            <div
-                              class="student-avatar"
-                              [style.background]="getAvatarColor(report.initials)"
-                            >
-                              {{ report.initials }}
-                            </div>
-                            <span class="student-name">{{ report.studentName }}</span>
-                          </div>
-                        </td>
-                        <td>{{ report.activity }}</td>
-                        <td>{{ report.date }}</td>
-                        <td>
-                          <span class="status-badge" [class]="report.status.toLowerCase()">
-                            {{ report.status }}
-                          </span>
-                        </td>
-                      </tr>
+
+                <div class="stat-card">
+                  <div class="stat-icon reports-icon">📋</div>
+                  <div class="stat-label">REPORTS SUBMITTED</div>
+                  <div class="stat-value">{{ data.stats.reportsSubmitted }}</div>
+                  <div class="stat-footer">Submitted this month</div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon pending-icon">⏳</div>
+                  <div class="stat-label">PENDING REPORTS</div>
+                  <div class="stat-value warning">
+                    {{ formatPending(data.stats.pendingReports) }}
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon activities-icon">✓</div>
+                  @if (data.stats.weekDelta != null) {
+                    <div class="stat-header">
+                      <span class="stat-trend positive"
+                        >+{{ data.stats.weekDelta }}% from last week</span
+                      >
+                    </div>
+                  }
+                  <div class="stat-label">ACTIVITIES COMPLETED</div>
+                  <div class="stat-value">{{ data.stats.activitiesCompleted }}</div>
+                </div>
+              </section>
+
+              <!-- Main Content Grid -->
+              <div class="dashboard-grid">
+                <!-- Left Column -->
+                <div class="left-column">
+                  <!-- Recent Reports -->
+                  <div class="content-card">
+                    <div class="card-header">
+                      <h2>Recent Reports</h2>
+                      <a routerLink="/schools/reports" class="view-all">View All</a>
+                    </div>
+                    @if (data.recentReports.length) {
+                      <table class="reports-table">
+                        <thead>
+                          <tr>
+                            <th>Student Name</th>
+                            <th>Activity</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (report of data.recentReports; track report.id) {
+                            <tr>
+                              <td>
+                                <div class="student-cell">
+                                  <div
+                                    class="student-avatar"
+                                    [style.background]="getAvatarColor(report.childFirstName)"
+                                  >
+                                    {{ report.childFirstName.slice(0, 2).toUpperCase() }}
+                                  </div>
+                                  <span class="student-name">{{ report.childFirstName }}</span>
+                                </div>
+                              </td>
+                              <td>{{ report.activityCategory }}</td>
+                              <td>{{ formatDate(report.activityDate) }}</td>
+                              <td>
+                                <span class="status-badge" [class]="report.status.toLowerCase()">
+                                  {{ report.status }}
+                                </span>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    } @else {
+                      <p class="empty-message">No reports yet.</p>
                     }
-                  </tbody>
-                </table>
-              </div>
+                  </div>
 
-              <!-- Recent Student Activities -->
-              <div class="content-card">
-                <div class="card-header">
-                  <h2>Recent Student Activities</h2>
-                </div>
-                <div class="activities-timeline">
-                  @for (activity of studentActivities(); track activity.id) {
-                    <div class="activity-item">
-                      <div class="activity-icon" [style.background]="activity.color">
-                        {{ activity.initials }}
-                      </div>
-                      <div class="activity-content">
-                        <p>
-                          <strong>{{ activity.studentName }}</strong> {{ activity.description }}
-                        </p>
-                        <span class="activity-time">{{ activity.timeAgo }}</span>
-                      </div>
+                  <!-- Recent Student Activities (derived from recent reports) -->
+                  <div class="content-card">
+                    <div class="card-header">
+                      <h2>Recent Student Activities</h2>
                     </div>
-                  }
-                </div>
-              </div>
-            </div>
-
-            <!-- Right Column -->
-            <div class="right-column">
-              <!-- Report Reminders -->
-              <div class="content-card reminders-card">
-                <div class="card-header">
-                  <h2>
-                    <span class="calendar-icon">📅</span>
-                    Report Reminders
-                  </h2>
-                </div>
-                <div class="reminders-list">
-                  @for (reminder of reportReminders(); track reminder.id) {
-                    <div class="reminder-item" [class]="reminder.urgency">
-                      <div class="reminder-header">
-                        <span class="reminder-when" [class]="reminder.urgency">
-                          {{ getReminderLabel(reminder.urgency) }}
-                        </span>
+                    @if (derivedActivities().length) {
+                      <div class="activities-timeline">
+                        @for (activity of derivedActivities(); track activity.id) {
+                          <div class="activity-item">
+                            <div class="activity-icon" [style.background]="activity.color">
+                              {{ activity.initials }}
+                            </div>
+                            <div class="activity-content">
+                              <p>
+                                <strong>{{ activity.studentName }}</strong>
+                                {{ activity.description }}
+                              </p>
+                              <span class="activity-time">{{ activity.timeAgo }}</span>
+                            </div>
+                          </div>
+                        }
                       </div>
-                      <div class="reminder-title">{{ reminder.title }}</div>
-                      @if (reminder.dueTime) {
-                        <div class="reminder-time">{{ reminder.dueTime }}</div>
-                      }
-                    </div>
-                  }
-                </div>
-                <button class="manage-calendar-btn">Manage Calendar</button>
-              </div>
-
-              <!-- Classroom Engagement -->
-              <div class="engagement-card">
-                <div class="engagement-header">
-                  <h2>Classroom Engagement</h2>
-                  <p>Average student engagement is up 18% compared to last week.</p>
-                </div>
-                <div class="engagement-chart">
-                  <div class="chart-bars">
-                    @for (day of engagementData(); track $index) {
-                      <div class="chart-column">
-                        <div
-                          class="bar"
-                          [style.height.%]="day.value"
-                          [class.today]="day.isToday"
-                        ></div>
-                        <span class="day-label">{{ day.label }}</span>
-                      </div>
+                    } @else {
+                      <p class="empty-message">No recent activities.</p>
                     }
                   </div>
                 </div>
+
+                <!-- Right Column -->
+                <div class="right-column">
+                  <!-- Report Reminders -->
+                  <div class="content-card reminders-card">
+                    <div class="card-header">
+                      <h2>
+                        <span class="calendar-icon">📅</span>
+                        Report Reminders
+                      </h2>
+                    </div>
+                    @if (data.reminders.length) {
+                      <div class="reminders-list">
+                        @for (reminder of data.reminders; track reminder.id) {
+                          <div class="reminder-item" [class]="reminder.urgency">
+                            <div class="reminder-header">
+                              <span class="reminder-when" [class]="reminder.urgency">
+                                {{ getReminderLabel(reminder.urgency) }}
+                              </span>
+                            </div>
+                            <div class="reminder-title">{{ reminder.title }}</div>
+                            @if (reminder.dueTime) {
+                              <div class="reminder-time">{{ reminder.dueTime }}</div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="empty-message">No reminders right now.</p>
+                    }
+                  </div>
+
+                  <!-- Classroom Engagement -->
+                  <div class="engagement-card">
+                    <div class="engagement-header">
+                      <h2>Classroom Engagement</h2>
+                      @if (data.stats.weekDelta != null) {
+                        <p>
+                          Average student engagement is up {{ data.stats.weekDelta }}% compared to
+                          last week.
+                        </p>
+                      } @else {
+                        <p>Track your classroom engagement over the week.</p>
+                      }
+                    </div>
+                    <div class="engagement-chart">
+                      <div class="chart-bars">
+                        @for (day of engagementData(); track $index) {
+                          <div class="chart-column">
+                            <div
+                              class="bar"
+                              [style.height.%]="day.value"
+                              [class.today]="day.isToday"
+                            ></div>
+                            <span class="day-label">{{ day.label }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            }
+          }
         </main>
       </div>
     } @else {
@@ -558,6 +577,34 @@ interface StudentActivity {
         max-width: 100%;
       }
 
+      .loading-state,
+      .error-state,
+      .empty-message {
+        background: white;
+        border-radius: 12px;
+        padding: 40px 24px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        margin-bottom: 24px;
+      }
+
+      .loading-state p {
+        color: #64748b;
+        font-size: 15px;
+      }
+
+      .error-state p {
+        color: #991b1b;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .empty-message {
+        color: #64748b;
+        font-size: 14px;
+        padding: 24px;
+      }
+
       .greeting-section {
         margin-bottom: 28px;
       }
@@ -782,7 +829,7 @@ interface StudentActivity {
         font-weight: 600;
       }
 
-      .status-badge.reported {
+      .status-badge.submitted {
         background: #d1fae5;
         color: #059669;
       }
@@ -1824,6 +1871,7 @@ interface StudentActivity {
 export class DashboardPage implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly childrenApi = inject(ChildrenApi);
+  private readonly schoolsApi = inject(SchoolsApi);
 
   protected readonly quickActions = quickActions;
   protected readonly weeklyBars = [40, 70, 100, 20, 2, 2, 2] as const;
@@ -1837,94 +1885,32 @@ export class DashboardPage implements OnInit {
     () => this.children().find((child) => !child.archivedAt) ?? null,
   );
   protected readonly parentFirstName = computed(() => this.parent()?.firstName || 'there');
-  protected readonly userFirstName = computed(() => this.parent()?.firstName || 'Sarah');
 
-  // School dashboard data
-  protected readonly recentReports = signal<RecentReport[]>([
-    {
-      id: '1',
-      studentName: 'Liam Miller',
-      initials: 'LM',
-      activity: 'Sensory Integration',
-      date: 'Oct 24, 2023',
-      status: 'Reported',
-    },
-    {
-      id: '2',
-      studentName: 'Emma Chen',
-      initials: 'EC',
-      activity: 'Social Skills Group',
-      date: 'Oct 23, 2023',
-      status: 'Draft',
-    },
-    {
-      id: '3',
-      studentName: 'Jacob Smith',
-      initials: 'JS',
-      activity: 'Communication Drill',
-      date: 'Oct 23, 2023',
-      status: 'Reported',
-    },
-    {
-      id: '4',
-      studentName: 'Noah Williams',
-      initials: 'NW',
-      activity: 'Visual Sequencing',
-      date: 'Oct 22, 2023',
-      status: 'Draft',
-    },
-  ]);
+  // School dashboard data from API
+  protected readonly dashboardData = signal<SchoolDashboardResponse | null>(null);
+  protected readonly dashboardLoading = signal(true);
+  protected readonly dashboardError = signal<string | null>(null);
 
-  protected readonly reportReminders = signal<ReportReminder[]>([
-    {
-      id: '1',
-      title: 'Weekly Progress: Sophia G.',
-      dueDate: 'Today',
-      dueTime: 'Due by 5:00 PM',
-      urgency: 'today',
-    },
-    {
-      id: '2',
-      title: 'IEP Review: Ethan Hunt',
-      dueDate: 'Tomorrow',
-      dueTime: 'Scheduled for 10:30 AM',
-      urgency: 'tomorrow',
-    },
-    {
-      id: '3',
-      title: 'Monthly Summary: All Students',
-      dueDate: 'Oct 26',
-      dueTime: 'Drafting required',
-      urgency: 'upcoming',
-    },
-  ]);
+  protected readonly greetingName = computed(() => {
+    const d = this.dashboardData();
+    if (d?.staffFirstName) return d.staffFirstName;
+    return this.parent()?.firstName || 'School';
+  });
 
-  protected readonly studentActivities = signal<StudentActivity[]>([
-    {
-      id: '1',
-      studentName: 'Liam Miller',
-      initials: 'LM',
-      description: 'mastered the "Color Sorting" cognitive milestone.',
-      timeAgo: '10 minutes ago',
-      color: '#3B82F6',
-    },
-    {
-      id: '2',
-      studentName: 'Emma Chen',
-      initials: 'EC',
-      description: 'participated in high-engagement social play for 15 mins.',
-      timeAgo: '2 hours ago',
-      color: '#10B981',
-    },
-    {
-      id: '3',
-      studentName: 'Jacob Smith',
-      initials: 'JS',
-      description: 'Observation notes added regarding morning routine.',
-      timeAgo: '4 hours ago',
-      color: '#64748B',
-    },
-  ]);
+  // Derived student activities from recent reports
+  protected readonly derivedActivities = computed(() => {
+    const reports = this.dashboardData()?.recentReports;
+    if (!reports?.length) return [];
+    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+    return reports.slice(0, 3).map((r, i) => ({
+      id: r.id,
+      studentName: r.childFirstName,
+      initials: r.childFirstName.slice(0, 2).toUpperCase(),
+      description: `completed "${r.title}" in ${r.activityCategory}.`,
+      timeAgo: this.formatDate(r.activityDate),
+      color: colors[i % colors.length],
+    }));
+  });
 
   protected readonly engagementData = signal([
     { label: 'Mon', value: 45, isToday: false },
@@ -1939,6 +1925,9 @@ export class DashboardPage implements OnInit {
   ngOnInit() {
     if (!this.parent()) this.auth.loadCurrentUser().subscribe();
     this.loadChildren();
+    if (this.isSchoolStaff()) {
+      this.loadDashboard();
+    }
   }
 
   protected dayPart(): 'morning' | 'afternoon' | 'evening' {
@@ -1979,6 +1968,31 @@ export class DashboardPage implements OnInit {
       default:
         return 'UPCOMING';
     }
+  }
+
+  protected formatDate(dateStr: string): string {
+    const date = new Date(`${dateStr}T00:00:00`);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  protected formatPending(value: number | undefined): string {
+    const n = value ?? 0;
+    return n < 10 ? `0${n}` : `${n}`;
+  }
+
+  private loadDashboard() {
+    this.dashboardLoading.set(true);
+    this.dashboardError.set(null);
+    this.schoolsApi.getDashboard().subscribe({
+      next: (data) => {
+        this.dashboardData.set(data);
+        this.dashboardLoading.set(false);
+      },
+      error: () => {
+        this.dashboardError.set('Dashboard could not be loaded. Please refresh the page.');
+        this.dashboardLoading.set(false);
+      },
+    });
   }
 
   private loadChildren() {

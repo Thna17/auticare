@@ -1,545 +1,591 @@
-// notifications.page.ts
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
+// notifications.page.ts — School notifications with live enrollment-request
+// approval flow. Data comes from GET /schools/notifications (enriched with the
+// sender name and linked admission request); Approve/Reject/Pending call
+// PATCH /schools/notifications/:id/decision, which atomically updates the
+// admission request, marks the notification read, upserts the enrollment, and
+// notifies the parent.
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import type { OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import type { SchoolNotificationItem } from '@auticare/contracts';
+import { SchoolsApi } from '../schools/data-access/schools.api';
 
-interface Notification {
-  id: string;
-  senderName: string;
-  studentName: string;
-  initials: string;
-  isSystem?: boolean;
-  messagePreview: string;
-  date: string;
-  status: 'Pending' | 'Approved' | 'Read';
-}
+type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
 
 @Component({
   standalone: true,
-  imports: [SchoolTopbarComponent],
+  imports: [DatePipe],
   selector: 'ac-notifications-page',
   template: `
-    <div class="page-layout">
-      <main class="main-content">
-        <ac-school-topbar />
+    <div class="notifications-card">
+      <!-- Filters Bar -->
+      <div class="filters-bar">
+        <div class="filter-tabs">
+          <button
+            class="tab-btn"
+            [class.active]="statusFilter() === 'ALL'"
+            (click)="statusFilter.set('ALL')"
+          >
+            All
+          </button>
+          <button
+            class="tab-btn"
+            [class.active]="statusFilter() === 'PENDING'"
+            (click)="statusFilter.set('PENDING')"
+          >
+            Pending
+          </button>
+          <button
+            class="tab-btn"
+            [class.active]="statusFilter() === 'DECIDED'"
+            (click)="statusFilter.set('DECIDED')"
+          >
+            Decided
+          </button>
+          <button
+            class="tab-btn"
+            [class.active]="statusFilter() === 'READ'"
+            (click)="statusFilter.set('READ')"
+          >
+            Read
+          </button>
+        </div>
+        <div class="filter-controls">
+          <button class="advanced-filter-btn" (click)="markAllRead()" [disabled]="markingAll()">
+            {{ markingAll() ? 'Marking…' : '✓ Mark all read' }}
+          </button>
+          <button class="icon-btn" aria-label="Refresh" (click)="load()" [disabled]="loading()">
+            {{ loading() ? '…' : '↻' }}
+          </button>
+        </div>
+      </div>
 
-        <!-- Notifications Card -->
-        <div class="notifications-card">
-          <!-- Filters Bar -->
-          <div class="filters-bar">
-            <div class="filter-tabs">
-              <button class="tab-btn active">All</button>
-              <button class="tab-btn">Enrollment</button>
-            </div>
-            <div class="filter-controls">
-              <select class="filter-select">
-                <option>Status: All</option>
-                <option>Pending</option>
-                <option>Approved</option>
-                <option>Read</option>
-              </select>
-              <button class="advanced-filter-btn">
-                <span>⚙</span>
-                <span>Advanced Filters</span>
-              </button>
-              <button class="icon-btn" aria-label="Refresh">↻</button>
-            </div>
-          </div>
-
-          <!-- Table -->
-          <table class="notifications-table">
-            <thead>
-              <tr>
-                <th>SENDER & STUDENT</th>
-                <th>MESSAGE PREVIEW</th>
-                <th>DATE</th>
-                <th>STATUS</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (notification of notifications(); track notification.id) {
-                <tr>
-                  <td>
-                    <div class="sender-cell">
-                      <div class="avatar" [class.system]="notification.isSystem">
-                        @if (notification.isSystem) {
-                          <span class="system-icon">⚠</span>
-                        } @else {
-                          {{ notification.initials }}
-                        }
-                      </div>
-                      <div class="sender-info">
-                        <span class="sender-name">{{ notification.senderName }}</span>
-                        @if (notification.studentName) {
-                          <span class="student-name">Student: {{ notification.studentName }}</span>
-                        }
-                      </div>
+      <!-- States -->
+      @if (loading()) {
+        <div class="state-card">Loading notifications…</div>
+      } @else if (error(); as loadError) {
+        <div class="state-card state-card--error">
+          {{ loadError }}
+          <button type="button" class="retry-btn" (click)="load()">Retry</button>
+        </div>
+      } @else if (filtered().length === 0) {
+        <div class="state-card">
+          @if (notifications().length === 0) {
+            No notifications yet. Enrollment requests from parents will appear here.
+          } @else {
+            No notifications match this filter.
+          }
+        </div>
+      } @else {
+        <!-- Table -->
+        <table class="notifications-table">
+          <thead>
+            <tr>
+              <th>SENDER & STUDENT</th>
+              <th>MESSAGE</th>
+              <th>DATE</th>
+              <th>STATUS</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (notification of filtered(); track notification.id) {
+              <tr [class.unread-row]="notification.status === 'UNREAD'">
+                <td>
+                  <div class="sender-cell">
+                    <div class="avatar" [class.system]="notification.type !== 'ENROLLMENT_REQUEST'">
+                      @if (notification.type !== 'ENROLLMENT_REQUEST') {
+                        <span class="system-icon">🔔</span>
+                      } @else {
+                        {{ initialsOf(notification.senderName) }}
+                      }
                     </div>
-                  </td>
-                  <td class="message-cell">{{ notification.messagePreview }}</td>
-                  <td class="date-cell">{{ notification.date }}</td>
-                  <td class="status-cell">
-                    <a href="#" class="status-link approve">Approve</a>
-                    <a href="#" class="status-link details">Details</a>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                    <div class="sender-info">
+                      <span class="sender-name">{{ notification.senderName || 'System' }}</span>
+                      @if (notification.studentName) {
+                        <span class="student-name">Student: {{ notification.studentName }}</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td class="message-cell">
+                  <span class="message-title">{{ notification.title }}</span>
+                  <span class="message-body">
+                    {{ notification.requestMessage ?? notification.body }}
+                  </span>
+                </td>
+                <td class="date-cell">{{ notification.createdAt | date: 'MMM d, y · HH:mm' }}</td>
+                <td class="status-cell">
+                  @switch (
+                    notification.type === 'ENROLLMENT_REQUEST' ? notification.admissionStatus : null
+                  ) {
+                    @case ('REQUESTED') {
+                      <span class="status-pill status-pill--pending">Pending</span>
+                    }
+                    @case ('APPROVED') {
+                      <span class="status-pill status-pill--approved">Approved</span>
+                    }
+                    @case ('REJECTED') {
+                      <span class="status-pill status-pill--rejected">Rejected</span>
+                    }
+                    @default {
+                      <span class="status-pill status-pill--info">
+                        {{ notification.status === 'UNREAD' ? 'Unread' : 'Read' }}
+                      </span>
+                    }
+                  }
+                </td>
+                <td class="actions-cell">
+                  @if (
+                    notification.type === 'ENROLLMENT_REQUEST' &&
+                    notification.admissionStatus === 'REQUESTED'
+                  ) {
+                    @if (actingId() === notification.id) {
+                      <span class="acting-label">Saving…</span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="status-link approve"
+                        (click)="decide(notification, 'APPROVED')"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        class="status-link reject"
+                        (click)="decide(notification, 'REJECTED')"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        type="button"
+                        class="status-link details"
+                        (click)="decide(notification, 'PENDING')"
+                      >
+                        Keep Pending
+                      </button>
+                    }
+                  } @else if (notification.status === 'UNREAD') {
+                    <button
+                      type="button"
+                      class="status-link details"
+                      (click)="markRead(notification)"
+                    >
+                      Mark read
+                    </button>
+                  } @else {
+                    <span class="no-actions">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
 
-          <!-- Pagination -->
-          <div class="pagination">
-            <span class="pagination-info">Showing 1 to 10 of 48 notifications</span>
-            <div class="pagination-controls">
-              <button class="page-btn">‹</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">2</button>
-              <button class="page-btn">3</button>
-              <button class="page-btn">›</button>
-            </div>
+        <!-- Feedback -->
+        @if (feedback(); as note) {
+          <div class="feedback-bar" [class.feedback-bar--error]="feedbackIsError()">
+            {{ note }}
           </div>
-        </div>
-
-        <!-- Notification History Card -->
-        <div class="history-card">
-          <div class="history-content">
-            <div class="history-icon">🕐</div>
-            <div class="history-info">
-              <h3>Notification History</h3>
-              <p>Archives are kept for 12 months for compliance records.</p>
-            </div>
-          </div>
-          <button class="archives-btn">Access Archives</button>
-        </div>
-      </main>
+        }
+      }
     </div>
   `,
   styles: [
     `
-      .page-layout {
-        display: flex;
-        gap: 24px;
-        padding: 24px;
-        background: #f8fafc;
-        min-height: 100vh;
-      }
-
-      .main-content {
-        flex: 1;
-        min-width: 0;
-        width: 100%;
-        max-width: 100%;
-      }
-
-      .page-header {
-        margin-bottom: 24px;
-      }
-
-      .page-header h1 {
-        margin: 0 0 8px 0;
-        font-size: 28px;
-        font-weight: 700;
-        color: #0f172a;
-      }
-
-      .page-header p {
-        margin: 0;
-        color: #64748b;
-        font-size: 14px;
-        max-width: 700px;
-      }
-
       .notifications-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-        overflow: hidden;
-        margin-bottom: 24px;
+        background: #fff;
+        border: 1px solid #e3edf2;
+        border-radius: 14px;
+        padding: 20px;
+        margin: 20px;
       }
-
       .filters-bar {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 16px 20px;
-        border-bottom: 1px solid #e2e8f0;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
       }
-
       .filter-tabs {
         display: flex;
         gap: 8px;
       }
-
       .tab-btn {
-        padding: 8px 16px;
-        border: 1px solid #e2e8f0;
-        background: white;
-        border-radius: 8px;
+        padding: 7px 16px;
+        border: 1px solid #d7e3ea;
+        border-radius: 999px;
+        background: #fff;
+        color: #5b7280;
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
       }
-
-      .tab-btn:hover {
-        border-color: #3b82f6;
-      }
-
       .tab-btn.active {
         background: #2d6a7a;
-        color: white;
         border-color: #2d6a7a;
+        color: #fff;
       }
-
       .filter-controls {
         display: flex;
-        gap: 12px;
+        gap: 8px;
         align-items: center;
       }
-
-      .filter-select {
-        padding: 8px 12px;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 13px;
-        outline: none;
-        cursor: pointer;
-      }
-
-      .filter-select:focus {
-        border-color: #3b82f6;
-      }
-
       .advanced-filter-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 14px;
-        background: white;
-        border: 1px solid #e2e8f0;
+        padding: 7px 14px;
+        border: 1px solid #d7e3ea;
         border-radius: 8px;
+        background: #fff;
+        color: #2d6a7a;
         font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
       }
-
-      .advanced-filter-btn:hover {
-        border-color: #3b82f6;
+      .advanced-filter-btn:disabled {
+        opacity: 0.6;
+        cursor: default;
       }
-
       .icon-btn {
-        background: none;
-        border: none;
-        font-size: 18px;
+        width: 34px;
+        height: 34px;
+        border: 1px solid #d7e3ea;
+        border-radius: 8px;
+        background: #fff;
+        color: #5b7280;
         cursor: pointer;
-        padding: 6px;
-        border-radius: 6px;
-        color: #64748b;
-        transition: background 0.2s;
+        font-size: 15px;
       }
 
-      .icon-btn:hover {
-        background: #f1f5f9;
+      .state-card {
+        padding: 36px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        background: #f8fafc;
+        color: #475569;
+        text-align: center;
+        font-size: 14px;
+      }
+      .state-card--error {
+        border-color: #fecaca;
+        background: #fef2f2;
+        color: #b91c1c;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .retry-btn {
+        padding: 6px 18px;
+        border: 1px solid #b91c1c;
+        border-radius: 8px;
+        background: #fff;
+        color: #b91c1c;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
       }
 
       .notifications-table {
         width: 100%;
         border-collapse: collapse;
+        font-size: 13.5px;
       }
-
       .notifications-table th {
         text-align: left;
-        padding: 14px 20px;
         font-size: 11px;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 1px solid #e2e8f0;
+        letter-spacing: 0.06em;
+        color: #7b8fa0;
+        padding: 10px 12px;
+        border-bottom: 1px solid #e8eff4;
       }
-
       .notifications-table td {
-        padding: 16px 20px;
-        border-bottom: 1px solid #f1f5f9;
-        font-size: 14px;
-        vertical-align: middle;
+        padding: 14px 12px;
+        border-bottom: 1px solid #eef3f7;
+        vertical-align: top;
+        color: #24404e;
       }
-
-      .notifications-table tr:last-child td {
-        border-bottom: none;
+      .unread-row {
+        background: #f4fbfd;
       }
-
       .sender-cell {
         display: flex;
+        gap: 10px;
         align-items: center;
-        gap: 12px;
+        min-width: 190px;
       }
-
       .avatar {
-        width: 40px;
-        height: 40px;
-        background: #dbeafe;
-        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: #e7f3f7;
+        color: #2d6a7a;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 600;
+        font-weight: 800;
         font-size: 14px;
-        color: #2563eb;
         flex-shrink: 0;
       }
-
       .avatar.system {
-        background: #fee2e2;
-        color: #ef4444;
+        background: #eef2f6;
       }
-
       .system-icon {
-        font-size: 18px;
+        font-size: 16px;
       }
-
       .sender-info {
         display: flex;
         flex-direction: column;
         gap: 2px;
       }
-
       .sender-name {
-        font-weight: 600;
-        color: #0f172a;
-        font-size: 14px;
+        font-weight: 700;
+        color: #10303b;
       }
-
       .student-name {
         font-size: 12px;
-        color: #64748b;
+        color: #6b8494;
       }
-
       .message-cell {
-        color: #475569;
-        max-width: 400px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .date-cell {
-        color: #64748b;
-        font-size: 13px;
-        white-space: nowrap;
-      }
-
-      .status-cell {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 3px;
+        max-width: 380px;
       }
-
+      .message-title {
+        font-weight: 600;
+        color: #10303b;
+      }
+      .message-body {
+        color: #5b7280;
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+      .date-cell {
+        white-space: nowrap;
+        color: #5b7280;
+        font-size: 12.5px;
+      }
+      .status-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+      }
+      .status-pill--pending {
+        background: #fdf3e2;
+        color: #a4691a;
+      }
+      .status-pill--approved {
+        background: #e7f6ef;
+        color: #177a4c;
+      }
+      .status-pill--rejected {
+        background: #fdecec;
+        color: #b04343;
+      }
+      .status-pill--info {
+        background: #eef2f6;
+        color: #5b7280;
+      }
+      .actions-cell {
+        white-space: nowrap;
+      }
       .status-link {
+        background: none;
+        border: none;
+        padding: 0 8px 0 0;
         font-size: 13px;
-        text-decoration: none;
-        font-weight: 500;
+        font-weight: 700;
+        cursor: pointer;
       }
-
       .status-link.approve {
-        color: #10b981;
+        color: #177a4c;
       }
-
-      .status-link.approve:hover {
-        text-decoration: underline;
+      .status-link.reject {
+        color: #b04343;
       }
-
       .status-link.details {
-        color: #64748b;
-      }
-
-      .status-link.details:hover {
-        text-decoration: underline;
-      }
-
-      .pagination {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-        border-top: 1px solid #e2e8f0;
-      }
-
-      .pagination-info {
-        font-size: 13px;
-        color: #64748b;
-      }
-
-      .pagination-controls {
-        display: flex;
-        gap: 6px;
-      }
-
-      .page-btn {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #e2e8f0;
-        background: white;
-        border-radius: 6px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .page-btn:hover {
-        border-color: #3b82f6;
-      }
-
-      .page-btn.active {
-        background: #2d6a7a;
-        color: white;
-        border-color: #2d6a7a;
-      }
-
-      .history-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 20px 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .history-content {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .history-icon {
-        font-size: 28px;
-      }
-
-      .history-info h3 {
-        margin: 0 0 4px 0;
-        font-size: 15px;
-        font-weight: 600;
-        color: #0f172a;
-      }
-
-      .history-info p {
-        margin: 0;
-        font-size: 13px;
-        color: #64748b;
-      }
-
-      .archives-btn {
-        padding: 10px 20px;
-        background: white;
-        border: 1px solid #2d6a7a;
         color: #2d6a7a;
+      }
+      .acting-label {
+        color: #6b8494;
+        font-size: 12.5px;
+      }
+      .no-actions {
+        color: #a8bcc7;
+      }
+
+      .feedback-bar {
+        margin-top: 14px;
+        padding: 10px 14px;
         border-radius: 8px;
-        font-weight: 600;
+        background: #e7f6ef;
+        color: #177a4c;
         font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s;
+        font-weight: 600;
+      }
+      .feedback-bar--error {
+        background: #fdecec;
+        color: #b04343;
       }
 
-      .archives-btn:hover {
-        background: #2d6a7a;
-        color: white;
-      }
-
-      /* Responsive Design */
-      @media (max-width: 1024px) {
-        .page-layout {
-          gap: 16px;
-          padding: 16px;
+      @media (max-width: 860px) {
+        .notifications-table thead {
+          display: none;
         }
-
-        .main-content {
-          max-width: calc(100% - 260px);
-        }
-
-        .message-cell {
-          max-width: 250px;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .page-layout {
-          flex-direction: column;
-          gap: 0;
-          padding: 0;
-        }
-
-        .main-content {
-          max-width: 100%;
-          padding: 16px;
-        }
-
-        .filters-bar {
-          flex-direction: column;
-          gap: 12px;
-          align-items: flex-start;
-        }
-
-        .filter-controls {
-          width: 100%;
-          justify-content: space-between;
-        }
-
-        .notifications-table {
+        .notifications-table tr {
           display: block;
-          overflow-x: auto;
+          padding: 12px 0;
+          border-bottom: 1px solid #eef3f7;
         }
-
-        .history-card {
-          flex-direction: column;
-          gap: 16px;
-          text-align: center;
+        .notifications-table td {
+          display: block;
+          border: 0;
+          padding: 4px 8px;
+        }
+        .message-cell {
+          max-width: none;
         }
       }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NotificationsPage {
-  readonly notifications = signal<Notification[]>([
-    {
-      id: '1',
-      senderName: 'Elena Mitchell',
-      studentName: 'Leo M.',
-      initials: 'EM',
-      messagePreview: 'We are looking to transition Leo into the fl...',
-      date: 'Today, 09:42 AM',
-      status: 'Pending',
-    },
-    {
-      id: '2',
-      senderName: 'James David',
-      studentName: 'Sarah D.',
-      initials: 'JD',
-      messagePreview: "Thank you for the update on Sarah's speec...",
-      date: 'Yesterday, 04:15 PM',
-      status: 'Pending',
-    },
-    {
-      id: '3',
-      senderName: 'System',
-      studentName: '',
-      initials: '',
-      isSystem: true,
-      messagePreview: 'Unusual login attempt detected from new...',
-      date: 'Oct 24, 11:20 PM',
-      status: 'Pending',
-    },
-    {
-      id: '4',
-      senderName: 'Robert Anderson',
-      studentName: 'Toby A.',
-      initials: 'RA',
-      messagePreview: 'Regarding the IEP meeting next Tuesday, r...',
-      date: 'Oct 24, 02:00 PM',
-      status: 'Pending',
-    },
-  ]);
+export class NotificationsPage implements OnInit {
+  private readonly api = inject(SchoolsApi);
+
+  readonly notifications = signal<SchoolNotificationItem[]>([]);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+  readonly statusFilter = signal<StatusFilter>('ALL');
+  readonly actingId = signal<string | null>(null);
+  readonly markingAll = signal(false);
+  readonly feedback = signal<string | null>(null);
+  readonly feedbackIsError = signal(false);
+
+  readonly filtered = computed(() => {
+    const filter = this.statusFilter();
+    const items = this.notifications();
+    switch (filter) {
+      case 'PENDING':
+        return items.filter(
+          (n) => n.type === 'ENROLLMENT_REQUEST' && n.admissionStatus === 'REQUESTED',
+        );
+      case 'DECIDED':
+        return items.filter(
+          (n) =>
+            n.type === 'ENROLLMENT_REQUEST' &&
+            (n.admissionStatus === 'APPROVED' || n.admissionStatus === 'REJECTED'),
+        );
+      case 'READ':
+        return items.filter((n) => n.status === 'READ');
+      default:
+        return items;
+    }
+  });
+
+  ngOnInit() {
+    this.load();
+  }
+
+  load() {
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.listNotifications().subscribe({
+      next: (items) => {
+        this.notifications.set(items);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('Could not load notifications. Check your connection and try again.');
+      },
+    });
+  }
+
+  decide(notification: SchoolNotificationItem, decision: 'APPROVED' | 'REJECTED' | 'PENDING') {
+    this.actingId.set(notification.id);
+    this.feedback.set(null);
+
+    this.api.decideEnrollmentRequest(notification.id, decision).subscribe({
+      next: () => {
+        this.actingId.set(null);
+        this.notifications.update((items) =>
+          items.map((item) =>
+            item.id === notification.id
+              ? {
+                  ...item,
+                  status: 'READ' as const,
+                  admissionStatus:
+                    decision === 'PENDING'
+                      ? 'REQUESTED'
+                      : decision === 'APPROVED'
+                        ? 'APPROVED'
+                        : 'REJECTED',
+                }
+              : item,
+          ),
+        );
+        this.feedback.set(
+          decision === 'APPROVED'
+            ? `Approved — ${notification.studentName ?? 'the student'} is now enrolled and appears on the Students page.`
+            : decision === 'REJECTED'
+              ? `Request rejected — the enrollment was recorded as declined.`
+              : `Request kept pending — the parent's request stays open for review.`,
+        );
+        this.feedbackIsError.set(false);
+      },
+      error: () => {
+        this.actingId.set(null);
+        this.feedback.set('Could not save the decision. Please try again.');
+        this.feedbackIsError.set(true);
+      },
+    });
+  }
+
+  markRead(notification: SchoolNotificationItem) {
+    this.api.markNotificationRead(notification.id).subscribe({
+      next: () => {
+        this.notifications.update((items) =>
+          items.map((item) =>
+            item.id === notification.id ? { ...item, status: 'READ' as const } : item,
+          ),
+        );
+      },
+      error: () => {
+        this.feedback.set('Could not mark the notification as read.');
+        this.feedbackIsError.set(true);
+      },
+    });
+  }
+
+  markAllRead() {
+    this.markingAll.set(true);
+    this.api.markAllNotificationsRead().subscribe({
+      next: () => {
+        this.markingAll.set(false);
+        this.notifications.update((items) =>
+          items.map((item) => ({ ...item, status: 'READ' as const })),
+        );
+      },
+      error: () => {
+        this.markingAll.set(false);
+        this.feedback.set('Could not mark all notifications as read.');
+        this.feedbackIsError.set(true);
+      },
+    });
+  }
+
+  initialsOf(name: string): string {
+    return (
+      name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
+  }
 }

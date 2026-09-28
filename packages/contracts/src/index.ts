@@ -199,6 +199,14 @@ export const adminHospitalAccountResponseSchema = z.object({
 export const screeningDisclaimer =
   'AutiCare screening is informational support only and is not a medical diagnosis. Please consult a qualified clinician for diagnosis or treatment decisions.';
 
+export const schoolChildEnrollmentStatuses = [
+  'PENDING',
+  'ACTIVE',
+  'REJECTED',
+  'GRADUATED',
+] as const;
+export type SchoolChildEnrollmentStatus = (typeof schoolChildEnrollmentStatuses)[number];
+/** @deprecated Use schoolChildEnrollmentStatuses instead. */
 export const schoolEnrollmentStatuses = ['ACTIVE', 'ENDED'] as const;
 export type SchoolEnrollmentStatus = (typeof schoolEnrollmentStatuses)[number];
 
@@ -226,6 +234,20 @@ export const schoolResponseSchema = z.object({
   updatedAt: z.string(),
 });
 export type SchoolResponse = z.infer<typeof schoolResponseSchema>;
+
+/**
+ * Parent school-search filters (GET /schools). There is no separate province
+ * column — the School model stores the province/region in `city`, so `province`
+ * filters on it. `specializations` is a comma-separated tag list; a school
+ * matches when it carries ANY of the tags.
+ */
+export const parentSchoolSearchQuerySchema = z.object({
+  search: z.string().trim().max(120).optional(),
+  province: z.string().trim().max(120).optional(),
+  availability: z.enum(schoolAvailabilityStatuses).optional(),
+  specializations: z.string().trim().max(400).optional(),
+});
+export type ParentSchoolSearchQuery = z.infer<typeof parentSchoolSearchQuerySchema>;
 
 // Full public profile (GET /schools/:id and GET /schools/me) — card fields plus
 // the extended detail fields. Read-only for parents; no account-internal fields
@@ -275,9 +297,9 @@ export const schoolChildEnrollmentResponseSchema = z.object({
   id: z.string(),
   schoolId: z.string(),
   childId: z.string(),
-  status: z.enum(schoolEnrollmentStatuses),
-  startedAt: z.string(),
-  endedAt: z.string().nullable(),
+  status: z.enum(schoolChildEnrollmentStatuses),
+  startDate: z.string(),
+  endDate: z.string().nullable(),
 });
 export type SchoolChildEnrollmentResponse = z.infer<typeof schoolChildEnrollmentResponseSchema>;
 
@@ -322,27 +344,177 @@ export const adminSchoolAccountResponseSchema = z.object({
 });
 export type AdminSchoolAccountResponse = z.infer<typeof adminSchoolAccountResponseSchema>;
 
-export const schoolActivityReportResponseSchema = z.object({
+export const activityReportResponseSchema = z.object({
   id: z.string(),
   schoolId: z.string(),
   childId: z.string(),
   reporterId: z.string(),
+  activityCategory: z.string(),
   title: z.string(),
   summary: z.string(),
   activityDate: z.string(),
+  status: z.string(),
+  duration: z.number().int().nullable(),
+  performanceMetrics: z.unknown().nullable(),
+  teacherObservation: z.string().nullable(),
+  recommendations: z.string().nullable(),
+  photoUrls: z.array(z.string()).nullable(),
   createdAt: z.string(),
 });
-export type SchoolActivityReportResponse = z.infer<typeof schoolActivityReportResponseSchema>;
+export type ActivityReportResponse = z.infer<typeof activityReportResponseSchema>;
+/** @deprecated Use ActivityReportResponse instead. */
+export type SchoolActivityReportResponse = ActivityReportResponse;
 
-export const createSchoolActivityReportRequestSchema = z.object({
+export const reportStatuses = ['DRAFT', 'SUBMITTED'] as const;
+export type ReportStatus = (typeof reportStatuses)[number];
+
+export const createActivityReportRequestSchema = z.object({
   childId: z.string().min(1),
-  title: z.string().min(1).max(160),
-  summary: z.string().min(1).max(4000),
-  activityDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format.'),
+  activityCategory: z.string().min(1).max(120),
+  // Canonical activity name. `title` is accepted as a legacy alias — the server
+  // derives the stored title from activityName ?? title ?? activityCategory.
+  activityName: z.string().min(1).max(160).optional(),
+  title: z.string().min(1).max(160).optional(),
+  // Optional — the server derives it from teacherObservation when omitted.
+  summary: z.string().max(4000).optional(),
+  // Optional — defaults to today (server time) when omitted.
+  activityDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format.')
+    .optional(),
+  duration: z.number().int().min(0).optional(),
+  performanceMetrics: z.unknown().optional(),
+  teacherObservation: z.string().max(4000).optional(),
+  recommendations: z.string().max(4000).optional(),
+  // Accepts server-generated upload paths like /uploads/activity-reports/<uuid>.jpg
+  // (relative), so plain min(1) instead of .url() which requires an origin.
+  photoUrls: z.array(z.string().min(1)).max(10).optional(),
+  status: z.enum(reportStatuses).optional(),
 });
-export type CreateSchoolActivityReportRequest = z.infer<
-  typeof createSchoolActivityReportRequestSchema
->;
+export type CreateActivityReportRequest = z.infer<typeof createActivityReportRequestSchema>;
+/** @deprecated Use CreateActivityReportRequest instead. */
+export type CreateSchoolActivityReportRequest = CreateActivityReportRequest;
+
+export const updateActivityReportRequestSchema = z
+  .object({
+    activityCategory: z.string().min(1).max(120).optional(),
+    title: z.string().min(1).max(160).optional(),
+    summary: z.string().min(1).max(4000).optional(),
+    activityDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format.')
+      .optional(),
+    status: z.enum(reportStatuses).optional(),
+    duration: z.number().int().min(0).nullable().optional(),
+    performanceMetrics: z.unknown().nullable().optional(),
+    teacherObservation: z.string().max(4000).nullable().optional(),
+    recommendations: z.string().max(4000).nullable().optional(),
+    // Accepts relative server upload paths too — see createActivityReportRequestSchema.
+    photoUrls: z.array(z.string().min(1)).max(10).nullable().optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, 'At least one report field must be provided.');
+export type UpdateActivityReportRequest = z.infer<typeof updateActivityReportRequestSchema>;
+
+export const listActivityReportsQuerySchema = z.object({
+  childId: z.string().optional(),
+  status: z.enum(reportStatuses).optional(),
+});
+export type ListActivityReportsQuery = z.infer<typeof listActivityReportsQuerySchema>;
+
+// ── School Notifications ──────────────────────────────────────────────
+export const schoolNotificationStatuses = ['UNREAD', 'READ'] as const;
+export type SchoolNotificationStatus = (typeof schoolNotificationStatuses)[number];
+
+export const notificationTypes = [
+  'SYSTEM',
+  'APPOINTMENT',
+  'ADMISSION',
+  'SCREENING',
+  'ACTIVITY',
+  'SCHOOL_REPORT',
+  'ENROLLMENT_REQUEST',
+  'REPORT_REQUEST',
+] as const;
+export type NotificationType = (typeof notificationTypes)[number];
+
+export const notificationResponseSchema = z.object({
+  id: z.string(),
+  type: z.enum(notificationTypes),
+  status: z.enum(schoolNotificationStatuses),
+  title: z.string(),
+  body: z.string(),
+  enrollmentId: z.string().nullable(),
+  reportId: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type NotificationResponse = z.infer<typeof notificationResponseSchema>;
+
+// ── Admission / enrollment requests ─────────────────────────────────────
+
+export const createAdmissionRequestSchema = z.object({
+  schoolId: z.string().min(1),
+  childId: z.string().min(1),
+  message: z.string().max(2000).optional(),
+});
+export type CreateAdmissionRequestRequest = z.infer<typeof createAdmissionRequestSchema>;
+
+export const admissionRequestResponseSchema = z.object({
+  id: z.string(),
+  schoolId: z.string(),
+  schoolName: z.string(),
+  childId: z.string().nullable(),
+  childName: z.string(),
+  status: z.string(),
+  message: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type AdmissionRequestResponse = z.infer<typeof admissionRequestResponseSchema>;
+
+/** School's decision on an enrollment-request notification. */
+export const enrollmentDecisions = ['APPROVED', 'REJECTED', 'PENDING'] as const;
+export const enrollmentDecisionSchema = z.enum(enrollmentDecisions);
+export type EnrollmentDecision = (typeof enrollmentDecisions)[number];
+
+/**
+ * School-facing notification item: the base notification enriched with the
+ * sender's name and (for ENROLLMENT_REQUEST types) the linked admission
+ * request details.
+ */
+export const schoolNotificationItemSchema = z.object({
+  id: z.string(),
+  type: z.enum(notificationTypes),
+  status: z.enum(schoolNotificationStatuses),
+  title: z.string(),
+  body: z.string(),
+  createdAt: z.string(),
+  senderName: z.string(),
+  admissionRequestId: z.string().nullable(),
+  admissionStatus: z.string().nullable(),
+  studentName: z.string().nullable(),
+  requestMessage: z.string().nullable(),
+});
+export type SchoolNotificationItem = z.infer<typeof schoolNotificationItemSchema>;
+
+export const decideNotificationRequestSchema = z.object({
+  decision: enrollmentDecisionSchema,
+});
+export type DecideNotificationRequest = z.infer<typeof decideNotificationRequestSchema>;
+
+export const notificationDecisionResponseSchema = z.object({
+  notification: notificationResponseSchema,
+  admissionStatus: z.string().nullable(),
+  enrollmentId: z.string().nullable(),
+});
+export type NotificationDecisionResponse = z.infer<typeof notificationDecisionResponseSchema>;
+
+export const listNotificationsQuerySchema = z.object({
+  isRead: z
+    .string()
+    .transform((val) => val === 'true')
+    .optional(),
+});
+export type ListNotificationsQuery = z.infer<typeof listNotificationsQuerySchema>;
 
 export const screeningSessionResponseSchema = z.object({
   id: z.string(),
@@ -440,3 +612,219 @@ export const upsertScreeningAnswerRequestSchema = z.object({
   answerValue: z.number().int().min(0).max(4),
 });
 export type UpsertScreeningAnswerRequest = z.infer<typeof upsertScreeningAnswerRequestSchema>;
+
+// ── School Dashboard ──────────────────────────────────────────────────────
+
+export const schoolDashboardRecentReportSchema = z.object({
+  id: z.string(),
+  childFirstName: z.string(),
+  activityCategory: z.string(),
+  title: z.string(),
+  activityDate: z.string(),
+  status: z.string(),
+});
+export type SchoolDashboardRecentReport = z.infer<typeof schoolDashboardRecentReportSchema>;
+
+export const schoolDashboardReminderSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  urgency: z.enum(['today', 'tomorrow', 'upcoming']),
+  dueTime: z.string().nullable(),
+});
+export type SchoolDashboardReminder = z.infer<typeof schoolDashboardReminderSchema>;
+
+export const schoolDashboardResponseSchema = z.object({
+  schoolName: z.string(),
+  staffFirstName: z.string(),
+  staffLastName: z.string(),
+  staffTitle: z.string().nullable(),
+  stats: z.object({
+    totalStudents: z.number().int(),
+    studentsDelta: z.number().int().nullable(),
+    reportsSubmitted: z.number().int(),
+    pendingReports: z.number().int(),
+    activitiesCompleted: z.number().int(),
+    weekDelta: z.number().nullable(),
+  }),
+  recentReports: z.array(schoolDashboardRecentReportSchema),
+  reminders: z.array(schoolDashboardReminderSchema),
+});
+export type SchoolDashboardResponse = z.infer<typeof schoolDashboardResponseSchema>;
+
+// ── School Enrollment Stats & Student List ───────────────────────────────
+
+export const enrollmentStatsResponseSchema = z.object({
+  totalStudents: z.number().int(),
+  newStudentsThisMonth: z.number().int(),
+  activePrograms: z.number().int(),
+  participationRate: z.number().int(),
+  averageProgress: z.number().int(),
+  needsAttention: z.number().int(),
+});
+export type EnrollmentStatsResponse = z.infer<typeof enrollmentStatsResponseSchema>;
+
+export const enrolledStudentSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  enrollmentStatus: z.enum(schoolChildEnrollmentStatuses),
+  startDate: z.string(),
+  leadSpecialist: z
+    .object({
+      id: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      title: z.string().nullable(),
+    })
+    .nullable(),
+  communicationProgress: z.number().int(),
+  age: z.number().optional(),
+  dateOfBirth: z.string().optional(),
+});
+export type EnrolledStudent = z.infer<typeof enrolledStudentSchema>;
+
+export const enrolledStudentsListResponseSchema = z.object({
+  students: z.array(enrolledStudentSchema),
+  pagination: z.object({
+    total: z.number().int(),
+    page: z.number().int(),
+    limit: z.number().int(),
+    totalPages: z.number().int(),
+  }),
+});
+export type EnrolledStudentsListResponse = z.infer<typeof enrolledStudentsListResponseSchema>;
+
+export const leadSpecialistResponseSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  title: z.string().nullable(),
+});
+export type LeadSpecialistResponse = z.infer<typeof leadSpecialistResponseSchema>;
+
+export const listEnrolledStudentsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  status: z.enum(schoolChildEnrollmentStatuses).optional(),
+  specialistId: z.string().optional(),
+  search: z.string().optional(),
+});
+export type ListEnrolledStudentsQuery = z.infer<typeof listEnrolledStudentsQuerySchema>;
+
+// ── School: Add New Student ───────────────────────────────────────────
+
+export const createSchoolStudentRequestSchema = z.object({
+  // Child fields
+  firstName: z.string().min(1).max(80),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format.'),
+  photoUrl: z.string().url().max(1000).optional(),
+  address: z.string().max(500).optional(),
+  // Guardian (Parent) fields
+  guardianFirstName: z.string().min(1).max(80),
+  guardianLastName: z.string().min(1).max(80),
+  guardianEmail: z.string().email(),
+  guardianPhone: z.string().max(40).optional(),
+  guardianSocialMedia: z.string().max(300).optional(),
+});
+export type CreateSchoolStudentRequest = z.infer<typeof createSchoolStudentRequestSchema>;
+
+// ── Activity Report Detail Response ──────────────────────────────────────
+
+export const activityReportDetailResponseSchema = activityReportResponseSchema.extend({
+  child: z.object({
+    id: z.string(),
+    firstName: z.string(),
+    dateOfBirth: z.string(),
+    photoUrl: z.string().nullable(),
+    parent: z.object({
+      firstName: z.string(),
+      lastName: z.string(),
+    }),
+  }),
+  reporter: z.object({
+    id: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+  }),
+});
+export type ActivityReportDetailResponse = z.infer<typeof activityReportDetailResponseSchema>;
+
+// ── Activity Report List with Child Info ───────────────────────────────────
+
+export const activityReportListItemSchema = z.object({
+  id: z.string(),
+  schoolId: z.string(),
+  childId: z.string(),
+  reporterId: z.string(),
+  activityCategory: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  activityDate: z.string(),
+  status: z.string(),
+  duration: z.number().int().nullable(),
+  performanceMetrics: z.unknown().nullable(),
+  teacherObservation: z.string().nullable(),
+  recommendations: z.string().nullable(),
+  photoUrls: z.array(z.string()).nullable(),
+  createdAt: z.string(),
+  childFirstName: z.string(),
+  childLastName: z.string().nullable(),
+  childPhotoUrl: z.string().nullable(),
+  reporterFirstName: z.string(),
+  reporterLastName: z.string(),
+});
+export type ActivityReportListItem = z.infer<typeof activityReportListItemSchema>;
+
+// ── Upload Response ──────────────────────────────────────────────────────
+
+export const uploadPhotosResponseSchema = z.object({
+  urls: z.array(z.string()),
+});
+export type UploadPhotosResponse = z.infer<typeof uploadPhotosResponseSchema>;
+
+export const createSchoolStudentResponseSchema = z.object({
+  student: z.object({
+    id: z.string(),
+    firstName: z.string(),
+    dateOfBirth: z.string(),
+    photoUrl: z.string().nullable(),
+    address: z.string().nullable(),
+  }),
+  guardian: z.object({
+    id: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
+    phoneNumber: z.string().nullable(),
+    socialMediaAccount: z.string().nullable(),
+  }),
+  enrollment: schoolChildEnrollmentResponseSchema,
+});
+export type CreateSchoolStudentResponse = z.infer<typeof createSchoolStudentResponseSchema>;
+
+// ── Parent: Activity Reports (SUBMITTED only) ─────────────────────────────
+
+/** One submitted activity report as visible to the child's parent. */
+export const parentActivityReportResponseSchema = z.object({
+  id: z.string(),
+  childId: z.string(),
+  activityCategory: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  activityDate: z.string(),
+  status: z.string(),
+  duration: z.number().int().nullable(),
+  performanceMetrics: z.unknown().nullable(),
+  teacherObservation: z.string().nullable(),
+  recommendations: z.string().nullable(),
+  photoUrls: z.array(z.string()).nullable(),
+  createdAt: z.string(),
+  /** School that ran the activity. */
+  schoolName: z.string(),
+  /** Staff member who filed the report. */
+  reporter: z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+  }),
+});
+export type ParentActivityReportResponse = z.infer<typeof parentActivityReportResponseSchema>;

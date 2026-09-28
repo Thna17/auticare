@@ -44,7 +44,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (childId) {
-    await prisma.schoolActivityReport.deleteMany({ where: { childId } });
+    await prisma.activityReport.deleteMany({ where: { childId } });
     await prisma.schoolChildEnrollment.deleteMany({ where: { childId } });
   }
   if (parentId || schoolUserId) {
@@ -81,6 +81,7 @@ describe('school activity reports', () => {
 
     const blockedReport = await schoolAgent.post('/api/v1/schools/activity-reports').send({
       childId,
+      activityCategory: 'Social/Emotional',
       title: 'Shared play activity',
       summary: 'Participated calmly in a small-group activity.',
       activityDate: '2026-07-11',
@@ -94,8 +95,19 @@ describe('school activity reports', () => {
     expect(enrollment.status).toBe(201);
     expect(enrollment.body.data.status).toBe('ACTIVE');
 
+    const enrolledStudents = await schoolAgent.get('/api/v1/schools/enrolled-students');
+    expect(enrolledStudents.status).toBe(200);
+    expect(Array.isArray(enrolledStudents.body.data)).toBe(true);
+    expect(
+      enrolledStudents.body.data.some(
+        (student: { id: string; firstName: string }) =>
+          student.id === childId && student.firstName === 'Report Child',
+      ),
+    ).toBe(true);
+
     const report = await schoolAgent.post('/api/v1/schools/activity-reports').send({
       childId,
+      activityCategory: 'Social/Emotional',
       title: 'Shared play activity',
       summary: 'Participated calmly in a small-group activity.',
       activityDate: '2026-07-11',

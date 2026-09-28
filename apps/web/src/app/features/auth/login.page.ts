@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
@@ -619,8 +620,8 @@ export class LoginPage {
     this.loading.set(true);
     this.auth.login(this.form.getRawValue()).subscribe({
       next: () => void this.router.navigateByUrl('/dashboard'),
-      error: () => {
-        this.error.set('Log in failed. Check your email and password.');
+      error: (err: unknown) => {
+        this.error.set(describeLoginError(err));
         this.loading.set(false);
       },
     });
@@ -630,3 +631,18 @@ export class LoginPage {
     this.showPassword.update((visible) => !visible);
   }
 }
+
+/**
+ * Turn a failed login request into an honest message: only a 401 means the
+ * credentials were rejected — network failures and server errors (e.g. the
+ * database being unreachable) should not be reported as a wrong password.
+ */
+const describeLoginError = (err: unknown): string => {
+  if (err instanceof HttpErrorResponse) {
+    if (err.status === 401) return 'Log in failed. Check your email and password.';
+    if (err.status === 0)
+      return 'Cannot reach the AutiCare server. Check that the API is running and try again.';
+    return `Server error (${err.status}). Please try again in a moment.`;
+  }
+  return 'Log in failed. Please try again.';
+};

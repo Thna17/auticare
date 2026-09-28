@@ -1,7 +1,11 @@
 // school-topbar.component.ts
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
+
 @Component({
   standalone: true,
+  imports: [RouterLink],
   selector: 'ac-school-topbar',
   template: `
     <header class="topbar">
@@ -22,13 +26,13 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
         <button class="icon-btn" aria-label="Help">
           <span class="icon">?</span>
         </button>
-        <div class="user-profile">
+        <a class="user-profile" routerLink="/schools/profile">
           <div class="user-info">
-            <span class="user-name">Sarah Mitchell</span>
-            <span class="user-role">Senior Special Educator</span>
+            <span class="user-name">{{ displayName() }}</span>
+            <span class="user-role">{{ roleLabel() }}</span>
           </div>
-          <div class="user-avatar">👩‍🏫</div>
-        </div>
+          <div class="user-avatar">{{ avatarInitials() }}</div>
+        </a>
       </div>
     </header>
   `,
@@ -113,6 +117,14 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
         gap: 12px;
         padding-left: 16px;
         border-left: 1px solid #e2e8f0;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+
+      .user-profile:hover {
+        opacity: 0.8;
       }
 
       .user-info {
@@ -140,10 +152,33 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #1e40af;
       }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SchoolTopbarComponent {}
+export class SchoolTopbarComponent {
+  private readonly auth = inject(AuthService);
+  private readonly parent = this.auth.parent;
+
+  protected readonly displayName = computed(() => {
+    const p = this.parent();
+    if (p) return `${p.firstName} ${p.lastName}`;
+    return 'School Staff';
+  });
+
+  protected readonly roleLabel = computed(() => {
+    const p = this.parent();
+    if (p?.role === 'SCHOOL') return 'School account';
+    return p?.role ?? 'Staff';
+  });
+
+  protected readonly avatarInitials = computed(() => {
+    const p = this.parent();
+    if (p) return `${p.firstName[0] ?? ''}${p.lastName[0] ?? ''}`.toUpperCase();
+    return 'SS';
+  });
+}

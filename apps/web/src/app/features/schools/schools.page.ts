@@ -1,20 +1,28 @@
 // schools.page.ts (Parent Side)
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import type { SchoolResponse } from '@auticare/contracts';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
+import { ChildrenApi } from '../children/data-access/children.api';
 import { SchoolsApi } from './data-access/schools.api';
+import { EnrollmentRequestsApi } from './data-access/enrollment-requests.api';
+import type { ChildResponse } from '@auticare/contracts';
 
 interface SchoolViewModel extends SchoolResponse {
-  rating: number;
+  rating: number | null;
   reviewCount: number;
   isVerified: boolean;
   specializations: string[];
-  studentTeacherRatio: string;
-  availability: 'Immediate' | 'Waitlist';
-  waitlistTime?: string;
-  imageUrl?: string;
 }
+
+const SPECIALIZATION_OPTIONS = [
+  'ABA',
+  'Speech Therapy',
+  'Sensory Integration',
+  'Occupational Therapy',
+  'Social Skills',
+] as const;
 
 @Component({
   standalone: true,
@@ -32,10 +40,13 @@ interface SchoolViewModel extends SchoolResponse {
               type="text"
               placeholder="Search for school names, cities, or specializations..."
               class="search-input"
+              [value]="search()"
+              (input)="search.set($any($event.target).value)"
+              (keyup.enter)="applyFilters()"
             />
           </div>
           <div class="topbar-actions">
-            <button class="icon-btn" aria-label="Notifications">
+            <button class="icon-btn" aria-label="Notifications" routerLink="/notifications">
               <span>🔔</span>
             </button>
             <button class="icon-btn" aria-label="Help">
@@ -43,10 +54,10 @@ interface SchoolViewModel extends SchoolResponse {
             </button>
             <div class="user-profile-small">
               <div class="user-text">
-                <span class="name">Sarah Jenkins</span>
-                <span class="role">Care Coordinator</span>
+                <span class="name">{{ userName() }}</span>
+                <span class="role">Parent</span>
               </div>
-              <div class="avatar-small">SJ</div>
+              <div class="avatar-small">{{ initials() }}</div>
             </div>
           </div>
         </header>
@@ -82,57 +93,54 @@ interface SchoolViewModel extends SchoolResponse {
 
             <div class="filter-group">
               <label class="filter-label">Province/Region</label>
-              <select class="filter-select">
-                <option>Phnom Penh</option>
-                <option>Kandal</option>
-                <option>Kompung Spue</option>
-                <option>SeimReap</option>
-                <option>Batdombong</option>
-                <option>Takoe</option>
+              <select
+                class="filter-select"
+                [value]="province()"
+                (change)="province.set($any($event.target).value); applyFilters()"
+              >
+                <option value="">All provinces</option>
+                @for (city of cities(); track city) {
+                  <option [value]="city">{{ city }}</option>
+                }
               </select>
             </div>
 
             <div class="filter-group">
-              <label class="filter-label">Distance (Within 50km)</label>
-              <div class="distance-slider">
-                <input type="range" min="5" max="100" value="50" class="slider" />
-                <div class="slider-labels">
-                  <span>5km</span>
-                  <span>100km+</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-group">
-              <label class="filter-label">School Type</label>
-              <div class="checkbox-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" />
-                  <span>Private Specialized</span>
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" checked />
-                  <span>Public Integration</span>
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" />
-                  <span>Non-profit/Charity</span>
-                </label>
-              </div>
+              <label class="filter-label">Availability</label>
+              <select
+                class="filter-select"
+                [value]="availability()"
+                (change)="availability.set($any($event.target).value); applyFilters()"
+              >
+                <option value="">Any availability</option>
+                <option value="IMMEDIATE">Immediate openings</option>
+                <option value="WAITLIST">Waitlist</option>
+                <option value="CLOSED">Closed</option>
+              </select>
             </div>
 
             <div class="filter-group">
               <label class="filter-label">Specializations</label>
               <div class="tags-group">
-                <button class="tag-btn">ABA</button>
-                <button class="tag-btn">Speech Therapy</button>
-                <button class="tag-btn">Sensory Integration</button>
-                <button class="tag-btn">Occupational Therapy</button>
-                <button class="tag-btn">Social Skills</button>
+                @for (tag of specializationOptions; track tag) {
+                  <button
+                    type="button"
+                    class="tag-btn"
+                    [class.active]="selectedSpecializations().includes(tag)"
+                    (click)="toggleSpecialization(tag)"
+                  >
+                    {{ tag }}
+                  </button>
+                }
               </div>
             </div>
 
-            <button class="apply-filters-btn">Go</button>
+            <button class="apply-filters-btn" (click)="applyFilters()" [disabled]="loading()">
+              {{ loading() ? 'Searching…' : 'Go' }}
+            </button>
+            <button class="clear-filters-btn" type="button" (click)="clearFilters()">
+              Reset filters
+            </button>
           </aside>
 
           <!-- Schools List -->
@@ -169,7 +177,7 @@ interface SchoolViewModel extends SchoolResponse {
                     <a class="school-link" [routerLink]="['/schools', school.id]">
                       <img
                         [src]="
-                          school.imageUrl ||
+                          school.coverImageUrl ||
                           'https://images.unsplash.com/photo-1562774053-801e4e208e4e?w=400&h=300&fit=crop'
                         "
                         [alt]="school.name"
@@ -186,11 +194,13 @@ interface SchoolViewModel extends SchoolResponse {
                       <a class="school-link" [routerLink]="['/schools', school.id]">
                         <h3>{{ school.name }}</h3>
                       </a>
-                      <div class="rating">
-                        <span class="star">★</span>
-                        <span class="rating-value">{{ school.rating }}</span>
-                        <span class="rating-count">({{ school.reviewCount }})</span>
-                      </div>
+                      @if (school.rating !== null) {
+                        <div class="rating">
+                          <span class="star">★</span>
+                          <span class="rating-value">{{ school.rating }}</span>
+                          <span class="rating-count">({{ school.reviewCount }})</span>
+                        </div>
+                      }
                     </div>
 
                     <div class="school-location">
@@ -198,18 +208,24 @@ interface SchoolViewModel extends SchoolResponse {
                       <span>{{ school.address }}, {{ school.city }}</span>
                     </div>
 
-                    <div class="specializations-list">
-                      @for (spec of school.specializations; track spec) {
-                        <span class="spec-tag">{{ spec }}</span>
-                      }
-                    </div>
+                    @if (school.description) {
+                      <p class="school-description">{{ school.description }}</p>
+                    }
+
+                    @if (school.specializations.length) {
+                      <div class="specializations-list">
+                        @for (spec of school.specializations; track spec) {
+                          <span class="spec-tag">{{ spec }}</span>
+                        }
+                      </div>
+                    }
 
                     <div class="school-meta">
                       <div class="meta-item">
                         <span class="meta-icon">👥</span>
                         <div>
                           <span class="meta-label">STUDENT:TEACHER</span>
-                          <span class="meta-value">{{ school.studentTeacherRatio }}</span>
+                          <span class="meta-value">{{ school.studentTeacherRatio ?? '—' }}</span>
                         </div>
                       </div>
 
@@ -219,23 +235,115 @@ interface SchoolViewModel extends SchoolResponse {
                           <span class="meta-label">AVAILABILITY</span>
                           <span
                             class="meta-value"
-                            [class.waitlist]="school.availability === 'Waitlist'"
+                            [class.waitlist]="school.availabilityStatus === 'WAITLIST'"
+                            [class.closed]="school.availabilityStatus === 'CLOSED'"
                           >
-                            {{ school.availability }}
-                            @if (school.waitlistTime) {
-                              <span class="waitlist-time">({{ school.waitlistTime }})</span>
+                            {{ availabilityLabel(school.availabilityStatus) }}
+                            @if (school.waitlistEstimate) {
+                              <span class="waitlist-time">({{ school.waitlistEstimate }})</span>
                             }
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <button class="enrollment-btn">Request Enrollment</button>
+                    <button
+                      class="enrollment-btn"
+                      (click)="openRequestDialog(school)"
+                      [disabled]="school.availabilityStatus === 'CLOSED'"
+                    >
+                      {{
+                        school.availabilityStatus === 'CLOSED'
+                          ? 'Not accepting requests'
+                          : 'Request Enrollment'
+                      }}
+                    </button>
                   </div>
                 </div>
               }
             }
           </div>
+
+          <!-- Enrollment request dialog -->
+          @if (requestDialogSchool(); as dialogSchool) {
+            <div class="dialog-backdrop" (click)="closeRequestDialog()">
+              <div
+                class="dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="request-dialog-title"
+                (click)="$event.stopPropagation()"
+              >
+                <h3 id="request-dialog-title">Request Enrollment</h3>
+                <p class="dialog-school">{{ dialogSchool.name }} — {{ dialogSchool.city }}</p>
+
+                @if (children().length === 0) {
+                  <p class="dialog-hint">
+                    Add a child to your family profile first — then you can request enrollment here.
+                  </p>
+                  <div class="dialog-actions">
+                    <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
+                      Close
+                    </button>
+                  </div>
+                } @else if (requestSubmitted(); as done) {
+                  <div class="success-box" role="status">
+                    <strong>Request sent.</strong>
+                    {{ done.childName }}'s enrollment request was delivered — {{ done.schoolName }}
+                    will review it and respond on your notifications.
+                  </div>
+                  <div class="dialog-actions">
+                    <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
+                      Done
+                    </button>
+                  </div>
+                } @else {
+                  <label class="dialog-field">
+                    <span class="dialog-label">Child</span>
+                    <select
+                      class="dialog-input"
+                      [value]="selectedChildId()"
+                      (change)="selectedChildId.set($any($event.target).value)"
+                    >
+                      @for (child of children(); track child.id) {
+                        <option [value]="child.id">{{ child.firstName }}</option>
+                      }
+                    </select>
+                  </label>
+
+                  <label class="dialog-field">
+                    <span class="dialog-label">Message to the school (optional)</span>
+                    <textarea
+                      class="dialog-input"
+                      rows="3"
+                      maxlength="2000"
+                      placeholder="Share anything that helps the school — your child's needs, goals, or questions."
+                      [value]="requestMessage()"
+                      (input)="requestMessage.set($any($event.target).value)"
+                    ></textarea>
+                  </label>
+
+                  @if (requestError(); as dialogErr) {
+                    <p class="error" role="alert">{{ dialogErr }}</p>
+                  }
+
+                  <div class="dialog-actions">
+                    <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      class="apply-filters-btn dialog-submit"
+                      (click)="submitRequest()"
+                      [disabled]="requestSubmitting() || !selectedChildId()"
+                    >
+                      {{ requestSubmitting() ? 'Sending…' : 'Send request' }}
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </div>
       </main>
     </div>
@@ -916,6 +1024,130 @@ interface SchoolViewModel extends SchoolResponse {
         color: #f59e0b;
       }
 
+      .meta-value.closed {
+        color: #a23434;
+      }
+
+      .school-description {
+        margin: 0;
+        color: #64748b;
+        font-size: 14px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .clear-filters-btn {
+        width: 100%;
+        margin-top: 8px;
+        padding: 10px;
+        background: transparent;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .clear-filters-btn:hover {
+        color: #2d6a7a;
+        border-color: #2d6a7a;
+      }
+
+      /* Enrollment request dialog */
+      .dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        padding: 16px;
+      }
+
+      .dialog {
+        width: 100%;
+        max-width: 460px;
+        background: white;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+      }
+
+      .dialog h3 {
+        margin: 0 0 4px;
+        color: #10303b;
+        font-size: 18px;
+      }
+
+      .dialog-school {
+        margin: 0 0 16px;
+        color: #64748b;
+        font-size: 14px;
+      }
+
+      .dialog-hint {
+        margin: 0 0 16px;
+        color: #5b7280;
+        font-size: 14px;
+      }
+
+      .dialog-field {
+        display: block;
+        margin-bottom: 14px;
+      }
+
+      .dialog-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 6px;
+      }
+
+      .dialog-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d7e3ea;
+        border-radius: 9px;
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+      }
+
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .dialog-submit {
+        width: auto;
+      }
+
+      .btn-secondary {
+        padding: 10px 18px;
+        border: 1px solid #d7e3ea;
+        border-radius: 9px;
+        background: #fff;
+        color: #2d6a7a;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .success-box {
+        padding: 12px 16px;
+        border-radius: 9px;
+        background: #e7f6ef;
+        color: #177a4c;
+        font-size: 14px;
+      }
+
       .waitlist-time {
         font-weight: 500;
         color: #64748b;
@@ -1067,39 +1299,173 @@ interface SchoolViewModel extends SchoolResponse {
 })
 export class SchoolsPage implements OnInit {
   private readonly api = inject(SchoolsApi);
+  private readonly childrenApi = inject(ChildrenApi);
+  private readonly requestsApi = inject(EnrollmentRequestsApi);
+  private readonly auth = inject(AuthService);
+
   readonly schools = signal<readonly SchoolViewModel[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  ngOnInit() {
-    this.loading.set(true);
-    this.api.listSchools().subscribe({
-      next: (schools) => {
-        // Map backend data to view model with mock enhancements
-        const viewModel = schools.map((school, index) => ({
-          ...school,
-          rating: 4.5 + (index % 5) * 0.1, // Mock rating between 4.5-4.9
-          reviewCount: 50 + index * 30, // Mock review count
-          isVerified: index % 2 === 0, // Alternate verified status
-          specializations: [
-            'Applied Behavior Analysis',
-            'Speech Therapy',
-            'Sensory Integration',
-          ].slice(0, 2 + (index % 2)),
-          studentTeacherRatio: `${3 + (index % 6)}:1`,
-          // Explicitly cast to the union type to satisfy TypeScript
-          availability: (index % 3 === 0 ? 'Waitlist' : 'Immediate') as 'Immediate' | 'Waitlist',
-          waitlistTime: index % 3 === 0 ? `${index + 1}m` : undefined,
-          imageUrl: undefined, // Will use default image in template
-        }));
+  // ── Filters ────────────────────────────────────────────────────────
+  readonly cities = signal<string[]>([]);
+  readonly search = signal('');
+  readonly province = signal('');
+  readonly availability = signal('');
+  readonly selectedSpecializations = signal<string[]>([]);
+  readonly specializationOptions = SPECIALIZATION_OPTIONS;
 
-        this.schools.set(viewModel);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Schools could not be loaded. Please refresh the page.');
-        this.loading.set(false);
-      },
+  // ── Enrollment request dialog ──────────────────────────────────────
+  readonly requestDialogSchool = signal<SchoolViewModel | null>(null);
+  readonly children = signal<ChildResponse[]>([]);
+  readonly selectedChildId = signal('');
+  readonly requestMessage = signal('');
+  readonly requestSubmitting = signal(false);
+  readonly requestError = signal<string | null>(null);
+  readonly requestSubmitted = signal<{ childName: string; schoolName: string } | null>(null);
+
+  readonly userName = computed(() => {
+    const parent = this.auth.parent();
+    const name = [parent?.firstName, parent?.lastName].filter(Boolean).join(' ').trim();
+    return name !== '' ? name : (parent?.email ?? 'Parent');
+  });
+  readonly initials = computed(() => {
+    const parent = this.auth.parent();
+    const first = parent?.firstName?.[0] ?? '';
+    const last = parent?.lastName?.[0] ?? '';
+    const value = (first + last).trim();
+    return value !== '' ? value.toUpperCase() : 'P';
+  });
+
+  ngOnInit() {
+    void this.loadSchools();
+    this.api.listSchoolCities().subscribe({
+      next: (cities) => this.cities.set(cities),
+      error: () => this.cities.set([]),
     });
+  }
+
+  loadSchools() {
+    this.loading.set(true);
+    this.error.set(null);
+    this.api
+      .listSchools({
+        search: this.search().trim() || undefined,
+        province: this.province() || undefined,
+        availability: this.availability() || undefined,
+        specializations:
+          this.selectedSpecializations().length > 0
+            ? this.selectedSpecializations().join(',')
+            : undefined,
+      })
+      .subscribe({
+        next: (schools) => {
+          // Real backend data — no mock overrides. rating/reviewCount/isVerified/
+          // specializations come straight from the API (rating is computed from
+          // real reviews server-side).
+          this.schools.set(schools);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('Schools could not be loaded. Please refresh the page.');
+          this.loading.set(false);
+        },
+      });
+  }
+
+  applyFilters() {
+    void this.loadSchools();
+  }
+
+  toggleSpecialization(tag: string) {
+    const current = this.selectedSpecializations();
+    this.selectedSpecializations.set(
+      current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag],
+    );
+    void this.loadSchools();
+  }
+
+  clearFilters() {
+    this.search.set('');
+    this.province.set('');
+    this.availability.set('');
+    this.selectedSpecializations.set([]);
+    void this.loadSchools();
+  }
+
+  availabilityLabel(status: SchoolResponse['availabilityStatus']): string {
+    switch (status) {
+      case 'IMMEDIATE':
+        return 'Immediate';
+      case 'WAITLIST':
+        return 'Waitlist';
+      case 'CLOSED':
+        return 'Closed';
+    }
+  }
+
+  // ── Enrollment request flow ────────────────────────────────────────
+
+  openRequestDialog(school: SchoolViewModel) {
+    this.requestDialogSchool.set(school);
+    this.requestSubmitted.set(null);
+    this.requestError.set(null);
+    this.requestMessage.set('');
+    this.childrenApi.listChildren().subscribe({
+      next: (children) => {
+        this.children.set(children);
+        if (children.length > 0 && this.selectedChildId() === '') {
+          this.selectedChildId.set(children[0].id);
+        }
+      },
+      error: () => this.children.set([]),
+    });
+  }
+
+  closeRequestDialog() {
+    this.requestDialogSchool.set(null);
+    this.requestSubmitted.set(null);
+    this.requestError.set(null);
+  }
+
+  submitRequest() {
+    const school = this.requestDialogSchool();
+    const childId = this.selectedChildId();
+    if (!school || !childId || this.requestSubmitting()) {
+      return;
+    }
+
+    this.requestSubmitting.set(true);
+    this.requestError.set(null);
+
+    const message = this.requestMessage().trim();
+    this.requestsApi
+      .createRequest({
+        schoolId: school.id,
+        childId,
+        ...(message !== '' && { message }),
+      })
+      .subscribe({
+        next: (request) => {
+          this.requestSubmitting.set(false);
+          this.requestSubmitted.set({
+            childName: request.childName,
+            schoolName: request.schoolName,
+          });
+        },
+        error: (err) => {
+          this.requestSubmitting.set(false);
+          const status = err?.status as number | undefined;
+          if (status === 409) {
+            this.requestError.set(
+              'This child already has an enrollment or an open request at this school.',
+            );
+          } else if (status === 404) {
+            this.requestError.set('This school or child could not be found.');
+          } else {
+            this.requestError.set('Could not send the request. Please try again.');
+          }
+        },
+      });
   }
 }

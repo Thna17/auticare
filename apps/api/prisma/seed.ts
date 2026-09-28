@@ -463,7 +463,7 @@ async function main() {
 
   await prisma.schoolChildEnrollment.upsert({
     where: { schoolId_childId: { schoolId: school.id, childId: 'demo-child-1' } },
-    update: { status: 'ACTIVE', endedAt: null },
+    update: { status: 'ACTIVE', endDate: null },
     create: { schoolId: school.id, childId: 'demo-child-1' },
   });
 
@@ -535,6 +535,96 @@ async function main() {
     ],
     skipDuplicates: true,
   });
+
+  // ── Seed ActivityReports for the school dashboard ──────────────────────
+  const now = new Date();
+  const daysAgo = (d: number) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() - d);
+    return date;
+  };
+
+  const seedReports: {
+    id: string;
+    schoolId: string;
+    childId: string;
+    reporterId: string;
+    activityCategory: string;
+    title: string;
+    summary: string;
+    activityDate: Date;
+    status: string;
+    duration?: number;
+  }[] = [
+    {
+      id: 'demo-report-1',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Cognitive/Developmental',
+      title: 'Color Sorting Activity',
+      summary: 'Sam successfully sorted 8 colors into groups with 90% accuracy.',
+      activityDate: daysAgo(1),
+      status: 'SUBMITTED',
+      duration: 30,
+    },
+    {
+      id: 'demo-report-2',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Social/Emotional',
+      title: 'Group Play Session',
+      summary: 'Sam initiated play with a peer and shared toys cooperatively.',
+      activityDate: daysAgo(3),
+      status: 'SUBMITTED',
+      duration: 45,
+    },
+    {
+      id: 'demo-report-3',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Language/Communication',
+      title: 'Vocabulary Building',
+      summary: 'Sam learned 5 new words and used them in sentences.',
+      activityDate: daysAgo(5),
+      status: 'SUBMITTED',
+      duration: 25,
+    },
+    {
+      id: 'demo-report-4',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Sensory/Motor',
+      title: 'Fine Motor Practice',
+      summary: 'Draft: Sam worked on pencil grip and tracing shapes.',
+      activityDate: daysAgo(7),
+      status: 'DRAFT',
+      duration: 20,
+    },
+    {
+      id: 'demo-report-5',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Adaptive/Self-Care',
+      title: 'Morning Routine Practice',
+      summary: 'Draft: Sam practiced putting on shoes independently.',
+      activityDate: daysAgo(10),
+      status: 'DRAFT',
+      duration: 15,
+    },
+  ];
+
+  for (const report of seedReports) {
+    await prisma.activityReport.upsert({
+      where: { id: report.id },
+      update: {},
+      create: report,
+    });
+  }
 
   console.log(screeningDisclaimer);
 }

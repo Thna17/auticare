@@ -27,6 +27,12 @@ export const SCHOOLS_ROUTES: Routes = [
     loadComponent: () => import('./school-enrollments.page').then((m) => m.SchoolEnrollmentsPage),
   },
   {
+    path: 'students/add',
+    canActivate: [roleGuard],
+    data: { roles: ['SCHOOL'] },
+    loadComponent: () => import('./add-student.page').then((m) => m.AddStudentPage),
+  },
+  {
     path: 'reports',
     canActivate: [roleGuard],
     data: { roles: ['PARENT', 'ADMIN', 'SCHOOL'] },

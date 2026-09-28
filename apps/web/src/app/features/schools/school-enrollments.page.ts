@@ -1,7 +1,12 @@
 // school-enrollments.page.ts
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import type { OnInit } from '@angular/core';
-import type { SchoolChildEnrollmentResponse } from '@auticare/contracts';
+import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import type {
+  EnrollmentStatsResponse,
+  EnrolledStudent,
+  LeadSpecialistResponse,
+} from '@auticare/contracts';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
@@ -11,15 +16,15 @@ interface EnrollmentViewModel {
   childId: string;
   childName: string;
   avatar: string;
-  status: 'Active' | 'Graduated' | 'Pending';
+  status: 'Active' | 'Graduated' | 'Pending' | 'Rejected';
   leadSpecialist: string;
   communicationProgress: number;
-  startedAt: string;
+  startDate: string;
 }
 
 @Component({
   standalone: true,
-  imports: [UiCardComponent, SchoolTopbarComponent],
+  imports: [UiCardComponent, SchoolTopbarComponent, RouterLink],
   selector: 'ac-school-enrollments-page',
   template: `
     <ac-school-topbar />
@@ -30,10 +35,10 @@ interface EnrollmentViewModel {
         <h1>Student Enrollment</h1>
         <p>Manage and monitor student engagement and therapeutic progress across all cohorts.</p>
       </div>
-      <button class="btn-primary">
+      <a class="btn-primary" routerLink="/schools/students/add">
         <span>👤+</span>
         <span>Add New Student</span>
-      </button>
+      </a>
     </section>
 
     <!-- Stats Cards -->
@@ -41,25 +46,25 @@ interface EnrollmentViewModel {
       <div class="stat-card">
         <span class="stat-label">Total Students</span>
         <div class="stat-value">
-          <span class="stat-number">124</span>
-          <span class="stat-trend">+3 this month</span>
+          <span class="stat-number">{{ stats()?.totalStudents ?? 0 }}</span>
+          <span class="stat-trend">+{{ stats()?.newStudentsThisMonth ?? 0 }} this month</span>
         </div>
       </div>
 
       <div class="stat-card">
         <span class="stat-label">Active Programs</span>
         <div class="stat-value">
-          <span class="stat-number">98</span>
-          <span class="stat-trend">82% Participation</span>
+          <span class="stat-number">{{ stats()?.activePrograms ?? 0 }}</span>
+          <span class="stat-trend">{{ stats()?.participationRate ?? 0 }}% Participation</span>
         </div>
       </div>
 
       <div class="stat-card">
         <span class="stat-label">Average Progress</span>
         <div class="stat-value">
-          <span class="stat-number">74%</span>
+          <span class="stat-number">{{ stats()?.averageProgress ?? 0 }}%</span>
           <div class="progress-bar-container">
-            <div class="progress-bar" style="width: 74%"></div>
+            <div class="progress-bar" [style.width.%]="stats()?.averageProgress ?? 0"></div>
           </div>
         </div>
       </div>
@@ -67,7 +72,7 @@ interface EnrollmentViewModel {
       <div class="stat-card">
         <span class="stat-label">Needs Attention</span>
         <div class="stat-value">
-          <span class="stat-number warning">12</span>
+          <span class="stat-number warning">{{ stats()?.needsAttention ?? 0 }}</span>
           <span class="stat-trend">Requires Review</span>
         </div>
       </div>
@@ -80,17 +85,18 @@ interface EnrollmentViewModel {
           <span>⚙</span>
           <span>Filters</span>
         </button>
-        <select class="filter-select">
-          <option>Enrollment: All Status</option>
-          <option>Active</option>
-          <option>Graduated</option>
-          <option>Pending</option>
+        <select class="filter-select" (change)="onStatusFilterChange($event)">
+          <option value="ALL">Enrollment: All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="GRADUATED">Graduated</option>
+          <option value="PENDING">Pending</option>
+          <option value="REJECTED">Rejected</option>
         </select>
-        <select class="filter-select">
-          <option>Lead Specialist: All</option>
-          <option>Dr. Aris Thorne</option>
-          <option>Sarah Jenkins</option>
-          <option>Michael Chen</option>
+        <select class="filter-select" (change)="onSpecialistFilterChange($event)">
+          <option value="">Lead Specialist: All</option>
+          @for (spec of specialists(); track spec.id) {
+            <option [value]="spec.id">{{ spec.firstName }} {{ spec.lastName }}</option>
+          }
         </select>
       </div>
       <div class="filters-right">
@@ -171,13 +177,35 @@ interface EnrollmentViewModel {
 
         <!-- Pagination -->
         <div class="pagination">
-          <span class="pagination-info">Showing 1 to 4 of 124 students</span>
+          <span class="pagination-info">
+            Showing {{ (currentPage() - 1) * pageSize() + 1 }} to
+            {{ Math.min(currentPage() * pageSize(), totalStudents()) }} of
+            {{ totalStudents() }} students
+          </span>
           <div class="pagination-controls">
-            <button class="page-btn">Previous</button>
-            <button class="page-btn active">1</button>
-            <button class="page-btn">2</button>
-            <button class="page-btn">3</button>
-            <button class="page-btn">Next</button>
+            <button
+              class="page-btn"
+              [disabled]="currentPage() <= 1"
+              (click)="goToPage(currentPage() - 1)"
+            >
+              Previous
+            </button>
+            @for (p of [].constructor(totalPages()); track p; let i = $index) {
+              <button
+                class="page-btn"
+                [class.active]="currentPage() === i + 1"
+                (click)="goToPage(i + 1)"
+              >
+                {{ i + 1 }}
+              </button>
+            }
+            <button
+              class="page-btn"
+              [disabled]="currentPage() >= totalPages()"
+              (click)="goToPage(currentPage() + 1)"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
@@ -217,6 +245,7 @@ interface EnrollmentViewModel {
         font-weight: 600;
         font-size: 14px;
         cursor: pointer;
+        text-decoration: none;
         transition: background 0.2s;
       }
 
@@ -440,6 +469,11 @@ interface EnrollmentViewModel {
         color: #d97706;
       }
 
+      .status-badge.rejected {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+
       .specialist-cell {
         display: flex;
         align-items: center;
@@ -529,6 +563,11 @@ interface EnrollmentViewModel {
         border-color: #2d6a7a;
       }
 
+      .page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
       .error {
         color: #a23434;
         font-weight: 600;
@@ -539,49 +578,108 @@ interface EnrollmentViewModel {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SchoolEnrollmentsPage implements OnInit {
+  readonly Math = Math;
   private readonly api = inject(SchoolsApi);
   readonly enrollments = signal<EnrollmentViewModel[]>([]);
+  readonly stats = signal<EnrollmentStatsResponse | null>(null);
+  readonly specialists = signal<LeadSpecialistResponse[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
+  // Filter state
+  readonly selectedStatus = signal<string>('ALL');
+  readonly selectedSpecialistId = signal<string | undefined>(undefined);
+  readonly searchQuery = signal<string>('');
+
+  // Pagination state
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+  readonly totalPages = signal(1);
+  readonly totalStudents = signal(0);
+
   ngOnInit() {
     this.loading.set(true);
-    this.api.listEnrollments().subscribe({
-      next: (enrollments) => {
-        this.enrollments.set(this.mapToViewModel(enrollments));
-        this.loading.set(false);
+    // Load stats and specialists in parallel
+    forkJoin({
+      stats: this.api.getEnrollmentStats(),
+      specialists: this.api.getEnrollmentSpecialists(),
+    }).subscribe({
+      next: ({ stats, specialists }) => {
+        this.stats.set(stats);
+        this.specialists.set(specialists);
+        this.loadStudents();
       },
       error: () => {
-        this.error.set('Enrollments could not be loaded. Please refresh the page.');
+        this.error.set('Failed to load enrollment data. Please refresh the page.');
         this.loading.set(false);
       },
     });
   }
 
-  private mapToViewModel(
-    enrollments: readonly SchoolChildEnrollmentResponse[],
-  ): EnrollmentViewModel[] {
-    // Mock data to match the design - replace with actual API response mapping
-    const mockNames = ['Leo Bennett', 'Maya Patel', 'Ethan Ross', 'Olivia Zhang'];
-    const mockSpecialists = ['Dr. Aris Thorne', 'Sarah Jenkins', 'Dr. Aris Thorne', 'Michael Chen'];
-    const mockAvatars = ['👦', '👧', '👦', '👧'];
-    const mockStatuses: Array<'Active' | 'Graduated' | 'Pending'> = [
-      'Active',
-      'Active',
-      'Graduated',
-      'Active',
-    ];
-    const mockProgress = [85, 42, 98, 22];
+  loadStudents() {
+    this.api
+      .getEnrolledStudentsList({
+        page: this.currentPage(),
+        limit: this.pageSize(),
+        status: this.selectedStatus() !== 'ALL' ? this.selectedStatus() : undefined,
+        specialistId: this.selectedSpecialistId(),
+        search: this.searchQuery() || undefined,
+      })
+      .subscribe({
+        next: (result) => {
+          this.enrollments.set(result.students.map(this.mapToViewModel));
+          this.totalPages.set(result.pagination.totalPages);
+          this.totalStudents.set(result.pagination.total);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('Failed to load enrolled students.');
+          this.loading.set(false);
+        },
+      });
+  }
 
-    return enrollments.map((enrollment, index) => ({
-      id: enrollment.id,
-      childId: enrollment.childId,
-      childName: mockNames[index % mockNames.length],
-      avatar: mockAvatars[index % mockAvatars.length],
-      status: mockStatuses[index % mockStatuses.length],
-      leadSpecialist: mockSpecialists[index % mockSpecialists.length],
-      communicationProgress: mockProgress[index % mockProgress.length],
-      startedAt: enrollment.startedAt,
-    }));
+  onStatusFilterChange(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedStatus.set(value);
+    this.currentPage.set(1);
+    this.loadStudents();
+  }
+
+  onSpecialistFilterChange(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedSpecialistId.set(value || undefined);
+    this.currentPage.set(1);
+    this.loadStudents();
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
+    this.loadStudents();
+  }
+
+  private mapToViewModel(student: EnrolledStudent): EnrollmentViewModel {
+    const avatar = student.firstName.charAt(0).toUpperCase();
+    const statusMap: Record<string, EnrollmentViewModel['status']> = {
+      ACTIVE: 'Active',
+      GRADUATED: 'Graduated',
+      PENDING: 'Pending',
+      REJECTED: 'Rejected',
+    };
+    const specialistName = student.leadSpecialist
+      ? `${student.leadSpecialist.firstName} ${student.leadSpecialist.lastName}`
+      : 'Unassigned';
+
+    return {
+      id: student.id,
+      childId: student.id,
+      childName: `${student.firstName} ${student.lastName}`.trim(),
+      avatar,
+      status: statusMap[student.enrollmentStatus] ?? 'Pending',
+      leadSpecialist: specialistName,
+      communicationProgress: student.communicationProgress,
+      startDate: student.startDate,
+    };
   }
 }

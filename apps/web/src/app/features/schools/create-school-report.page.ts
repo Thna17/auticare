@@ -1,19 +1,15 @@
-// create-school-report.page.ts
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { SchoolsApi } from './data-access/schools.api';
-import type { SchoolChildEnrollmentResponse } from '@auticare/contracts';
+import { SchoolsApi, type EnrolledStudentOption } from './data-access/schools.api';
 
-interface StudentViewModel {
-  id: string;
-  childId: string;
-  childName: string;
-  avatar: string;
-  age: string;
-  group: string;
-  status: string;
+/** A file that has been accepted but not yet uploaded to the server. */
+export interface PendingFile {
+  file: File;
+  previewUrl: string | null; // object URL for image previews; null for docs
+  uploading: boolean;
+  uploadedUrl: string | null; // server path, e.g. /uploads/activity-reports/<uuid>.jpg
 }
 
 @Component({
@@ -25,7 +21,7 @@ interface StudentViewModel {
       <nav class="breadcrumbs">
         <a class="breadcrumb-link" routerLink="/schools/enrollments">Students</a>
         <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-item">{{ selectedChild().childName }}</span>
+        <span class="breadcrumb-item">{{ selectedChild()?.firstName ?? '...' }}</span>
         <span class="breadcrumb-separator">/</span>
         <span class="breadcrumb-item active">New Activity Report</span>
       </nav>
@@ -35,7 +31,9 @@ interface StudentViewModel {
         <h1>Create Activity Report</h1>
         <div class="header-actions">
           <a class="btn-cancel" routerLink="/schools/reports">Cancel</a>
-          <button type="button" class="btn-save-draft" (click)="saveDraft()">Save Draft</button>
+          <button type="button" class="btn-save-draft" (click)="saveDraft()" [disabled]="saving()">
+            {{ saving() ? 'Saving...' : 'Save Draft' }}
+          </button>
         </div>
       </header>
 
@@ -44,41 +42,67 @@ interface StudentViewModel {
         <div class="profile-section-card">
           <div class="selector-row">
             <label for="child-select" class="selector-label">Select Student:</label>
-            <select id="child-select" formControlName="childId" class="child-select">
-              @for (child of children(); track child.childId) {
-                <option [value]="child.childId">{{ child.childName }} ({{ child.childId }})</option>
+            <select
+              id="child-select"
+              formControlName="childId"
+              class="child-select"
+              [disabled]="loadingStudents()"
+            >
+              @if (loadingStudents()) {
+                <option value="" disabled>Loading students…</option>
+              } @else {
+                <option value="" disabled>Select a student</option>
+              }
+              @for (student of students(); track student.id) {
+                <option [value]="student.id">{{ student.firstName }} {{ student.lastName }}</option>
               }
             </select>
+            @if (studentsError()) {
+              <span class="selector-error">{{ studentsError() }}</span>
+            }
           </div>
 
-          <div class="student-profile-info">
-            <div class="student-avatar-container">
-              <span class="student-avatar-large">{{ selectedChild().avatar }}</span>
-            </div>
-            <div class="student-meta-block">
-              <span class="student-name-title">{{ selectedChild().childName }}</span>
-              <span class="student-id-subtitle">Student ID: #{{ selectedChild().childId }}</span>
-            </div>
-
-            <div class="student-detail-group">
-              <div class="detail-item">
-                <span class="detail-label">AGE</span>
-                <span class="detail-value">{{ selectedChild().age }}</span>
+          @if (selectedChild(); as child) {
+            <div class="student-profile-info">
+              <div class="student-avatar-container">
+                @if (child.photoUrl) {
+                  <img
+                    [src]="child.photoUrl"
+                    alt="{{ child.firstName }}"
+                    class="student-avatar-img"
+                  />
+                } @else {
+                  <span class="student-avatar-large">{{ child.firstName.charAt(0) }}</span>
+                }
               </div>
-              <div class="detail-item">
-                <span class="detail-label">PRIMARY GROUP</span>
-                <span class="detail-value">
-                  <span class="group-dot"></span>
-                  {{ selectedChild().group }}
-                </span>
+              <div class="student-meta-block">
+                <span class="student-name-title">{{ child.firstName }} {{ child.lastName }}</span>
+                <span class="student-id-subtitle">Student ID: #{{ child.id }}</span>
+              </div>
+
+              <div class="student-detail-group">
+                <div class="detail-item">
+                  <span class="detail-label">AGE</span>
+                  <span class="detail-value">{{ child.age }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">DATE OF BIRTH</span>
+                  <span class="detail-value">{{ child.dateOfBirth }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">ENROLLED SINCE</span>
+                  <span class="detail-value">{{ child.startDate }}</span>
+                </div>
+              </div>
+
+              <div class="student-status-badge">
+                <span class="status-dot"></span>
+                Status: {{ child.enrollmentStatus }}
               </div>
             </div>
-
-            <div class="student-status-badge">
-              <span class="status-dot"></span>
-              Status: {{ selectedChild().status }}
-            </div>
-          </div>
+          } @else if (!loadingStudents()) {
+            <p class="no-student-hint">Select a student above to see their profile.</p>
+          }
         </div>
 
         <!-- Main Form Grid -->
@@ -236,29 +260,82 @@ interface StudentViewModel {
               </div>
             </div>
 
-            <!-- 5. Activity Photos -->
+            <!-- 5. Attachments -->
             <div class="form-section photos-section">
               <h2><span class="section-icon">📷</span> 5. Activity Photos</h2>
 
-              <div class="upload-dragzone">
+              <div
+                class="upload-dragzone"
+                (click)="fileInput.click()"
+                (dragover)="$event.preventDefault()"
+                (drop)="onFileDrop($event)"
+              >
                 <span class="upload-cloud-icon">📥</span>
                 <p class="upload-main-text">
-                  Drag & drop photos or <span class="browse-btn">browse</span>
+                  Drag & drop files or <span class="browse-btn">browse</span>
                 </p>
-                <p class="upload-sub-text">Max 5 photos, up to 10MB each (JPG, PNG)</p>
+                <p class="upload-sub-text">JPG, PNG, PDF, Word, text, CSV — up to 10MB each</p>
               </div>
+              <input
+                #fileInput
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,.pdf,.doc,.docx,.txt,.csv"
+                multiple
+                (change)="onFilesSelected($event)"
+                style="display: none"
+              />
 
-              <div class="photo-previews-row">
-                <div class="preview-box-empty">
-                  <span class="preview-icon">🖼️</span>
+              @if (uploadError()) {
+                <p class="upload-error">{{ uploadError() }}</p>
+              }
+
+              @if (pendingFiles().length > 0) {
+                <div class="photo-previews-row">
+                  @for (item of pendingFiles(); track $index; let i = $index) {
+                    <div class="preview-box">
+                      @if (item.previewUrl) {
+                        <img
+                          [src]="item.previewUrl"
+                          class="preview-image"
+                          alt="Attachment preview"
+                        />
+                      } @else {
+                        <div class="preview-doc">
+                          <span class="preview-doc-icon">📄</span>
+                          <span class="preview-doc-name">{{ item.file.name }}</span>
+                        </div>
+                      }
+                      @if (item.uploading) {
+                        <div class="preview-overlay">
+                          <span class="spinner"></span>
+                        </div>
+                      } @else if (item.uploadedUrl) {
+                        <span class="preview-uploaded" title="Uploaded">✓</span>
+                      }
+                      <button
+                        type="button"
+                        class="remove-photo-btn"
+                        (click)="removeFile(i)"
+                        [disabled]="item.uploading"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  }
                 </div>
-                <div class="preview-box-empty">
-                  <span class="preview-icon">🖼️</span>
+              } @else {
+                <div class="photo-previews-row">
+                  <div class="preview-box-empty">
+                    <span class="preview-icon">🖼️</span>
+                  </div>
+                  <div class="preview-box-empty">
+                    <span class="preview-icon">🖼️</span>
+                  </div>
+                  <div class="preview-box-empty">
+                    <span class="preview-icon">🖼️</span>
+                  </div>
                 </div>
-                <div class="preview-box-empty">
-                  <span class="preview-icon">🖼️</span>
-                </div>
-              </div>
+              }
             </div>
           </div>
         </div>
@@ -280,10 +357,15 @@ interface StudentViewModel {
         <!-- Sticky Footer -->
         <footer class="sticky-footer">
           <div class="footer-content">
-            <span class="autosave-text">Last autosaved at {{ autosaveTime }}</span>
+            <span class="autosave-text">{{ footerStatus() }}</span>
             <div class="footer-actions">
-              <button type="button" class="btn-footer-save" (click)="saveDraft()">
-                Save Draft
+              <button
+                type="button"
+                class="btn-footer-save"
+                (click)="saveDraft()"
+                [disabled]="saving()"
+              >
+                {{ saving() ? 'Saving...' : 'Save Draft' }}
               </button>
               <button type="submit" class="btn-footer-submit" [disabled]="saving()">
                 {{ saving() ? 'Submitting...' : 'Submit Report' }}
@@ -388,6 +470,10 @@ interface StudentViewModel {
       .btn-save-draft:hover {
         background: #0f2c3b;
       }
+      .btn-save-draft:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+      }
 
       /* Profile section card */
       .profile-section-card {
@@ -421,8 +507,22 @@ interface StudentViewModel {
         outline: none;
         cursor: pointer;
       }
+      .child-select:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
       .child-select:focus {
         border-color: #3d6375;
+      }
+      .selector-error {
+        font-size: 12px;
+        color: #b91c1c;
+        font-weight: 600;
+      }
+      .no-student-hint {
+        margin: 0;
+        font-size: 13px;
+        color: #64748b;
       }
 
       /* Profile info grid */
@@ -443,8 +543,15 @@ interface StudentViewModel {
         justify-content: center;
         overflow: hidden;
       }
+      .student-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
       .student-avatar-large {
-        font-size: 36px;
+        font-size: 24px;
+        font-weight: 700;
+        color: #19465b;
       }
       .student-meta-block {
         display: flex;
@@ -485,12 +592,6 @@ interface StudentViewModel {
         display: flex;
         align-items: center;
         gap: 6px;
-      }
-      .group-dot {
-        width: 8px;
-        height: 8px;
-        background: #3b82f6;
-        border-radius: 50%;
       }
       .student-status-badge {
         display: inline-flex;
@@ -666,7 +767,7 @@ interface StudentViewModel {
         transform: scale(1.2);
       }
 
-      /* Photo upload component */
+      /* Attachment upload */
       .upload-dragzone {
         border: 2px dashed #cbd5e1;
         border-radius: 12px;
@@ -701,10 +802,105 @@ interface StudentViewModel {
         color: #64748b;
         margin: 0;
       }
+      .upload-error {
+        margin: 0 0 12px 0;
+        font-size: 12px;
+        color: #b91c1c;
+        font-weight: 600;
+      }
       .photo-previews-row {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 12px;
+      }
+      .preview-box {
+        aspect-ratio: 1;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .preview-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .preview-doc {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px;
+        text-align: center;
+      }
+      .preview-doc-icon {
+        font-size: 22px;
+      }
+      .preview-doc-name {
+        font-size: 9px;
+        color: #475569;
+        word-break: break-all;
+        max-height: 2.6em;
+        overflow: hidden;
+      }
+      .preview-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgb(255 255 255 / 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .spinner {
+        width: 22px;
+        height: 22px;
+        border: 3px solid #cbd5e1;
+        border-top-color: #19465b;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .preview-uploaded {
+        position: absolute;
+        left: 4px;
+        bottom: 4px;
+        width: 20px;
+        height: 20px;
+        background: #10b981;
+        color: white;
+        border-radius: 50%;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .remove-photo-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 24px;
+        height: 24px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .remove-photo-btn:disabled {
+        opacity: 0.5;
+        cursor: wait;
       }
       .preview-box-empty {
         aspect-ratio: 1;
@@ -749,14 +945,13 @@ interface StudentViewModel {
       .sticky-footer {
         position: fixed;
         bottom: 0;
-        left: 292px; /* Offset to align with app shell layout */
+        left: 292px;
         right: 0;
         background: #ffffff;
         border-top: 1px solid #e2e8f0;
         padding: 16px 40px;
         box-shadow: 0 -4px 10px rgb(0 0 0 / 0.05);
         z-index: 10;
-        transition: left 0.2s;
       }
       .footer-content {
         max-width: 1200px;
@@ -789,6 +984,10 @@ interface StudentViewModel {
         background: #f8fafc;
         border-color: #94a3b8;
       }
+      .btn-footer-save:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
       .btn-footer-submit {
         padding: 12px 28px;
         background: #19465b;
@@ -808,7 +1007,6 @@ interface StudentViewModel {
         cursor: not-allowed;
       }
 
-      /* Stack on small viewports */
       @media (max-width: 960px) {
         .report-grid {
           grid-template-columns: 1fr;
@@ -846,7 +1044,12 @@ export class CreateSchoolReportPage implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly message = signal<string | null>(null);
-  readonly enrollments = signal<StudentViewModel[]>([]);
+  readonly students = signal<EnrolledStudentOption[]>([]);
+  readonly loadingStudents = signal(true);
+  readonly studentsError = signal<string | null>(null);
+  /** Files picked but not yet on the server. Uploaded URLs live in each item. */
+  readonly pendingFiles = signal<PendingFile[]>([]);
+  readonly uploadError = signal<string | null>(null);
 
   readonly categories = [
     'Cognitive/Developmental',
@@ -856,25 +1059,13 @@ export class CreateSchoolReportPage implements OnInit {
     'Adaptive/Self-Care',
   ];
 
-  readonly autosaveTime = new Date().toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-
-  // Rich form controls mapping UI layout elements
   readonly form = this.fb.nonNullable.group({
     childId: ['', [Validators.required]],
-    title: ['', [Validators.required, Validators.maxLength(160)]],
-    activityDate: [new Date().toISOString().slice(0, 10), [Validators.required]],
-    summary: ['', [Validators.required, Validators.maxLength(4000)]],
-
-    // UI-only form controls
     category: ['', [Validators.required]],
     duration: [45, [Validators.required, Validators.min(1)]],
     activityName: ['', [Validators.required, Validators.maxLength(160)]],
-    teacherObservations: ['', [Validators.required, Validators.maxLength(2000)]],
-    parentRecommendations: ['', [Validators.required, Validators.maxLength(2000)]],
+    teacherObservations: ['', [Validators.required, Validators.maxLength(4000)]],
+    parentRecommendations: ['', [Validators.required, Validators.maxLength(4000)]],
     participation: [5, [Validators.required]],
     communication: [5, [Validators.required]],
     socialInteraction: [5, [Validators.required]],
@@ -883,152 +1074,205 @@ export class CreateSchoolReportPage implements OnInit {
     taskCompletion: [5, [Validators.required]],
   });
 
-  readonly children = computed(() => {
-    const list = this.enrollments();
-    if (list.length > 0) return list;
-
-    // Static fallback to matches exact image details
-    return [
-      {
-        id: 'fallback-id',
-        childId: 'demo-child-1',
-        childName: 'Leo Miller',
-        avatar: '👦',
-        age: '5 Years',
-        group: 'Blue Horizon',
-        status: 'Stable',
-      },
-    ];
-  });
-
   readonly selectedChild = computed(() => {
     const childId = this.form.controls.childId.value;
-    const list = this.children();
-    return list.find((c) => c.childId === childId) || list[0] || null;
+    const list = this.students();
+    return list.find((s) => s.id === childId) || null;
+  });
+
+  readonly footerStatus = computed(() => {
+    const files = this.pendingFiles();
+    const uploading = files.filter((f) => f.uploading).length;
+    const uploaded = files.filter((f) => f.uploadedUrl).length;
+    if (uploading > 0) return `Uploading ${uploading} file${uploading === 1 ? '' : 's'}…`;
+    if (uploaded > 0) return `${uploaded} file${uploaded === 1 ? '' : 's'} attached`;
+    return 'Form ready';
   });
 
   ngOnInit() {
-    this.api.listEnrollments().subscribe({
-      next: (enrollments) => {
-        const mapped = this.mapToViewModel(enrollments);
-        this.enrollments.set(mapped);
-        if (mapped.length > 0) {
-          this.form.controls.childId.setValue(mapped[0].childId);
+    this.loadStudents();
+  }
+
+  /** GET /schools/enrolled-students — ACTIVE enrollments with age pre-computed. */
+  private loadStudents() {
+    this.loadingStudents.set(true);
+    this.studentsError.set(null);
+    this.api.getEnrolledStudents().subscribe({
+      next: (students) => {
+        this.students.set(students);
+        this.loadingStudents.set(false);
+        if (students.length === 0) {
+          this.studentsError.set('No active students found for your school.');
         }
       },
-      error: () => {
-        // Suppress and fallback gracefully
+      error: (err) => {
+        this.loadingStudents.set(false);
+        this.studentsError.set(
+          err?.error?.error?.message ?? 'Failed to load students. Please refresh the page.',
+        );
       },
     });
   }
 
-  private mapToViewModel(
-    enrollments: readonly SchoolChildEnrollmentResponse[],
-  ): StudentViewModel[] {
-    const mockNames = ['Leo Miller', 'Maya Patel', 'Ethan Ross', 'Olivia Zhang'];
-    const mockAvatars = ['👦', '👧', '👦', '👧'];
-    const mockAges = ['5 Years', '6 Years', '4 Years', '5 Years'];
-    const mockGroups = ['Blue Horizon', 'Green Meadows', 'Yellow Sun', 'Red Valleys'];
+  onFilesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files) return;
+    void this.addFiles(Array.from(input.files));
+    input.value = '';
+  }
 
-    return enrollments.map((enrollment, index) => ({
-      id: enrollment.id,
-      childId: enrollment.childId,
-      childName: mockNames[index % mockNames.length],
-      avatar: mockAvatars[index % mockAvatars.length],
-      age: mockAges[index % mockAges.length],
-      group: mockGroups[index % mockGroups.length],
-      status: 'Stable',
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    if (!event.dataTransfer?.files) return;
+    void this.addFiles(Array.from(event.dataTransfer.files));
+  }
+
+  /**
+   * Accept files, show previews, and immediately upload each batch to
+   * POST /schools/upload/activity-files. The returned URLs are stored on the
+   * pending item, so Save/Submit already has everything it needs.
+   */
+  private async addFiles(files: File[]) {
+    this.uploadError.set(null);
+
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'application/pdf',
+      'text/plain',
+      'text/csv',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    const maxBytes = 10 * 1024 * 1024;
+
+    const valid: File[] = [];
+    for (const file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        this.uploadError.set(`"${file.name}" is not a supported file type.`);
+        continue;
+      }
+      if (file.size > maxBytes) {
+        this.uploadError.set(`"${file.name}" exceeds the 10MB limit.`);
+        continue;
+      }
+      if (valid.length + this.pendingFiles().length >= 10) {
+        this.uploadError.set('Maximum 10 attachments per report.');
+        break;
+      }
+      valid.push(file);
+    }
+    if (valid.length === 0) return;
+
+    const isImage = (file: File) => file.type.startsWith('image/');
+
+    // Reserve UI slots with previews right away, then upload.
+    const items: PendingFile[] = valid.map((file) => ({
+      file,
+      previewUrl: isImage(file) ? URL.createObjectURL(file) : null,
+      uploading: true,
+      uploadedUrl: null,
     }));
+    this.pendingFiles.update((current) => [...current, ...items]);
+
+    const formData = new FormData();
+    for (const item of items) {
+      formData.append('files', item.file);
+    }
+
+    this.api.uploadActivityFiles(formData).subscribe({
+      next: (res) => {
+        const urls = res.urls;
+        this.pendingFiles.update((current) =>
+          current.map((entry) => {
+            const index = items.indexOf(entry);
+            if (index === -1) return entry;
+            return { ...entry, uploading: false, uploadedUrl: urls[index] ?? null };
+          }),
+        );
+      },
+      error: (err) => {
+        // Drop the failed batch from the UI; the user can retry.
+        this.pendingFiles.update((current) => current.filter((entry) => !items.includes(entry)));
+        for (const item of items) {
+          if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+        }
+        this.uploadError.set(err?.error?.error?.message ?? 'Upload failed. Please try again.');
+      },
+    });
+  }
+
+  removeFile(index: number) {
+    const files = [...this.pendingFiles()];
+    const [removed] = files.splice(index, 1);
+    if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+    this.pendingFiles.set(files);
   }
 
   saveDraft() {
-    this.message.set(
-      'Draft has been autosaved at ' +
-        new Date().toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        }),
-    );
-    setTimeout(() => this.message.set(null), 4000);
+    this.submitWithStatus('DRAFT');
   }
 
   submit() {
+    this.submitWithStatus('SUBMITTED');
+  }
+
+  private submitWithStatus(status: 'DRAFT' | 'SUBMITTED') {
     this.error.set(null);
     this.message.set(null);
 
-    // Bind selected child ID
-    const currentChild = this.selectedChild();
-    if (currentChild) {
-      this.form.controls.childId.setValue(currentChild.childId);
-    }
-
-    // Set activityName directly to title
-    this.form.controls.title.setValue(this.form.controls.activityName.value);
-
-    // Format all metadata and observances into the markdown summary expected by the database schema
-    const cat = this.form.controls.category.value;
-    const dur = this.form.controls.duration.value;
-    const actName = this.form.controls.activityName.value;
-    const obs = this.form.controls.teacherObservations.value;
-    const rec = this.form.controls.parentRecommendations.value;
-
-    const part = this.form.controls.participation.value;
-    const comm = this.form.controls.communication.value;
-    const soc = this.form.controls.socialInteraction.value;
-    const att = this.form.controls.attention.value;
-    const emo = this.form.controls.emotionalRegulation.value;
-    const task = this.form.controls.taskCompletion.value;
-
-    const summaryText = `
-### 1. Activity Details
-- **Category**: ${cat}
-- **Duration**: ${dur} minutes
-- **Activity Name**: ${actName}
-
-### 2. Performance (0-10 Scale)
-- **Participation**: ${part}/10
-- **Communication**: ${comm}/10
-- **Social Interaction**: ${soc}/10
-- **Attention**: ${att}/10
-- **Emotional Regulation**: ${emo}/10
-- **Task Completion**: ${task}/10
-
-### 3. Teacher Observations
-${obs}
-
-### 4. Parent Recommendations
-${rec}
-`.trim();
-
-    this.form.controls.summary.setValue(summaryText);
-
-    if (this.form.invalid) {
+    if (this.form.invalid || !this.form.controls.childId.value) {
       this.form.markAllAsTouched();
-      this.error.set('Complete all report fields correctly.');
+      this.error.set('Please select a student and fill in all required fields.');
+      return;
+    }
+    if (this.pendingFiles().some((file) => file.uploading)) {
+      this.error.set('Please wait until all files finish uploading.');
       return;
     }
 
-    const value = this.form.getRawValue();
     this.saving.set(true);
+    const value = this.form.getRawValue();
+    const photoUrls = this.pendingFiles()
+      .map((file) => file.uploadedUrl)
+      .filter((url): url is string => url !== null);
 
     this.api
-      .createReport({
-        childId: value.childId.trim(),
-        title: value.title.trim(),
-        activityDate: value.activityDate,
-        summary: value.summary.trim(),
+      .createActivityReport({
+        childId: value.childId,
+        activityCategory: value.category,
+        activityName: value.activityName,
+        duration: value.duration,
+        performanceMetrics: {
+          participation: value.participation,
+          communication: value.communication,
+          socialInteraction: value.socialInteraction,
+          attention: value.attention,
+          emotionalRegulation: value.emotionalRegulation,
+          taskCompletion: value.taskCompletion,
+        },
+        teacherObservation: value.teacherObservations,
+        recommendations: value.parentRecommendations,
+        photoUrls: photoUrls.length > 0 ? photoUrls : undefined,
+        status,
       })
       .subscribe({
         next: () => {
-          this.message.set('Activity report has been submitted.');
+          const label = status === 'DRAFT' ? 'Draft saved' : 'Report submitted';
+          this.message.set(`${label} successfully.`);
           this.saving.set(false);
-          setTimeout(() => {
-            void this.router.navigateByUrl('/schools/reports');
-          }, 1500);
+          if (status === 'SUBMITTED') {
+            setTimeout(() => {
+              void this.router.navigateByUrl('/schools/reports');
+            }, 1500);
+          }
         },
-        error: () => {
-          this.error.set('Report could not be created. Confirm the child is actively enrolled.');
+        error: (err) => {
+          this.error.set(
+            err?.error?.error?.message ??
+              'Failed to save report. Check that the student is actively enrolled.',
+          );
           this.saving.set(false);
         },
       });
