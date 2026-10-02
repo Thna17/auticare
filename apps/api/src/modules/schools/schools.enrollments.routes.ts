@@ -6,8 +6,13 @@ import {
   getEnrollmentStats,
   getEnrolledStudents,
   getLeadSpecialists,
+  removeEnrolledStudent,
+  updateEnrolledStudent,
 } from './schools.enrollments.controller.js';
-import { createSchoolStudentRequestSchema } from '@auticare/contracts';
+import {
+  createSchoolStudentRequestSchema,
+  updateSchoolEnrollmentRequestSchema,
+} from '@auticare/contracts';
 
 // Sub-router mounted inside schoolsRoutes which already applies requireAuth.
 export const schoolsEnrollmentsRoutes = Router();
@@ -43,4 +48,31 @@ schoolsEnrollmentsRoutes.post(
   requireRole('SCHOOL'),
   validateBody(createSchoolStudentRequestSchema),
   createStudent,
+);
+
+/**
+ * PATCH /api/v1/schools/enrollments/:childId
+ * Edit an enrolled student: child profile fields (firstName, lastName,
+ * dateOfBirth, notes...) and/or this school's enrollment (status,
+ * leadSpecialistId). Scoped to the authenticated school via the
+ * schoolId+childId unique constraint — other schools' rows are untouchable.
+ * NOTE: registered AFTER the fixed `/enrollments/students` path so "students"
+ * is never captured as a :childId.
+ */
+schoolsEnrollmentsRoutes.patch(
+  '/enrollments/:childId',
+  requireRole('SCHOOL'),
+  validateBody(updateSchoolEnrollmentRequestSchema),
+  updateEnrolledStudent,
+);
+
+/**
+ * DELETE /api/v1/schools/enrollments/:childId
+ * Remove the student FROM THIS SCHOOL: ends (REJECTED + endDate) the
+ * enrollment row. The parent-owned Child record is NEVER deleted.
+ */
+schoolsEnrollmentsRoutes.delete(
+  '/enrollments/:childId',
+  requireRole('SCHOOL'),
+  removeEnrolledStudent,
 );

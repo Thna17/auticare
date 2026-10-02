@@ -285,4 +285,15 @@ export class SchoolsService {
     }
     throw forbidden();
   }
+
+  async deleteActivityReport(actor: Actor, reportId: string) {
+    if (actor.role !== 'SCHOOL') throw forbidden();
+    const staff = await this.repository.findStaffForParent(actor.parentId);
+    if (!staff) throw forbidden();
+    const report = await this.repository.findActivityReportById(reportId);
+    if (!report) throw notFound('Activity report was not found.');
+    if (report.schoolId !== staff.schoolId) throw forbidden();
+    await this.repository.deleteActivityReport(reportId);
+    return { success: true };
+  }
 }

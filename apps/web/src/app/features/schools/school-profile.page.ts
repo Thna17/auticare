@@ -15,6 +15,7 @@ import type {
 } from '@auticare/contracts';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
+import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { SchoolProfileViewComponent } from './components/school-profile-view.component';
 
 // Defined locally (not imported from @auticare/contracts as a runtime value) so the
@@ -39,8 +40,15 @@ const specializationOptions: readonly string[] = [
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, UiCardComponent, SchoolProfileViewComponent],
+  imports: [
+    ReactiveFormsModule,
+    UiCardComponent,
+    SchoolTopbarComponent,
+    SchoolProfileViewComponent,
+  ],
   template: `
+    <ac-school-topbar />
+
     <section class="page-header">
       <p class="eyebrow">School workspace</p>
       <h1>School profile</h1>
@@ -274,16 +282,10 @@ const specializationOptions: readonly string[] = [
   `,
   styles: [
     `
-      /* Center the whole page column, matching the parent detail page (school-detail.page.ts).
-         Without this the host is full-width and the 760px children left-align, leaving dead
-         space on the right. */
       :host {
         display: block;
-        max-width: 760px;
-        margin: 0 auto;
       }
       .page-header {
-        max-width: 760px;
         margin-bottom: 28px;
       }
       .eyebrow {
@@ -297,7 +299,6 @@ const specializationOptions: readonly string[] = [
       form {
         display: grid;
         gap: 20px;
-        max-width: 760px;
       }
       fieldset {
         display: grid;
@@ -490,7 +491,6 @@ const specializationOptions: readonly string[] = [
         font-size: 1.15rem;
       }
       .prompt {
-        max-width: 760px;
         margin-bottom: 20px;
         background: #e8f6ff;
         border: 1px solid #d4e6ef;
@@ -516,9 +516,6 @@ const specializationOptions: readonly string[] = [
       .cancel-btn:disabled {
         opacity: 0.6;
         cursor: not-allowed;
-      }
-      .save-banner {
-        max-width: 760px;
       }
     `,
   ],

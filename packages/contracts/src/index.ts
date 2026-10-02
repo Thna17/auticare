@@ -728,6 +728,46 @@ export const createSchoolStudentRequestSchema = z.object({
 });
 export type CreateSchoolStudentRequest = z.infer<typeof createSchoolStudentRequestSchema>;
 
+// ── School: Edit / Remove enrolled student ─────────────────────────────
+
+/**
+ * PATCH /schools/enrollments/:childId — school-side update of an enrolled
+ * student. Child fields touch the parent-owned Child record; enrollment
+ * fields touch the SchoolChildEnrollment for the authenticated school only.
+ * All fields optional; at least one must be present (validated in service).
+ */
+export const updateSchoolEnrollmentRequestSchema = z.object({
+  // Child fields
+  firstName: z.string().min(1).max(80).optional(),
+  lastName: z.string().max(80).nullable().optional(),
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format.')
+    .optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  photoUrl: z.string().url().max(1000).nullable().optional(),
+  address: z.string().max(500).nullable().optional(),
+  // Enrollment fields
+  status: z.enum(schoolChildEnrollmentStatuses).optional(),
+  leadSpecialistId: z.string().cuid().nullable().optional(),
+});
+export type UpdateSchoolEnrollmentRequest = z.infer<typeof updateSchoolEnrollmentRequestSchema>;
+
+/** PATCH /schools/enrollments/:childId response — the refreshed row. */
+export const schoolEnrollmentMutationResponseSchema = z.object({
+  childId: z.string(),
+  childFirstName: z.string(),
+  childLastName: z.string().nullable(),
+  enrollmentId: z.string(),
+  enrollmentStatus: z.enum(schoolChildEnrollmentStatuses),
+  leadSpecialistId: z.string().nullable(),
+  startDate: z.string(),
+  endDate: z.string().nullable(),
+});
+export type SchoolEnrollmentMutationResponse = z.infer<
+  typeof schoolEnrollmentMutationResponseSchema
+>;
+
 // ── Activity Report Detail Response ──────────────────────────────────────
 
 export const activityReportDetailResponseSchema = activityReportResponseSchema.extend({

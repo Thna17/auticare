@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import type { ActivityReportDetailResponse } from '@auticare/contracts';
 import { SchoolsApi, type EnrolledStudentOption } from './data-access/schools.api';
+import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 
 /** A file that has been accepted but not yet uploaded to the server. */
 export interface PendingFile {
@@ -14,21 +16,25 @@ export interface PendingFile {
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, SchoolTopbarComponent],
   template: `
     <div class="create-report-container">
+      <ac-school-topbar />
+
       <!-- Breadcrumbs -->
       <nav class="breadcrumbs">
         <a class="breadcrumb-link" routerLink="/schools/enrollments">Students</a>
         <span class="breadcrumb-separator">/</span>
         <span class="breadcrumb-item">{{ selectedChild()?.firstName ?? '...' }}</span>
         <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-item active">New Activity Report</span>
+        <span class="breadcrumb-item active">{{
+          editMode() ? 'Edit Activity Report' : 'New Activity Report'
+        }}</span>
       </nav>
 
       <!-- Page Header -->
       <header class="report-header">
-        <h1>Create Activity Report</h1>
+        <h1>{{ editMode() ? 'Edit Activity Report' : 'Create Activity Report' }}</h1>
         <div class="header-actions">
           <a class="btn-cancel" routerLink="/schools/reports">Cancel</a>
           <button type="button" class="btn-save-draft" (click)="saveDraft()" [disabled]="saving()">
@@ -336,6 +342,20 @@ export interface PendingFile {
                   </div>
                 </div>
               }
+
+              @for (url of existingPhotoUrls(); track url; let i = $index) {
+                <div class="existing-attachment">
+                  <a [href]="url" target="_blank" rel="noopener">{{ fileNameOf(url) }}</a>
+                  <button
+                    type="button"
+                    class="remove-photo-btn"
+                    (click)="removeExistingPhoto(i)"
+                    aria-label="Remove attachment"
+                  >
+                    ×
+                  </button>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -368,7 +388,15 @@ export interface PendingFile {
                 {{ saving() ? 'Saving...' : 'Save Draft' }}
               </button>
               <button type="submit" class="btn-footer-submit" [disabled]="saving()">
-                {{ saving() ? 'Submitting...' : 'Submit Report' }}
+                {{
+                  saving()
+                    ? editMode()
+                      ? 'Updating...'
+                      : 'Submitting...'
+                    : editMode()
+                      ? 'Update Report'
+                      : 'Submit Report'
+                }}
               </button>
             </div>
           </div>
@@ -379,8 +407,6 @@ export interface PendingFile {
   styles: [
     `
       .create-report-container {
-        max-width: 1200px;
-        margin: 0 auto;
         padding-bottom: 120px;
         font-family:
           system-ui,
@@ -949,13 +975,11 @@ export interface PendingFile {
         right: 0;
         background: #ffffff;
         border-top: 1px solid #e2e8f0;
-        padding: 16px 40px;
+        padding: 16px 56px;
         box-shadow: 0 -4px 10px rgb(0 0 0 / 0.05);
         z-index: 10;
       }
       .footer-content {
-        max-width: 1200px;
-        margin: 0 auto;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -1040,7 +1064,12 @@ export class CreateSchoolReportPage implements OnInit {
   private readonly api = inject(SchoolsApi);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
+  readonly reportId = signal<string | null>(null);
+  readonly editMode = computed(() => this.reportId() !== null);
+  readonly existingPhotoUrls = signal<string[]>([]);
+  private readonly editingReport = signal<ActivityReportDetailResponse | null>(null);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly message = signal<string | null>(null);
@@ -1091,6 +1120,58 @@ export class CreateSchoolReportPage implements OnInit {
 
   ngOnInit() {
     this.loadStudents();
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.reportId.set(id);
+      this.api.getActivityReportById(id).subscribe({
+        next: (report) => {
+          this.editingReport.set(report);
+          const metrics =
+            report.performanceMetrics && typeof report.performanceMetrics === 'object'
+              ? (report.performanceMetrics as Record<string, unknown>)
+              : {};
+          this.form.patchValue({
+            childId: report.childId,
+            category: report.activityCategory,
+            duration: report.duration ?? 45,
+            activityName: report.title,
+            teacherObservations: report.teacherObservation ?? '',
+            parentRecommendations: report.recommendations ?? '',
+            participation: this.metricValue(metrics, 'participation'),
+            communication: this.metricValue(metrics, 'communication'),
+            socialInteraction: this.metricValue(metrics, 'socialInteraction'),
+            attention: this.metricValue(metrics, 'attention'),
+            emotionalRegulation: this.metricValue(metrics, 'emotionalRegulation'),
+            taskCompletion: this.metricValue(metrics, 'taskCompletion'),
+          });
+          this.existingPhotoUrls.set(report.photoUrls ?? []);
+        },
+        error: (err) => {
+          this.error.set(err?.error?.error?.message ?? 'Could not load this report for editing.');
+        },
+      });
+    }
+  }
+
+  private metricValue(metrics: Record<string, unknown>, key: string): number {
+    const value = metrics[key];
+    return typeof value === 'number' && Number.isFinite(value)
+      ? Math.max(0, Math.min(10, value))
+      : 5;
+  }
+
+  removeExistingPhoto(index: number) {
+    this.existingPhotoUrls.update((urls) => urls.filter((_, i) => i !== index));
+  }
+
+  fileNameOf(url: string): string {
+    try {
+      return decodeURIComponent(
+        new URL(url, window.location.origin).pathname.split('/').pop() ?? url,
+      );
+    } catch {
+      return url;
+    }
   }
 
   /** GET /schools/enrolled-students — ACTIVE enrollments with age pre-computed. */
@@ -1157,7 +1238,7 @@ export class CreateSchoolReportPage implements OnInit {
         this.uploadError.set(`"${file.name}" exceeds the 10MB limit.`);
         continue;
       }
-      if (valid.length + this.pendingFiles().length >= 10) {
+      if (valid.length + this.pendingFiles().length + this.existingPhotoUrls().length >= 10) {
         this.uploadError.set('Maximum 10 attachments per report.');
         break;
       }
@@ -1234,47 +1315,66 @@ export class CreateSchoolReportPage implements OnInit {
 
     this.saving.set(true);
     const value = this.form.getRawValue();
-    const photoUrls = this.pendingFiles()
-      .map((file) => file.uploadedUrl)
-      .filter((url): url is string => url !== null);
+    const photoUrls = [
+      ...this.existingPhotoUrls(),
+      ...this.pendingFiles()
+        .map((file) => file.uploadedUrl)
+        .filter((url): url is string => url !== null),
+    ];
 
-    this.api
-      .createActivityReport({
-        childId: value.childId,
-        activityCategory: value.category,
-        activityName: value.activityName,
-        duration: value.duration,
-        performanceMetrics: {
-          participation: value.participation,
-          communication: value.communication,
-          socialInteraction: value.socialInteraction,
-          attention: value.attention,
-          emotionalRegulation: value.emotionalRegulation,
-          taskCompletion: value.taskCompletion,
-        },
-        teacherObservation: value.teacherObservations,
-        recommendations: value.parentRecommendations,
-        photoUrls: photoUrls.length > 0 ? photoUrls : undefined,
-        status,
-      })
-      .subscribe({
-        next: () => {
-          const label = status === 'DRAFT' ? 'Draft saved' : 'Report submitted';
-          this.message.set(`${label} successfully.`);
-          this.saving.set(false);
-          if (status === 'SUBMITTED') {
-            setTimeout(() => {
-              void this.router.navigateByUrl('/schools/reports');
-            }, 1500);
-          }
-        },
-        error: (err) => {
-          this.error.set(
-            err?.error?.error?.message ??
-              'Failed to save report. Check that the student is actively enrolled.',
-          );
-          this.saving.set(false);
-        },
-      });
+    const metrics = {
+      participation: value.participation,
+      communication: value.communication,
+      socialInteraction: value.socialInteraction,
+      attention: value.attention,
+      emotionalRegulation: value.emotionalRegulation,
+      taskCompletion: value.taskCompletion,
+    };
+    const request = this.editMode()
+      ? this.api.updateActivityReport(this.reportId()!, {
+          activityCategory: value.category,
+          title: value.activityName,
+          summary: `${value.activityName} — ${value.category}`,
+          activityDate:
+            this.editingReport()?.activityDate.slice(0, 10) ??
+            new Date().toISOString().slice(0, 10),
+          duration: value.duration,
+          performanceMetrics: metrics,
+          teacherObservation: value.teacherObservations,
+          recommendations: value.parentRecommendations,
+          photoUrls,
+          status,
+        })
+      : this.api.createActivityReport({
+          childId: value.childId,
+          activityCategory: value.category,
+          activityName: value.activityName,
+          duration: value.duration,
+          performanceMetrics: metrics,
+          teacherObservation: value.teacherObservations,
+          recommendations: value.parentRecommendations,
+          photoUrls: photoUrls.length > 0 ? photoUrls : undefined,
+          status,
+        });
+
+    request.subscribe({
+      next: () => {
+        const label = this.editMode()
+          ? 'Report updated'
+          : status === 'DRAFT'
+            ? 'Draft saved'
+            : 'Report submitted';
+        this.message.set(`${label} successfully.`);
+        this.saving.set(false);
+        setTimeout(() => void this.router.navigateByUrl('/schools/reports'), 900);
+      },
+      error: (err) => {
+        this.error.set(
+          err?.error?.error?.message ??
+            'Failed to save report. Check that the student is actively enrolled.',
+        );
+        this.saving.set(false);
+      },
+    });
   }
 }

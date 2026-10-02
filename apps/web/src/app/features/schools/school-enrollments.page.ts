@@ -1,11 +1,20 @@
 // school-enrollments.page.ts
-import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import type {
   EnrollmentStatsResponse,
   EnrolledStudent,
   LeadSpecialistResponse,
+  SchoolChildEnrollmentStatus,
 } from '@auticare/contracts';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
@@ -168,7 +177,25 @@ interface EnrollmentViewModel {
                   </div>
                 </td>
                 <td>
-                  <button class="kebab-btn" aria-label="Actions"></button>
+                  <div class="actions-cell">
+                    <button
+                      class="action-btn edit"
+                      type="button"
+                      (click)="openEditDialog(enrollment)"
+                      aria-label="Edit student"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      class="action-btn delete"
+                      type="button"
+                      (click)="openDeleteDialog(enrollment)"
+                      aria-label="Remove student"
+                      [disabled]="deleting()"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </td>
               </tr>
             }
@@ -209,6 +236,154 @@ interface EnrollmentViewModel {
           </div>
         </div>
       </div>
+    }
+
+    <!-- Edit student dialog -->
+    @if (editing(); as student) {
+      <div class="dialog-backdrop" (click)="closeEditDialog()">
+        <div
+          class="dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-student-title"
+          (click)="$event.stopPropagation()"
+        >
+          <h3 id="edit-student-title">Edit student</h3>
+          <p class="dialog-subtitle">{{ student.childName }}</p>
+
+          <label class="dialog-field">
+            <span class="dialog-label">First name</span>
+            <input
+              class="dialog-input"
+              type="text"
+              maxlength="80"
+              [value]="editFirstName()"
+              (input)="editFirstName.set($any($event.target).value)"
+            />
+          </label>
+
+          <label class="dialog-field">
+            <span class="dialog-label">Last name</span>
+            <input
+              class="dialog-input"
+              type="text"
+              maxlength="80"
+              [value]="editLastName()"
+              (input)="editLastName.set($any($event.target).value)"
+            />
+          </label>
+
+          <label class="dialog-field">
+            <span class="dialog-label">Date of birth</span>
+            <input
+              class="dialog-input"
+              type="date"
+              [value]="editDateOfBirth()"
+              (input)="editDateOfBirth.set($any($event.target).value)"
+            />
+          </label>
+
+          <div class="dialog-row">
+            <label class="dialog-field">
+              <span class="dialog-label">Enrollment status</span>
+              <select
+                class="dialog-input"
+                [value]="editStatus()"
+                (change)="editStatus.set($any($event.target).value)"
+              >
+                <option value="PENDING">Pending</option>
+                <option value="ACTIVE">Active</option>
+                <option value="GRADUATED">Graduated</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </label>
+
+            <label class="dialog-field">
+              <span class="dialog-label">Lead specialist</span>
+              <select
+                class="dialog-input"
+                [value]="editSpecialistId()"
+                (change)="editSpecialistId.set($any($event.target).value)"
+              >
+                <option value="">Unassigned</option>
+                @for (spec of specialists(); track spec.id) {
+                  <option [value]="spec.id">{{ spec.firstName }} {{ spec.lastName }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          <label class="dialog-field">
+            <span class="dialog-label">Notes (shared with the guardian's profile)</span>
+            <textarea
+              class="dialog-input"
+              rows="3"
+              maxlength="2000"
+              [value]="editNotes()"
+              (input)="editNotes.set($any($event.target).value)"
+            ></textarea>
+          </label>
+
+          @if (editError(); as err) {
+            <p class="dialog-error" role="alert">{{ err }}</p>
+          }
+
+          <div class="dialog-actions">
+            <button type="button" class="btn-secondary" (click)="closeEditDialog()">Cancel</button>
+            <button
+              type="button"
+              class="btn-primary-small"
+              (click)="saveEdit()"
+              [disabled]="savingEdit()"
+            >
+              {{ savingEdit() ? 'Saving…' : 'Save changes' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Delete confirmation dialog -->
+    @if (deleting(); as student) {
+      <div class="dialog-backdrop" (click)="closeDeleteDialog()">
+        <div
+          class="dialog dialog-narrow"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-student-title"
+          (click)="$event.stopPropagation()"
+        >
+          <h3 id="delete-student-title">Remove student</h3>
+          <p class="dialog-subtitle">{{ student.childName }}</p>
+          <p class="dialog-warning">
+            This removes {{ student.childName }} from your school's enrollment list. The student's
+            profile and history stay safe with their guardian — only the enrollment at your school
+            is ended.
+          </p>
+
+          @if (deleteError(); as err) {
+            <p class="dialog-error" role="alert">{{ err }}</p>
+          }
+
+          <div class="dialog-actions">
+            <button type="button" class="btn-secondary" (click)="closeDeleteDialog()">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn-danger"
+              (click)="confirmDelete()"
+              [disabled]="deletingInProgress()"
+            >
+              {{ deletingInProgress() ? 'Removing…' : 'Remove student' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (actionMessage(); as message) {
+      <div class="toast" role="status">{{ message }}</div>
     }
   `,
   styles: [
@@ -573,18 +748,228 @@ interface EnrollmentViewModel {
         font-weight: 600;
         padding: 16px;
       }
+
+      /* ── ACTIONS column ─────────────────────────────────────── */
+      .actions-cell {
+        display: flex;
+        gap: 8px;
+      }
+
+      .action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        cursor: pointer;
+        font-size: 14px;
+        display: grid;
+        place-items: center;
+        transition: all 0.15s;
+      }
+
+      .action-btn.edit:hover {
+        border-color: #2d6a7a;
+        background: #e8f4f8;
+      }
+
+      .action-btn.delete:hover {
+        border-color: #a23434;
+        background: #fbeaea;
+      }
+
+      .action-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* ── Dialogs ────────────────────────────────────────────── */
+      .dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        padding: 16px;
+      }
+
+      .dialog {
+        width: 100%;
+        max-width: 500px;
+        background: white;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .dialog-narrow {
+        max-width: 420px;
+      }
+
+      .dialog h3 {
+        margin: 0 0 4px;
+        color: #10303b;
+        font-size: 18px;
+      }
+
+      .dialog-subtitle {
+        margin: 0 0 16px;
+        color: #64748b;
+        font-size: 14px;
+      }
+
+      .dialog-warning {
+        margin: 0 0 16px;
+        color: #5b7280;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .dialog-field {
+        display: block;
+        margin-bottom: 14px;
+      }
+
+      .dialog-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .dialog-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 6px;
+      }
+
+      .dialog-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d7e3ea;
+        border-radius: 9px;
+        font-size: 14px;
+        font-family: inherit;
+        box-sizing: border-box;
+      }
+
+      .dialog-error {
+        margin: 0 0 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #ffdad6;
+        color: #93000a;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .btn-primary-small {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 9px;
+        background: #2d6a7a;
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .btn-primary-small:hover:not(:disabled) {
+        background: #1f4f5c;
+      }
+
+      .btn-primary-small:disabled,
+      .btn-danger:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+
+      .btn-secondary {
+        padding: 10px 18px;
+        border: 1px solid #d7e3ea;
+        border-radius: 9px;
+        background: #fff;
+        color: #2d6a7a;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .btn-danger {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 9px;
+        background: #a23434;
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background: #7d1f1f;
+      }
+
+      /* ── Toast ──────────────────────────────────────────────── */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #10303b;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+        z-index: 110;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SchoolEnrollmentsPage implements OnInit {
+export class SchoolEnrollmentsPage implements OnInit, OnDestroy {
   readonly Math = Math;
   private readonly api = inject(SchoolsApi);
+  private readonly destroy$ = new Subject<void>();
   readonly enrollments = signal<EnrollmentViewModel[]>([]);
   readonly stats = signal<EnrollmentStatsResponse | null>(null);
   readonly specialists = signal<LeadSpecialistResponse[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+
+  // Edit dialog state
+  readonly editing = signal<EnrollmentViewModel | null>(null);
+  readonly editFirstName = signal('');
+  readonly editLastName = signal('');
+  readonly editDateOfBirth = signal('');
+  readonly editNotes = signal('');
+  readonly editStatus = signal<string>('PENDING');
+  readonly editSpecialistId = signal('');
+  readonly savingEdit = signal(false);
+  readonly editError = signal<string | null>(null);
+
+  // Delete dialog state
+  readonly deleting = signal<EnrollmentViewModel | null>(null);
+  readonly deletingInProgress = signal(false);
+  readonly deleteError = signal<string | null>(null);
+
+  // Transient success toast
+  readonly actionMessage = signal<string | null>(null);
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Filter state
   readonly selectedStatus = signal<string>('ALL');
@@ -657,6 +1042,134 @@ export class SchoolEnrollmentsPage implements OnInit {
     if (page < 1 || page > this.totalPages()) return;
     this.currentPage.set(page);
     this.loadStudents();
+  }
+
+  // ── Edit student ───────────────────────────────────────────────────
+
+  openEditDialog(enrollment: EnrollmentViewModel) {
+    this.editing.set(enrollment);
+    this.editError.set(null);
+    this.editFirstName.set(enrollment.childName.split(' ')[0] ?? '');
+    this.editLastName.set(enrollment.childName.split(' ').slice(1).join(' '));
+    this.editDateOfBirth.set('');
+    this.editNotes.set('');
+    this.editStatus.set(enrollment.status.toUpperCase());
+    this.editSpecialistId.set('');
+  }
+
+  closeEditDialog() {
+    this.editing.set(null);
+    this.editError.set(null);
+  }
+
+  saveEdit() {
+    const student = this.editing();
+    if (!student || this.savingEdit()) return;
+
+    const firstName = this.editFirstName().trim();
+    if (firstName === '') {
+      this.editError.set('First name is required.');
+      return;
+    }
+
+    const data: {
+      firstName?: string;
+      lastName?: string | null;
+      dateOfBirth?: string;
+      notes?: string;
+      status?: SchoolChildEnrollmentStatus;
+      leadSpecialistId?: string | null;
+    } = {
+      firstName,
+      lastName: this.editLastName().trim() === '' ? null : this.editLastName().trim(),
+      status: this.editStatus() as SchoolChildEnrollmentStatus,
+      leadSpecialistId: this.editSpecialistId() === '' ? null : this.editSpecialistId(),
+    };
+    const dob = this.editDateOfBirth().trim();
+    if (dob !== '') data.dateOfBirth = dob;
+    const notes = this.editNotes().trim();
+    if (notes !== '') data.notes = notes;
+
+    this.savingEdit.set(true);
+    this.editError.set(null);
+    this.api
+      .updateStudent(student.childId, data)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updated) => {
+          this.savingEdit.set(false);
+          this.closeEditDialog();
+          this.showToast(`${updated.childFirstName}'s profile was updated.`);
+          this.refreshAfterMutation();
+        },
+        error: (err) => {
+          this.savingEdit.set(false);
+          this.editError.set(
+            err?.status === 400
+              ? (err?.error?.error?.message ?? 'Check the fields and try again.')
+              : 'Could not save the changes. Please try again.',
+          );
+        },
+      });
+  }
+
+  // ── Remove student ─────────────────────────────────────────────────
+
+  openDeleteDialog(enrollment: EnrollmentViewModel) {
+    this.deleting.set(enrollment);
+    this.deleteError.set(null);
+  }
+
+  closeDeleteDialog() {
+    this.deleting.set(null);
+    this.deleteError.set(null);
+  }
+
+  confirmDelete() {
+    const student = this.deleting();
+    if (!student || this.deletingInProgress()) return;
+
+    this.deletingInProgress.set(true);
+    this.deleteError.set(null);
+    this.api
+      .deleteStudent(student.childId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (ended) => {
+          this.deletingInProgress.set(false);
+          this.closeDeleteDialog();
+          this.showToast(`${ended.childFirstName} was removed from your school's enrollment list.`);
+          this.refreshAfterMutation();
+        },
+        error: () => {
+          this.deletingInProgress.set(false);
+          this.deleteError.set('Could not remove the student. Please try again.');
+        },
+      });
+  }
+
+  /** Reload stats + list after any mutation so counters stay honest. */
+  private refreshAfterMutation() {
+    this.api
+      .getEnrollmentStats()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (stats) => this.stats.set(stats),
+        error: () => undefined,
+      });
+    this.loadStudents();
+  }
+
+  private showToast(message: string) {
+    this.actionMessage.set(message);
+    if (this.toastTimer !== null) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => this.actionMessage.set(null), 4000);
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    if (this.toastTimer !== null) clearTimeout(this.toastTimer);
   }
 
   private mapToViewModel(student: EnrolledStudent): EnrollmentViewModel {

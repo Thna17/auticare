@@ -24,6 +24,8 @@ import type {
   SchoolNotificationItem,
   NotificationDecisionResponse,
   NotificationResponse,
+  UpdateSchoolEnrollmentRequest,
+  SchoolEnrollmentMutationResponse,
 } from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
@@ -239,6 +241,33 @@ export class SchoolsApi {
   }
 
   /**
+   * Edit an enrolled student: child profile fields (firstName, lastName,
+   * dateOfBirth, notes...) and/or the enrollment (status, leadSpecialistId).
+   * The child record itself is parent-owned — the school can only edit its
+   * own enrollment row plus the profile fields shared here.
+   */
+  updateStudent(childId: string, data: UpdateSchoolEnrollmentRequest) {
+    return this.http
+      .patch<{ data: SchoolEnrollmentMutationResponse }>(
+        `${this.apiBaseUrl}/schools/enrollments/${childId}`,
+        data,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  /**
+   * Remove a student FROM this school — ends the enrollment (REJECTED +
+   * endDate). Never deletes the parent-owned Child record.
+   */
+  deleteStudent(childId: string) {
+    return this.http
+      .delete<{ data: SchoolEnrollmentMutationResponse }>(
+        `${this.apiBaseUrl}/schools/enrollments/${childId}`,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  /**
    * Student picker for the activity report form — ACTIVE enrollments with
    * dateOfBirth and a server-computed age (GET /schools/enrolled-students).
    */
@@ -260,6 +289,12 @@ export class SchoolsApi {
     return this.http
       .patch<{ data: ActivityReportResponse }>(`${this.apiBaseUrl}/schools/reports/${id}`, input)
       .pipe(map((response) => response.data));
+  }
+
+  deleteActivityReport(id: string) {
+    return this.http
+      .delete<{ data: { success: boolean } }>(`${this.apiBaseUrl}/schools/activity-reports/${id}`)
+      .pipe(map(() => undefined));
   }
 
   /** Upload images to /uploads/activity-reports/ — backend field name is `photos`. */

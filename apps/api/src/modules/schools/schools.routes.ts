@@ -11,6 +11,7 @@ import {
   getSchoolStaffMe,
   listSchoolAccounts,
   listActivityReports,
+  deleteActivityReport,
   listEnrollments,
   listSchoolCities,
   listSchools,
@@ -106,6 +107,7 @@ schoolsRoutes.post(
   validateBody(createActivityReportRequestSchema),
   createActivityReport,
 );
+schoolsRoutes.delete('/activity-reports/:id', requireRole('SCHOOL'), deleteActivityReport);
 schoolsRoutes.post(
   '/upload/activity-photos',
   requireRole('SCHOOL'),

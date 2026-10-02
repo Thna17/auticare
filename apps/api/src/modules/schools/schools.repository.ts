@@ -9,6 +9,7 @@ import type {
   SchoolChildEnrollment,
   SchoolStaff,
 } from '@prisma/client';
+import type { SchoolChildEnrollmentStatus } from '@auticare/contracts';
 import { prisma } from '../../database/prisma.js';
 import type { SchoolAccountRecord, SchoolRating } from './schools.mapper.js';
 
@@ -308,6 +309,10 @@ export class SchoolsRepository {
 
   findActivityReportById(id: string): Promise<ActivityReport | null> {
     return prisma.activityReport.findUnique({ where: { id } });
+  }
+
+  deleteActivityReport(id: string): Promise<ActivityReport> {
+    return prisma.activityReport.delete({ where: { id } });
   }
 
   findActivityReportByIdWithRelations(id: string) {
@@ -702,7 +707,61 @@ export class SchoolsRepository {
     );
   }
 
-  // ── Enrollment Stats & Student List ────────────────────────────────────
+  /**
+   * The one enrollment row for (schoolId, childId) — null when the child is
+   * not enrolled at this school. Every edit/remove path must go through this
+   * so a school can never touch another school's enrollment.
+   */
+  findEnrollmentForSchool(
+    schoolId: string,
+    childId: string,
+  ): Promise<SchoolChildEnrollment | null> {
+    return prisma.schoolChildEnrollment.findUnique({
+      where: { schoolId_childId: { schoolId, childId } },
+    });
+  }
+
+  /** Update child profile fields (school granted access via the enrollment). */
+  updateChildFields(
+    childId: string,
+    data: {
+      firstName?: string;
+      lastName?: string | null;
+      dateOfBirth?: Date;
+      notes?: string | null;
+      photoUrl?: string | null;
+      address?: string | null;
+    },
+  ): Promise<Child> {
+    return prisma.child.update({ where: { id: childId }, data });
+  }
+
+  /** Update an enrollment row (status / leadSpecialistId), school-scoped by caller. */
+  updateEnrollment(
+    enrollmentId: string,
+    data: { status?: SchoolChildEnrollmentStatus; leadSpecialistId?: string | null },
+  ): Promise<SchoolChildEnrollment> {
+    return prisma.schoolChildEnrollment.update({ where: { id: enrollmentId }, data });
+  }
+
+  /**
+   * DATA INTEGRITY: removes the student FROM THE SCHOOL by ending the
+   * SchoolChildEnrollment — never deletes the parent-owned Child record.
+   * Idempotent: ending an already-ended enrollment is a no-op write.
+   */
+  endEnrollment(enrollmentId: string): Promise<SchoolChildEnrollment> {
+    return prisma.schoolChildEnrollment.update({
+      where: { id: enrollmentId },
+      data: { status: 'REJECTED', endDate: new Date() },
+    });
+  }
+
+  /** School-scoped staff existence check for lead-specialist assignment. */
+  findStaffByIdForSchool(staffId: string, schoolId: string): Promise<SchoolStaff | null> {
+    return prisma.schoolStaff.findFirst({ where: { id: staffId, schoolId } });
+  }
+
+  // ── Enrollment Stats & Student List ────────────────────────────────
 
   /** Total enrollments for the school (all statuses). */
   countAllEnrollments(schoolId: string): Promise<number> {

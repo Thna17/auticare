@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import {
   createSchoolStudentRequestSchema,
   listEnrolledStudentsQuerySchema,
+  updateSchoolEnrollmentRequestSchema,
 } from '@auticare/contracts';
 import { forbidden } from '../../common/errors/app-error.js';
 import { created, ok } from '../../common/http/response.js';
@@ -68,4 +69,36 @@ export const createStudent = async (req: Request, res: Response) => {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error;
     throw Object.assign(new Error('Failed to create student.'), { statusCode: 500 });
   }
+};
+
+/** PATCH /api/v1/schools/enrollments/:childId — edit student/enrollment. */
+export const updateEnrolledStudent = async (req: Request, res: Response) => {
+  if (!req.auth || req.auth.role !== 'SCHOOL') throw forbidden();
+  const childId = requiredPathParam(req.params.childId);
+  const input = updateSchoolEnrollmentRequestSchema.parse(req.body);
+  try {
+    ok(res, await service.updateEnrolledStudent(req.auth, childId, input));
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    throw Object.assign(new Error('Failed to update the student.'), { statusCode: 500 });
+  }
+};
+
+/** DELETE /api/v1/schools/enrollments/:childId — remove student from school. */
+export const removeEnrolledStudent = async (req: Request, res: Response) => {
+  if (!req.auth || req.auth.role !== 'SCHOOL') throw forbidden();
+  const childId = requiredPathParam(req.params.childId);
+  try {
+    ok(res, await service.removeEnrolledStudent(req.auth, childId));
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    throw Object.assign(new Error('Failed to remove the student.'), { statusCode: 500 });
+  }
+};
+
+const requiredPathParam = (value: string | readonly string[] | undefined): string => {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw Object.assign(new Error('Missing route parameter.'), { statusCode: 400 });
+  }
+  return value;
 };

@@ -6,8 +6,10 @@ import type {
   EnrolledStudent,
   LeadSpecialistResponse,
   SchoolChildEnrollmentStatus,
+  UpdateSchoolEnrollmentRequest,
+  SchoolEnrollmentMutationResponse,
 } from '@auticare/contracts';
-import { AppError, forbidden } from '../../common/errors/app-error.js';
+import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { PasswordService } from '../auth/password.service.js';
 import { SchoolsRepository } from './schools.repository.js';
 
@@ -164,6 +166,121 @@ export class SchoolEnrollmentsService {
         limit: pagination.limit,
         totalPages,
       },
+    };
+  }
+
+  /**
+   * PATCH /schools/enrollments/:childId — update an enrolled student for the
+   * authenticated school. Child fields edit the parent-owned profile (the
+   * school is trusted as the child's care provider while enrolled); the
+   * enrollment status/lead-specialist touch only this school's row.
+   */
+  async updateEnrolledStudent(
+    actor: Actor,
+    childId: string,
+    input: UpdateSchoolEnrollmentRequest,
+  ): Promise<SchoolEnrollmentMutationResponse> {
+    const staff = await this.requireSchoolStaff(actor);
+    const schoolId = staff.schoolId;
+
+    const enrollment = await this.repository.findEnrollmentForSchool(schoolId, childId);
+    if (!enrollment) {
+      throw notFound('This student is not enrolled at your school.');
+    }
+
+    const hasChildFields =
+      input.firstName !== undefined ||
+      input.lastName !== undefined ||
+      input.dateOfBirth !== undefined ||
+      input.notes !== undefined ||
+      input.photoUrl !== undefined ||
+      input.address !== undefined;
+    const hasEnrollmentFields = input.status !== undefined || input.leadSpecialistId !== undefined;
+    if (!hasChildFields && !hasEnrollmentFields) {
+      throw new AppError('VALIDATION_ERROR', 'Provide at least one field to update.', 400);
+    }
+
+    // Validate lead specialist belongs to THIS school before writing.
+    if (input.leadSpecialistId) {
+      const specialist = await this.repository.findStaffByIdForSchool(
+        input.leadSpecialistId,
+        schoolId,
+      );
+      if (!specialist) {
+        throw new AppError(
+          'VALIDATION_ERROR',
+          'Lead specialist must be staff at your school.',
+          400,
+        );
+      }
+    }
+
+    if (hasChildFields) {
+      await this.repository.updateChildFields(childId, {
+        ...(input.firstName !== undefined && { firstName: input.firstName.trim() }),
+        ...(input.lastName !== undefined && { lastName: input.lastName }),
+        ...(input.dateOfBirth !== undefined && {
+          dateOfBirth: new Date(`${input.dateOfBirth}T00:00:00.000Z`),
+        }),
+        ...(input.notes !== undefined && { notes: input.notes }),
+        ...(input.photoUrl !== undefined && { photoUrl: input.photoUrl }),
+        ...(input.address !== undefined && { address: input.address }),
+      });
+    }
+
+    const updatedEnrollment = hasEnrollmentFields
+      ? await this.repository.updateEnrollment(enrollment.id, {
+          ...(input.status !== undefined && { status: input.status }),
+          ...(input.leadSpecialistId !== undefined && { leadSpecialistId: input.leadSpecialistId }),
+        })
+      : enrollment;
+
+    const child = await this.repository.findChild(childId);
+    if (!child) throw notFound('Student profile was not found.');
+
+    return {
+      childId: child.id,
+      childFirstName: child.firstName,
+      childLastName: child.lastName,
+      enrollmentId: updatedEnrollment.id,
+      enrollmentStatus: updatedEnrollment.status as SchoolChildEnrollmentStatus,
+      leadSpecialistId: updatedEnrollment.leadSpecialistId,
+      startDate: updatedEnrollment.startDate.toISOString().slice(0, 10),
+      endDate: updatedEnrollment.endDate?.toISOString().slice(0, 10) ?? null,
+    };
+  }
+
+  /**
+   * DELETE /schools/enrollments/:childId — remove the student FROM THIS
+   * SCHOOL. The parent-owned Child record is never deleted; the enrollment
+   * is marked REJECTED with an endDate so history is preserved.
+   */
+  async removeEnrolledStudent(
+    actor: Actor,
+    childId: string,
+  ): Promise<SchoolEnrollmentMutationResponse> {
+    const staff = await this.requireSchoolStaff(actor);
+    const schoolId = staff.schoolId;
+
+    const enrollment = await this.repository.findEnrollmentForSchool(schoolId, childId);
+    if (!enrollment) {
+      throw notFound('This student is not enrolled at your school.');
+    }
+
+    const ended = await this.repository.endEnrollment(enrollment.id);
+
+    const child = await this.repository.findChild(childId);
+    if (!child) throw notFound('Student profile was not found.');
+
+    return {
+      childId: child.id,
+      childFirstName: child.firstName,
+      childLastName: child.lastName,
+      enrollmentId: ended.id,
+      enrollmentStatus: ended.status as SchoolChildEnrollmentStatus,
+      leadSpecialistId: ended.leadSpecialistId,
+      startDate: ended.startDate.toISOString().slice(0, 10),
+      endDate: ended.endDate?.toISOString().slice(0, 10) ?? null,
     };
   }
 

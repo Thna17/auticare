@@ -76,3 +76,6 @@ export const createActivityReport = async (req: Request, res: Response) =>
 
 export const listActivityReports = async (req: Request, res: Response) =>
   ok(res, await service.listActivityReports(req.auth!));
+
+export const deleteActivityReport = async (req: Request, res: Response) =>
+  ok(res, await service.deleteActivityReport(req.auth!, requiredParam(req.params.id)));

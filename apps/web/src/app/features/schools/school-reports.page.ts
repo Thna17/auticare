@@ -9,6 +9,8 @@ import { RouterLink } from '@angular/router';
 import { SchoolsApi } from './data-access/schools.api';
 import type { EnrolledStudentOption } from './data-access/schools.api';
 import type { ActivityReportListItem } from '@auticare/contracts';
+import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
+import { AuthService } from '../../core/auth/auth.service';
 
 interface MetricRow {
   label: string;
@@ -28,222 +30,237 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, SchoolTopbarComponent],
   template: `
-    <div class="reports-container">
-      <!-- Page Header -->
-      <header class="reports-header">
-        <div>
-          <h1>Activity Reports</h1>
-          <p class="reports-subtitle">Everything your school has recorded for its students.</p>
-        </div>
-        <a class="btn-new-report" routerLink="/schools/reports/new">＋ New Report</a>
-      </header>
+    <ac-school-topbar />
 
-      <!-- Filters -->
-      <div class="filters-row">
-        <div class="filter-group">
-          <label class="filter-label" for="status-filter">Status</label>
-          <select
-            id="status-filter"
-            class="filter-select"
-            [value]="statusFilter()"
-            (change)="onStatusChange($event)"
-          >
-            <option value="ALL">All</option>
-            <option value="SUBMITTED">Submitted</option>
-            <option value="DRAFT">Draft</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label class="filter-label" for="child-filter">Student</label>
-          <select
-            id="child-filter"
-            class="filter-select"
-            [value]="childFilter()"
-            (change)="onChildChange($event)"
-          >
-            <option value="">All students</option>
-            @for (student of students(); track student.childId) {
-              <option [value]="student.childId">
-                {{ student.firstName }} {{ student.lastName }}
-              </option>
-            }
-          </select>
-        </div>
-        <span class="filter-count">{{ filteredReports().length }} report(s)</span>
+    <!-- Page Header -->
+    <header class="reports-header">
+      <div>
+        <h1>Activity Reports</h1>
+        <p class="reports-subtitle">Everything your school has recorded for its students.</p>
       </div>
+      <a class="btn-new-report" routerLink="/schools/reports/new">＋ New Report</a>
+    </header>
 
-      <!-- States -->
-      @if (loading()) {
-        <div class="state-card">Loading reports…</div>
-      } @else if (error(); as loadError) {
-        <div class="state-card state-card--error">
-          {{ loadError }}
-          <button type="button" class="retry-btn" (click)="loadReports()">Retry</button>
-        </div>
-      } @else if (filteredReports().length === 0) {
-        <div class="state-card">
-          @if (reports().length === 0) {
-            No reports yet.
-            <a routerLink="/schools/reports/new" class="inline-link">Create the first one</a>.
-          } @else {
-            No reports match the current filters.
+    <!-- Filters -->
+    <div class="filters-row">
+      <div class="filter-group">
+        <label class="filter-label" for="status-filter">Status</label>
+        <select
+          id="status-filter"
+          class="filter-select"
+          [value]="statusFilter()"
+          (change)="onStatusChange($event)"
+        >
+          <option value="ALL">All</option>
+          <option value="SUBMITTED">Submitted</option>
+          <option value="DRAFT">Draft</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="child-filter">Student</label>
+        <select
+          id="child-filter"
+          class="filter-select"
+          [value]="childFilter()"
+          (change)="onChildChange($event)"
+        >
+          <option value="">All students</option>
+          @for (student of students(); track student.childId) {
+            <option [value]="student.childId">
+              {{ student.firstName }} {{ student.lastName }}
+            </option>
           }
-        </div>
-      } @else {
-        <!-- Report list -->
-        <div class="report-list">
-          @for (report of filteredReports(); track report.id) {
-            <article class="report-card">
-              <button
-                type="button"
-                class="report-card-main"
-                (click)="toggleExpanded(report.id)"
-                [attr.aria-expanded]="expandedId() === report.id"
-              >
-                <div class="report-child-block">
-                  @if (report.childPhotoUrl) {
-                    <img
-                      class="report-avatar"
-                      [src]="report.childPhotoUrl"
-                      [alt]="childName(report)"
-                    />
-                  } @else {
-                    <span class="report-avatar report-avatar--initial">{{ initial(report) }}</span>
-                  }
-                  <div class="report-child-meta">
-                    <span class="report-child-name">{{ childName(report) }}</span>
-                    <span class="report-category">{{ report.activityCategory }}</span>
-                  </div>
-                </div>
-
-                <div class="report-title-block">
-                  <span class="report-title">{{ report.title }}</span>
-                  <span class="report-summary-preview">{{ report.summary }}</span>
-                </div>
-
-                <div class="report-side-block">
-                  <span
-                    class="status-badge"
-                    [class.status-badge--draft]="report.status === 'DRAFT'"
-                  >
-                    {{ report.status === 'DRAFT' ? 'Draft' : 'Submitted' }}
-                  </span>
-                  <span class="report-date">{{ report.activityDate | date: 'MMM d, y' }}</span>
-                  @if (report.duration) {
-                    <span class="report-duration">{{ report.duration }} min</span>
-                  }
-                </div>
-
-                <span
-                  class="expand-chevron"
-                  [class.expand-chevron--open]="expandedId() === report.id"
-                  >▾</span
-                >
-              </button>
-
-              @if (expandedId() === report.id) {
-                <div class="report-detail">
-                  <div class="detail-grid">
-                    <section class="detail-section">
-                      <h3>Summary</h3>
-                      <p class="detail-text">{{ report.summary }}</p>
-                    </section>
-
-                    @if (metricsOf(report).length > 0) {
-                      <section class="detail-section">
-                        <h3>Performance</h3>
-                        <div class="metric-rows">
-                          @for (metric of metricsOf(report); track metric.label) {
-                            <div class="metric-row">
-                              <span class="metric-label">{{ metric.label }}</span>
-                              <div class="metric-bar-track">
-                                <div
-                                  class="metric-bar-fill"
-                                  [style.width.%]="metric.value * 10"
-                                ></div>
-                              </div>
-                              <span class="metric-value">{{ metric.value }}/10</span>
-                            </div>
-                          }
-                        </div>
-                      </section>
-                    }
-
-                    @if (report.teacherObservation) {
-                      <section class="detail-section">
-                        <h3>Teacher Observations</h3>
-                        <blockquote class="detail-quote">
-                          {{ report.teacherObservation }}
-                        </blockquote>
-                      </section>
-                    }
-
-                    @if (report.recommendations) {
-                      <section class="detail-section">
-                        <h3>Recommendations</h3>
-                        <p class="detail-text">{{ report.recommendations }}</p>
-                      </section>
-                    }
-
-                    @if (imagesOf(report).length > 0) {
-                      <section class="detail-section">
-                        <h3>Photos</h3>
-                        <div class="photo-grid">
-                          @for (url of imagesOf(report); track url) {
-                            <a [href]="url" target="_blank" rel="noopener">
-                              <img class="photo-thumb" [src]="url" alt="Activity photo" />
-                            </a>
-                          }
-                        </div>
-                      </section>
-                    }
-
-                    @if (documentsOf(report).length > 0) {
-                      <section class="detail-section">
-                        <h3>Documents</h3>
-                        <ul class="doc-list">
-                          @for (url of documentsOf(report); track url) {
-                            <li>
-                              <a class="inline-link" [href]="url" target="_blank" rel="noopener">
-                                {{ fileNameOf(url) }}
-                              </a>
-                            </li>
-                          }
-                        </ul>
-                      </section>
-                    }
-
-                    <section class="detail-section detail-section--meta">
-                      <h3>Recorded by</h3>
-                      <p class="detail-text">
-                        {{ report.reporterFirstName }} {{ report.reporterLastName }} · created
-                        {{ report.createdAt | date: 'MMM d, y' }}
-                      </p>
-                    </section>
-                  </div>
-                </div>
-              }
-            </article>
-          }
-        </div>
-      }
+        </select>
+      </div>
+      <span class="filter-count">{{ filteredReports().length }} report(s)</span>
     </div>
+
+    @if (actionMessage()) {
+      <p class="action-message" role="status">{{ actionMessage() }}</p>
+    }
+
+    <!-- States -->
+    @if (loading()) {
+      <div class="state-card">Loading reports…</div>
+    } @else if (error(); as loadError) {
+      <div class="state-card state-card--error">
+        {{ loadError }}
+        <button type="button" class="retry-btn" (click)="loadReports()">Retry</button>
+      </div>
+    } @else if (filteredReports().length === 0) {
+      <div class="state-card">
+        @if (reports().length === 0) {
+          No reports yet.
+          <a routerLink="/schools/reports/new" class="inline-link">Create the first one</a>.
+        } @else {
+          No reports match the current filters.
+        }
+      </div>
+    } @else {
+      <!-- Report list -->
+      <div class="report-list">
+        @for (report of filteredReports(); track report.id) {
+          <article class="report-card">
+            <button
+              type="button"
+              class="report-card-main"
+              (click)="toggleExpanded(report.id)"
+              [attr.aria-expanded]="expandedId() === report.id"
+            >
+              <div class="report-child-block">
+                @if (report.childPhotoUrl) {
+                  <img
+                    class="report-avatar"
+                    [src]="report.childPhotoUrl"
+                    [alt]="childName(report)"
+                  />
+                } @else {
+                  <span class="report-avatar report-avatar--initial">{{ initial(report) }}</span>
+                }
+                <div class="report-child-meta">
+                  <span class="report-child-name">{{ childName(report) }}</span>
+                  <span class="report-category">{{ report.activityCategory }}</span>
+                </div>
+              </div>
+
+              <div class="report-title-block">
+                <span class="report-title">{{ report.title }}</span>
+                <span class="report-summary-preview">{{ report.summary }}</span>
+              </div>
+
+              <div class="report-side-block">
+                <span class="status-badge" [class.status-badge--draft]="report.status === 'DRAFT'">
+                  {{ report.status === 'DRAFT' ? 'Draft' : 'Submitted' }}
+                </span>
+                <span class="report-date">{{ report.activityDate | date: 'MMM d, y' }}</span>
+                @if (report.duration) {
+                  <span class="report-duration">{{ report.duration }} min</span>
+                }
+              </div>
+
+              <span class="expand-chevron" [class.expand-chevron--open]="expandedId() === report.id"
+                >▾</span
+              >
+            </button>
+            @if (canManageReports()) {
+              <div class="report-card-actions" aria-label="Report actions">
+                <a
+                  class="report-action report-action--edit"
+                  [routerLink]="['/schools/reports', report.id, 'edit']"
+                  title="Edit Report"
+                  aria-label="Edit Report"
+                  >✏️</a
+                >
+                <button
+                  type="button"
+                  class="report-action report-action--delete"
+                  title="Delete Report"
+                  aria-label="Delete Report"
+                  [disabled]="deletingId() === report.id"
+                  (click)="deleteReport(report.id)"
+                >
+                  {{ deletingId() === report.id ? '…' : '🗑️' }}
+                </button>
+              </div>
+            }
+
+            @if (expandedId() === report.id) {
+              <div class="report-detail">
+                <div class="detail-grid">
+                  <section class="detail-section">
+                    <h3>Summary</h3>
+                    <p class="detail-text">{{ report.summary }}</p>
+                  </section>
+
+                  @if (metricsOf(report).length > 0) {
+                    <section class="detail-section">
+                      <h3>Performance</h3>
+                      <div class="metric-rows">
+                        @for (metric of metricsOf(report); track metric.label) {
+                          <div class="metric-row">
+                            <span class="metric-label">{{ metric.label }}</span>
+                            <div class="metric-bar-track">
+                              <div
+                                class="metric-bar-fill"
+                                [style.width.%]="metric.value * 10"
+                              ></div>
+                            </div>
+                            <span class="metric-value">{{ metric.value }}/10</span>
+                          </div>
+                        }
+                      </div>
+                    </section>
+                  }
+
+                  @if (report.teacherObservation) {
+                    <section class="detail-section">
+                      <h3>Teacher Observations</h3>
+                      <blockquote class="detail-quote">
+                        {{ report.teacherObservation }}
+                      </blockquote>
+                    </section>
+                  }
+
+                  @if (report.recommendations) {
+                    <section class="detail-section">
+                      <h3>Recommendations</h3>
+                      <p class="detail-text">{{ report.recommendations }}</p>
+                    </section>
+                  }
+
+                  @if (imagesOf(report).length > 0) {
+                    <section class="detail-section">
+                      <h3>Photos</h3>
+                      <div class="photo-grid">
+                        @for (url of imagesOf(report); track url) {
+                          <a [href]="url" target="_blank" rel="noopener">
+                            <img class="photo-thumb" [src]="url" alt="Activity photo" />
+                          </a>
+                        }
+                      </div>
+                    </section>
+                  }
+
+                  @if (documentsOf(report).length > 0) {
+                    <section class="detail-section">
+                      <h3>Documents</h3>
+                      <ul class="doc-list">
+                        @for (url of documentsOf(report); track url) {
+                          <li>
+                            <a class="inline-link" [href]="url" target="_blank" rel="noopener">
+                              {{ fileNameOf(url) }}
+                            </a>
+                          </li>
+                        }
+                      </ul>
+                    </section>
+                  }
+
+                  <section class="detail-section detail-section--meta">
+                    <h3>Recorded by</h3>
+                    <p class="detail-text">
+                      {{ report.reporterFirstName }} {{ report.reporterLastName }} · created
+                      {{ report.createdAt | date: 'MMM d, y' }}
+                    </p>
+                  </section>
+                </div>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
   `,
   styles: [
     `
-      .reports-container {
-        max-width: 1080px;
-        margin: 0 auto;
-        padding: 28px 24px 60px;
-      }
       .reports-header {
         display: flex;
-        align-items: flex-start;
         justify-content: space-between;
+        align-items: center;
         gap: 16px;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
       }
       .reports-header h1 {
         margin: 0;
@@ -274,9 +291,9 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 
       .filters-row {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         gap: 16px;
-        margin-bottom: 18px;
+        margin-bottom: 24px;
         flex-wrap: wrap;
       }
       .filter-group {
@@ -346,14 +363,19 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
       .report-list {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 0;
       }
       .report-card {
+        position: relative;
         background: #fff;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         overflow: hidden;
         transition: box-shadow 0.15s ease;
+      }
+      .report-list > .report-card {
+        margin-bottom: 16px;
       }
       .report-card:hover {
         box-shadow: 0 4px 14px rgba(16, 48, 59, 0.08);
@@ -364,12 +386,53 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         align-items: center;
         gap: 16px;
         width: 100%;
-        padding: 14px 18px;
+        padding: 20px 112px 20px 24px;
         background: none;
         border: 0;
         text-align: left;
         cursor: pointer;
         font: inherit;
+      }
+      .report-card-actions {
+        position: absolute;
+        top: 22px;
+        right: 20px;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .report-action {
+        display: inline-flex;
+        width: 36px;
+        height: 36px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        background: #fff;
+        font-size: 17px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .report-action--edit {
+        color: #0f766e;
+      }
+      .report-action--delete {
+        color: #b91c1c;
+      }
+      .report-action:hover {
+        background: #f8fafc;
+      }
+      .report-action:disabled {
+        cursor: wait;
+        opacity: 0.55;
+      }
+      .action-message {
+        margin: 0 0 16px;
+        color: #0f766e;
+        font-size: 14px;
+        font-weight: 600;
       }
       .report-child-block {
         display: flex;
@@ -593,6 +656,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 })
 export class SchoolReportsPage implements OnInit {
   private readonly api = inject(SchoolsApi);
+  private readonly auth = inject(AuthService);
 
   readonly reports = signal<ActivityReportListItem[]>([]);
   readonly students = signal<EnrolledStudentOption[]>([]);
@@ -602,6 +666,9 @@ export class SchoolReportsPage implements OnInit {
   readonly statusFilter = signal<'ALL' | 'SUBMITTED' | 'DRAFT'>('ALL');
   readonly childFilter = signal('');
   readonly expandedId = signal<string | null>(null);
+  readonly deletingId = signal<string | null>(null);
+  readonly actionMessage = signal<string | null>(null);
+  readonly canManageReports = computed(() => this.auth.parent()?.role === 'SCHOOL');
 
   readonly filteredReports = computed(() => {
     const status = this.statusFilter();
@@ -650,6 +717,34 @@ export class SchoolReportsPage implements OnInit {
 
   toggleExpanded(reportId: string) {
     this.expandedId.set(this.expandedId() === reportId ? null : reportId);
+  }
+
+  deleteReport(reportId: string) {
+    const report = this.reports().find((item) => item.id === reportId);
+    if (!report || this.deletingId()) return;
+    const student = this.childName(report) || 'this student';
+    if (
+      !window.confirm(
+        `Are you sure you want to delete this report for ${student}? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    this.actionMessage.set(null);
+    this.deletingId.set(reportId);
+    this.api.deleteActivityReport(reportId).subscribe({
+      next: () => {
+        this.reports.update((reports) => reports.filter((item) => item.id !== reportId));
+        this.deletingId.set(null);
+        this.actionMessage.set('Activity report deleted successfully.');
+      },
+      error: (err) => {
+        this.deletingId.set(null);
+        this.actionMessage.set(
+          err?.error?.error?.message ?? 'Could not delete this report. Please try again.',
+        );
+      },
+    });
   }
 
   childName(report: ActivityReportListItem): string {

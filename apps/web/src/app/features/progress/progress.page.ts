@@ -1,7 +1,7 @@
 // parent-report-detail.page.ts
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import type { ParentActivityReportResponse } from '@auticare/contracts';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ParentActivityApi } from './data-access/parent-activity.api';
@@ -38,13 +38,11 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
   selector: 'ac-parent-report-detail-page',
   template: `
     <div class="page-layout">
-      <!-- Main Content -->
       <main class="main-content">
-        <!-- Top Bar -->
         <header class="topbar">
           <div class="child-switcher">
-            <label class="child-switcher-label" for="child-select">Child:</label>
-            <select id="child-select" class="child-select" (change)="onChildChange($event)">
+            <label class="child-switcher-label" for="child-select">Child:</label
+            ><select id="child-select" class="child-select" (change)="onChildChange($event)">
               @for (child of children(); track child.id) {
                 <option [value]="child.id" [selected]="child.id === selectedChildId()">
                   {{ child.firstName }}
@@ -60,227 +58,168 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                 (change)="onReportChange($event)"
                 aria-label="Choose report"
               >
-                @for (report of reports(); track report.id) {
-                  <option [value]="report.id">
-                    {{ report.activityDate }} — {{ report.title }}
-                  </option>
+                @for (item of reports(); track item.id) {
+                  <option [value]="item.id">{{ item.activityDate }} — {{ item.title }}</option>
                 }
               </select>
             }
             <a class="back-link" routerLink="/dashboard">← Back to Dashboard</a>
           </div>
         </header>
-
-        <!-- Loading state -->
         @if (loading()) {
-          <div class="report-container">
-            <div class="state-block">
-              <span class="spinner"></span>
-              <p>Loading report…</p>
-            </div>
+          <div class="state-block">
+            <span class="spinner"></span>
+            <p>Loading report…</p>
           </div>
-        }
-
-        <!-- Error state -->
-        @else if (error()) {
-          <div class="report-container">
-            <div class="state-block error-state">
-              <span class="state-icon">⚠️</span>
-              <p>{{ error() }}</p>
-              <button type="button" class="mark-all-btn" (click)="loadReports()">Try again</button>
-            </div>
+        } @else if (error()) {
+          <div class="state-block error-state">
+            <p>{{ error() }}</p>
+            <button type="button" class="btn-secondary" (click)="loadReports()">Try again</button>
           </div>
-        }
-
-        <!-- Empty state -->
-        @else if (!report()) {
-          <div class="report-container">
-            <div class="state-block">
-              <span class="state-icon">📋</span>
-              <p>
-                No submitted activity reports yet.<br />
-                Reports appear here once your child's school shares them.
-              </p>
-            </div>
+        } @else if (!report()) {
+          <div class="state-block">
+            <span class="state-icon">▤</span>
+            <p>
+              No submitted activity reports yet.<br />Reports appear here once your child's school
+              shares them.
+            </p>
           </div>
-        }
-
-        <!-- Report Content -->
-        @else if (report(); as r) {
+        } @else if (report(); as r) {
           <div class="report-container">
-            <!-- Report Header -->
-            <div class="report-header">
-              <div>
-                <h1>Activity Report: {{ r.title }}</h1>
-                <div class="report-meta">
-                  <span class="date">Date: {{ r.activityDate }}</span>
-                  <span class="school-chip">🏫 {{ r.schoolName }}</span>
-                  <span class="status-badge completed">✓ Completed Successfully</span>
-                </div>
+            <header class="report-header">
+              <h1>Activity Report: {{ r.title }}</h1>
+              <div class="report-meta">
+                <span class="date">{{ formatDate(r.activityDate) }}</span>
+                @if (r.schoolName) {
+                  <span class="school-chip">{{ r.schoolName }}</span>
+                }
               </div>
-            </div>
-
+            </header>
             <div class="report-grid">
-              <!-- Left Column -->
               <div class="report-main">
-                <!-- Activity Summary -->
                 <section class="report-card">
                   <div class="card-header">
-                    <span class="card-icon"></span>
-                    <h2>Activity Summary</h2>
+                    <span class="card-icon" aria-hidden="true">✎</span>
+                    <h2>Teacher Observations</h2>
                   </div>
-                  <div class="card-content">
-                    @for (paragraph of summaryParagraphs(); track $index) {
-                      <p>{{ paragraph }}</p>
-                    }
-                    <div class="summary-facts">
-                      <span class="fact-chip">Category: {{ r.activityCategory }}</span>
-                      @if (r.duration !== null) {
-                        <span class="fact-chip">Duration: {{ r.duration }} min</span>
-                      }
-                    </div>
-                  </div>
+                  <p class="observation-text">
+                    {{
+                      r.teacherObservation ||
+                        'No teacher observations were included in this report.'
+                    }}
+                  </p>
+                  @if (r.reporter) {
+                    <p class="teacher-name">
+                      {{ r.reporter.firstName }} {{ r.reporter.lastName }} · {{ r.schoolName }}
+                    </p>
+                  }
                 </section>
-
-                <!-- Activity Moments -->
-                @if (images().length > 0) {
-                  <section class="report-card">
-                    <div class="card-header">
-                      <span class="card-icon">📷</span>
-                      <h2>Activity Moments</h2>
-                    </div>
-                    <div class="activity-moments">
-                      @for (image of images(); track image.url) {
-                        <div class="moment-card">
-                          <img [src]="image.url" [alt]="image.label" class="moment-image" />
-                          <div class="moment-overlay">
-                            <span>{{ image.label }}</span>
+                <section class="report-card">
+                  <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">▥</span>
+                    <h2>Performance Metrics</h2>
+                  </div>
+                  @if (engagementMetrics().length) {
+                    <div class="engagement-breakdown">
+                      @for (metric of engagementMetrics(); track metric.label) {
+                        <div class="metric-row">
+                          <div class="metric-heading">
+                            <span class="metric-label">{{ metric.label }}</span
+                            ><span class="metric-value">{{ metric.display }}</span>
+                          </div>
+                          <div
+                            class="metric-bar-bg"
+                            role="progressbar"
+                            [attr.aria-label]="metric.label"
+                            [attr.aria-valuenow]="metric.value / 10"
+                            aria-valuemin="0"
+                            aria-valuemax="10"
+                          >
+                            <div class="metric-bar-fill" [style.width.%]="metric.value"></div>
                           </div>
                         </div>
                       }
                     </div>
-                  </section>
-                }
-
-                <!-- Documents -->
-                @if (documents().length > 0) {
-                  <section class="report-card">
-                    <div class="card-header">
-                      <span class="card-icon">📎</span>
-                      <h2>Documents</h2>
-                    </div>
-                    <div class="document-grid">
+                  } @else {
+                    <p class="empty-note">Performance scores were not included in this report.</p>
+                  }
+                </section>
+                <section class="report-card">
+                  <div class="card-header">
+                    <span class="card-icon" aria-hidden="true">▧</span>
+                    <h2>Activity Photos</h2>
+                  </div>
+                  @if (images().length || documents().length) {
+                    <div class="activity-moments">
+                      @for (image of images(); track image.url) {
+                        <a
+                          class="moment-card"
+                          [href]="image.url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          ><img
+                            [src]="image.url"
+                            [alt]="image.label"
+                            class="moment-image"
+                            loading="lazy"
+                        /></a>
+                      }
                       @for (doc of documents(); track doc.url) {
-                        <a class="document-link" [href]="doc.url" target="_blank" rel="noopener">
-                          <span class="document-icon">📄</span>
-                          <span class="document-name">{{ doc.name }}</span>
-                          <span class="document-open">Open ↗</span>
-                        </a>
+                        <a
+                          class="document-link"
+                          [href]="doc.url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          ><span class="document-icon" aria-hidden="true">▤</span
+                          ><span class="document-name">{{ doc.name }}</span
+                          ><span class="document-open">Open ↗</span></a
+                        >
                       }
                     </div>
-                  </section>
-                }
-
-                <!-- Teacher Observations -->
-                @if (r.teacherObservation) {
-                  <section class="report-card observations-card">
-                    <div class="card-header">
-                      <div class="teacher-info">
-                        <div class="teacher-avatar">‍🏫</div>
-                        <div>
-                          <h3>Teacher Observations</h3>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="card-content">
-                      <blockquote class="observation-quote">
-                        "{{ r.teacherObservation }}"
-                      </blockquote>
-                      <cite class="teacher-name">
-                        — {{ r.reporter.firstName }} {{ r.reporter.lastName }}, {{ r.schoolName }}
-                      </cite>
-                    </div>
-                  </section>
-                }
+                  } @else {
+                    <p class="empty-note">No activity photos or documents were attached.</p>
+                  }
+                </section>
               </div>
-
-              <!-- Right Column -->
-              <div class="report-sidebar">
-                <!-- Engagement Metrics -->
-                <section class="report-card engagement-card">
+              <aside class="report-sidebar">
+                <section class="report-card">
                   <div class="card-header">
-                    <span class="card-icon">📊</span>
-                    <h2>Engagement</h2>
+                    <span class="card-icon" aria-hidden="true">◷</span>
+                    <h2>Activity Summary</h2>
                   </div>
-                  <div class="engagement-overall">
-                    <div class="circular-progress">
-                      <svg viewBox="0 0 120 120" class="progress-svg">
-                        <circle class="progress-bg" cx="60" cy="60" r="52"></circle>
-                        <circle
-                          class="progress-bar"
-                          cx="60"
-                          cy="60"
-                          r="52"
-                          [attr.stroke-dasharray]="2 * 3.14159 * 52"
-                          [attr.stroke-dashoffset]="
-                            2 * 3.14159 * 52 * (1 - overallProgress() / 100)
-                          "
-                        ></circle>
-                      </svg>
-                      <div class="progress-text">
-                        <span class="progress-value">{{ overallProgress() }}%</span>
-                        <span class="progress-label">Overall Participation</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="engagement-breakdown">
-                    @for (metric of engagementMetrics(); track metric.label) {
-                      <div class="metric-row">
-                        <span class="metric-label">{{ metric.label }}</span>
-                        <div class="metric-bar-bg">
-                          <div
-                            class="metric-bar-fill"
-                            [style.width.%]="metric.value"
-                            [style.background]="metric.color"
-                          ></div>
-                        </div>
-                        <span class="metric-value">{{ metric.display }}</span>
-                      </div>
+                  <p class="summary-description">
+                    {{ r.summary || 'No activity summary was included.' }}
+                  </p>
+                  <div class="summary-facts">
+                    <span class="fact-chip">Category: {{ r.activityCategory }}</span>
+                    @if (r.duration !== null) {
+                      <span class="fact-chip">Duration: {{ r.duration }} min</span>
                     }
                   </div>
                 </section>
-
-                <!-- Home Follow-up -->
-                <section class="report-card followup-card">
+                <section class="report-card">
                   <div class="card-header">
-                    <span class="card-icon">🏠</span>
-                    <h2>Home Follow-up</h2>
+                    <span class="card-icon" aria-hidden="true">⌂</span>
+                    <h2>Home Recommendations</h2>
                   </div>
-                  <div class="card-content">
-                    <p class="followup-intro">
-                      Recommended steps to reinforce this activity at home:
-                    </p>
-                    <blockquote class="observation-quote followup-quote">
-                      {{
-                        r.recommendations ??
-                          'No specific recommendations were included in this report.'
-                      }}
-                    </blockquote>
-                  </div>
+                  @if (recommendationItems().length) {
+                    <ul class="recommendation-list">
+                      @for (item of recommendationItems(); track $index) {
+                        <li>{{ item }}</li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="empty-note">No specific recommendations included.</p>
+                  }
                 </section>
-
-                <!-- Action Buttons -->
                 <div class="action-buttons">
-                  <button type="button" class="btn-secondary">
-                    <span>↗</span>
-                    <span>Share with Specialist</span>
-                  </button>
-                  <button type="button" class="btn-primary">
-                    <span>⬇</span>
-                    <span>Download Full Report</span>
+                  <button type="button" class="btn-primary" (click)="downloadReport()">
+                    <span aria-hidden="true">↓</span><span>Download Full Report</span></button
+                  ><button type="button" class="btn-secondary" (click)="shareReport()">
+                    <span aria-hidden="true">↗</span><span>Share with Specialist</span>
                   </button>
                 </div>
-              </div>
+              </aside>
             </div>
           </div>
         }
@@ -812,12 +751,118 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
           gap: 16px;
         }
       }
+      .main-content {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 28px 40px 56px;
+      }
+      .report-grid {
+        grid-template-columns: minmax(0, 1.85fr) minmax(280px, 1fr);
+      }
+      .report-sidebar {
+        position: sticky;
+        top: 20px;
+      }
+      .report-card {
+        border: 1px solid #edf1f5;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      .card-icon {
+        display: inline-flex;
+        width: 36px;
+        height: 36px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: #e6f4f2;
+        color: #0f766e;
+      }
+      .report-header h1 {
+        font-size: clamp(26px, 3vw, 34px);
+      }
+      .metric-row {
+        display: block;
+      }
+      .metric-heading {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .metric-bar-bg {
+        height: 9px;
+        border-radius: 999px;
+      }
+      .metric-bar-fill {
+        background: #0f766e !important;
+        border-radius: 999px;
+      }
+      .observation-text,
+      .summary-description {
+        margin: 0;
+        color: #334155;
+        font-size: 15px;
+        line-height: 1.8;
+        white-space: pre-wrap;
+      }
+      .recommendation-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin: 0;
+        padding-left: 20px;
+        color: #334155;
+        font-size: 14px;
+        line-height: 1.65;
+      }
+      .recommendation-list li::marker {
+        color: #0f766e;
+      }
+      .empty-note {
+        margin: 0;
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .activity-moments {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .moment-card {
+        display: block;
+      }
+      .action-buttons {
+        flex-direction: column;
+      }
+      .btn-primary {
+        background: #0f766e;
+      }
+      .btn-primary:hover {
+        background: #115e59;
+      }
+      .btn-secondary {
+        color: #0f766e;
+        border-color: #0f766e;
+      }
+      @media (max-width: 900px) {
+        .report-grid {
+          grid-template-columns: 1fr;
+        }
+        .report-sidebar {
+          position: static;
+        }
+      }
+      @media (max-width: 720px) {
+        .main-content {
+          padding: 18px 14px 36px;
+        }
+        .report-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgressPage implements OnInit {
-  private readonly route = inject(ActivatedRoute);
   private readonly childrenApi = inject(ChildrenApi);
   private readonly activityApi = inject(ParentActivityApi);
 
@@ -839,15 +884,17 @@ export class ProgressPage implements OnInit {
   /** The performanceMetrics JSON (0-10 sliders) mapped to progress bars. */
   readonly engagementMetrics = computed<EngagementMetric[]>(() => {
     const raw = (this.report()?.performanceMetrics ?? null) as Record<string, unknown> | null;
-    if (!raw) return [];
     const metrics: EngagementMetric[] = [];
     for (const def of METRIC_DEFS) {
-      const value = raw[def.key];
-      if (typeof value !== 'number' || Number.isNaN(value)) continue;
+      const value = raw?.[def.key];
+      if (typeof value !== 'number' || Number.isNaN(value)) {
+        metrics.push({ label: def.label, value: 0, display: '—/10', color: def.color });
+        continue;
+      }
       const clamped = Math.max(0, Math.min(10, value));
       metrics.push({
         label: def.label,
-        value: clamped * 10, // 0-10 → percentage
+        value: clamped * 10, // 0-10 â†’ percentage
         display: `${Math.round(clamped)}/10`,
         color: def.color,
       });
@@ -878,7 +925,7 @@ export class ProgressPage implements OnInit {
       .map((url) => ({ url, name: this.fileName(url) }));
   });
 
-  /** summary is one long text — split on blank lines into paragraphs. */
+  /** summary is one long text â€” split on blank lines into paragraphs. */
   readonly summaryParagraphs = computed<string[]>(() => {
     const summary = this.report()?.summary ?? '';
     const paragraphs = summary
@@ -887,6 +934,73 @@ export class ProgressPage implements OnInit {
       .filter((paragraph) => paragraph.length > 0);
     return paragraphs.length > 0 ? paragraphs : [summary];
   });
+
+  readonly recommendationItems = computed<string[]>(() => {
+    const text = this.report()?.recommendations?.trim() ?? '';
+    if (!text) return [];
+    return text
+      .split(/\r?\n|(?=\s*\d+[.)]\s)/)
+      .map((item) => item.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim())
+      .filter(Boolean);
+  });
+
+  formatDate(value: string): string {
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime())
+      ? value
+      : new Intl.DateTimeFormat(undefined, { dateStyle: 'long' }).format(date);
+  }
+
+  downloadReport() {
+    const report = this.report();
+    if (!report) return;
+    const lines = [
+      `Activity Report: ${report.title}`,
+      `Date: ${this.formatDate(report.activityDate)}`,
+      `School: ${report.schoolName}`,
+      `Category: ${report.activityCategory}`,
+      `Duration: ${report.duration ?? 'Not specified'} min`,
+      '',
+      'Activity Summary',
+      report.summary,
+      '',
+      'Teacher Observations',
+      report.teacherObservation || 'No teacher observations included.',
+      '',
+      'Performance Metrics',
+      ...this.engagementMetrics().map((metric) => `${metric.label}: ${metric.display}`),
+      '',
+      'Home Recommendations',
+      ...this.recommendationItems().map((item, index) => `${index + 1}. ${item}`),
+      '',
+      'Attachments',
+      ...(report.photoUrls ?? []),
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${report.title.replace(/[^a-z0-9-_]+/gi, '-').replace(/^-|-$/g, '') || 'activity-report'}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async shareReport() {
+    const report = this.report();
+    if (!report) return;
+    const shareData = {
+      title: `Activity Report: ${report.title}`,
+      text: `${report.title} — ${this.formatDate(report.activityDate)} (${report.schoolName})`,
+      url: window.location.href,
+    };
+    if (navigator.share) {
+      await navigator.share(shareData).catch(() => undefined);
+    } else if (navigator.clipboard) {
+      await navigator.clipboard
+        .writeText(`${shareData.text}\n${shareData.url}`)
+        .catch(() => undefined);
+    }
+  }
 
   ngOnInit() {
     this.childrenApi.listChildren().subscribe({
@@ -942,7 +1056,7 @@ export class ProgressPage implements OnInit {
         .split('.')
         .pop()
         ?.toLowerCase();
-      return extension === 'jpg' || extension === 'jpeg' || extension === 'png';
+      return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(extension ?? '');
     } catch {
       return false;
     }
