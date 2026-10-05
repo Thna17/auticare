@@ -104,8 +104,11 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                   {{ appointment.hospitalName }} · {{ appointment.childName ?? 'Patient TBD' }}
                 </p>
                 <p class="meta">{{ formatDate(appointment.scheduledAt) }}</p>
-                @if (appointment.status === 'CANCELLED' && appointment.reason) {
-                  <p class="meta reason">{{ appointment.reason }}</p>
+                @if (appointment.status === 'CANCELLED' && appointment.rejectionReason) {
+                  <p class="meta reason">
+                    <span class="reason-label">Reason given:</span>
+                    {{ appointment.rejectionReason }}
+                  </p>
                 }
               </div>
               <ac-ui-badge [tone]="statusTone[appointment.status]">
@@ -332,6 +335,9 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         font-size: var(--ac-type-meta);
       }
 
+      .reason-label {
+        font-weight: var(--ac-font-weight-bold);
+      }
       .meta.reason {
         margin-top: 4px;
         font-style: italic;

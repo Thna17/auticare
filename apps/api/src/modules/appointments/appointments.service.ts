@@ -15,6 +15,7 @@ const map = (item: AppointmentWithRelations) => ({
   scheduledAt: item.scheduledAt.toISOString(),
   status: item.status,
   reason: item.reason,
+  rejectionReason: item.rejectionReason,
 });
 export class AppointmentsService {
   constructor(private readonly repository = new AppointmentsRepository()) {}

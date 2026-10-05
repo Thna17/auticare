@@ -423,7 +423,11 @@ model Appointment {
   doctorId    String?
   scheduledAt DateTime
   status      AppointmentStatus @default(REQUESTED)
+  // The parent's reason for requesting the appointment.
   reason      String?           @db.Text
+  // The hospital's explanation when it rejects a request (status CANCELLED).
+  // Distinct from `reason` above, which is the parent's own text.
+  rejectionReason String?       @db.Text
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   parent      Parent            @relation(fields: [parentId], references: [id], onDelete: Cascade)
