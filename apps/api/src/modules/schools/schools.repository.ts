@@ -329,6 +329,8 @@ export class SchoolsRepository {
         child: {
           select: {
             id: true,
+            // Needed to authorise a PARENT caller against the child they own.
+            parentId: true,
             firstName: true,
             dateOfBirth: true,
             photoUrl: true,

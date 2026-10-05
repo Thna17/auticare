@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import type { ParentActivityReportResponse } from '@auticare/contracts';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ParentActivityApi } from './data-access/parent-activity.api';
+import { attachmentUrl } from '../../core/config/attachment-url';
 
 interface EngagementMetric {
   label: string;
@@ -911,18 +912,24 @@ export class ProgressPage implements OnInit {
   });
 
   /** photoUrls split into images (grid) and documents (links). */
+  // Attachments are served through the authorised report route, so the stored
+  // path is turned into a report-scoped URL before it reaches the template.
   readonly images = computed<AttachmentImage[]>(() => {
-    const urls = this.report()?.photoUrls ?? [];
+    const report = this.report();
+    const urls = report?.photoUrls ?? [];
+    if (!report) return [];
     return urls
       .filter((url) => this.isImage(url))
-      .map((url, index) => ({ url, label: `Photo ${index + 1}` }));
+      .map((url, index) => ({ url: attachmentUrl(report.id, url), label: `Photo ${index + 1}` }));
   });
 
   readonly documents = computed<AttachmentDocument[]>(() => {
-    const urls = this.report()?.photoUrls ?? [];
+    const report = this.report();
+    const urls = report?.photoUrls ?? [];
+    if (!report) return [];
     return urls
       .filter((url) => !this.isImage(url))
-      .map((url) => ({ url, name: this.fileName(url) }));
+      .map((url) => ({ url: attachmentUrl(report.id, url), name: this.fileName(url) }));
   });
 
   /** summary is one long text â€” split on blank lines into paragraphs. */

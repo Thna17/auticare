@@ -6,6 +6,7 @@ import {
   createReport,
   listReports,
   getReportById,
+  getReportAttachment,
   updateReport,
 } from './schools.reports.controller.js';
 import {
@@ -59,6 +60,17 @@ schoolsReportsRoutes.get(
  * Get a single report with child and reporter info.
  */
 schoolsReportsRoutes.get('/reports/:id', requireRole('SCHOOL', 'PARENT', 'ADMIN'), getReportById);
+
+/**
+ * GET /api/v1/schools/reports/:id/attachments/:filename
+ * Authorised download for a report's attachments. Same audience as the report
+ * itself; the service rejects anything the caller may not see with 404.
+ */
+schoolsReportsRoutes.get(
+  '/reports/:id/attachments/:filename',
+  requireRole('SCHOOL', 'PARENT', 'ADMIN'),
+  getReportAttachment,
+);
 
 /**
  * PATCH /api/v1/schools/reports/:id
