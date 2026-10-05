@@ -66,4 +66,49 @@ describe('hospital directory authorization', () => {
     expect(adminCreateResponse.body.data.name).toBe(hospitalInput.name);
     createdHospitalIds.push(adminCreateResponse.body.data.id);
   });
+
+  it('lets an administrator provision a hospital manager who can access only hospital management', async () => {
+    const admin = await prisma.parent.create({
+      data: {
+        email: `hospital-manager-admin-${unique}@auticare.test`,
+        passwordHash: await passwordService.hash(password),
+        firstName: 'Hospital',
+        lastName: 'Admin',
+        role: 'ADMIN',
+        preference: { create: {} },
+      },
+    });
+    createdParentIds.push(admin.id);
+    const adminAgent = request.agent(app);
+    await adminAgent.post('/api/v1/auth/login').send({ email: admin.email, password });
+    const managerEmail = `hospital-manager-${unique}@auticare.test`;
+    const create = await adminAgent.post('/api/v1/hospitals/admin/accounts').send({
+      hospital: {
+        name: `Managed Care ${unique}`,
+        city: 'Phnom Penh',
+        address: '45 Care Road',
+        services: 'Pediatrics',
+      },
+      account: {
+        email: managerEmail,
+        password,
+        firstName: 'Mina',
+        lastName: 'Manager',
+        title: 'Manager',
+      },
+    });
+    expect(create.status).toBe(201);
+    expect(create.body.data.account.role).toBe('HOSPITAL');
+    createdParentIds.push(create.body.data.account.id);
+    createdHospitalIds.push(create.body.data.hospital.id);
+
+    const managerAgent = request.agent(app);
+    const login = await managerAgent
+      .post('/api/v1/auth/login')
+      .send({ email: managerEmail, password });
+    expect(login.status).toBe(200);
+    const me = await managerAgent.get('/api/v1/hospital-management/me');
+    expect(me.status).toBe(200);
+    expect(me.body.data.hospital.id).toBe(create.body.data.hospital.id);
+  });
 });

@@ -152,7 +152,6 @@ import { availabilityLabel, availabilityTone } from '../school-display.util';
         display: flex;
         flex-direction: column;
         gap: 18px;
-        max-width: 760px;
       }
       .cover {
         width: 100%;
@@ -295,7 +294,8 @@ import { availabilityLabel, availabilityTone } from '../school-display.util';
       }
       dl {
         display: grid;
-        gap: 14px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px 24px;
         margin: 0;
       }
       dt {

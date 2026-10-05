@@ -1,11 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { screeningDisclaimer } from '@auticare/contracts';
 import { PasswordService } from '../src/modules/auth/password.service.js';
+
 const prisma = new PrismaClient();
 const passwordService = new PasswordService();
+
 async function main() {
   const passwordHash = await passwordService.hash('AutiCareDemoPassword123');
   const adminPasswordHash = await passwordService.hash('AutiCareAdminPassword123');
+
   await prisma.parent.upsert({
     where: { email: 'admin@auticare.local' },
     update: {},
@@ -18,6 +21,7 @@ async function main() {
       preference: { create: { preferredLanguage: 'en' } },
     },
   });
+
   const schoolPasswordHash = await passwordService.hash('AutiCareSchoolPassword123');
   const schoolUser = await prisma.parent.upsert({
     where: { email: 'school@auticare.local' },
@@ -28,6 +32,20 @@ async function main() {
       lastName: 'Staff',
       role: 'SCHOOL',
       passwordHash: schoolPasswordHash,
+      preference: { create: { preferredLanguage: 'en' } },
+    },
+  });
+
+  const hospitalPasswordHash = await passwordService.hash('AutiCareHospitalPassword123');
+  const hospitalUser = await prisma.parent.upsert({
+    where: { email: 'hospital@auticare.local' },
+    update: {},
+    create: {
+      email: 'hospital@auticare.local',
+      firstName: 'Hospital',
+      lastName: 'Manager',
+      role: 'HOSPITAL',
+      passwordHash: hospitalPasswordHash,
       preference: { create: { preferredLanguage: 'en' } },
     },
   });
@@ -42,6 +60,7 @@ async function main() {
       preference: { create: { preferredLanguage: 'en' } },
     },
   });
+
   await prisma.child.upsert({
     where: { id: 'demo-child-1' },
     update: {},
@@ -52,6 +71,7 @@ async function main() {
       dateOfBirth: new Date('2020-05-01'),
     },
   });
+
   // ORIGINAL, HEURISTIC screening items (not copied from any copyrighted
   // instrument, and not a clinically validated screening tool). Each item carries
   // a polarity so the scoring engine can correct for opposite concern-directions:
@@ -422,6 +442,7 @@ async function main() {
   await prisma.screeningQuestion.updateMany({ data: { isActive: false } });
   await prisma.screeningQuestion.deleteMany({ where: { answers: { none: {} } } });
   await prisma.screeningQuestion.createMany({ data: screeningQuestions });
+
   const school = await prisma.school.upsert({
     where: { id: 'demo-school-1' },
     update: {},
@@ -433,16 +454,19 @@ async function main() {
       description: 'Inclusive learning support.',
     },
   });
+
   await prisma.schoolStaff.upsert({
     where: { parentId_schoolId: { parentId: schoolUser.id, schoolId: school.id } },
     update: {},
     create: { parentId: schoolUser.id, schoolId: school.id, title: 'Activity Reporter' },
   });
+
   await prisma.schoolChildEnrollment.upsert({
     where: { schoolId_childId: { schoolId: school.id, childId: 'demo-child-1' } },
-    update: { status: 'ACTIVE', endedAt: null },
+    update: { status: 'ACTIVE', endDate: null },
     create: { schoolId: school.id, childId: 'demo-child-1' },
   });
+
   const hospital = await prisma.hospital.upsert({
     where: { id: 'demo-hospital-1' },
     update: {},
@@ -454,6 +478,7 @@ async function main() {
       services: 'Developmental pediatrics, occupational therapy',
     },
   });
+
   await prisma.doctor.upsert({
     where: { id: 'demo-doctor-1' },
     update: {},
@@ -462,6 +487,40 @@ async function main() {
       hospitalId: hospital.id,
       fullName: 'Dr. Lina Sok',
       specialty: 'Developmental Pediatrics',
+    },
+  });
+
+  await prisma.hospitalStaff.upsert({
+    where: { parentId_hospitalId: { parentId: hospitalUser.id, hospitalId: hospital.id } },
+    update: {},
+    create: { parentId: hospitalUser.id, hospitalId: hospital.id, title: 'Hospital Manager' },
+  });
+  await prisma.appointment.upsert({
+    where: { id: 'demo-appointment-requested' },
+    update: {},
+    create: {
+      id: 'demo-appointment-requested',
+      parentId: parent.id,
+      childId: 'demo-child-1',
+      hospitalId: hospital.id,
+      doctorId: 'demo-doctor-1',
+      scheduledAt: new Date('2027-01-15T09:00:00.000Z'),
+      status: 'REQUESTED',
+      reason: 'Development consultation',
+    },
+  });
+  await prisma.appointment.upsert({
+    where: { id: 'demo-appointment-confirmed' },
+    update: {},
+    create: {
+      id: 'demo-appointment-confirmed',
+      parentId: parent.id,
+      childId: 'demo-child-1',
+      hospitalId: hospital.id,
+      doctorId: 'demo-doctor-1',
+      scheduledAt: new Date('2027-02-15T10:00:00.000Z'),
+      status: 'CONFIRMED',
+      reason: 'Follow-up consultation',
     },
   });
   await prisma.activity.createMany({
@@ -476,6 +535,98 @@ async function main() {
     ],
     skipDuplicates: true,
   });
+
+  // ── Seed ActivityReports for the school dashboard ──────────────────────
+  const now = new Date();
+  const daysAgo = (d: number) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() - d);
+    return date;
+  };
+
+  const seedReports: {
+    id: string;
+    schoolId: string;
+    childId: string;
+    reporterId: string;
+    activityCategory: string;
+    title: string;
+    summary: string;
+    activityDate: Date;
+    status: string;
+    duration?: number;
+  }[] = [
+    {
+      id: 'demo-report-1',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Cognitive/Developmental',
+      title: 'Color Sorting Activity',
+      summary: 'Sam successfully sorted 8 colors into groups with 90% accuracy.',
+      activityDate: daysAgo(1),
+      status: 'SUBMITTED',
+      duration: 30,
+    },
+    {
+      id: 'demo-report-2',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Social/Emotional',
+      title: 'Group Play Session',
+      summary: 'Sam initiated play with a peer and shared toys cooperatively.',
+      activityDate: daysAgo(3),
+      status: 'SUBMITTED',
+      duration: 45,
+    },
+    {
+      id: 'demo-report-3',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Language/Communication',
+      title: 'Vocabulary Building',
+      summary: 'Sam learned 5 new words and used them in sentences.',
+      activityDate: daysAgo(5),
+      status: 'SUBMITTED',
+      duration: 25,
+    },
+    {
+      id: 'demo-report-4',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Sensory/Motor',
+      title: 'Fine Motor Practice',
+      summary: 'Draft: Sam worked on pencil grip and tracing shapes.',
+      activityDate: daysAgo(7),
+      status: 'DRAFT',
+      duration: 20,
+    },
+    {
+      id: 'demo-report-5',
+      schoolId: school.id,
+      childId: 'demo-child-1',
+      reporterId: schoolUser.id,
+      activityCategory: 'Adaptive/Self-Care',
+      title: 'Morning Routine Practice',
+      summary: 'Draft: Sam practiced putting on shoes independently.',
+      activityDate: daysAgo(10),
+      status: 'DRAFT',
+      duration: 15,
+    },
+  ];
+
+  for (const report of seedReports) {
+    await prisma.activityReport.upsert({
+      where: { id: report.id },
+      update: {},
+      create: report,
+    });
+  }
+
   console.log(screeningDisclaimer);
 }
+
 main().finally(async () => prisma.$disconnect());

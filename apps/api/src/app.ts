@@ -8,6 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { openApiDocument } from './config/openapi.js';
+import path from 'path';
 import { errorHandler } from './common/middleware/error-handler.js';
 import { requestIdMiddleware } from './common/middleware/request-id.js';
 import { generalRateLimit } from './common/security/rate-limits.js';
@@ -15,8 +16,14 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { childrenRoutes } from './modules/children/children.routes.js';
 import { healthRoutes } from './modules/health/health.routes.js';
 import { hospitalsRoutes } from './modules/hospitals/hospitals.routes.js';
+import {
+  appointmentsRoutes,
+  hospitalDoctorsRoutes,
+} from './modules/appointments/appointments.routes.js';
+import { hospitalManagementRoutes } from './modules/hospital-management/hospital-management.routes.js';
 import { schoolsRoutes } from './modules/schools/index.js';
 import { screeningRoutes } from './modules/screening/index.js';
+import { parentsRoutes } from './modules/parents/index.js';
 export const createApp = () => {
   const app = express();
   app.disable('x-powered-by');
@@ -33,8 +40,13 @@ export const createApp = () => {
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/v1/children', childrenRoutes);
   app.use('/api/v1/hospitals', hospitalsRoutes);
+  app.use('/api/v1/hospitals', hospitalDoctorsRoutes);
+  app.use('/api/v1/appointments', appointmentsRoutes);
+  app.use('/api/v1/hospital-management', hospitalManagementRoutes);
   app.use('/api/v1/schools', schoolsRoutes);
   app.use('/api/v1/screening', screeningRoutes);
+  app.use('/api/v1/parents', parentsRoutes);
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   app.use(errorHandler);
   return app;
 };

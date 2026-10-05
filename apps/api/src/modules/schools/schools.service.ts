@@ -1,18 +1,19 @@
 import type {
   CreateSchoolAccountRequest,
-  CreateSchoolActivityReportRequest,
+  CreateActivityReportRequest,
   CreateSchoolChildEnrollmentRequest,
   SchoolAvailabilityStatus,
   UpdateSchoolProfileRequest,
   UpdateSchoolRequest,
   UserRole,
 } from '@auticare/contracts';
+import type { Prisma } from '@prisma/client';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { PasswordService } from '../auth/password.service.js';
 import { SchoolsRepository } from './schools.repository.js';
 import {
   toSchoolAccountResponse,
-  toSchoolActivityReportResponse,
+  toActivityReportResponse,
   toSchoolChildEnrollmentResponse,
   toSchoolDetailResponse,
   toSchoolResponse,
@@ -35,13 +36,28 @@ export class SchoolsService {
     private readonly passwordService = new PasswordService(),
   ) {}
 
-  async listSchools(actor: Actor) {
+  async listSchools(actor: Actor, filters: ParentSchoolSearchQuery = {}) {
     if (actor.role === 'SCHOOL') throw forbidden();
-    const schools = await this.repository.listSchools();
+    const specializations = (filters.specializations ?? '')
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag !== '');
+    const schools = await this.repository.listSchools({
+      search: filters.search,
+      province: filters.province,
+      availability: filters.availability,
+      specializations: specializations.length > 0 ? specializations : undefined,
+    });
     const ratings = await this.repository.getRatingsForSchools(schools.map((school) => school.id));
     return schools.map((school) =>
       toSchoolResponse(school, ratings.get(school.id) ?? { average: null, count: 0 }),
     );
+  }
+
+  /** Distinct provinces of active schools, for the search filter dropdown. */
+  async listSchoolCities(actor: Actor) {
+    if (actor.role === 'SCHOOL') throw forbidden();
+    return this.repository.listSchoolCities();
   }
 
   /** Public read-only detail available to any authenticated account (read-only). */
@@ -212,41 +228,72 @@ export class SchoolsService {
     throw forbidden();
   }
 
-  async createActivityReport(actor: Actor, input: CreateSchoolActivityReportRequest) {
+  async createActivityReport(actor: Actor, input: CreateActivityReportRequest) {
     if (actor.role !== 'SCHOOL') throw forbidden();
     const staff = await this.repository.findStaffForParent(actor.parentId);
     if (!staff) throw forbidden();
-    const enrollment = await this.repository.findActiveEnrollment({
+    const enrollment = await this.repository.findReportableEnrollment({
       schoolId: staff.schoolId,
       childId: input.childId,
     });
     if (!enrollment) throw forbidden();
+    // activityName is canonical; title/summary/activityDate are derived when
+    // omitted so the frontend payload can stay lean.
+    const title = input.activityName ?? input.title ?? input.activityCategory;
+    const summary =
+      input.summary ??
+      [input.activityName ?? input.title ?? input.activityCategory, input.activityCategory]
+        .filter(Boolean)
+        .join(' — ');
+    const activityDate = input.activityDate ?? new Date().toISOString().slice(0, 10);
+
     const report = await this.repository.createActivityReport({
       schoolId: staff.schoolId,
       childId: input.childId,
       reporterId: actor.parentId,
-      title: input.title,
-      summary: input.summary,
-      activityDate: parseActivityDate(input.activityDate),
+      activityCategory: input.activityCategory,
+      title,
+      summary,
+      activityDate: parseActivityDate(activityDate),
+      ...(input.duration !== undefined && { duration: input.duration }),
+      ...(input.performanceMetrics !== undefined && {
+        performanceMetrics: input.performanceMetrics as Prisma.InputJsonValue,
+      }),
+      ...(input.teacherObservation !== undefined && {
+        teacherObservation: input.teacherObservation,
+      }),
+      ...(input.recommendations !== undefined && { recommendations: input.recommendations }),
+      ...(input.photoUrls !== undefined && { photoUrls: input.photoUrls }),
     });
-    return toSchoolActivityReportResponse(report);
+    return toActivityReportResponse(report);
   }
 
   async listActivityReports(actor: Actor) {
     if (actor.role === 'PARENT') {
       const reports = await this.repository.listReportsForParent(actor.parentId);
-      return reports.map(toSchoolActivityReportResponse);
+      return reports.map(toActivityReportResponse);
     }
     if (actor.role === 'SCHOOL') {
       const staff = await this.repository.findStaffForParent(actor.parentId);
       if (!staff) throw forbidden();
       const reports = await this.repository.listReportsForSchool(staff.schoolId);
-      return reports.map(toSchoolActivityReportResponse);
+      return reports.map(toActivityReportResponse);
     }
     if (actor.role === 'ADMIN') {
       const reports = await this.repository.listAllReports();
-      return reports.map(toSchoolActivityReportResponse);
+      return reports.map(toActivityReportResponse);
     }
     throw forbidden();
+  }
+
+  async deleteActivityReport(actor: Actor, reportId: string) {
+    if (actor.role !== 'SCHOOL') throw forbidden();
+    const staff = await this.repository.findStaffForParent(actor.parentId);
+    if (!staff) throw forbidden();
+    const report = await this.repository.findActivityReportById(reportId);
+    if (!report) throw notFound('Activity report was not found.');
+    if (report.schoolId !== staff.schoolId) throw forbidden();
+    await this.repository.deleteActivityReport(reportId);
+    return { success: true };
   }
 }

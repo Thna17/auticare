@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
 import { created, ok } from '../../common/http/response.js';
+import { parentSchoolSearchQuerySchema } from '@auticare/contracts';
+import type { ParentSchoolSearchQuery } from '@auticare/contracts';
 import { SchoolsService } from './schools.service.js';
 
 const service = new SchoolsService();
@@ -9,11 +11,28 @@ const requiredParam = (value: string | readonly string[] | undefined): string =>
   return value;
 };
 
+/**
+ * Extract validated search filters from req.query WITHOUT reassigning it —
+ * Express 5 made req.query getter-only.
+ */
+const searchFilters = (req: Request): ParentSchoolSearchQuery => {
+  const parsed = parentSchoolSearchQuerySchema.parse(req.query);
+  return {
+    ...(parsed.search !== undefined && { search: parsed.search }),
+    ...(parsed.province !== undefined && { province: parsed.province }),
+    ...(parsed.availability !== undefined && { availability: parsed.availability }),
+    ...(parsed.specializations !== undefined && { specializations: parsed.specializations }),
+  };
+};
+
 export const getSchoolStaffMe = async (req: Request, res: Response) =>
   ok(res, await service.me(req.auth!));
 
 export const listSchools = async (req: Request, res: Response) =>
-  ok(res, await service.listSchools(req.auth!));
+  ok(res, await service.listSchools(req.auth!, searchFilters(req)));
+
+export const listSchoolCities = async (req: Request, res: Response) =>
+  ok(res, await service.listSchoolCities(req.auth!));
 
 export const getMySchool = async (req: Request, res: Response) =>
   ok(res, await service.getMySchool(req.auth!));
@@ -57,3 +76,6 @@ export const createActivityReport = async (req: Request, res: Response) =>
 
 export const listActivityReports = async (req: Request, res: Response) =>
   ok(res, await service.listActivityReports(req.auth!));
+
+export const deleteActivityReport = async (req: Request, res: Response) =>
+  ok(res, await service.deleteActivityReport(req.auth!, requiredParam(req.params.id)));

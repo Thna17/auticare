@@ -27,10 +27,23 @@ export const SCHOOLS_ROUTES: Routes = [
     loadComponent: () => import('./school-enrollments.page').then((m) => m.SchoolEnrollmentsPage),
   },
   {
+    path: 'students/add',
+    canActivate: [roleGuard],
+    data: { roles: ['SCHOOL'] },
+    loadComponent: () => import('./add-student.page').then((m) => m.AddStudentPage),
+  },
+  {
     path: 'reports',
     canActivate: [roleGuard],
     data: { roles: ['PARENT', 'ADMIN', 'SCHOOL'] },
     loadComponent: () => import('./school-reports.page').then((m) => m.SchoolReportsPage),
+  },
+  {
+    path: 'reports/:id/edit',
+    canActivate: [roleGuard],
+    data: { roles: ['SCHOOL'] },
+    loadComponent: () =>
+      import('./create-school-report.page').then((m) => m.CreateSchoolReportPage),
   },
   {
     path: 'reports/new',
@@ -45,10 +58,10 @@ export const SCHOOLS_ROUTES: Routes = [
     data: { roles: ['SCHOOL'] },
     loadComponent: () => import('./school-profile.page').then((m) => m.SchoolProfilePage),
   },
+  // Read-only public detail. Registered last so it never shadows the fixed
+  // paths above. Any authenticated role may VIEW (read-only, no edit controls);
+  // matches the API (GET /schools/:id).
   {
-    // Read-only public detail. Registered last so it never shadows the fixed
-    // paths above. Any authenticated role may VIEW (read-only, no edit controls);
-    // matches the API (GET /schools/:id).
     path: ':id',
     canActivate: [roleGuard],
     data: { roles: ['PARENT', 'ADMIN', 'SCHOOL'] },

@@ -12,6 +12,7 @@ enum UserRole {
   PARENT
   ADMIN
   SCHOOL
+  HOSPITAL
 }
 
 enum ScreeningStatus {
@@ -59,10 +60,15 @@ enum NotificationType {
   SCREENING
   ACTIVITY
   SCHOOL_REPORT
+  ENROLLMENT_REQUEST
+  REPORT_REQUEST
 }
 
 enum SchoolEnrollmentStatus {
+  PENDING
   ACTIVE
+  REJECTED
+  GRADUATED
   ENDED
 }
 
@@ -72,6 +78,8 @@ model Parent {
   passwordHash        String
   firstName           String
   lastName            String
+  phoneNumber         String?
+  socialMediaAccount  String?
   role                UserRole             @default(PARENT)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -85,7 +93,8 @@ model Parent {
   appointments        Appointment[]
   notifications       Notification[]
   schoolStaffProfiles SchoolStaff[]
-  schoolActivityReports SchoolActivityReport[]
+  activityReports     ActivityReport[]
+  hospitalStaffProfiles HospitalStaff[]
 
   @@index([email])
 }
@@ -131,7 +140,10 @@ model Child {
   id               String             @id @default(cuid())
   parentId         String
   firstName        String
+  lastName         String?
   dateOfBirth      DateTime
+  photoUrl         String?
+  address          String?            @db.Text
   notes            String?            @db.Text
   archivedAt       DateTime?
   createdAt        DateTime           @default(now())
@@ -141,7 +153,7 @@ model Child {
   appointments     Appointment[]
   activityProgress ActivityProgress[]
   schoolEnrollments SchoolChildEnrollment[]
-  schoolActivityReports SchoolActivityReport[]
+  activityReports     ActivityReport[]
 
   @@index([parentId, archivedAt])
 }
@@ -234,6 +246,26 @@ enum SchoolAvailabilityStatus {
   CLOSED
 }
 
+// School visibility / operational status (admin-controlled).
+enum SchoolStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// Enrollment lifecycle (supersedes the original ACTIVE/ENDED pair).
+enum SchoolChildEnrollmentStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  GRADUATED
+}
+
+// Notification read-state.
+enum SchoolNotificationStatus {
+  UNREAD
+  READ
+}
+
 model School {
   id                    String                   @id @default(cuid())
   name                  String
@@ -255,6 +287,9 @@ model School {
   specializations       Json? // string[] of specialization tags
   // Admin-controlled trust flag; NOT editable by the school account itself.
   isVerified            Boolean                  @default(false)
+  // School-side features
+  studentCapacity       Int                      @default(0)
+  status                SchoolStatus             @default(ACTIVE)
   createdAt             DateTime                 @default(now())
   updatedAt             DateTime                 @updatedAt
   favorites             FavoriteSchool[]
@@ -262,39 +297,45 @@ model School {
   admissionRequests     AdmissionRequest[]
   staff                 SchoolStaff[]
   childEnrollments      SchoolChildEnrollment[]
-  activityReports       SchoolActivityReport[]
+  activityReports       ActivityReport[]
+  notifications         Notification[]
 
   @@index([city, name])
 }
 
 model SchoolStaff {
-  id        String   @id @default(cuid())
-  parentId  String
-  schoolId  String
-  title     String?
-  createdAt DateTime @default(now())
-  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  id                      String                  @id @default(cuid())
+  parentId                String
+  schoolId                String
+  role                    String                  @default("TEACHER")
+  title                   String?
+  createdAt               DateTime                @default(now())
+  parent                  Parent                  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school                  School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  assignedEnrollments     SchoolChildEnrollment[]
 
   @@unique([parentId, schoolId])
   @@index([schoolId])
 }
 
 model SchoolChildEnrollment {
-  id        String                 @id @default(cuid())
-  schoolId  String
-  childId   String
-  status    SchoolEnrollmentStatus @default(ACTIVE)
-  startedAt DateTime               @default(now())
-  endedAt   DateTime?
-  createdAt DateTime               @default(now())
-  updatedAt DateTime               @updatedAt
-  school    School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  child     Child                  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  id                 String                          @id @default(cuid())
+  schoolId           String
+  childId            String
+  leadSpecialistId   String?                         // Optional: assigned lead specialist staff member
+  status             SchoolChildEnrollmentStatus     @default(PENDING)
+  startDate          DateTime                        @default(now()) @map("started_at")
+  endDate            DateTime?                       @map("ended_at")
+  createdAt          DateTime                        @default(now())
+  updatedAt          DateTime                        @updatedAt
+  school             School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  child              Child                           @relation(fields: [childId], references: [id], onDelete: Cascade)
+  leadSpecialist     SchoolStaff?                    @relation(fields: [leadSpecialistId], references: [id], onDelete: SetNull)
 
   @@unique([schoolId, childId])
   @@index([childId, status])
   @@index([schoolId, status])
+  @@index([leadSpecialistId])
 }
 
 model FavoriteSchool {
@@ -343,8 +384,23 @@ model Hospital {
   updatedAt    DateTime      @updatedAt
   doctors      Doctor[]
   appointments Appointment[]
+  staff        HospitalStaff[]
 
   @@index([city, name])
+}
+
+model HospitalStaff {
+  id         String   @id @default(cuid())
+  parentId   String
+  hospitalId String
+  title      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  parent     Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, hospitalId])
+  @@index([hospitalId])
 }
 
 model Doctor {
@@ -405,34 +461,47 @@ model ActivityProgress {
   @@index([childId, activityId])
 }
 
-model SchoolActivityReport {
-  id         String   @id @default(cuid())
-  schoolId   String
-  childId    String
-  reporterId String
-  title      String
-  summary    String   @db.Text
-  activityDate DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  school     School   @relation(fields: [schoolId], references: [id])
-  child      Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
-  reporter   Parent   @relation(fields: [reporterId], references: [id])
+model ActivityReport {
+  id               String                 @id @default(cuid())
+  schoolId         String
+  childId          String
+  reporterId       String
+  activityCategory String
+  title            String
+  summary          String                 @db.Text
+  activityDate     DateTime
+  status           String                 @default("DRAFT")
+  duration         Int? // minutes
+  performanceMetrics Json?
+  teacherObservation String?              @db.Text
+  recommendations  String?                @db.Text
+  photoUrls        Json? // string[] of photo URLs
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  school           School                 @relation(fields: [schoolId], references: [id])
+  child            Child                  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  reporter         Parent                 @relation(fields: [reporterId], references: [id])
 
+  @@map("SchoolActivityReport")
   @@index([childId, activityDate])
   @@index([schoolId, activityDate])
   @@index([reporterId])
 }
 
 model Notification {
-  id        String           @id @default(cuid())
-  parentId  String
-  type      NotificationType
-  title     String
-  body      String
-  readAt    DateTime?
-  createdAt DateTime         @default(now())
-  parent    Parent           @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  id             String                   @id @default(cuid())
+  parentId       String
+  schoolId       String?
+  type           NotificationType
+  status         SchoolNotificationStatus @default(UNREAD)
+  title          String
+  body           String
+  enrollmentId   String?
+  reportId       String?
+  createdAt      DateTime                 @default(now())
+  parent         Parent                   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school         School?                  @relation(fields: [schoolId], references: [id])
 
-  @@index([parentId, readAt])
+  @@index([parentId, status])
+  @@index([schoolId])
 }

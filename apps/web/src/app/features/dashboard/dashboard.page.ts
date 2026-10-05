@@ -1,9 +1,11 @@
 import type { OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { ChildResponse } from '@auticare/contracts';
+import type { ChildResponse, SchoolDashboardResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 import { ChildrenApi } from '../children/data-access/children.api';
+import { SchoolsApi } from '../schools/data-access/schools.api';
+import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 
 type QuickAction = {
   readonly title: string;
@@ -29,308 +31,1008 @@ const quickActions: readonly QuickAction[] = [
   },
 ];
 
+interface StudentActivity {
+  id: string;
+  studentName: string;
+  initials: string;
+  description: string;
+  timeAgo: string;
+  color: string;
+}
+
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, SchoolTopbarComponent],
+  host: {
+    '[class.school-dashboard]': 'isSchoolStaff()',
+  },
   template: `
-    <section class="dashboard-header">
-      <div>
-        <h1>Good {{ dayPart() }}, {{ parentFirstName() }}</h1>
-        <p>
-          @if (isParent()) {
-            Welcome back to AutiCare.
-            @if (selectedChild()) {
-              Here's what's happening with {{ selectedChild()!.firstName }} today.
-            } @else {
-              Create a child profile to personalize your care dashboard.
-            }
-          } @else {
-            Manage the care directory and review family support records from one place.
-          }
-        </p>
-      </div>
+    @if (isSchoolStaff()) {
+      <!-- SCHOOL DASHBOARD -->
+      <div class="page-layout">
+        <main class="main-content">
+          <ac-school-topbar />
 
-      @if (isParent() && selectedChild()) {
-        <a class="child-switcher" [routerLink]="['/children', selectedChild()!.id]">
-          <span class="child-avatar" aria-hidden="true">{{ childInitials(selectedChild()!) }}</span>
-          <span>
-            <strong
-              >{{ selectedChild()!.firstName }},
-              {{ ageLabel(selectedChild()!.dateOfBirth) }}</strong
-            >
-            <small>Open profile</small>
-          </span>
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path
-              d="m8 10 4 4 4-4"
-              fill="none"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2.4"
-            />
-          </svg>
-        </a>
-      } @else if (isParent()) {
-        <a class="child-switcher empty" routerLink="/children">
-          <span class="child-avatar" aria-hidden="true">+</span>
-          <span>
-            <strong>No child selected</strong>
-            <small>Add child profile</small>
-          </span>
-        </a>
-      }
-    </section>
-
-    @if (childrenError()) {
-      <p class="error" role="alert">{{ childrenError() }}</p>
-    }
-
-    @if (isParent()) {
-      <section class="bento-grid" aria-label="Parent dashboard overview">
-        <article class="card screening-card">
-          <div class="progress-wrap" aria-label="Screening progress 65 percent">
-            <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-              <circle cx="60" cy="60" r="48" class="progress-track"></circle>
-              <circle cx="60" cy="60" r="48" class="progress-value"></circle>
-            </svg>
-            <div>
-              <strong>65%</strong>
-              <span>Progress</span>
+          @if (dashboardLoading()) {
+            <div class="loading-state">
+              <p>Loading dashboard...</p>
             </div>
-          </div>
+          } @else if (dashboardError()) {
+            <div class="error-state" role="alert">
+              <p>{{ dashboardError() }}</p>
+            </div>
+          } @else {
+            <!-- Greeting Section -->
+            <section class="greeting-section">
+              <div>
+                <h1>Good {{ dayPart() }}, {{ greetingName() }}</h1>
+                <p>Here's a summary of your classroom's progress today.</p>
+              </div>
+            </section>
 
-          <div class="screening-copy">
-            <span class="status-pill">Status: Active Review</span>
-            <h2>Moderate support recommended</h2>
-            <p>
-              Last screening completed on January 15, 2024. Your care team is currently reviewing
-              these results for a personalized roadmap.
-            </p>
-            <a class="primary-button" routerLink="/screening">View results</a>
-          </div>
-        </article>
+            @if (dashboardData(); as data) {
+              <!-- Stats Grid -->
+              <section class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-icon students-icon">👥</div>
+                  @if (data.stats.studentsDelta) {
+                    <div class="stat-header">
+                      <span class="stat-trend">+{{ data.stats.studentsDelta }} this term</span>
+                    </div>
+                  }
+                  <div class="stat-label">TOTAL STUDENTS</div>
+                  <div class="stat-value">{{ data.stats.totalStudents }}</div>
+                </div>
 
-        <article class="card weekly-card">
-          <div class="section-title">
-            <h2>Weekly Progress</h2>
+                <div class="stat-card">
+                  <div class="stat-icon reports-icon">📋</div>
+                  <div class="stat-label">REPORTS SUBMITTED</div>
+                  <div class="stat-value">{{ data.stats.reportsSubmitted }}</div>
+                  <div class="stat-footer">Submitted this month</div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon pending-icon">⏳</div>
+                  <div class="stat-label">PENDING REPORTS</div>
+                  <div class="stat-value warning">
+                    {{ formatPending(data.stats.pendingReports) }}
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon activities-icon">✓</div>
+                  @if (data.stats.weekDelta != null) {
+                    <div class="stat-header">
+                      <span class="stat-trend positive"
+                        >+{{ data.stats.weekDelta }}% from last week</span
+                      >
+                    </div>
+                  }
+                  <div class="stat-label">ACTIVITIES COMPLETED</div>
+                  <div class="stat-value">{{ data.stats.activitiesCompleted }}</div>
+                </div>
+              </section>
+
+              <!-- Main Content Grid -->
+              <div class="dashboard-grid">
+                <!-- Left Column -->
+                <div class="left-column">
+                  <!-- Recent Reports -->
+                  <div class="content-card">
+                    <div class="card-header">
+                      <h2>Recent Reports</h2>
+                      <a routerLink="/schools/reports" class="view-all">View All</a>
+                    </div>
+                    @if (data.recentReports.length) {
+                      <table class="reports-table">
+                        <thead>
+                          <tr>
+                            <th>Student Name</th>
+                            <th>Activity</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (report of data.recentReports; track report.id) {
+                            <tr>
+                              <td>
+                                <div class="student-cell">
+                                  <div
+                                    class="student-avatar"
+                                    [style.background]="getAvatarColor(report.childFirstName)"
+                                  >
+                                    {{ report.childFirstName.slice(0, 2).toUpperCase() }}
+                                  </div>
+                                  <span class="student-name">{{ report.childFirstName }}</span>
+                                </div>
+                              </td>
+                              <td>{{ report.activityCategory }}</td>
+                              <td>{{ formatDate(report.activityDate) }}</td>
+                              <td>
+                                <span class="status-badge" [class]="report.status.toLowerCase()">
+                                  {{ report.status }}
+                                </span>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    } @else {
+                      <p class="empty-message">No reports yet.</p>
+                    }
+                  </div>
+
+                  <!-- Recent Student Activities (derived from recent reports) -->
+                  <div class="content-card">
+                    <div class="card-header">
+                      <h2>Recent Student Activities</h2>
+                    </div>
+                    @if (derivedActivities().length) {
+                      <div class="activities-timeline">
+                        @for (activity of derivedActivities(); track activity.id) {
+                          <div class="activity-item">
+                            <div class="activity-icon" [style.background]="activity.color">
+                              {{ activity.initials }}
+                            </div>
+                            <div class="activity-content">
+                              <p>
+                                <strong>{{ activity.studentName }}</strong>
+                                {{ activity.description }}
+                              </p>
+                              <span class="activity-time">{{ activity.timeAgo }}</span>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="empty-message">No recent activities.</p>
+                    }
+                  </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="right-column">
+                  <!-- Report Reminders -->
+                  <div class="content-card reminders-card">
+                    <div class="card-header">
+                      <h2>
+                        <span class="calendar-icon">📅</span>
+                        Report Reminders
+                      </h2>
+                    </div>
+                    @if (data.reminders.length) {
+                      <div class="reminders-list">
+                        @for (reminder of data.reminders; track reminder.id) {
+                          <div class="reminder-item" [class]="reminder.urgency">
+                            <div class="reminder-header">
+                              <span class="reminder-when" [class]="reminder.urgency">
+                                {{ getReminderLabel(reminder.urgency) }}
+                              </span>
+                            </div>
+                            <div class="reminder-title">{{ reminder.title }}</div>
+                            @if (reminder.dueTime) {
+                              <div class="reminder-time">{{ reminder.dueTime }}</div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="empty-message">No reminders right now.</p>
+                    }
+                  </div>
+
+                  <!-- Classroom Engagement -->
+                  <div class="engagement-card">
+                    <div class="engagement-header">
+                      <h2>Classroom Engagement</h2>
+                      @if (data.stats.weekDelta != null) {
+                        <p>
+                          Average student engagement is up {{ data.stats.weekDelta }}% compared to
+                          last week.
+                        </p>
+                      } @else {
+                        <p>Track your classroom engagement over the week.</p>
+                      }
+                    </div>
+                    <div class="engagement-chart">
+                      <div class="chart-bars">
+                        @for (day of engagementData(); track $index) {
+                          <div class="chart-column">
+                            <div
+                              class="bar"
+                              [style.height.%]="day.value"
+                              [class.today]="day.isToday"
+                            ></div>
+                            <span class="day-label">{{ day.label }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          }
+        </main>
+      </div>
+    } @else {
+      <!-- PARENT DASHBOARD (Existing Code - Unchanged) -->
+      <section class="dashboard-header">
+        <div>
+          <h1>Good {{ dayPart() }}, {{ parentFirstName() }}</h1>
+          <p>
+            @if (isParent()) {
+              Welcome back to AutiCare.
+              @if (selectedChild()) {
+                Here's what's happening with {{ selectedChild()!.firstName }} today.
+              } @else {
+                Create a child profile to personalize your care dashboard.
+              }
+            } @else {
+              Manage the care directory and review family support records from one place.
+            }
+          </p>
+        </div>
+
+        @if (isParent() && selectedChild()) {
+          <a class="child-switcher" [routerLink]="['/children', selectedChild()!.id]">
+            <span class="child-avatar" aria-hidden="true">{{
+              childInitials(selectedChild()!)
+            }}</span>
+            <span>
+              <strong
+                >{{ selectedChild()!.firstName }},
+                {{ ageLabel(selectedChild()!.dateOfBirth) }}</strong
+              >
+              <small>Open profile</small>
+            </span>
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path
-                d="M4 17 9 12l3 3 7-8M16 7h3v3"
+                d="m8 10 4 4 4-4"
                 fill="none"
                 stroke="currentColor"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                stroke-width="2.2"
+                stroke-width="2.4"
               />
             </svg>
-          </div>
-          <div class="bar-chart" aria-label="3 activities completed this week">
-            @for (height of weeklyBars; track $index) {
-              <span [style.--bar-height.%]="height" [class.active]="height === 100">
-                @if (height === 100) {
-                  <strong>3</strong>
-                }
-              </span>
-            }
-          </div>
-          <p><strong>3 activities</strong> completed this week. You're on track for your goal!</p>
-        </article>
-
-        <article class="card action-card">
-          <div class="soft-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <path
-                d="M5 6h14v9H8l-3 3V6Z"
-                fill="none"
-                stroke="currentColor"
-                stroke-linejoin="round"
-                stroke-width="2"
-              />
-              <path
-                d="M8 10h8M8 13h5"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-width="2"
-              />
-            </svg>
-          </div>
-          <h2>Next Recommended Action</h2>
-          <p>
-            Based on {{ selectedChild()?.firstName || 'your child' }}'s latest screening, explore
-            new communication activities tailored for social engagement.
-          </p>
-          <a class="text-link" routerLink="/activities">
-            Explore communication activities
-            <span aria-hidden="true">-&gt;</span>
           </a>
-        </article>
-
-        <article class="card appointment-card">
-          <div class="appointment-top">
+        } @else if (isParent()) {
+          <a class="child-switcher empty" routerLink="/children">
+            <span class="child-avatar" aria-hidden="true">+</span>
             <span>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                />
-              </svg>
-              Upcoming Appointment
+              <strong>No child selected</strong>
+              <small>Add child profile</small>
             </span>
-            <strong>Confirmed</strong>
-          </div>
-          <h2>Angkor Children's Hospital</h2>
-          <p>Developmental Assessment with Dr. Somat</p>
-          <div class="appointment-meta">
-            <span>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                />
-              </svg>
-              Feb 1, 2024
-            </span>
-            <span>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                />
-              </svg>
-              09:30 AM
-            </span>
-          </div>
-        </article>
+          </a>
+        }
       </section>
 
-      @if (!selectedChild() && !childrenLoading()) {
-        <section class="empty-state">
-          <h2>Personalize your dashboard</h2>
-          <p>
-            Add your first child profile to connect screenings, activities, school reports, and care
-            notes.
-          </p>
-          <a class="primary-button" routerLink="/children">Open child profiles</a>
+      @if (childrenError()) {
+        <p class="error" role="alert">{{ childrenError() }}</p>
+      }
+
+      @if (isParent()) {
+        <section class="bento-grid" aria-label="Parent dashboard overview">
+          <article class="card screening-card">
+            <div class="progress-wrap" aria-label="Screening progress 65 percent">
+              <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+                <circle cx="60" cy="60" r="48" class="progress-track"></circle>
+                <circle cx="60" cy="60" r="48" class="progress-value"></circle>
+              </svg>
+              <div>
+                <strong>65%</strong>
+                <span>Progress</span>
+              </div>
+            </div>
+
+            <div class="screening-copy">
+              <span class="status-pill">Status: Active Review</span>
+              <h2>Moderate support recommended</h2>
+              <p>
+                Last screening completed on January 15, 2024. Your care team is currently reviewing
+                these results for a personalized roadmap.
+              </p>
+              <a class="primary-button" routerLink="/screening">View results</a>
+            </div>
+          </article>
+
+          <article class="card weekly-card">
+            <div class="section-title">
+              <h2>Weekly Progress</h2>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M4 17 9 12l3 3 7-8M16 7h3v3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2.2"
+                />
+              </svg>
+            </div>
+            <div class="bar-chart" aria-label="3 activities completed this week">
+              @for (height of weeklyBars; track $index) {
+                <span [style.--bar-height.%]="height" [class.active]="height === 100">
+                  @if (height === 100) {
+                    <strong>3</strong>
+                  }
+                </span>
+              }
+            </div>
+            <p><strong>3 activities</strong> completed this week. You're on track for your goal!</p>
+          </article>
+
+          <article class="card action-card">
+            <div class="soft-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M5 6h14v9H8l-3 3V6Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                />
+                <path
+                  d="M8 10h8M8 13h5"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-width="2"
+                />
+              </svg>
+            </div>
+            <h2>Next Recommended Action</h2>
+            <p>
+              Based on {{ selectedChild()?.firstName || 'your child' }}'s latest screening, explore
+              new communication activities tailored for social engagement.
+            </p>
+            <a class="text-link" routerLink="/activities">
+              Explore communication activities
+              <span aria-hidden="true">-&gt;</span>
+            </a>
+          </article>
+
+          <article class="card appointment-card">
+            <div class="appointment-top">
+              <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  />
+                </svg>
+                Upcoming Appointment
+              </span>
+              <strong>Confirmed</strong>
+            </div>
+            <h2>Angkor Children's Hospital</h2>
+            <p>Developmental Assessment with Dr. Somat</p>
+            <div class="appointment-meta">
+              <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  />
+                </svg>
+                Feb 1, 2024
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  />
+                </svg>
+                09:30 AM
+              </span>
+            </div>
+          </article>
+        </section>
+
+        @if (!selectedChild() && !childrenLoading()) {
+          <section class="empty-state">
+            <h2>Personalize your dashboard</h2>
+            <p>
+              Add your first child profile to connect screenings, activities, school reports, and
+              care notes.
+            </p>
+            <a class="primary-button" routerLink="/children">Open child profiles</a>
+          </section>
+        }
+
+        <section class="quick-actions" aria-labelledby="quick-actions-title">
+          <h2 id="quick-actions-title">Quick Actions</h2>
+          <div>
+            @for (action of quickActions; track action.path) {
+              <a class="quick-card" [routerLink]="action.path">
+                <span class="quick-icon" [class]="action.icon" aria-hidden="true"></span>
+                <span>
+                  <strong>{{ action.title }}</strong>
+                  <small>{{ action.description }}</small>
+                </span>
+              </a>
+            }
+          </div>
+        </section>
+      } @else {
+        <section class="admin-overview" aria-label="Administrator overview">
+          <article>
+            <span class="admin-icon directory" aria-hidden="true"></span>
+            <p class="admin-label">Care directory</p>
+            <h2>Keep hospitals current</h2>
+            <p>
+              Publish hospitals and specialist services so families can make informed care choices.
+            </p>
+            <a class="primary-button" routerLink="/hospitals">Manage hospitals</a>
+          </article>
+          <article>
+            <span class="admin-icon family" aria-hidden="true"></span>
+            <p class="admin-label">Family records</p>
+            <h2>{{ children().length }} active child profiles</h2>
+            <p>
+              Review child profiles across the service to support the care team with accurate
+              records.
+            </p>
+            <a class="text-link" routerLink="/children"
+              >Review child profiles <span aria-hidden="true">-&gt;</span></a
+            >
+          </article>
+          <article>
+            <span class="admin-icon school" aria-hidden="true"></span>
+            <p class="admin-label">School reporting</p>
+            <h2>Coordinate activity updates</h2>
+            <p>
+              Review school participation and keep the support network aligned around each child.
+            </p>
+            <a class="text-link" routerLink="/schools"
+              >Open schools <span aria-hidden="true">-&gt;</span></a
+            >
+          </article>
         </section>
       }
 
-      <section class="quick-actions" aria-labelledby="quick-actions-title">
-        <h2 id="quick-actions-title">Quick Actions</h2>
-        <div>
-          @for (action of quickActions; track action.path) {
-            <a class="quick-card" [routerLink]="action.path">
-              <span class="quick-icon" [class]="action.icon" aria-hidden="true"></span>
-              <span>
-                <strong>{{ action.title }}</strong>
-                <small>{{ action.description }}</small>
-              </span>
+      <footer class="dashboard-footer">
+        <section>
+          <h2>AutiCare</h2>
+          <p>
+            Supporting neurodiverse families with personalized care paths and professional
+            resources.
+          </p>
+        </section>
+        <section>
+          <h3>Support</h3>
+          <a routerLink="/support">Emergency Resources</a>
+          <a routerLink="/support">Medical Disclaimer</a>
+          <a routerLink="/support">Contact Support</a>
+        </section>
+        <section>
+          <h3>Quick Links</h3>
+          <a routerLink="/privacy">Privacy Policy</a>
+          <a routerLink="/terms">Terms of Service</a>
+        </section>
+        <section>
+          <h3>Stay Connected</h3>
+          <div class="social-row" aria-label="Community links">
+            <a routerLink="/support" aria-label="Share AutiCare">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M18 8a3 3 0 1 0-2.8-4M6 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM8.7 16.3l6.6-3.6M8.7 18.7l6.6 2.6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                />
+              </svg>
             </a>
-          }
-        </div>
-      </section>
-    } @else {
-      <section class="admin-overview" aria-label="Administrator overview">
-        <article>
-          <span class="admin-icon directory" aria-hidden="true"></span>
-          <p class="admin-label">Care directory</p>
-          <h2>Keep hospitals current</h2>
-          <p>
-            Publish hospitals and specialist services so families can make informed care choices.
-          </p>
-          <a class="primary-button" routerLink="/hospitals">Manage hospitals</a>
-        </article>
-        <article>
-          <span class="admin-icon family" aria-hidden="true"></span>
-          <p class="admin-label">Family records</p>
-          <h2>{{ children().length }} active child profiles</h2>
-          <p>
-            Review child profiles across the service to support the care team with accurate records.
-          </p>
-          <a class="text-link" routerLink="/children"
-            >Review child profiles <span aria-hidden="true">-&gt;</span></a
-          >
-        </article>
-        <article>
-          <span class="admin-icon school" aria-hidden="true"></span>
-          <p class="admin-label">School reporting</p>
-          <h2>Coordinate activity updates</h2>
-          <p>Review school participation and keep the support network aligned around each child.</p>
-          <a class="text-link" routerLink="/schools"
-            >Open schools <span aria-hidden="true">-&gt;</span></a
-          >
-        </article>
-      </section>
+            <a routerLink="/support" aria-label="Open community support">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1M12 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                />
+              </svg>
+            </a>
+          </div>
+          <p class="copyright">(c) 2024 AutiCare. All rights reserved.</p>
+        </section>
+      </footer>
     }
-
-    <footer class="dashboard-footer">
-      <section>
-        <h2>AutiCare</h2>
-        <p>
-          Supporting neurodiverse families with personalized care paths and professional resources.
-        </p>
-      </section>
-      <section>
-        <h3>Support</h3>
-        <a routerLink="/support">Emergency Resources</a>
-        <a routerLink="/support">Medical Disclaimer</a>
-        <a routerLink="/support">Contact Support</a>
-      </section>
-      <section>
-        <h3>Quick Links</h3>
-        <a routerLink="/privacy">Privacy Policy</a>
-        <a routerLink="/terms">Terms of Service</a>
-      </section>
-      <section>
-        <h3>Stay Connected</h3>
-        <div class="social-row" aria-label="Community links">
-          <a routerLink="/support" aria-label="Share AutiCare">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path
-                d="M18 8a3 3 0 1 0-2.8-4M6 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM8.7 16.3l6.6-3.6M8.7 18.7l6.6 2.6"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-              />
-            </svg>
-          </a>
-          <a routerLink="/support" aria-label="Open community support">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path
-                d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1M12 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-              />
-            </svg>
-          </a>
-        </div>
-        <p class="copyright">(c) 2024 AutiCare. All rights reserved.</p>
-      </section>
-    </footer>
   `,
   styles: [
     `
+      /* ========== SCHOOL DASHBOARD STYLES ========== */
+      .page-layout {
+        display: flex;
+        gap: 24px;
+        padding: 24px 0;
+        background: #f8fafc;
+        min-height: 100vh;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .main-content {
+        flex: 1;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .loading-state,
+      .error-state,
+      .empty-message {
+        background: white;
+        border-radius: 12px;
+        padding: 40px 24px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        margin-bottom: 24px;
+      }
+
+      .loading-state p {
+        color: #64748b;
+        font-size: 15px;
+      }
+
+      .error-state p {
+        color: #991b1b;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .empty-message {
+        color: #64748b;
+        font-size: 14px;
+        padding: 24px;
+      }
+
+      .greeting-section {
+        margin-bottom: 28px;
+      }
+
+      .greeting-section h1 {
+        margin: 0 0 8px 0;
+        font-size: 32px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .greeting-section p {
+        margin: 0;
+        color: #64748b;
+        font-size: 15px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+
+      .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        position: relative;
+      }
+
+      .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 12px;
+      }
+
+      .students-icon {
+        background: #dbeafe;
+      }
+
+      .reports-icon {
+        background: #d1fae5;
+      }
+
+      .pending-icon {
+        background: #fef3c7;
+      }
+
+      .activities-icon {
+        background: #dbeafe;
+      }
+
+      .stat-header {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+      }
+
+      .stat-trend {
+        font-size: 12px;
+        color: #10b981;
+        font-weight: 600;
+      }
+
+      .stat-trend.positive {
+        color: #10b981;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+
+      .stat-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1;
+      }
+
+      .stat-value.warning {
+        color: #f59e0b;
+      }
+
+      .stat-footer {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 8px;
+      }
+
+      .progress-bar-mini {
+        width: 100%;
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 2px;
+        margin-top: 12px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: #f59e0b;
+        border-radius: 2px;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 24px;
+      }
+
+      .left-column,
+      .right-column {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .content-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .card-header h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .calendar-icon {
+        font-size: 20px;
+      }
+
+      .view-all {
+        font-size: 13px;
+        color: #2d6a7a;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .view-all:hover {
+        text-decoration: underline;
+      }
+
+      .reports-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .reports-table th {
+        text-align: left;
+        padding: 12px 16px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .reports-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+      }
+
+      .reports-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .student-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .student-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 12px;
+        color: white;
+      }
+
+      .student-name {
+        font-weight: 500;
+        color: #0f172a;
+      }
+
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .status-badge.submitted {
+        background: #d1fae5;
+        color: #059669;
+      }
+
+      .status-badge.draft {
+        background: #f1f5f9;
+        color: #64748b;
+      }
+
+      .activities-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .activity-item {
+        display: flex;
+        gap: 14px;
+      }
+
+      .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: white;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+
+      .activity-content {
+        flex: 1;
+      }
+
+      .activity-content p {
+        margin: 0 0 4px 0;
+        font-size: 14px;
+        color: #0f172a;
+        line-height: 1.5;
+      }
+
+      .activity-content strong {
+        font-weight: 600;
+      }
+
+      .activity-time {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .reminders-card {
+        background: white;
+      }
+
+      .reminders-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .reminder-item {
+        padding: 16px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border-left: 4px solid #e2e8f0;
+      }
+
+      .reminder-item.today {
+        background: #fef2f2;
+        border-left-color: #ef4444;
+      }
+
+      .reminder-item.tomorrow {
+        background: #f0f9ff;
+        border-left-color: #3b82f6;
+      }
+
+      .reminder-item.upcoming {
+        background: #f8fafc;
+        border-left-color: #64748b;
+      }
+
+      .reminder-header {
+        margin-bottom: 8px;
+      }
+
+      .reminder-when {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+      }
+
+      .reminder-when.today {
+        color: #ef4444;
+      }
+
+      .reminder-when.tomorrow {
+        color: #3b82f6;
+      }
+
+      .reminder-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 4px;
+      }
+
+      .reminder-time {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .manage-calendar-btn {
+        width: 100%;
+        padding: 12px;
+        background: white;
+        border: 1px solid #2d6a7a;
+        color: #2d6a7a;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .manage-calendar-btn:hover {
+        background: #2d6a7a;
+        color: white;
+      }
+
+      .engagement-card {
+        background: linear-gradient(135deg, #2d6a7a 0%, #1e4a5a 100%);
+        border-radius: 12px;
+        padding: 24px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(45, 106, 122, 0.3);
+      }
+
+      .engagement-header h2 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .engagement-header p {
+        margin: 0 0 20px 0;
+        font-size: 13px;
+        opacity: 0.9;
+      }
+
+      .engagement-chart {
+        margin-top: 20px;
+      }
+
+      .chart-bars {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        height: 160px;
+        gap: 12px;
+      }
+
+      .chart-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .bar {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 6px 6px 0 0;
+        min-height: 20px;
+        transition: all 0.3s;
+      }
+
+      .bar.today {
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .day-label {
+        font-size: 11px;
+        opacity: 0.9;
+      }
+
+      /* ========== PARENT DASHBOARD STYLES (Unchanged) ========== */
       :host {
         display: block;
         max-width: 1160px;
         margin: 0 auto;
+      }
+
+      :host.school-dashboard {
+        max-width: none;
+        margin: 0;
       }
 
       h1,
@@ -1040,6 +1742,18 @@ const quickActions: readonly QuickAction[] = [
         .dashboard-footer {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .right-column {
+          order: -1;
+        }
       }
 
       @media (max-width: 720px) {
@@ -1134,6 +1848,21 @@ const quickActions: readonly QuickAction[] = [
           gap: 26px;
           padding-bottom: 16px;
         }
+
+        .page-layout {
+          flex-direction: column;
+          gap: 0;
+          padding: 0 0 16px;
+        }
+
+        .main-content {
+          max-width: 100%;
+          padding: 0;
+        }
+
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
       }
     `,
   ],
@@ -1142,6 +1871,7 @@ const quickActions: readonly QuickAction[] = [
 export class DashboardPage implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly childrenApi = inject(ChildrenApi);
+  private readonly schoolsApi = inject(SchoolsApi);
 
   protected readonly quickActions = quickActions;
   protected readonly weeklyBars = [40, 70, 100, 20, 2, 2, 2] as const;
@@ -1150,14 +1880,54 @@ export class DashboardPage implements OnInit {
   protected readonly childrenError = signal<string | null>(null);
   protected readonly parent = this.auth.parent;
   protected readonly isParent = computed(() => this.parent()?.role === 'PARENT');
+  protected readonly isSchoolStaff = computed(() => this.parent()?.role === 'SCHOOL');
   protected readonly selectedChild = computed(
     () => this.children().find((child) => !child.archivedAt) ?? null,
   );
   protected readonly parentFirstName = computed(() => this.parent()?.firstName || 'there');
 
+  // School dashboard data from API
+  protected readonly dashboardData = signal<SchoolDashboardResponse | null>(null);
+  protected readonly dashboardLoading = signal(true);
+  protected readonly dashboardError = signal<string | null>(null);
+
+  protected readonly greetingName = computed(() => {
+    const d = this.dashboardData();
+    if (d?.staffFirstName) return d.staffFirstName;
+    return this.parent()?.firstName || 'School';
+  });
+
+  // Derived student activities from recent reports
+  protected readonly derivedActivities = computed(() => {
+    const reports = this.dashboardData()?.recentReports;
+    if (!reports?.length) return [];
+    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+    return reports.slice(0, 3).map((r, i) => ({
+      id: r.id,
+      studentName: r.childFirstName,
+      initials: r.childFirstName.slice(0, 2).toUpperCase(),
+      description: `completed "${r.title}" in ${r.activityCategory}.`,
+      timeAgo: this.formatDate(r.activityDate),
+      color: colors[i % colors.length],
+    }));
+  });
+
+  protected readonly engagementData = signal([
+    { label: 'Mon', value: 45, isToday: false },
+    { label: 'Tue', value: 52, isToday: false },
+    { label: 'Wed', value: 48, isToday: false },
+    { label: 'Thu', value: 60, isToday: false },
+    { label: 'Fri', value: 55, isToday: false },
+    { label: 'Today', value: 78, isToday: true },
+    { label: 'Sun', value: 30, isToday: false },
+  ]);
+
   ngOnInit() {
     if (!this.parent()) this.auth.loadCurrentUser().subscribe();
     this.loadChildren();
+    if (this.isSchoolStaff()) {
+      this.loadDashboard();
+    }
   }
 
   protected dayPart(): 'morning' | 'afternoon' | 'evening' {
@@ -1181,6 +1951,48 @@ export class DashboardPage implements OnInit {
     }
     const safeYears = Math.max(years, 0);
     return safeYears === 1 ? 'age 1' : `age ${safeYears}`;
+  }
+
+  protected getAvatarColor(initials: string): string {
+    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+    const index = initials.charCodeAt(0) % colors.length;
+    return colors[index];
+  }
+
+  protected getReminderLabel(urgency: string): string {
+    switch (urgency) {
+      case 'today':
+        return 'DUE TODAY';
+      case 'tomorrow':
+        return 'TOMORROW';
+      default:
+        return 'UPCOMING';
+    }
+  }
+
+  protected formatDate(dateStr: string): string {
+    const date = new Date(`${dateStr}T00:00:00`);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  protected formatPending(value: number | undefined): string {
+    const n = value ?? 0;
+    return n < 10 ? `0${n}` : `${n}`;
+  }
+
+  private loadDashboard() {
+    this.dashboardLoading.set(true);
+    this.dashboardError.set(null);
+    this.schoolsApi.getDashboard().subscribe({
+      next: (data) => {
+        this.dashboardData.set(data);
+        this.dashboardLoading.set(false);
+      },
+      error: () => {
+        this.dashboardError.set('Dashboard could not be loaded. Please refresh the page.');
+        this.dashboardLoading.set(false);
+      },
+    });
   }
 
   private loadChildren() {

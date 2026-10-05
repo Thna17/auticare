@@ -45,5 +45,11 @@
   "lint-staged": {
     "*.{ts,js,html,scss,json,md,yml,yaml}": "prettier --write"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@angular/common": "^21.2.20",
+    "@angular/core": "^21.2.20",
+    "@angular/forms": "^21.2.20",
+    "@angular/router": "^21.2.20"
+  }
 }

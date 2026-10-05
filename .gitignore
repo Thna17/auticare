@@ -9,3 +9,5 @@ coverage
 .playwright-cli
 output
 apps.zip
+apps/api/uploads/
+dev-server.log

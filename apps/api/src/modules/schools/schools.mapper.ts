@@ -1,7 +1,8 @@
 import type {
   Parent,
   School,
-  SchoolActivityReport,
+  ActivityReport,
+  Notification,
   SchoolChildEnrollment,
   SchoolStaff,
 } from '@prisma/client';
@@ -10,7 +11,8 @@ import type {
   ParentResponse,
   SchoolDetailResponse,
   SchoolResponse,
-  SchoolActivityReportResponse,
+  ActivityReportResponse,
+  NotificationResponse,
   SchoolChildEnrollmentResponse,
   SchoolStaffResponse,
 } from '@auticare/contracts';
@@ -89,19 +91,35 @@ export const toSchoolChildEnrollmentResponse = (
   schoolId: enrollment.schoolId,
   childId: enrollment.childId,
   status: enrollment.status,
-  startedAt: enrollment.startedAt.toISOString(),
-  endedAt: enrollment.endedAt?.toISOString() ?? null,
+  startDate: enrollment.startDate.toISOString(),
+  endDate: enrollment.endDate?.toISOString() ?? null,
 });
 
-export const toSchoolActivityReportResponse = (
-  report: SchoolActivityReport,
-): SchoolActivityReportResponse => ({
+export const toActivityReportResponse = (report: ActivityReport): ActivityReportResponse => ({
   id: report.id,
   schoolId: report.schoolId,
   childId: report.childId,
   reporterId: report.reporterId,
+  activityCategory: report.activityCategory,
   title: report.title,
   summary: report.summary,
   activityDate: report.activityDate.toISOString().slice(0, 10),
+  status: report.status,
+  duration: report.duration ?? null,
+  performanceMetrics: report.performanceMetrics ?? null,
+  teacherObservation: report.teacherObservation ?? null,
+  recommendations: report.recommendations ?? null,
+  photoUrls: Array.isArray(report.photoUrls) ? (report.photoUrls as string[]) : null,
   createdAt: report.createdAt.toISOString(),
+});
+
+export const toNotificationResponse = (notification: Notification): NotificationResponse => ({
+  id: notification.id,
+  type: notification.type,
+  status: notification.status,
+  title: notification.title,
+  body: notification.body,
+  enrollmentId: notification.enrollmentId ?? null,
+  reportId: notification.reportId ?? null,
+  createdAt: notification.createdAt.toISOString(),
 });
