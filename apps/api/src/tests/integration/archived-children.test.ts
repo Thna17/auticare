@@ -95,6 +95,44 @@ afterAll(async () => {
 const names = (rows: unknown[]): string[] =>
   rows.map((row) => (row as { firstName?: string }).firstName ?? '');
 
+describe('query parameter validation', () => {
+  // One middleware now validates every list endpoint's query. These assert the
+  // 400 envelope is unchanged from the six hand-rolled variants it replaced, and
+  // that valid filters still reach the service.
+
+  it('rejects an out-of-enum status on the enrolled-students list with 400', async () => {
+    const res = await schoolAgent.get('/api/v1/schools/enrollments/students?status=NONSENSE');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(Array.isArray(res.body.error.details)).toBe(true);
+  });
+
+  it('rejects an out-of-range limit with 400', async () => {
+    const res = await schoolAgent.get('/api/v1/schools/enrollments/students?limit=9999');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('accepts a valid filter and applies it', async () => {
+    const res = await schoolAgent.get('/api/v1/schools/enrollments/students?status=ACTIVE&limit=5');
+    expect(res.status).toBe(200);
+    expect(res.body.data.pagination.limit).toBe(5);
+  });
+
+  it('applies schema defaults when the query is absent', async () => {
+    const res = await schoolAgent.get('/api/v1/schools/enrollments/students');
+    expect(res.status).toBe(200);
+    expect(res.body.data.pagination.page).toBe(1);
+    expect(res.body.data.pagination.limit).toBe(10);
+  });
+
+  it('rejects an out-of-enum report status with 400', async () => {
+    const res = await schoolAgent.get('/api/v1/schools/reports?status=NOPE');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+});
+
 describe('archived children and the school roster', () => {
   it('shows both children to the school before either is archived', async () => {
     const picker = await schoolAgent.get('/api/v1/schools/enrolled-students');

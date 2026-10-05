@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
+import type { HospitalAppointmentFiltersQuery } from '@auticare/contracts';
 import { created, ok } from '../../common/http/response.js';
+import { validatedQuery } from '../../common/middleware/validate-query.js';
 import { HospitalManagementService } from './hospital-management.service.js';
 const service = new HospitalManagementService();
 const param = (value: string | readonly string[] | undefined) => {
@@ -7,17 +9,10 @@ const param = (value: string | readonly string[] | undefined) => {
   return value;
 };
 export const me = async (req: Request, res: Response) => ok(res, await service.me(req.auth!));
-const queryString = (value: unknown): string | undefined =>
-  typeof value === 'string' && value !== '' ? value : undefined;
 export const appointments = async (req: Request, res: Response) =>
   ok(
     res,
-    await service.appointments(req.auth!, {
-      status: queryString(req.query.status),
-      doctorId: queryString(req.query.doctorId),
-      from: queryString(req.query.from),
-      to: queryString(req.query.to),
-    }),
+    await service.appointments(req.auth!, validatedQuery<HospitalAppointmentFiltersQuery>(req)),
   );
 export const changeStatus = async (req: Request, res: Response) =>
   ok(res, await service.changeStatus(req.auth!, param(req.params.appointmentId), req.body));

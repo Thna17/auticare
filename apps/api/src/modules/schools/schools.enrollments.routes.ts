@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { validateBody } from '../../common/middleware/validate.js';
 import { requireRole } from '../auth/index.js';
+import { validateQuery } from '../../common/middleware/validate-query.js';
+import { listEnrolledStudentsQuerySchema } from '@auticare/contracts';
 import {
   createStudent,
   getEnrollmentStats,
@@ -30,7 +32,12 @@ schoolsEnrollmentsRoutes.get('/enrollments/stats', requireRole('SCHOOL'), getEnr
  * communication progress, and enrollment status.
  * Query params: page, limit, status, specialistId, search
  */
-schoolsEnrollmentsRoutes.get('/enrollments/students', requireRole('SCHOOL'), getEnrolledStudents);
+schoolsEnrollmentsRoutes.get(
+  '/enrollments/students',
+  requireRole('SCHOOL'),
+  validateQuery(listEnrolledStudentsQuerySchema),
+  getEnrolledStudents,
+);
 
 /**
  * GET /api/v1/schools/enrollments/specialists

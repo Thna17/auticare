@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { validateBody } from '../../common/middleware/validate.js';
 import { requireRole } from '../auth/index.js';
+import { validateQuery } from '../../common/middleware/validate-query.js';
 import {
   createReport,
   listReports,
@@ -46,12 +47,7 @@ schoolsReportsRoutes.post(
 schoolsReportsRoutes.get(
   '/reports',
   requireRole('SCHOOL', 'PARENT', 'ADMIN'),
-  (req, _res, next) => {
-    // Express 5: req.query is getter-only — validate in place instead of
-    // reassigning (the schema is pass-through, so no transformation needed).
-    listReportsQuerySchema.parse(req.query);
-    next();
-  },
+  validateQuery(listReportsQuerySchema),
   listReports,
 );
 

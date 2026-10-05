@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { created, ok } from '../../common/http/response.js';
-import { parentSchoolSearchQuerySchema } from '@auticare/contracts';
+import { validatedQuery } from '../../common/middleware/validate-query.js';
 import type { ParentSchoolSearchQuery } from '@auticare/contracts';
 import { SchoolsService } from './schools.service.js';
 
@@ -12,11 +12,12 @@ const requiredParam = (value: string | readonly string[] | undefined): string =>
 };
 
 /**
- * Extract validated search filters from req.query WITHOUT reassigning it —
- * Express 5 made req.query getter-only.
+ * Search filters, already parsed by validateQuery on the route. Undefined keys
+ * are dropped rather than passed through, because exactOptionalPropertyTypes
+ * distinguishes an absent key from one set to undefined.
  */
 const searchFilters = (req: Request): ParentSchoolSearchQuery => {
-  const parsed = parentSchoolSearchQuerySchema.parse(req.query);
+  const parsed = validatedQuery<ParentSchoolSearchQuery>(req);
   return {
     ...(parsed.search !== undefined && { search: parsed.search }),
     ...(parsed.province !== undefined && { province: parsed.province }),

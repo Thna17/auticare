@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
+import type { ListNotificationsQuery } from '@auticare/contracts';
 import { ok } from '../../common/http/response.js';
+import { validatedQuery } from '../../common/middleware/validate-query.js';
 import { SchoolNotificationsService } from './schools.notifications.service.js';
 
 const service = new SchoolNotificationsService();
@@ -10,7 +12,10 @@ const requiredParam = (value: string | readonly string[] | undefined): string =>
 };
 
 export const listNotifications = async (req: Request, res: Response) =>
-  ok(res, await service.listNotificationItems(req.auth!, req.query));
+  ok(
+    res,
+    await service.listNotificationItems(req.auth!, validatedQuery<ListNotificationsQuery>(req)),
+  );
 
 export const decideEnrollmentRequest = async (req: Request, res: Response) =>
   ok(

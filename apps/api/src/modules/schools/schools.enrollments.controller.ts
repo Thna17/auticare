@@ -1,10 +1,11 @@
 import type { Request, Response } from 'express';
 import {
   createSchoolStudentRequestSchema,
-  listEnrolledStudentsQuerySchema,
   updateSchoolEnrollmentRequestSchema,
 } from '@auticare/contracts';
+import type { ListEnrolledStudentsQuery } from '@auticare/contracts';
 import { forbidden } from '../../common/errors/app-error.js';
+import { validatedQuery } from '../../common/middleware/validate-query.js';
 import { created, ok } from '../../common/http/response.js';
 import { SchoolEnrollmentsService } from './schools.enrollments.service.js';
 
@@ -26,8 +27,8 @@ export const getEnrollmentStats = async (req: Request, res: Response) => {
 export const getEnrolledStudents = async (req: Request, res: Response) => {
   if (!req.auth || req.auth.role !== 'SCHOOL') throw forbidden();
 
-  // Validate and parse query parameters with Zod
-  const query = listEnrolledStudentsQuerySchema.parse(req.query);
+  // Already parsed by validateQuery on the route.
+  const query = validatedQuery<ListEnrolledStudentsQuery>(req);
 
   try {
     const filters: { status?: string; specialistId?: string; search?: string } = {};
