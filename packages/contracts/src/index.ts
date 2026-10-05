@@ -166,6 +166,22 @@ export const createAppointmentRequestSchema = z.object({
   reason: z.string().max(2000).optional(),
 });
 export type CreateAppointmentRequest = z.infer<typeof createAppointmentRequestSchema>;
+/**
+ * Hospital-side appointment list filters (GET /hospital-management/appointments).
+ *
+ * Kept permissive on purpose: `status` and the date range are validated further
+ * in the service, which returns a message naming the valid statuses. Tightening
+ * them here would change those messages, so this schema only does what the old
+ * hand-rolled `queryString` helper did — accept a non-empty string or nothing.
+ */
+export const hospitalAppointmentFiltersQuerySchema = z.object({
+  status: z.string().trim().min(1).optional(),
+  doctorId: z.string().trim().min(1).optional(),
+  from: z.string().trim().min(1).optional(),
+  to: z.string().trim().min(1).optional(),
+});
+export type HospitalAppointmentFiltersQuery = z.infer<typeof hospitalAppointmentFiltersQuerySchema>;
+
 export const updateAppointmentStatusRequestSchema = z.object({
   status: z.enum(appointmentStatuses),
   /**

@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
+import type { ListActivityReportsQuery } from '@auticare/contracts';
 import { created, ok } from '../../common/http/response.js';
+import { validatedQuery } from '../../common/middleware/validate-query.js';
 import { SchoolsReportsService } from './schools.reports.service.js';
 
 const service = new SchoolsReportsService();
@@ -13,7 +15,7 @@ export const createReport = async (req: Request, res: Response) =>
   created(res, await service.createReport(req.auth!, req.body));
 
 export const listReports = async (req: Request, res: Response) =>
-  ok(res, await service.listReports(req.auth!, req.query as Record<string, string | undefined>));
+  ok(res, await service.listReports(req.auth!, validatedQuery<ListActivityReportsQuery>(req)));
 
 export const getReportById = async (req: Request, res: Response) =>
   ok(res, await service.getReportById(req.auth!, requiredParam(req.params.id)));

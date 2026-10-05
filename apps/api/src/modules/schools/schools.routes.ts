@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { validateBody } from '../../common/middleware/validate.js';
+import { validateQuery } from '../../common/middleware/validate-query.js';
 import { requireAuth, requireRole } from '../auth/index.js';
 import {
   createActivityReport,
@@ -42,15 +43,11 @@ import {
 export const schoolsRoutes = Router();
 schoolsRoutes.use(requireAuth);
 
-// Directory listing (parents/admins). Query filters validated in place —
-// Express 5: req.query is getter-only, so never reassign it.
+// Directory listing (parents/admins).
 schoolsRoutes.get(
   '/',
   requireRole('PARENT', 'ADMIN'),
-  (req, _res, next) => {
-    parentSchoolSearchQuerySchema.parse(req.query);
-    next();
-  },
+  validateQuery(parentSchoolSearchQuerySchema),
   listSchools,
 );
 // Distinct provinces (stored in the city column) for the filter dropdown.

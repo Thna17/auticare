@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireRole } from '../auth/index.js';
+import { validateQuery } from '../../common/middleware/validate-query.js';
 import { validateBody } from '../../common/middleware/validate.js';
 import { decideNotificationRequestSchema, listNotificationsQuerySchema } from '@auticare/contracts';
 import {
@@ -22,11 +23,7 @@ export const schoolsNotificationsRoutes = Router();
 schoolsNotificationsRoutes.get(
   '/notifications',
   requireRole('SCHOOL'),
-  (req, _res, next) => {
-    // Express 5: req.query is getter-only — validate in place, never reassign.
-    listNotificationsQuerySchema.parse(req.query);
-    next();
-  },
+  validateQuery(listNotificationsQuerySchema),
   listNotifications,
 );
 
