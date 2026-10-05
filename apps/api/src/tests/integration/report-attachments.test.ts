@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../app.js';
 import { prisma } from '../../database/prisma.js';
 import { PasswordService } from '../../modules/auth/password.service.js';
-import { uploadDir } from '../../modules/uploads/uploads.controller.js';
+import { MAX_FILE_BYTES, uploadDir } from '../../modules/uploads/uploads.controller.js';
 
 const app = createApp();
 const passwordService = new PasswordService();
@@ -224,6 +224,64 @@ describe('report attachment downloads', () => {
       const res = await schoolAgent.get(attachmentPath(reportId, bad));
       expect(res.status).not.toBe(200);
     }
+  });
+});
+
+describe('upload validation errors', () => {
+  // All three previously surfaced as 500 "Something went wrong" and were logged
+  // as unhandled API errors: fileFilter and the filename guard rejected with a
+  // plain Error, and multer's own limit errors were not handled at all.
+
+  it('rejects a disallowed file type with 400, not 500', async () => {
+    const res = await schoolAgent
+      .post('/api/v1/schools/upload/activity-files')
+      .attach('files', Buffer.from('#!/bin/sh\necho hi\n'), {
+        filename: 'script.sh',
+        contentType: 'application/x-sh',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error.message).toMatch(/images, PDF, Word, text, or CSV/i);
+  });
+
+  it('rejects an over-size file with 400 naming the limit', async () => {
+    // One byte over the 10MB cap, so multer raises LIMIT_FILE_SIZE.
+    const tooBig = Buffer.alloc(MAX_FILE_BYTES + 1, 0x41);
+    const res = await schoolAgent
+      .post('/api/v1/schools/upload/activity-photos')
+      .attach('photos', tooBig, { filename: 'big.png', contentType: 'image/png' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error.message).toMatch(/10MB or smaller/);
+  });
+
+  it('rejects too many files with 400', async () => {
+    // The photos field accepts 5; send 6 so multer raises LIMIT_FILE_COUNT.
+    let req = schoolAgent.post('/api/v1/schools/upload/activity-photos');
+    for (let i = 0; i < 6; i += 1) {
+      req = req.attach('photos', Buffer.from([0xff, 0xd8, 0xff, 0xdb]), {
+        filename: `p${i}.jpg`,
+        contentType: 'image/jpeg',
+      });
+    }
+    const res = await req;
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('rejects an unexpected field name with 400', async () => {
+    const res = await schoolAgent
+      .post('/api/v1/schools/upload/activity-photos')
+      .attach('wrongField', Buffer.from([0xff, 0xd8]), {
+        filename: 'x.jpg',
+        contentType: 'image/jpeg',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 });
 
