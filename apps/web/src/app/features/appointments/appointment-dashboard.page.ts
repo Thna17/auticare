@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { UiBadgeComponent } from '../../design-system/components/ui-badge.component';
 import { AppointmentsFacade } from './state/appointments.facade';
+import type { AppointmentResponse } from '@auticare/contracts';
 import type { AppointmentStatus } from './appointments.types';
 import { statusPresentation, statusTone } from './appointments.types';
 
@@ -95,6 +96,9 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
           message="Schedule a visit with a specialist to see it listed here."
         />
       } @else {
+        @if (cancelError(); as problem) {
+          <p class="cancel-error" role="alert">{{ problem }}</p>
+        }
         <ul class="appointment-list">
           @for (appointment of visibleAppointments(); track appointment.id) {
             <li class="appointment-row">
@@ -111,9 +115,34 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                   </p>
                 }
               </div>
-              <ac-ui-badge [tone]="statusTone[appointment.status]">
-                {{ presentation(appointment.status).label }}
-              </ac-ui-badge>
+              <div class="row-side">
+                <ac-ui-badge [tone]="statusTone[appointment.status]">
+                  {{ presentation(appointment.status).label }}
+                </ac-ui-badge>
+
+                @if (isCancellable(appointment)) {
+                  @if (confirmingId() === appointment.id) {
+                    <div class="cancel-confirm" role="group" aria-label="Confirm cancellation">
+                      <span>Cancel this appointment?</span>
+                      <button
+                        type="button"
+                        class="cancel-yes"
+                        [disabled]="isCancelling(appointment.id)"
+                        (click)="confirmCancel(appointment)"
+                      >
+                        {{ isCancelling(appointment.id) ? 'Cancelling…' : 'Yes, cancel' }}
+                      </button>
+                      <button type="button" class="cancel-no" (click)="confirmingId.set(null)">
+                        Keep it
+                      </button>
+                    </div>
+                  } @else {
+                    <button type="button" class="cancel-btn" (click)="askCancel(appointment)">
+                      Cancel
+                    </button>
+                  }
+                }
+              </div>
             </li>
           }
         </ul>
@@ -335,6 +364,64 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         font-size: var(--ac-type-meta);
       }
 
+      .row-side {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .cancel-btn,
+      .cancel-yes,
+      .cancel-no {
+        min-height: 36px;
+        padding: 0 12px;
+        border-radius: 8px;
+        font-weight: var(--ac-font-weight-bold);
+        cursor: pointer;
+      }
+
+      .cancel-btn {
+        border: 1px solid #b8c2c8;
+        background: #fff;
+        color: #8b3d3d;
+      }
+
+      .cancel-confirm {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: var(--ac-type-meta);
+      }
+
+      .cancel-yes {
+        border: 0;
+        background: #8b3d3d;
+        color: #fff;
+      }
+
+      .cancel-no {
+        border: 1px solid #b8c2c8;
+        background: #fff;
+        color: #001e2b;
+      }
+
+      .cancel-yes:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .cancel-error {
+        margin: 0 0 12px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        color: #b42318;
+        background: #fdecec;
+        border: 1px solid #eec2c2;
+      }
+
       .reason-label {
         font-weight: var(--ac-font-weight-bold);
       }
@@ -406,6 +493,9 @@ export class AppointmentDashboardPage implements OnInit {
   );
   protected readonly statusOptions = statusFilterOptions;
   protected readonly statusTone = statusTone;
+  protected readonly cancelError = this.facade.cancelError;
+  /** Which row is showing its inline confirmation, if any. */
+  protected readonly confirmingId = signal<string | null>(null);
   protected readonly timeOptions: ReadonlyArray<{ value: TimeFilter; label: string }> = [
     { value: 'ALL', label: 'All Time' },
     { value: 'UPCOMING', label: 'Upcoming' },
@@ -443,6 +533,27 @@ export class AppointmentDashboardPage implements OnInit {
       }
       return next;
     });
+  }
+
+  /**
+   * The API allows cancellation only while an appointment is REQUESTED or
+   * CONFIRMED, so the button is hidden otherwise rather than offered and refused.
+   */
+  protected isCancellable(appointment: AppointmentResponse): boolean {
+    return appointment.status === 'REQUESTED' || appointment.status === 'CONFIRMED';
+  }
+
+  protected isCancelling(appointmentId: string): boolean {
+    return this.facade.cancelling().includes(appointmentId);
+  }
+
+  protected askCancel(appointment: AppointmentResponse): void {
+    this.confirmingId.set(appointment.id);
+  }
+
+  protected confirmCancel(appointment: AppointmentResponse): void {
+    this.facade.cancelAppointment(appointment.id);
+    this.confirmingId.set(null);
   }
 
   protected presentation(status: AppointmentStatus) {

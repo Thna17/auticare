@@ -25,6 +25,19 @@ export class AppointmentsApi {
       .pipe(map((response) => response.data));
   }
 
+  /**
+   * Parent-initiated cancellation. The API only allows it while the appointment
+   * is REQUESTED or CONFIRMED, and scopes it to the caller's own appointments.
+   */
+  cancelAppointment(appointmentId: string) {
+    return this.http
+      .patch<{ data: AppointmentResponse }>(
+        `${this.apiBaseUrl}/appointments/${appointmentId}/cancel`,
+        {},
+      )
+      .pipe(map((response) => response.data));
+  }
+
   createAppointment(input: CreateAppointmentRequest) {
     return this.http
       .post<{ data: AppointmentResponse }>(`${this.apiBaseUrl}/appointments`, input)

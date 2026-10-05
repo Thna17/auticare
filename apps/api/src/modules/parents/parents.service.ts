@@ -138,12 +138,16 @@ export class ParentsService {
   async listNotifications(actor: Actor) {
     if (actor.role !== 'PARENT') throw forbidden();
     const notifications = await this.repository.listNotificationsForParent(actor.parentId);
+    // Shaped as NotificationResponse so the web side can reuse the existing
+    // contract instead of a parent-only variant.
     return notifications.map((notification) => ({
       id: notification.id,
       type: notification.type,
       status: notification.status,
       title: notification.title,
       body: notification.body,
+      enrollmentId: notification.enrollmentId,
+      reportId: notification.reportId,
       createdAt: notification.createdAt.toISOString(),
     }));
   }
