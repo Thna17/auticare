@@ -20,6 +20,7 @@ import type {
   UpdateSchoolRequest,
   EnrollmentStatsResponse,
   EnrolledStudentsListResponse,
+  EnrolledStudentOption,
   LeadSpecialistResponse,
   SchoolNotificationItem,
   NotificationDecisionResponse,
@@ -30,18 +31,12 @@ import type {
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
 
-/** Student-picker entry returned by GET /schools/enrolled-students. */
-export type EnrolledStudentOption = {
-  id: string;
-  childId: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  age: number;
-  photoUrl: string | null;
-  enrollmentStatus: 'ACTIVE' | 'PENDING';
-  startDate: string;
-};
+/**
+ * Student-picker entry returned by GET /schools/enrolled-students. Defined in
+ * @auticare/contracts; re-exported so the pages importing it from this module
+ * keep working.
+ */
+export type { EnrolledStudentOption };
 
 @Injectable({ providedIn: 'root' })
 export class SchoolsApi {

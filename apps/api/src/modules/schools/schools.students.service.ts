@@ -1,3 +1,4 @@
+import type { EnrolledStudentOption } from '@auticare/contracts';
 import { forbidden } from '../../common/errors/app-error.js';
 import { SchoolsRepository } from './schools.repository.js';
 
@@ -11,22 +12,8 @@ export type SchoolStudent = {
   startDate: string;
 };
 
-/** Student-picker entry for the activity report form (and similar UIs). */
-export type EnrolledStudentOption = {
-  id: string;
-  childId: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  age: number;
-  photoUrl: string | null;
-  // ACTIVE and PENDING both appear: listPickerEnrolledStudentsForSchool queries
-  // `status: { in: ['ACTIVE', 'PENDING'] }` so reports can be written for newly
-  // added children before activation. Matches the web-side copy of this type in
-  // apps/web/.../data-access/schools.api.ts.
-  enrollmentStatus: 'ACTIVE' | 'PENDING';
-  startDate: string;
-};
+/** Re-exported so existing importers of this module keep working. */
+export type { EnrolledStudentOption };
 
 export class SchoolStudentsService {
   constructor(private readonly repository = new SchoolsRepository()) {}
