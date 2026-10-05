@@ -9,6 +9,7 @@ import type {
   RegisterRequest,
   ResetPasswordRequest,
   ResetPasswordResponse,
+  UpdateMyProfileRequest,
 } from '@auticare/contracts';
 import type { Observable } from 'rxjs';
 import { catchError, map, of, tap } from 'rxjs';
@@ -42,6 +43,17 @@ export class AuthService {
   }
   register(input: RegisterRequest): Observable<ParentResponse> {
     return this.http.post<{ data: AuthResponse }>(`${this.apiBaseUrl}/auth/register`, input).pipe(
+      map((response) => response.data.parent),
+      tap((parent) => this.state.set({ status: 'authenticated', parent })),
+    );
+  }
+  /**
+   * Update the signed-in account holder's own profile. The response carries the
+   * updated parent, so the shared auth state is refreshed in place — the header
+   * name and initials follow a save without a reload.
+   */
+  updateMyProfile(input: UpdateMyProfileRequest): Observable<ParentResponse> {
+    return this.http.patch<{ data: AuthResponse }>(`${this.apiBaseUrl}/auth/me`, input).pipe(
       map((response) => response.data.parent),
       tap((parent) => this.state.set({ status: 'authenticated', parent })),
     );

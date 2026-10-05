@@ -49,9 +49,34 @@ export const parentResponseSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   role: z.enum(userRoles),
+  /** Optional contact details the account holder can edit themselves. */
+  phoneNumber: z.string().nullable(),
+  socialMediaAccount: z.string().nullable(),
 });
 export type ParentResponse = z.infer<typeof parentResponseSchema>;
 export const authResponseSchema = z.object({ parent: parentResponseSchema });
+
+/**
+ * Fields the signed-in account holder may change about themselves
+ * (PATCH /auth/me).
+ *
+ * Deliberately excludes `email` and `role`: email is the login identity and
+ * changing it needs a verification flow, and role is assigned by an
+ * administrator. Password changes go through the existing
+ * forgot-password/reset-password pair.
+ *
+ * Every field is optional so a client can send only what changed, but at least
+ * one must be present — the service rejects an empty body rather than doing a
+ * no-op write.
+ */
+export const updateMyProfileRequestSchema = z.object({
+  firstName: z.string().trim().min(1).max(80).optional(),
+  lastName: z.string().trim().min(1).max(80).optional(),
+  // Nullable so a value can be cleared, not just replaced.
+  phoneNumber: z.string().trim().max(32).nullable().optional(),
+  socialMediaAccount: z.string().trim().max(160).nullable().optional(),
+});
+export type UpdateMyProfileRequest = z.infer<typeof updateMyProfileRequestSchema>;
 export type AuthResponse = z.infer<typeof authResponseSchema>;
 
 export const refreshResponseSchema = z.object({ parent: parentResponseSchema });

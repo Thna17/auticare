@@ -56,3 +56,6 @@ export const logout = async (req: Request, res: Response) => {
 
 export const me = async (req: Request, res: Response) =>
   ok(res, await authService.me(req.auth!.parentId));
+
+export const updateMe = async (req: Request, res: Response) =>
+  ok(res, await authService.updateMyProfile(req.auth!.parentId, req.body));

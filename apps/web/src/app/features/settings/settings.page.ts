@@ -1,11 +1,20 @@
 import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import type { ParentResponse, UpdateMyProfileRequest } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, ReactiveFormsModule],
   template: `
     <section class="profile-hero">
       <div class="identity">
@@ -43,25 +52,60 @@ import { AuthService } from '../../core/auth/auth.service';
           </p>
         </header>
 
-        <div class="field-grid">
-          <label class="field">
-            <span>First name</span>
-            <input [value]="parent()?.firstName || ''" readonly />
-          </label>
-          <label class="field">
-            <span>Last name</span>
-            <input [value]="parent()?.lastName || ''" readonly />
-          </label>
-          <label class="field full">
-            <span>Email address</span>
-            <input [value]="parent()?.email || ''" readonly />
-          </label>
-        </div>
+        <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+          <div class="field-grid">
+            <label class="field">
+              <span>First name</span>
+              <input formControlName="firstName" autocomplete="given-name" />
+              @if (showError('firstName')) {
+                <small class="field-error" role="alert">First name is required.</small>
+              }
+            </label>
+            <label class="field">
+              <span>Last name</span>
+              <input formControlName="lastName" autocomplete="family-name" />
+              @if (showError('lastName')) {
+                <small class="field-error" role="alert">Last name is required.</small>
+              }
+            </label>
+            <label class="field">
+              <span>Phone number <em>(optional)</em></span>
+              <input formControlName="phoneNumber" autocomplete="tel" inputmode="tel" />
+            </label>
+            <label class="field">
+              <span>Social media <em>(optional)</em></span>
+              <input formControlName="socialMediaAccount" />
+            </label>
+            <label class="field full">
+              <span>Email address</span>
+              <input [value]="parent()?.email || ''" readonly aria-describedby="email-note" />
+              <small id="email-note" class="field-hint">
+                Your email is your sign-in and cannot be changed here.
+              </small>
+            </label>
+          </div>
 
-        <p class="info-note">
-          Profile editing for parent account details needs a backend account-update endpoint. This
-          screen is structured for that flow and currently reflects your authenticated account.
-        </p>
+          @if (saveError()) {
+            <p class="form-error" role="alert">{{ saveError() }}</p>
+          }
+          @if (saved()) {
+            <p class="form-success" role="status">Your profile has been updated.</p>
+          }
+
+          <div class="form-actions">
+            <button type="submit" class="save-btn" [disabled]="saving() || form.pristine">
+              {{ saving() ? 'Saving…' : 'Save changes' }}
+            </button>
+            <button
+              type="button"
+              class="reset-btn"
+              [disabled]="saving() || form.pristine"
+              (click)="resetForm()"
+            >
+              Discard
+            </button>
+          </div>
+        </form>
       </section>
 
       <aside class="side-panel" aria-label="Profile support">
@@ -255,6 +299,81 @@ import { AuthService } from '../../core/auth/auth.service';
         grid-column: 1 / -1;
       }
 
+      .field span em {
+        font-style: normal;
+        font-weight: var(--ac-font-weight-regular, 400);
+        color: #5b6569;
+      }
+
+      .field-hint {
+        font-weight: var(--ac-font-weight-regular, 400);
+        color: #5b6569;
+      }
+
+      .field-error {
+        font-weight: var(--ac-font-weight-regular, 400);
+        color: #b42318;
+      }
+
+      .form-error,
+      .form-success {
+        margin: 18px 0 0;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-weight: var(--ac-font-weight-bold);
+      }
+
+      .form-error {
+        color: #b42318;
+        background: #fdecec;
+        border: 1px solid #eec2c2;
+      }
+
+      .form-success {
+        color: #0b6b3a;
+        background: #e8f7ee;
+        border: 1px solid #bfe3cd;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      .save-btn,
+      .reset-btn {
+        min-height: 48px;
+        padding: 0 22px;
+        border-radius: 12px;
+        font-weight: var(--ac-font-weight-bold);
+        cursor: pointer;
+      }
+
+      .save-btn {
+        border: 0;
+        background: #3d6375;
+        color: #fff;
+      }
+
+      .reset-btn {
+        border: 1px solid #b8c2c8;
+        background: #fff;
+        color: #001e2b;
+      }
+
+      .save-btn:disabled,
+      .reset-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      input[readonly] {
+        background: #eef3f6;
+        color: #41484b;
+      }
+
       input {
         width: 100%;
         min-height: 54px;
@@ -344,8 +463,29 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class SettingsPage implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   readonly parent = this.auth.parent;
+  protected readonly saving = signal(false);
+  protected readonly saved = signal(false);
+  protected readonly saveError = signal<string | null>(null);
+
+  protected readonly form = this.fb.group({
+    firstName: this.fb.control('', [Validators.required, Validators.maxLength(80)]),
+    lastName: this.fb.control('', [Validators.required, Validators.maxLength(80)]),
+    phoneNumber: this.fb.control('', [Validators.maxLength(32)]),
+    socialMediaAccount: this.fb.control('', [Validators.maxLength(160)]),
+  });
+
+  constructor() {
+    // Keep the form in step with whoever is signed in: the parent signal is
+    // populated asynchronously by loadCurrentUser, and is refreshed again after a
+    // save. Only reset while untouched, so an in-progress edit is never clobbered.
+    effect(() => {
+      const parent = this.parent();
+      if (parent && this.form.pristine) this.patchFrom(parent);
+    });
+  }
   readonly displayName = computed(() => {
     const parent = this.parent();
     if (!parent) return 'Parent profile';
@@ -360,5 +500,68 @@ export class SettingsPage implements OnInit {
     const parent = this.parent();
     if (!parent) return 'AC';
     return `${parent.firstName.slice(0, 1)}${parent.lastName.slice(0, 1)}`.toUpperCase();
+  }
+
+  protected showError(control: 'firstName' | 'lastName'): boolean {
+    const field = this.form.controls[control];
+    return field.invalid && (field.dirty || field.touched);
+  }
+
+  protected resetForm(): void {
+    const parent = this.parent();
+    if (parent) this.patchFrom(parent);
+    this.saveError.set(null);
+    this.saved.set(false);
+  }
+
+  protected save(): void {
+    this.saved.set(false);
+    this.saveError.set(null);
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    // Send only what changed. Empty optional fields are sent as null so a value
+    // can be cleared, which an empty string would not do.
+    const value = this.form.getRawValue();
+    const parent = this.parent();
+    const payload: UpdateMyProfileRequest = {};
+    if (value.firstName !== parent?.firstName) payload.firstName = value.firstName;
+    if (value.lastName !== parent?.lastName) payload.lastName = value.lastName;
+    const phone = value.phoneNumber.trim() === '' ? null : value.phoneNumber.trim();
+    if (phone !== (parent?.phoneNumber ?? null)) payload.phoneNumber = phone;
+    const social = value.socialMediaAccount.trim() === '' ? null : value.socialMediaAccount.trim();
+    if (social !== (parent?.socialMediaAccount ?? null)) payload.socialMediaAccount = social;
+
+    if (Object.keys(payload).length === 0) {
+      this.form.markAsPristine();
+      return;
+    }
+
+    this.saving.set(true);
+    this.auth.updateMyProfile(payload).subscribe({
+      next: (updated) => {
+        this.saving.set(false);
+        this.saved.set(true);
+        this.patchFrom(updated);
+      },
+      error: (err: { error?: { error?: { message?: string } } }) => {
+        this.saving.set(false);
+        this.saveError.set(
+          err?.error?.error?.message ?? 'Your profile could not be saved. Please try again.',
+        );
+      },
+    });
+  }
+
+  private patchFrom(parent: ParentResponse): void {
+    this.form.reset({
+      firstName: parent.firstName,
+      lastName: parent.lastName,
+      phoneNumber: parent.phoneNumber ?? '',
+      socialMediaAccount: parent.socialMediaAccount ?? '',
+    });
   }
 }
