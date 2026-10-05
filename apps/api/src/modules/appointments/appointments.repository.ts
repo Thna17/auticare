@@ -1,6 +1,12 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
 
 const appointmentInclude = { child: true, hospital: true, doctor: true } as const;
+
+/** Appointment row as this repository returns it — with its relations loaded. */
+export type AppointmentWithRelations = Prisma.AppointmentGetPayload<{
+  include: typeof appointmentInclude;
+}>;
 export class AppointmentsRepository {
   findChild(id: string) {
     return prisma.child.findUnique({ where: { id } });

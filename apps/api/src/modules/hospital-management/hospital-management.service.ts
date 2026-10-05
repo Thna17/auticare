@@ -1,15 +1,27 @@
-import type { DoctorRequest, UpdateAppointmentStatusRequest, UserRole } from '@auticare/contracts';
+import { appointmentStatuses } from '@auticare/contracts';
+import type {
+  AppointmentStatus,
+  DoctorRequest,
+  UpdateAppointmentStatusRequest,
+  UserRole,
+} from '@auticare/contracts';
+import type { Doctor } from '@prisma/client';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { HospitalManagementRepository } from './hospital-management.repository.js';
+import type { AppointmentWithRelations } from './hospital-management.repository.js';
 type Actor = { parentId: string; role: UserRole };
-const mapDoctor = (d: any) => ({
+
+const isAppointmentStatus = (value: string): value is AppointmentStatus =>
+  (appointmentStatuses as readonly string[]).includes(value);
+
+const mapDoctor = (d: Doctor) => ({
   id: d.id,
   hospitalId: d.hospitalId,
   fullName: d.fullName,
   specialty: d.specialty,
   bio: d.bio,
 });
-const mapAppointment = (a: any) => ({
+const mapAppointment = (a: AppointmentWithRelations) => ({
   id: a.id,
   parentId: a.parentId,
   childId: a.childId,
@@ -53,15 +65,35 @@ export class HospitalManagementService {
   }
   async appointments(
     actor: Actor,
-    filters: { status?: any; doctorId?: string; from?: string; to?: string },
+    // `| undefined` is explicit because exactOptionalPropertyTypes is on and the
+    // controller always passes all four keys, some of them undefined.
+    filters: {
+      status?: string | undefined;
+      doctorId?: string | undefined;
+      from?: string | undefined;
+      to?: string | undefined;
+    },
   ) {
     const staff = await this.staff(actor);
     const from = filters.from ? new Date(filters.from) : undefined;
     const to = filters.to ? new Date(filters.to) : undefined;
     if ((from && Number.isNaN(from.getTime())) || (to && Number.isNaN(to.getTime())))
       throw new AppError('VALIDATION_ERROR', 'Invalid date filter.', 400);
+    // `status` comes from the query string; narrow it before it reaches Prisma.
+    // It was previously `any`, so an unrecognised value reached the query and
+    // surfaced as a 500 rather than a 400.
+    let status: AppointmentStatus | undefined;
+    if (filters.status !== undefined) {
+      if (!isAppointmentStatus(filters.status))
+        throw new AppError(
+          'VALIDATION_ERROR',
+          `status must be one of: ${appointmentStatuses.join(', ')}.`,
+          400,
+        );
+      status = filters.status;
+    }
     const filter = {
-      ...(filters.status ? { status: filters.status } : {}),
+      ...(status ? { status } : {}),
       ...(filters.doctorId ? { doctorId: filters.doctorId } : {}),
       ...(from ? { from } : {}),
       ...(to ? { to } : {}),

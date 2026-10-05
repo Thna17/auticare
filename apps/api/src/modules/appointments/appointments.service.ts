@@ -1,8 +1,9 @@
 import type { CreateAppointmentRequest, UserRole } from '@auticare/contracts';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { AppointmentsRepository } from './appointments.repository.js';
+import type { AppointmentWithRelations } from './appointments.repository.js';
 type Actor = { parentId: string; role: UserRole };
-const map = (item: any) => ({
+const map = (item: AppointmentWithRelations) => ({
   id: item.id,
   parentId: item.parentId,
   childId: item.childId,

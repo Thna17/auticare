@@ -2,6 +2,7 @@ import type {
   CreateSchoolAccountRequest,
   CreateActivityReportRequest,
   CreateSchoolChildEnrollmentRequest,
+  ParentSchoolSearchQuery,
   SchoolAvailabilityStatus,
   UpdateSchoolProfileRequest,
   UpdateSchoolRequest,
@@ -210,7 +211,7 @@ export class SchoolsService {
     if (!child) throw notFound('Child profile was not found.');
     if (actor.role === 'PARENT' && child.parentId !== actor.parentId) throw forbidden();
     if (actor.role !== 'PARENT' && actor.role !== 'ADMIN') throw forbidden();
-    const enrollment = await this.repository.endEnrollment({ schoolId, childId });
+    const enrollment = await this.repository.graduateEnrollment({ schoolId, childId });
     return toSchoolChildEnrollmentResponse(enrollment);
   }
 
