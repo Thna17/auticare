@@ -38,8 +38,17 @@ export class HospitalManagementRepository {
   appointment(id: string, hospitalId: string) {
     return prisma.appointment.findFirst({ where: { id, hospitalId }, include });
   }
-  updateStatus(id: string, status: AppointmentStatus) {
-    return prisma.appointment.update({ where: { id }, data: { status }, include });
+  /**
+   * `rejectionReason` is only passed when the hospital rejects a request; it is
+   * left untouched otherwise, so an earlier explanation survives a later status
+   * change rather than being blanked.
+   */
+  updateStatus(id: string, status: AppointmentStatus, rejectionReason?: string) {
+    return prisma.appointment.update({
+      where: { id },
+      data: { status, ...(rejectionReason !== undefined ? { rejectionReason } : {}) },
+      include,
+    });
   }
   doctors(hospitalId: string) {
     return prisma.doctor.findMany({ where: { hospitalId }, orderBy: { fullName: 'asc' } });

@@ -152,7 +152,10 @@ export const appointmentResponseSchema = z.object({
   doctorName: z.string().nullable(),
   scheduledAt: z.string(),
   status: z.enum(appointmentStatuses),
+  /** The parent's reason for requesting the appointment. */
   reason: z.string().nullable(),
+  /** The hospital's explanation when it rejected the request. */
+  rejectionReason: z.string().nullable(),
 });
 export type AppointmentResponse = z.infer<typeof appointmentResponseSchema>;
 export const createAppointmentRequestSchema = z.object({
@@ -165,6 +168,12 @@ export const createAppointmentRequestSchema = z.object({
 export type CreateAppointmentRequest = z.infer<typeof createAppointmentRequestSchema>;
 export const updateAppointmentStatusRequestSchema = z.object({
   status: z.enum(appointmentStatuses),
+  /**
+   * The hospital's explanation, stored only when rejecting (status CANCELLED).
+   * Previously the web client sent this and the schema silently stripped it, so
+   * the reason never reached the patient.
+   */
+  reason: z.string().trim().max(2000).optional(),
 });
 export type UpdateAppointmentStatusRequest = z.infer<typeof updateAppointmentStatusRequestSchema>;
 export const doctorRequestSchema = z.object({

@@ -33,6 +33,7 @@ const mapAppointment = (a: AppointmentWithRelations) => ({
   scheduledAt: a.scheduledAt.toISOString(),
   status: a.status,
   reason: a.reason,
+  rejectionReason: a.rejectionReason,
   parentName: `${a.parent.firstName} ${a.parent.lastName}`.trim(),
 });
 export class HospitalManagementService {
@@ -116,7 +117,14 @@ export class HospitalManagementService {
         'This appointment status transition is not allowed.',
         400,
       );
-    return mapAppointment(await this.repository.updateStatus(id, input.status));
+    // The explanation is a *rejection* reason, so it is only stored when the
+    // request is actually being rejected. A reason sent with any other status is
+    // ignored rather than recorded against, say, a confirmation.
+    const rejectionReason =
+      input.status === 'CANCELLED' && input.reason !== undefined && input.reason !== ''
+        ? input.reason
+        : undefined;
+    return mapAppointment(await this.repository.updateStatus(id, input.status, rejectionReason));
   }
   async doctors(actor: Actor) {
     const staff = await this.staff(actor);
