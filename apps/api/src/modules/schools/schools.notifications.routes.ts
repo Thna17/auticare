@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { requireRole } from '../auth/index.js';
 import { validateBody } from '../../common/middleware/validate.js';
 import { decideNotificationRequestSchema, listNotificationsQuerySchema } from '@auticare/contracts';

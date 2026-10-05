@@ -1,3 +1,4 @@
+import { schoolChildEnrollmentStatuses } from '@auticare/contracts';
 import type {
   CreateSchoolStudentRequest,
   CreateSchoolStudentResponse,
@@ -14,6 +15,9 @@ import { PasswordService } from '../auth/password.service.js';
 import { SchoolsRepository } from './schools.repository.js';
 
 type Actor = { parentId: string; role: string };
+
+const isEnrollmentStatus = (value: string): value is SchoolChildEnrollmentStatus =>
+  (schoolChildEnrollmentStatuses as readonly string[]).includes(value);
 
 /** Shape of a staff row returned by getLeadSpecialists (repo). */
 interface StaffRow {
@@ -95,11 +99,23 @@ export class SchoolEnrollmentsService {
     const staff = await this.requireSchoolStaff(actor);
     const schoolId = staff.schoolId;
 
+    // `status` arrives from the query string, so narrow it to the enum before it
+    // reaches the repository. Previously it was cast with `as any` and an
+    // unrecognised value reached Prisma, which threw and surfaced as a 500.
+    const status = filters.status;
+    if (status !== undefined && !isEnrollmentStatus(status)) {
+      throw new AppError(
+        'VALIDATION_ERROR',
+        `status must be one of: ${schoolChildEnrollmentStatuses.join(', ')}.`,
+        400,
+      );
+    }
+
     const skip = (pagination.page - 1) * pagination.limit;
     const { items, total } = await this.repository.getEnrolledStudents(
       schoolId,
       {
-        status: filters.status,
+        status,
         specialistId: filters.specialistId,
         search: filters.search,
       },

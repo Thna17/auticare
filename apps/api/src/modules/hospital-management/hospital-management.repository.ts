@@ -1,5 +1,11 @@
+import type { Prisma, AppointmentStatus } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
 const include = { child: true, doctor: true, hospital: true, parent: true } as const;
+
+/** Appointment row as this repository returns it — with all four relations loaded. */
+export type AppointmentWithRelations = Prisma.AppointmentGetPayload<{
+  include: typeof include;
+}>;
 export class HospitalManagementRepository {
   staff(parentId: string) {
     return prisma.hospitalStaff.findFirst({
@@ -9,7 +15,7 @@ export class HospitalManagementRepository {
   }
   appointments(
     hospitalId: string,
-    where: { status?: any; doctorId?: string; from?: Date; to?: Date },
+    where: { status?: AppointmentStatus; doctorId?: string; from?: Date; to?: Date },
   ) {
     return prisma.appointment.findMany({
       where: {
@@ -32,7 +38,7 @@ export class HospitalManagementRepository {
   appointment(id: string, hospitalId: string) {
     return prisma.appointment.findFirst({ where: { id, hospitalId }, include });
   }
-  updateStatus(id: string, status: any) {
+  updateStatus(id: string, status: AppointmentStatus) {
     return prisma.appointment.update({ where: { id }, data: { status }, include });
   }
   doctors(hospitalId: string) {

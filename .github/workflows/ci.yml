@@ -34,6 +34,15 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test:unit
+      # The integration tests need real tables. `db:generate` only builds the
+      # Prisma client, so without this the suite hits "table `School` does not
+      # exist". `db:push` syncs schema.prisma straight to the throwaway CI
+      # database — migrate deploy would not work here, because the migrations
+      # are behind schema.prisma (no migration adds School.studentCapacity,
+      # School.status, or the GRADUATED/PENDING enum values).
+      - run: pnpm --filter @auticare/api db:push
+        env:
+          DATABASE_URL: mysql://auticare:auticare_dev_password@127.0.0.1:3306/auticare
       - run: pnpm test:integration
         env:
           NODE_ENV: test
