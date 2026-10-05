@@ -694,6 +694,26 @@ export const enrolledStudentsListResponseSchema = z.object({
 });
 export type EnrolledStudentsListResponse = z.infer<typeof enrolledStudentsListResponseSchema>;
 
+/**
+ * Student-picker entry for the activity report form (GET /schools/enrolled-students).
+ *
+ * ACTIVE and PENDING both appear: listPickerEnrolledStudentsForSchool queries
+ * `status: { in: ['ACTIVE', 'PENDING'] }` so reports can be written for newly
+ * added children before activation.
+ */
+export const enrolledStudentOptionSchema = z.object({
+  id: z.string(),
+  childId: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  dateOfBirth: z.string(),
+  age: z.number().int(),
+  photoUrl: z.string().nullable(),
+  enrollmentStatus: z.enum(['ACTIVE', 'PENDING']),
+  startDate: z.string(),
+});
+export type EnrolledStudentOption = z.infer<typeof enrolledStudentOptionSchema>;
+
 export const leadSpecialistResponseSchema = z.object({
   id: z.string(),
   firstName: z.string(),
