@@ -410,7 +410,6 @@ describe('school profile validation', () => {
 });
 
 describe('school dashboard', () => {
-  let reportId = '';
   let childId = '';
 
   beforeAll(async () => {
@@ -429,7 +428,7 @@ describe('school dashboard', () => {
     });
 
     // Create activity reports with known statuses.
-    const submitted = await prisma.activityReport.create({
+    await prisma.activityReport.create({
       data: {
         schoolId: schoolAId,
         childId: child.id,
@@ -442,7 +441,6 @@ describe('school dashboard', () => {
         duration: 30,
       },
     });
-    reportId = submitted.id;
 
     await prisma.activityReport.create({
       data: {

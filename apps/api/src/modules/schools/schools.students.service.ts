@@ -20,7 +20,11 @@ export type EnrolledStudentOption = {
   dateOfBirth: string;
   age: number;
   photoUrl: string | null;
-  enrollmentStatus: 'ACTIVE';
+  // ACTIVE and PENDING both appear: listPickerEnrolledStudentsForSchool queries
+  // `status: { in: ['ACTIVE', 'PENDING'] }` so reports can be written for newly
+  // added children before activation. Matches the web-side copy of this type in
+  // apps/web/.../data-access/schools.api.ts.
+  enrollmentStatus: 'ACTIVE' | 'PENDING';
   startDate: string;
 };
 

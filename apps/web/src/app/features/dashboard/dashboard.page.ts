@@ -31,15 +31,6 @@ const quickActions: readonly QuickAction[] = [
   },
 ];
 
-interface StudentActivity {
-  id: string;
-  studentName: string;
-  initials: string;
-  description: string;
-  timeAgo: string;
-  color: string;
-}
-
 @Component({
   standalone: true,
   imports: [RouterLink, SchoolTopbarComponent],

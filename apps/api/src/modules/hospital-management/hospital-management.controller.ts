@@ -7,8 +7,18 @@ const param = (value: string | readonly string[] | undefined) => {
   return value;
 };
 export const me = async (req: Request, res: Response) => ok(res, await service.me(req.auth!));
+const queryString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value !== '' ? value : undefined;
 export const appointments = async (req: Request, res: Response) =>
-  ok(res, await service.appointments(req.auth!, req.query));
+  ok(
+    res,
+    await service.appointments(req.auth!, {
+      status: queryString(req.query.status),
+      doctorId: queryString(req.query.doctorId),
+      from: queryString(req.query.from),
+      to: queryString(req.query.to),
+    }),
+  );
 export const changeStatus = async (req: Request, res: Response) =>
   ok(res, await service.changeStatus(req.auth!, param(req.params.appointmentId), req.body));
 export const doctors = async (req: Request, res: Response) =>

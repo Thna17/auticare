@@ -15,11 +15,13 @@ import type { SchoolAccountRecord, SchoolRating } from './schools.mapper.js';
 
 export class SchoolsRepository {
   listSchools(
+    // `| undefined` is explicit because exactOptionalPropertyTypes is on and
+    // the caller always passes all four keys, some of them undefined.
     filters: {
-      search?: string;
-      province?: string;
-      availability?: SchoolAvailabilityStatus;
-      specializations?: string[];
+      search?: string | undefined;
+      province?: string | undefined;
+      availability?: SchoolAvailabilityStatus | undefined;
+      specializations?: string[] | undefined;
     } = {},
   ): Promise<School[]> {
     const where: Prisma.SchoolWhereInput = { status: 'ACTIVE' };
@@ -197,7 +199,12 @@ export class SchoolsRepository {
     });
   }
 
-  endEnrollment(input: { schoolId: string; childId: string }): Promise<SchoolChildEnrollment> {
+  /**
+   * Marks a school+child enrollment GRADUATED. Distinct from endEnrollment
+   * below, which REJECTS by enrollment id — both were previously named
+   * endEnrollment, so this one was shadowed and unreachable at runtime.
+   */
+  graduateEnrollment(input: { schoolId: string; childId: string }): Promise<SchoolChildEnrollment> {
     return prisma.schoolChildEnrollment.update({
       where: { schoolId_childId: { schoolId: input.schoolId, childId: input.childId } },
       data: { status: 'GRADUATED', endDate: new Date() },
@@ -769,9 +776,9 @@ export class SchoolsRepository {
   }
 
   /** Count of enrollments for a given status. */
-  countEnrollmentsByStatus(schoolId: string, status: string): Promise<number> {
+  countEnrollmentsByStatus(schoolId: string, status: SchoolChildEnrollmentStatus): Promise<number> {
     return prisma.schoolChildEnrollment.count({
-      where: { schoolId, status: status as any },
+      where: { schoolId, status },
     });
   }
 
@@ -779,7 +786,7 @@ export class SchoolsRepository {
   async getEnrolledStudents(
     schoolId: string,
     filters: {
-      status?: string | undefined;
+      status?: SchoolChildEnrollmentStatus | undefined;
       specialistId?: string | undefined;
       search?: string | undefined;
     },
@@ -788,7 +795,7 @@ export class SchoolsRepository {
     const where: Prisma.SchoolChildEnrollmentWhereInput = {
       schoolId,
       ...(filters.status !== undefined && {
-        status: filters.status as any,
+        status: filters.status,
       }),
       ...(filters.specialistId !== undefined && {
         // Filter by staff: need to check staff's parent owns reports for children in enrollment
