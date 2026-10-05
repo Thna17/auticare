@@ -7,6 +7,7 @@ import type {
   ResetPasswordRequest,
   ResetPasswordResponse,
   UserRole,
+  UpdateMyProfileRequest,
 } from '@auticare/contracts';
 import { AppError, unauthorized } from '../../common/errors/app-error.js';
 import { env, isProduction } from '../../config/env.js';
@@ -84,6 +85,38 @@ export class AuthService {
   async me(parentId: string) {
     const parent = await this.repository.findParentById(parentId);
     if (!parent) throw unauthorized();
+    return { parent: toParentResponse(parent) };
+  }
+
+  /**
+   * Update the signed-in account holder's own profile.
+   *
+   * An empty body is rejected rather than performed as a no-op write, matching
+   * how the enrollment update behaves. Only the four accepted fields can move;
+   * email, role and passwordHash are not part of the request shape.
+   */
+  async updateMyProfile(parentId: string, input: UpdateMyProfileRequest) {
+    const data: {
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string | null;
+      socialMediaAccount?: string | null;
+    } = {};
+    if (input.firstName !== undefined) data.firstName = input.firstName;
+    if (input.lastName !== undefined) data.lastName = input.lastName;
+    if (input.phoneNumber !== undefined) data.phoneNumber = input.phoneNumber;
+    if (input.socialMediaAccount !== undefined) {
+      data.socialMediaAccount = input.socialMediaAccount;
+    }
+
+    if (Object.keys(data).length === 0) {
+      throw new AppError('VALIDATION_ERROR', 'Provide at least one field to update.', 400);
+    }
+
+    const existing = await this.repository.findParentById(parentId);
+    if (!existing) throw unauthorized();
+
+    const parent = await this.repository.updateProfile(parentId, data);
     return { parent: toParentResponse(parent) };
   }
 

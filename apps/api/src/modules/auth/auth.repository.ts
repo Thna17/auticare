@@ -9,6 +9,23 @@ export class AuthRepository {
     return prisma.parent.findUnique({ where: { email } });
   }
 
+  /**
+   * Update the account holder's own editable profile fields. The caller is
+   * identified from their session, so there is no id in the payload to tamper
+   * with, and email/role/passwordHash are not in the accepted shape at all.
+   */
+  updateProfile(
+    parentId: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string | null;
+      socialMediaAccount?: string | null;
+    },
+  ): Promise<Parent> {
+    return prisma.parent.update({ where: { id: parentId }, data });
+  }
+
   findParentById(id: string): Promise<Parent | null> {
     return prisma.parent.findUnique({ where: { id } });
   }

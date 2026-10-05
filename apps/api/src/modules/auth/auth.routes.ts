@@ -5,6 +5,7 @@ import {
   login,
   logout,
   me,
+  updateMe,
   refresh,
   register,
   requestPasswordReset,
@@ -16,6 +17,7 @@ import {
   passwordResetRequestSchema,
   registerRequestSchema,
   resetPasswordRequestSchema,
+  updateMyProfileRequestSchema,
 } from './auth.schemas.js';
 
 export const authRoutes = Router();
@@ -36,3 +38,9 @@ authRoutes.post(
 authRoutes.post('/logout', logout);
 authRoutes.post('/refresh', refresh);
 authRoutes.get('/me', requireAuth, me);
+/**
+ * PATCH /api/v1/auth/me
+ * The signed-in account holder updates their own profile. Any role may call it —
+ * every user is a Parent row — and the id comes from the session, never the body.
+ */
+authRoutes.patch('/me', requireAuth, validateBody(updateMyProfileRequestSchema), updateMe);

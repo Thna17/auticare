@@ -3,4 +3,5 @@ export {
   passwordResetRequestSchema,
   registerRequestSchema,
   resetPasswordRequestSchema,
+  updateMyProfileRequestSchema,
 } from '@auticare/contracts';
