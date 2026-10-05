@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { prisma } from '../../database/prisma.js';
@@ -6,7 +7,12 @@ import { PasswordService } from '../../modules/auth/password.service.js';
 
 const app = createApp();
 const passwordService = new PasswordService();
-const unique = Date.now();
+// Date.now() alone is not unique: vitest runs these files in parallel
+// workers, so two of them can start in the same millisecond and build
+// identical emails — and Parent.email is UNIQUE. school-profile and
+// school-admin both derive `school-parent-${unique}`, which is exactly
+// how that collided. The random suffix makes the value per-worker unique.
+const unique = `${Date.now()}-${randomUUID().slice(0, 8)}`;
 const parentEmail = `parent-${unique}@auticare.test`;
 const otherParentEmail = `other-${unique}@auticare.test`;
 const adminEmail = `admin-${unique}@auticare.test`;
