@@ -54,6 +54,12 @@ export const MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
 export const STORED_FILENAME_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp|gif|pdf|doc|docx|txt|csv)$/;
 
+/** Per-file size cap. Exported so error messages can quote it without duplicating the number. */
+export const MAX_FILE_BYTES = 10 * 1024 * 1024;
+/** Field count limits, exported for the same reason. */
+export const MAX_FILES = 10;
+export const MAX_PHOTOS = 5;
+
 const makeMulter = (allowedMimes: string[], errorMessage: string) =>
   multer({
     storage: multer.diskStorage({
@@ -67,16 +73,19 @@ const makeMulter = (allowedMimes: string[], errorMessage: string) =>
         // declared type is outside the allowlist.
         const ext = EXTENSION_BY_MIME[file.mimetype];
         if (ext === undefined) {
-          cb(new Error('Unsupported file type.'), '');
+          cb(new AppError('VALIDATION_ERROR', 'Unsupported file type.', 400), '');
           return;
         }
         cb(null, `${crypto.randomUUID()}${ext}`);
       },
     }),
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB per file
+    limits: { fileSize: MAX_FILE_BYTES },
     fileFilter: (_req, file, cb) => {
       if (allowedMimes.includes(file.mimetype)) cb(null, true);
-      else cb(new Error(errorMessage));
+      // multer hands whatever we pass to cb straight to next(), so an AppError
+      // reaches the error handler's 400 branch. A plain Error landed in the
+      // unhandled-error branch and surfaced as a 500 for ordinary bad input.
+      else cb(new AppError('VALIDATION_ERROR', errorMessage, 400));
     },
   });
 
@@ -128,8 +137,8 @@ export const uploadActivityFiles = async (req: Request, res: Response) => {
   if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
     throw new AppError('VALIDATION_ERROR', 'No files uploaded.', 400);
   }
-  if (req.files.length > 10) {
-    throw new AppError('VALIDATION_ERROR', 'Maximum 10 files allowed.', 400);
+  if (req.files.length > MAX_FILES) {
+    throw new AppError('VALIDATION_ERROR', `Maximum ${MAX_FILES} files allowed.`, 400);
   }
   respondWithUploadedUrls(req.files, res);
 };
@@ -143,8 +152,8 @@ export const uploadActivityPhotos = async (req: Request, res: Response) => {
   if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
     throw new AppError('VALIDATION_ERROR', 'No files uploaded.', 400);
   }
-  if (req.files.length > 5) {
-    throw new AppError('VALIDATION_ERROR', 'Maximum 5 photos allowed.', 400);
+  if (req.files.length > MAX_PHOTOS) {
+    throw new AppError('VALIDATION_ERROR', `Maximum ${MAX_PHOTOS} photos allowed.`, 400);
   }
   respondWithUploadedUrls(req.files, res);
 };
