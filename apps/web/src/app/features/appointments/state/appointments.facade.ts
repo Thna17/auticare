@@ -10,6 +10,9 @@ import type {
 
 export type BookingStep = 'select' | 'submitting' | 'confirmed';
 
+export const visitReasons = ['Consultation', 'Follow-up', 'Test results', 'Other'] as const;
+export type VisitReason = (typeof visitReasons)[number];
+
 type BookingState = {
   readonly isOpen: boolean;
   readonly step: BookingStep;
@@ -17,6 +20,8 @@ type BookingState = {
   readonly childId: string | null;
   readonly date: string | null;
   readonly time: string | null;
+  readonly visitReason: VisitReason | null;
+  readonly notes: string;
   readonly error: string | null;
   readonly confirmed: AppointmentResponse | null;
 };
@@ -28,6 +33,8 @@ const initialBooking: BookingState = {
   childId: null,
   date: null,
   time: null,
+  visitReason: null,
+  notes: '',
   error: null,
   confirmed: null,
 };
@@ -126,6 +133,14 @@ export class AppointmentsFacade {
     this.booking.update((state) => ({ ...state, time, error: null }));
   }
 
+  selectVisitReason(visitReason: VisitReason) {
+    this.booking.update((state) => ({ ...state, visitReason, error: null }));
+  }
+
+  setNotes(notes: string) {
+    this.booking.update((state) => ({ ...state, notes }));
+  }
+
   confirmBooking() {
     const state = this.booking();
     const hospital = this.activeHospital();
@@ -135,11 +150,13 @@ export class AppointmentsFacade {
     }
 
     const scheduledAt = combineDateAndTime(state.date, state.time);
+    const reason = [state.visitReason, state.notes.trim()].filter(Boolean).join(' — ') || undefined;
     const request: CreateAppointmentRequest = {
       childId: state.childId,
       hospitalId: hospital.id,
       doctorId: state.doctor.id,
       scheduledAt,
+      reason,
     };
 
     this.booking.update((s) => ({ ...s, step: 'submitting', error: null }));

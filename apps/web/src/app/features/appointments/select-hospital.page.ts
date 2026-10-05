@@ -10,13 +10,13 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
   imports: [RouterLink, UiEmptyStateComponent],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
-      <a routerLink="/appointments">Appointments</a>
+      <a routerLink="/appointments">Hospital Appointments</a>
       <span aria-hidden="true">/</span>
       <span aria-current="page">Choose a hospital</span>
     </nav>
 
-    <h1>Where would you like to book?</h1>
-    <p>Pick a hospital to see its available specialists.</p>
+    <h1>Which hospital would you like to visit?</h1>
+    <p>Pick a hospital to see its available specialists and request an appointment.</p>
 
     @if (loading()) {
       <p class="status" aria-live="polite">Loading hospitals...</p>

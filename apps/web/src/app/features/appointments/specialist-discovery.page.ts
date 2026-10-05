@@ -12,7 +12,7 @@ import { specialtyCategories } from './appointments.types';
   imports: [RouterLink, UiEmptyStateComponent, BookAppointmentModalComponent],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
-      <a routerLink="/appointments">Appointments</a>
+      <a routerLink="/appointments">Hospital Appointments</a>
       <span aria-hidden="true">/</span>
       <span aria-current="page">{{ facade.activeHospital()?.name ?? 'Specialists' }}</span>
     </nav>
@@ -51,7 +51,7 @@ import { specialtyCategories } from './appointments.types';
             <p class="rating">★ {{ rating(doctor.id) }}</p>
             <p class="next-available">Next available: {{ nextAvailable(doctor.id) }}</p>
             <button type="button" class="book-button" (click)="facade.openBooking(doctor)">
-              Book Appointment
+              Request Appointment
             </button>
           </article>
         }

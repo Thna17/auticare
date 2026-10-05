@@ -8,5 +8,6 @@ coverage
 .DS_Store
 .playwright-cli
 output
+apps.zip
 apps/api/uploads/
 dev-server.log

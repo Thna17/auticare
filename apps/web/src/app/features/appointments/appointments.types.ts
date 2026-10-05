@@ -32,6 +32,20 @@ export const statusPresentation: Record<AppointmentStatus, StatusPresentation> =
   CANCELLED: { label: 'Cancelled', foreground: '#b91c1c', background: '#fee2e2' },
 };
 
+/**
+ * Maps appointment status to the shared `ac-ui-badge` tone (see
+ * design-system/components/ui-badge.component.ts). This is the tone
+ * source of truth going forward — `statusPresentation` above stays
+ * only for the label text until every call site has migrated off its
+ * hardcoded hex colors.
+ */
+export const statusTone: Record<AppointmentStatus, 'positive' | 'caution' | 'alert' | 'neutral'> = {
+  REQUESTED: 'caution',
+  CONFIRMED: 'positive',
+  COMPLETED: 'neutral',
+  CANCELLED: 'alert',
+};
+
 export const specialtyCategories = [
   'All',
   'Speech Therapy',

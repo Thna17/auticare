@@ -22,11 +22,18 @@ export class HospitalManagementApi {
       .get<{ data: AppointmentResponse[] }>(`${this.base}/hospital-management/appointments`)
       .pipe(map((r) => r.data));
   }
-  changeStatus(id: string, status: string) {
+  changeStatus(id: string, status: string, reason?: string) {
+    // NOTE: `reason` is sent alongside `status` for forward-compatibility, but the
+    // API's updateAppointmentStatusRequestSchema (see @auticare/contracts) does not
+    // yet persist it — a `rejectionReason` column/field needs to be added
+    // server-side before this reaches the patient. Until then this is a
+    // best-effort optimistic value only (see AppointmentDetailDrawer / the admin
+    // page, which keep the reason in local state so it still shows in this
+    // session's UI).
     return this.http
       .patch<{ data: AppointmentResponse }>(
         `${this.base}/hospital-management/appointments/${id}/status`,
-        { status },
+        reason ? { status, reason } : { status },
       )
       .pipe(map((r) => r.data));
   }
