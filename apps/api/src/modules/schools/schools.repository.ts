@@ -11,6 +11,7 @@ import type {
 } from '@prisma/client';
 import type { SchoolChildEnrollmentStatus } from '@auticare/contracts';
 import { prisma } from '../../database/prisma.js';
+import { ENROLLMENT_CHILD_NOT_ARCHIVED } from '../../database/active-child.js';
 import type { SchoolAccountRecord, SchoolRating } from './schools.mapper.js';
 
 export class SchoolsRepository {
@@ -238,7 +239,7 @@ export class SchoolsRepository {
 
   listEnrollmentsForSchool(schoolId: string): Promise<SchoolChildEnrollment[]> {
     return prisma.schoolChildEnrollment.findMany({
-      where: { schoolId, status: 'ACTIVE' },
+      where: { schoolId, status: 'ACTIVE', ...ENROLLMENT_CHILD_NOT_ARCHIVED },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -253,6 +254,7 @@ export class SchoolsRepository {
       where: {
         schoolId,
         status: { in: ['ACTIVE', 'PENDING'] },
+        ...ENROLLMENT_CHILD_NOT_ARCHIVED,
       },
       include: { child: true },
       orderBy: { startDate: 'desc' },
@@ -271,6 +273,7 @@ export class SchoolsRepository {
       where: {
         schoolId,
         status: { in: ['ACTIVE', 'PENDING'] },
+        ...ENROLLMENT_CHILD_NOT_ARCHIVED,
       },
       include: { child: true },
       orderBy: { startDate: 'desc' },
@@ -583,14 +586,14 @@ export class SchoolsRepository {
   /** Count of enrollment requests with status 'PENDING'. */
   countPendingEnrollments(schoolId: string): Promise<number> {
     return prisma.schoolChildEnrollment.count({
-      where: { schoolId, status: 'PENDING' },
+      where: { schoolId, status: 'PENDING', ...ENROLLMENT_CHILD_NOT_ARCHIVED },
     });
   }
 
   /** Count of enrollments created since a given date. */
   countEnrollmentsSince(schoolId: string, since: Date): Promise<number> {
     return prisma.schoolChildEnrollment.count({
-      where: { schoolId, createdAt: { gte: since } },
+      where: { schoolId, createdAt: { gte: since }, ...ENROLLMENT_CHILD_NOT_ARCHIVED },
     });
   }
 
@@ -774,13 +777,15 @@ export class SchoolsRepository {
 
   /** Total enrollments for the school (all statuses). */
   countAllEnrollments(schoolId: string): Promise<number> {
-    return prisma.schoolChildEnrollment.count({ where: { schoolId } });
+    return prisma.schoolChildEnrollment.count({
+      where: { schoolId, ...ENROLLMENT_CHILD_NOT_ARCHIVED },
+    });
   }
 
   /** Count of enrollments for a given status. */
   countEnrollmentsByStatus(schoolId: string, status: SchoolChildEnrollmentStatus): Promise<number> {
     return prisma.schoolChildEnrollment.count({
-      where: { schoolId, status },
+      where: { schoolId, status, ...ENROLLMENT_CHILD_NOT_ARCHIVED },
     });
   }
 
@@ -796,6 +801,7 @@ export class SchoolsRepository {
   ) {
     const where: Prisma.SchoolChildEnrollmentWhereInput = {
       schoolId,
+      ...ENROLLMENT_CHILD_NOT_ARCHIVED,
       ...(filters.status !== undefined && {
         status: filters.status,
       }),
