@@ -7,9 +7,52 @@ import { ok } from '../../common/http/response.js';
 import { AppError } from '../../common/errors/app-error.js';
 
 // Shared upload directory — files land under <cwd>/uploads/activity-reports/
-// with UUID filenames and are served back through the static /uploads route
-// registered in app.ts.
-const uploadDir = path.join(process.cwd(), 'uploads', 'activity-reports');
+// with UUID filenames. They are NOT served statically: downloads go through the
+// authorised route GET /api/v1/schools/reports/:id/attachments/:filename.
+export const uploadDir = path.join(process.cwd(), 'uploads', 'activity-reports');
+
+/**
+ * The only extensions we will ever write, keyed by the MIME type we accepted.
+ *
+ * The stored extension is derived from this map, never from
+ * `file.originalname`. `originalname` is client-controlled, so taking the
+ * extension from it allowed a file to be stored as e.g. `<uuid>.html` while
+ * claiming `image/jpeg`; the old static route then served it as text/html from
+ * the API origin — stored XSS. The download route resolves its Content-Type
+ * through this map too, rather than trusting anything client-supplied.
+ */
+const EXTENSION_BY_MIME: Readonly<Record<string, string>> = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif',
+  'application/pdf': '.pdf',
+  'application/msword': '.doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'text/plain': '.txt',
+  'text/csv': '.csv',
+};
+
+/** Content-Type to serve for a stored extension. Inverse of EXTENSION_BY_MIME. */
+export const MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  '.jpg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.pdf': 'application/pdf',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.txt': 'text/plain',
+  '.csv': 'text/csv',
+};
+
+/**
+ * A stored filename: a UUID plus one allowlisted extension, and nothing else.
+ * Anchored, so no path separator or traversal sequence can pass.
+ */
+export const STORED_FILENAME_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp|gif|pdf|doc|docx|txt|csv)$/;
 
 const makeMulter = (allowedMimes: string[], errorMessage: string) =>
   multer({
@@ -19,7 +62,14 @@ const makeMulter = (allowedMimes: string[], errorMessage: string) =>
         cb(null, uploadDir);
       },
       filename: (_req, file, cb) => {
-        const ext = path.extname(file.originalname) || '';
+        // Extension comes from the accepted MIME type, never from
+        // file.originalname. fileFilter has already rejected anything whose
+        // declared type is outside the allowlist.
+        const ext = EXTENSION_BY_MIME[file.mimetype];
+        if (ext === undefined) {
+          cb(new Error('Unsupported file type.'), '');
+          return;
+        }
         cb(null, `${crypto.randomUUID()}${ext}`);
       },
     }),

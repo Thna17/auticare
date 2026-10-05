@@ -11,6 +11,7 @@ import type { EnrolledStudentOption } from './data-access/schools.api';
 import type { ActivityReportListItem } from '@auticare/contracts';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { attachmentUrl } from '../../core/config/attachment-url';
 
 interface MetricRow {
   label: string;
@@ -769,12 +770,18 @@ export class SchoolReportsPage implements OnInit {
     return rows;
   }
 
+  // Both return authorised, report-scoped download URLs rather than the stored
+  // path: attachments are no longer served by a public static mount.
   imagesOf(report: ActivityReportListItem): string[] {
-    return (report.photoUrls ?? []).filter((url) => IMAGE_EXTENSIONS.test(url));
+    return (report.photoUrls ?? [])
+      .filter((url) => IMAGE_EXTENSIONS.test(url))
+      .map((url) => attachmentUrl(report.id, url));
   }
 
   documentsOf(report: ActivityReportListItem): string[] {
-    return (report.photoUrls ?? []).filter((url) => !IMAGE_EXTENSIONS.test(url));
+    return (report.photoUrls ?? [])
+      .filter((url) => !IMAGE_EXTENSIONS.test(url))
+      .map((url) => attachmentUrl(report.id, url));
   }
 
   fileNameOf(url: string): string {

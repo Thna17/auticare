@@ -5,7 +5,14 @@ import type {
   UpdateActivityReportRequest,
 } from '@auticare/contracts';
 import type { ActivityReport } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
+import {
+  MIME_BY_EXTENSION,
+  STORED_FILENAME_PATTERN,
+  uploadDir,
+} from '../uploads/uploads.controller.js';
 import { SchoolsRepository } from './schools.repository.js';
 import { toActivityReportResponse } from './schools.mapper.js';
 
@@ -127,13 +134,67 @@ export class SchoolsReportsService {
     const report = await this.repository.findActivityReportByIdWithRelations(reportId);
     if (!report) throw notFound('Activity report was not found.');
 
-    // Scope check for SCHOOL role
+    // Both scope checks raise notFound rather than forbidden: a 403 would confirm
+    // that a report with this id exists, letting a caller enumerate other
+    // families' and schools' reports by id.
     if (actor.role === 'SCHOOL') {
       const staff = await this.requireSchoolStaff(actor);
-      if (staff.schoolId !== report.schoolId) throw forbidden();
+      if (staff.schoolId !== report.schoolId) throw notFound('Activity report was not found.');
+    }
+
+    // A PARENT may only read reports about their own child. This check was
+    // missing, so any authenticated parent could read any report by id.
+    if (actor.role === 'PARENT' && report.child.parentId !== actor.parentId) {
+      throw notFound('Activity report was not found.');
     }
 
     return report;
+  }
+
+  /**
+   * Resolve one of a report's attachments to an absolute path on disk, for the
+   * authorised download route.
+   *
+   * Authorisation is deliberately delegated to getReportById, so an attachment
+   * is readable exactly when its report is: the owning school, the parent of the
+   * child it is about, or an ADMIN. Everything else raises notFound, so a caller
+   * cannot probe for files or report ids.
+   *
+   * A file is only served if the report actually references it. Orphaned uploads
+   * — accepted but never attached to a saved report — are therefore unreachable,
+   * which is the safe default.
+   */
+  async getReportAttachment(
+    actor: Actor,
+    reportId: string,
+    filename: string,
+  ): Promise<{ absolutePath: string; contentType: string; filename: string }> {
+    if (!STORED_FILENAME_PATTERN.test(filename)) {
+      // Not a name we could have written, so not a name we will look up on disk.
+      throw notFound('Attachment was not found.');
+    }
+
+    const report = await this.getReportById(actor, reportId);
+
+    const urls = Array.isArray(report.photoUrls) ? (report.photoUrls as unknown[]) : [];
+    const referenced = urls.some(
+      (url) => typeof url === 'string' && path.posix.basename(url) === filename,
+    );
+    if (!referenced) throw notFound('Attachment was not found.');
+
+    const extension = path.extname(filename);
+    const contentType = MIME_BY_EXTENSION[extension];
+    if (contentType === undefined) throw notFound('Attachment was not found.');
+
+    const absolutePath = path.join(uploadDir, filename);
+    // uploadDir is fixed and filename is pattern-checked above, so this cannot
+    // escape the directory; assert it anyway in case the pattern ever loosens.
+    if (!absolutePath.startsWith(uploadDir + path.sep)) {
+      throw notFound('Attachment was not found.');
+    }
+    if (!fs.existsSync(absolutePath)) throw notFound('Attachment was not found.');
+
+    return { absolutePath, contentType, filename };
   }
 
   /**

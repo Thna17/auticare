@@ -8,7 +8,6 @@ import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { openApiDocument } from './config/openapi.js';
-import path from 'path';
 import { errorHandler } from './common/middleware/error-handler.js';
 import { requestIdMiddleware } from './common/middleware/request-id.js';
 import { generalRateLimit } from './common/security/rate-limits.js';
@@ -46,7 +45,10 @@ export const createApp = () => {
   app.use('/api/v1/schools', schoolsRoutes);
   app.use('/api/v1/screening', screeningRoutes);
   app.use('/api/v1/parents', parentsRoutes);
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  // NOTE: uploads are deliberately NOT served statically. They are files about
+  // children, and express.static has no notion of who is asking. Downloads go
+  // through GET /api/v1/schools/reports/:id/attachments/:filename, which
+  // authorises the caller against the owning report.
   app.use(errorHandler);
   return app;
 };

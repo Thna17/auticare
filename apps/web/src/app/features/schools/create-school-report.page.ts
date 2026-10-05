@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { ActivityReportDetailResponse } from '@auticare/contracts';
 import { SchoolsApi, type EnrolledStudentOption } from './data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
+import { attachmentUrl } from '../../core/config/attachment-url';
 
 /** A file that has been accepted but not yet uploaded to the server. */
 export interface PendingFile {
@@ -345,7 +346,9 @@ export interface PendingFile {
 
               @for (url of existingPhotoUrls(); track url; let i = $index) {
                 <div class="existing-attachment">
-                  <a [href]="url" target="_blank" rel="noopener">{{ fileNameOf(url) }}</a>
+                  <a [href]="attachmentHref(url)" target="_blank" rel="noopener">{{
+                    fileNameOf(url)
+                  }}</a>
                   <button
                     type="button"
                     class="remove-photo-btn"
@@ -1162,6 +1165,16 @@ export class CreateSchoolReportPage implements OnInit {
 
   removeExistingPhoto(index: number) {
     this.existingPhotoUrls.update((urls) => urls.filter((_, i) => i !== index));
+  }
+
+  /**
+   * Display URL for an already-saved attachment. existingPhotoUrls deliberately
+   * holds the STORED paths, because they are posted straight back in photoUrls
+   * on save — only the rendered href is the authorised, report-scoped route.
+   */
+  protected attachmentHref(storedUrl: string): string {
+    const id = this.reportId();
+    return id === null ? storedUrl : attachmentUrl(id, storedUrl);
   }
 
   fileNameOf(url: string): string {
