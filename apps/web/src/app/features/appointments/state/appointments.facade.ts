@@ -78,6 +78,34 @@ export class AppointmentsFacade {
     };
   });
 
+  /** Ids currently being cancelled, so each row can disable just its own button. */
+  readonly cancelling = signal<readonly string[]>([]);
+  readonly cancelError = signal<string | null>(null);
+
+  /**
+   * Cancel one of the signed-in parent's own appointments. The API refuses
+   * anything that is not REQUESTED or CONFIRMED, so the surfaced message comes
+   * from the server rather than being guessed here.
+   */
+  cancelAppointment(appointmentId: string) {
+    this.cancelError.set(null);
+    this.cancelling.update((ids) => [...ids, appointmentId]);
+    this.api.cancelAppointment(appointmentId).subscribe({
+      next: (updated) => {
+        this.appointments.update((rows) =>
+          rows.map((row) => (row.id === updated.id ? updated : row)),
+        );
+        this.cancelling.update((ids) => ids.filter((id) => id !== appointmentId));
+      },
+      error: (err: { error?: { error?: { message?: string } } }) => {
+        this.cancelError.set(
+          err?.error?.error?.message ?? 'This appointment could not be cancelled.',
+        );
+        this.cancelling.update((ids) => ids.filter((id) => id !== appointmentId));
+      },
+    });
+  }
+
   loadAppointments() {
     this.loading.set(true);
     this.error.set(null);

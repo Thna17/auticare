@@ -18,6 +18,7 @@ const primaryNav: readonly NavItem[] = [
   { label: 'Hospitals', path: '/hospitals', icon: 'hospital' },
   { label: 'Progress', path: '/progress', icon: 'trend' },
   { label: 'Appointments', path: '/appointments', icon: 'calendar' },
+  { label: 'Notifications', path: '/notifications', icon: 'bell' },
   { label: 'Messages', path: '/support', icon: 'mail' },
 ];
 
