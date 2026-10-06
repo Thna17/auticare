@@ -17,14 +17,14 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
       <ac-ui-spinner label="Loading child profile…" />
     } @else if (error()) {
       <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
-    } @else if (child()) {
+    } @else if (child(); as profile) {
       <section class="profile-hero">
         <div class="identity">
-          <div class="avatar" aria-hidden="true">{{ initials(child()!) }}</div>
+          <div class="avatar" aria-hidden="true">{{ initials(profile) }}</div>
           <div>
             <p class="eyebrow">Child profile</p>
-            <h1>{{ child()!.firstName }}</h1>
-            <p>{{ ageLabel(child()!.dateOfBirth) }} · Born {{ child()!.dateOfBirth }}</p>
+            <h1>{{ profile.firstName }}</h1>
+            <p>{{ ageLabel(profile.dateOfBirth) }} · Born {{ profile.dateOfBirth }}</p>
           </div>
         </div>
         <div class="hero-actions">
@@ -38,15 +38,15 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
       <section class="summary-grid" aria-label="Child profile summary">
         <article>
           <span>Profile status</span>
-          <strong>{{ child()!.archivedAt ? 'Archived' : 'Active' }}</strong>
+          <strong>{{ profile.archivedAt ? 'Archived' : 'Active' }}</strong>
         </article>
         <article>
           <span>Age</span>
-          <strong>{{ ageLabel(child()!.dateOfBirth) }}</strong>
+          <strong>{{ ageLabel(profile.dateOfBirth) }}</strong>
         </article>
         <article>
           <span>Care notes</span>
-          <strong>{{ child()!.notes ? 'Added' : 'Not added' }}</strong>
+          <strong>{{ profile.notes ? 'Added' : 'Not added' }}</strong>
         </article>
       </section>
 

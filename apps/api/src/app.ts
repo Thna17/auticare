@@ -5,9 +5,10 @@ import express from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import swaggerUi from 'swagger-ui-express';
-import { env } from './config/env.js';
+import { env, isProduction } from './config/env.js';
 import { logger } from './config/logger.js';
 import { openApiDocument } from './config/openapi.js';
+import { notFound } from './common/errors/app-error.js';
 import { errorHandler } from './common/middleware/error-handler.js';
 import { requestIdMiddleware } from './common/middleware/request-id.js';
 import { generalRateLimit } from './common/security/rate-limits.js';
@@ -36,7 +37,13 @@ export const createApp = () => {
   app.use(cookieParser());
   app.use(generalRateLimit);
   app.use('/health', healthRoutes);
-  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
+  // The docs describe every endpoint, its payload shape and its auth requirement.
+  // That is a map of the API for anyone who finds it, so it is served outside
+  // production only. Production deployments that want it should put it behind
+  // their own auth rather than re-enabling it here.
+  if (!isProduction) {
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
+  }
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/v1/children', childrenRoutes);
   app.use('/api/v1/hospitals', hospitalsRoutes);
@@ -51,6 +58,14 @@ export const createApp = () => {
   // children, and express.static has no notion of who is asking. Downloads go
   // through GET /api/v1/schools/reports/:id/attachments/:filename, which
   // authorises the caller against the owning report.
+
+  // Without this, an unknown path falls through to Express's default handler,
+  // which answers with an HTML page. Every other failure on this API is the JSON
+  // error envelope, and the web client parses that envelope — so a typo in a URL
+  // produced a response the client could not read.
+  app.use((_req, _res, next) => {
+    next(notFound('The requested endpoint does not exist.'));
+  });
   app.use(errorHandler);
   return app;
 };

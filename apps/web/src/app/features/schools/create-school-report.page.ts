@@ -1401,8 +1401,11 @@ export class CreateSchoolReportPage implements OnInit {
       emotionalRegulation: value.emotionalRegulation,
       taskCompletion: value.taskCompletion,
     };
-    const request = this.editMode()
-      ? this.api.updateActivityReport(this.reportId()!, {
+    // editMode() is computed from reportId(), but TypeScript cannot see through
+    // the computed — branching on the id directly narrows it for real.
+    const reportId = this.reportId();
+    const request = reportId
+      ? this.api.updateActivityReport(reportId, {
           activityCategory: value.category,
           title: value.activityName,
           summary: `${value.activityName} — ${value.category}`,
