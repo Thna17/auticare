@@ -85,7 +85,7 @@ describe('school activity reports', () => {
 
     await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
 
-    const blockedReport = await schoolAgent.post('/api/v1/schools/activity-reports').send({
+    const blockedReport = await schoolAgent.post('/api/v1/schools/reports').send({
       childId,
       activityCategory: 'Social/Emotional',
       title: 'Shared play activity',
@@ -111,7 +111,7 @@ describe('school activity reports', () => {
       ),
     ).toBe(true);
 
-    const report = await schoolAgent.post('/api/v1/schools/activity-reports').send({
+    const report = await schoolAgent.post('/api/v1/schools/reports').send({
       childId,
       activityCategory: 'Social/Emotional',
       title: 'Shared play activity',
@@ -122,7 +122,7 @@ describe('school activity reports', () => {
     expect(report.body.data.schoolId).toBe(schoolId);
     expect(report.body.data.childId).toBe(childId);
 
-    const parentReports = await parentAgent.get('/api/v1/schools/activity-reports');
+    const parentReports = await parentAgent.get('/api/v1/schools/reports');
     expect(parentReports.status).toBe(200);
     expect(
       parentReports.body.data.reports.some(
@@ -132,23 +132,21 @@ describe('school activity reports', () => {
     expect(parentReports.body.data.pagination.page).toBe(1);
   });
 
-  // POST /schools/activity-reports is a near-copy of POST /schools/reports, and
-  // it was missing the line that carries `status` through. Both endpoints accept
-  // the field, so the request looked fine and the response said DRAFT; the school
-  // was navigated away as though it had submitted, and the parent's progress page
-  // — which lists SUBMITTED only — never showed the report. Asserted on both
-  // endpoints, because the duplication is what made the gap possible.
-  it.each([
-    ['/api/v1/schools/activity-reports', 'activity-reports'],
-    ['/api/v1/schools/reports', 'reports'],
-  ])('stores the submitted status asked for via %s', async (path) => {
+  // There used to be a second create endpoint, POST /schools/activity-reports,
+  // which is what the report form posted to. It was a near-copy of this one
+  // missing the line that carries `status` through: the request looked fine, the
+  // response said DRAFT, the school was navigated away as though it had
+  // submitted, and the parent's progress page — which lists SUBMITTED only —
+  // never showed the report. The copy is gone; this is the guard that the
+  // surviving one keeps the status it is given.
+  it('stores the submitted status it is asked for', async () => {
     const schoolAgent = request.agent(app);
     await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
 
-    const created = await schoolAgent.post(path).send({
+    const created = await schoolAgent.post('/api/v1/schools/reports').send({
       childId,
       activityCategory: 'Social/Emotional',
-      activityName: `Status check ${path}`,
+      activityName: 'Status check',
       summary: 'Checks that status survives the request.',
       teacherObservation: 'Engaged throughout.',
       status: 'SUBMITTED',
@@ -157,7 +155,8 @@ describe('school activity reports', () => {
     expect(created.status).toBe(201);
     expect(created.body.data.status).toBe('SUBMITTED');
 
-    // The field the parent's own endpoint filters on, read back from storage.
+    // Read back from storage, since the response body echoing the right value is
+    // not the same as the row holding it.
     const readBack = await schoolAgent.get(`/api/v1/schools/reports/${created.body.data.id}`);
     expect(readBack.body.data.status).toBe('SUBMITTED');
   });
@@ -166,7 +165,7 @@ describe('school activity reports', () => {
     const schoolAgent = request.agent(app);
     await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
 
-    const created = await schoolAgent.post('/api/v1/schools/activity-reports').send({
+    const created = await schoolAgent.post('/api/v1/schools/reports').send({
       childId,
       activityCategory: 'Social/Emotional',
       activityName: 'Draft by omission',
@@ -175,5 +174,60 @@ describe('school activity reports', () => {
 
     expect(created.status).toBe(201);
     expect(created.body.data.status).toBe('DRAFT');
+  });
+
+  // Delete was the one thing the removed /activity-reports routes still offered
+  // that this module did not, so it moved here rather than disappearing.
+  it('deletes a report belonging to the caller’s school', async () => {
+    const schoolAgent = request.agent(app);
+    await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
+
+    const created = await schoolAgent.post('/api/v1/schools/reports').send({
+      childId,
+      activityCategory: 'Social/Emotional',
+      activityName: 'To be deleted',
+      teacherObservation: 'Temporary.',
+    });
+    expect(created.status).toBe(201);
+
+    const removed = await schoolAgent.delete(`/api/v1/schools/reports/${created.body.data.id}`);
+    expect(removed.status).toBe(200);
+    expect(removed.body.data.success).toBe(true);
+
+    const gone = await schoolAgent.get(`/api/v1/schools/reports/${created.body.data.id}`);
+    expect(gone.status).toBe(404);
+  });
+
+  it('answers 404, not 403, when deleting another school’s report', async () => {
+    const otherSchool = await prisma.school.create({
+      data: {
+        name: `Other School ${unique}`,
+        city: 'Phnom Penh',
+        address: 'Other Road 1',
+        description: 'Test school',
+      },
+    });
+    const foreign = await prisma.activityReport.create({
+      data: {
+        schoolId: otherSchool.id,
+        childId,
+        reporterId: schoolUserId,
+        activityCategory: 'Social/Emotional',
+        title: 'Not yours',
+        summary: 'Belongs to another school.',
+        activityDate: new Date('2026-07-11'),
+      },
+    });
+
+    const schoolAgent = request.agent(app);
+    await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
+
+    // 404 rather than 403: a 403 would confirm the id exists to a caller probing
+    // for other schools' reports, which is the same reason getReportById does it.
+    const refused = await schoolAgent.delete(`/api/v1/schools/reports/${foreign.id}`);
+    expect(refused.status).toBe(404);
+
+    await prisma.activityReport.delete({ where: { id: foreign.id } });
+    await prisma.school.delete({ where: { id: otherSchool.id } });
   });
 });

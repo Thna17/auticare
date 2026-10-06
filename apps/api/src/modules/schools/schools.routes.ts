@@ -3,7 +3,6 @@ import { validateBody } from '../../common/middleware/validate.js';
 import { validateQuery } from '../../common/middleware/validate-query.js';
 import { requireAuth, requireRole } from '../auth/index.js';
 import {
-  createActivityReport,
   createSchoolAccount,
   createEnrollment,
   endEnrollment,
@@ -11,8 +10,6 @@ import {
   getSchoolById,
   getSchoolStaffMe,
   listSchoolAccounts,
-  listActivityReports,
-  deleteActivityReport,
   listEnrollments,
   listSchoolCities,
   listSchools,
@@ -21,12 +18,11 @@ import {
 } from './schools.controller.js';
 import {
   createSchoolAccountRequestSchema,
-  createActivityReportRequestSchema,
   createSchoolChildEnrollmentRequestSchema,
   updateSchoolProfileRequestSchema,
   updateSchoolRequestSchema,
 } from './schools.schemas.js';
-import { paginationQuerySchema, parentSchoolSearchQuerySchema } from '@auticare/contracts';
+import { parentSchoolSearchQuerySchema } from '@auticare/contracts';
 import { schoolsProfileRoutes } from './schools.profile.routes.js';
 import { schoolsStudentsRoutes } from './schools.students.routes.js';
 import { schoolsReportsRoutes } from './schools.reports.routes.js';
@@ -91,21 +87,15 @@ schoolsRoutes.post(
   createSchoolAccount,
 );
 
-// Enrollments & activity reports (fixed-path routes registered before param routes).
+// Enrollments (fixed-path routes registered before param routes).
+//
+// The /activity-reports routes that used to live here are gone. They duplicated
+// the schools.reports module — same payloads, parallel service methods — and the
+// copies had already drifted: the create path here silently ignored `status`, so
+// a school's submitted report was stored as a draft and never reached the parent.
+// Everything now goes through /schools/reports, which also has get, update,
+// attachments and (newly) delete.
 schoolsRoutes.get('/enrollments', requireRole('PARENT', 'SCHOOL'), listEnrollments);
-schoolsRoutes.get(
-  '/activity-reports',
-  requireRole('PARENT', 'SCHOOL', 'ADMIN'),
-  validateQuery(paginationQuerySchema),
-  listActivityReports,
-);
-schoolsRoutes.post(
-  '/activity-reports',
-  requireRole('SCHOOL'),
-  validateBody(createActivityReportRequestSchema),
-  createActivityReport,
-);
-schoolsRoutes.delete('/activity-reports/:id', requireRole('SCHOOL'), deleteActivityReport);
 schoolsRoutes.post(
   '/upload/activity-photos',
   requireRole('SCHOOL'),

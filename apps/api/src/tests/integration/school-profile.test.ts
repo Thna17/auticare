@@ -226,7 +226,7 @@ describe('school profile access control', () => {
     expect(
       (
         await parent
-          .post('/api/v1/schools/activity-reports')
+          .post('/api/v1/schools/reports')
           .send({ childId: 'x', title: 'x', summary: 'x', activityDate: '2026-01-01' })
       ).status,
     ).toBe(403);
