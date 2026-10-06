@@ -60,6 +60,98 @@
   --ac-color-alert-strong: #93000a; /* x15 */
   --ac-color-alert-surface: #ffdad6; /* x14 */
   --ac-color-alert-slate: #b91c1c; /* x14 — slate palette */
+
+  /* ──────────────────────────────────────────────────────────────────────
+   * The rest of the palette actually in use, added so no component carries a
+   * raw hex. Values are byte-identical to the literals they replace, so
+   * adopting them changes nothing on screen.
+   *
+   * NEAR-DUPLICATES, measured in CIELAB (ΔE < 10, i.e. a small but visible
+   * difference). Collapsing each cluster to its most-used member would remove
+   * 29 distinct values and IS a visual change, so it is left as a decision:
+   *
+   *   13 pale tints, 84 uses   #f1f5f9 #dbeafe #d7e3ea #dfe9ee #fdecec #f0f7fb
+   *                            #f8fcff #eef8fc #e7f6ef #e8f4f8 #f2f9fd #f4faff #fef2f2
+   *    5 dark teals, 36 uses   #1f4f5c #19465b #163f52 #123f52 #1a3a4a
+   *    4 greys, 27 uses        #5b7280 #5b6569 #71787c #5b666b
+   *    4 near-blacks, 24 uses  #1e293b #103443 #123443 #223344
+   *    3 slates, 28 uses       #475569 #334155 #244b5d
+   *    3 pale greys, 26 uses   #cbd5e1 #c1d3dc #c1c7cc
+   *    2 reds, 16 uses         #ba1a1a #b42318
+   *    2 olives, 15 uses       #546343 #5a6949
+   *    2 greens, 11 uses       #177a4c #236b43
+   * ────────────────────────────────────────────────────────────────────── */
+
+  /* Slate scale — Tailwind values, the second palette noted above. */
+  --ac-color-slate-50: #f8fafc;
+  --ac-color-slate-100: #f1f5f9;
+  --ac-color-slate-300: #cbd5e1;
+  --ac-color-slate-400: #94a3b8;
+  --ac-color-slate-600: #475569;
+  --ac-color-slate-700: #334155;
+  --ac-color-slate-800: #1e293b;
+
+  /* Blue / informational */
+  --ac-color-blue-100: #dbeafe;
+  --ac-color-blue-500: #3b82f6;
+  --ac-color-blue-600: #2563eb;
+
+  /* Status: red */
+  --ac-color-red-500: #ef4444;
+  --ac-color-red-600: #ba1a1a;
+  --ac-color-red-700: #b42318;
+  --ac-color-red-50: #fef2f2;
+  --ac-color-red-100: #fdecec;
+  --ac-color-red-border: #eec2c2;
+
+  /* Status: green */
+  --ac-color-green-500: #10b981;
+  --ac-color-green-600: #177a4c;
+  --ac-color-green-700: #236b43;
+  --ac-color-green-teal: #0f766e;
+  --ac-color-green-50: #e7f6ef;
+  --ac-color-green-100: #d1fae5;
+
+  /* Status: amber */
+  --ac-color-amber-500: #f59e0b;
+
+  /* Teal inks — the custom dark family (near-duplicates, see note above) */
+  --ac-color-ink-a: #1f4f5c;
+  --ac-color-ink-b: #19465b;
+  --ac-color-ink-c: #163f52;
+  --ac-color-ink-d: #123f52;
+  --ac-color-ink-e: #1a3a4a;
+  --ac-color-ink-f: #103443;
+  --ac-color-ink-g: #123443;
+  --ac-color-ink-h: #223344;
+  --ac-color-ink-i: #273a43;
+  --ac-color-ink-j: #244b5d;
+
+  /* Pale surfaces — the custom tint family (near-duplicates, see note above) */
+  --ac-color-tint-blue: #ceedff;
+  --ac-color-tint-blue-soft: #f0f7fb;
+  --ac-color-tint-blue-pale: #f8fcff;
+  --ac-color-tint-blue-mist: #eef8fc;
+  --ac-color-tint-blue-light: #e8f4f8;
+  --ac-color-tint-blue-faint: #f2f9fd;
+  --ac-color-tint-blue-wash: #f4faff;
+  --ac-color-tint-steel: #d7e3ea;
+  --ac-color-tint-steel-soft: #dfe9ee;
+
+  /* Olive / sage family */
+  --ac-color-olive-light: #d7e9c0;
+  --ac-color-olive: #546343;
+  --ac-color-olive-mid: #5a6949;
+  --ac-color-olive-dark: #3d4b2d;
+  --ac-color-olive-darkest: #244b2d;
+
+  /* Greys (near-duplicates, see note above) */
+  --ac-color-grey-a: #5b7280;
+  --ac-color-grey-b: #5b6569;
+  --ac-color-grey-c: #71787c;
+  --ac-color-grey-d: #5b666b;
+  --ac-color-grey-pale: #c1d3dc;
+  --ac-color-grey-pale-alt: #c1c7cc;
   --ac-font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --ac-font-weight-regular: 400;

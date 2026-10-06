@@ -359,7 +359,7 @@ const SPECIALIZATION_OPTIONS = [
       /* Sidebar Styles */
       .sidebar {
         width: 260px;
-        background: #e8f4f8;
+        background: var(--ac-color-tint-blue-light);
         border-radius: 0 16px 16px 0;
         padding: 24px 16px;
         display: flex;
@@ -391,7 +391,7 @@ const SPECIALIZATION_OPTIONS = [
       .logo-text {
         font-size: 22px;
         font-weight: 700;
-        color: #1a3a4a;
+        color: var(--ac-color-ink-e);
       }
 
       .menu-toggle {
@@ -476,7 +476,7 @@ const SPECIALIZATION_OPTIONS = [
 
       .nav-item.active {
         background: #a8d5e2;
-        color: #1a3a4a;
+        color: var(--ac-color-ink-e);
         font-weight: 600;
       }
 
@@ -504,7 +504,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .new-screening-btn:hover {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
 
       .sidebar-footer {
@@ -515,7 +515,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .logout-btn {
-        color: #ef4444;
+        color: var(--ac-color-red-500);
       }
 
       .logout-btn:hover {
@@ -562,7 +562,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .search-input:focus {
-        border-color: #3b82f6;
+        border-color: var(--ac-color-blue-500);
       }
 
       .topbar-actions {
@@ -613,8 +613,8 @@ const SPECIALIZATION_OPTIONS = [
       .avatar-small {
         width: 40px;
         height: 40px;
-        background: #dbeafe;
-        color: #2563eb;
+        background: var(--ac-color-blue-100);
+        color: var(--ac-color-blue-600);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -669,7 +669,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .toggle-btn:hover {
-        background: #f1f5f9;
+        background: var(--ac-color-slate-100);
       }
 
       .toggle-btn.active {
@@ -737,7 +737,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .filter-select:focus {
-        border-color: #3b82f6;
+        border-color: var(--ac-color-blue-500);
       }
 
       .distance-slider {
@@ -783,7 +783,7 @@ const SPECIALIZATION_OPTIONS = [
         gap: 10px;
         cursor: pointer;
         font-size: 14px;
-        color: #475569;
+        color: var(--ac-color-slate-600);
       }
 
       .checkbox-label input[type='checkbox'] {
@@ -801,7 +801,7 @@ const SPECIALIZATION_OPTIONS = [
 
       .tag-btn {
         padding: 6px 12px;
-        background: #f1f5f9;
+        background: var(--ac-color-slate-100);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 6px;
         font-size: 13px;
@@ -828,7 +828,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .apply-filters-btn:hover {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
 
       /* Schools List */
@@ -907,7 +907,7 @@ const SPECIALIZATION_OPTIONS = [
         position: absolute;
         top: 12px;
         left: 12px;
-        background: #10b981;
+        background: var(--ac-color-green-500);
         color: white;
         padding: 4px 10px;
         border-radius: 6px;
@@ -945,7 +945,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .star {
-        color: #f59e0b;
+        color: var(--ac-color-amber-500);
         font-size: 18px;
       }
 
@@ -980,8 +980,8 @@ const SPECIALIZATION_OPTIONS = [
 
       .spec-tag {
         padding: 4px 10px;
-        background: #dbeafe;
-        color: #2563eb;
+        background: var(--ac-color-blue-100);
+        color: var(--ac-color-blue-600);
         border-radius: 6px;
         font-size: 12px;
         font-weight: 600;
@@ -1021,7 +1021,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .meta-value.waitlist {
-        color: #f59e0b;
+        color: var(--ac-color-amber-500);
       }
 
       .meta-value.closed {
@@ -1091,7 +1091,7 @@ const SPECIALIZATION_OPTIONS = [
 
       .dialog-hint {
         margin: 0 0 16px;
-        color: #5b7280;
+        color: var(--ac-color-grey-a);
         font-size: 14px;
       }
 
@@ -1104,14 +1104,14 @@ const SPECIALIZATION_OPTIONS = [
         display: block;
         font-size: 13px;
         font-weight: 600;
-        color: #334155;
+        color: var(--ac-color-slate-700);
         margin-bottom: 6px;
       }
 
       .dialog-input {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid #d7e3ea;
+        border: 1px solid var(--ac-color-tint-steel);
         border-radius: 9px;
         font-size: 14px;
         font-family: inherit;
@@ -1131,7 +1131,7 @@ const SPECIALIZATION_OPTIONS = [
 
       .btn-secondary {
         padding: 10px 18px;
-        border: 1px solid #d7e3ea;
+        border: 1px solid var(--ac-color-tint-steel);
         border-radius: 9px;
         background: var(--ac-color-surface);
         color: var(--ac-color-action-alt);
@@ -1143,8 +1143,8 @@ const SPECIALIZATION_OPTIONS = [
       .success-box {
         padding: 12px 16px;
         border-radius: 9px;
-        background: #e7f6ef;
-        color: #177a4c;
+        background: var(--ac-color-green-50);
+        color: var(--ac-color-green-600);
         font-size: 14px;
       }
 
@@ -1168,7 +1168,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .enrollment-btn:hover {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
 
       /* Pagination */
@@ -1196,8 +1196,8 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .page-btn:hover {
-        border-color: #3b82f6;
-        background: #f1f5f9;
+        border-color: var(--ac-color-blue-500);
+        background: var(--ac-color-slate-100);
       }
 
       .page-btn.active {

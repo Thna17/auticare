@@ -165,7 +165,7 @@ const schoolMobileNav: readonly NavItem[] = [
       :host {
         display: block;
         min-height: 100svh;
-        background: #f2f9fd;
+        background: var(--ac-color-tint-blue-faint);
         color: var(--ac-color-text-strong);
       }
 
@@ -287,7 +287,7 @@ const schoolMobileNav: readonly NavItem[] = [
       }
 
       .account-copy strong {
-        color: #19465b;
+        color: var(--ac-color-ink-b);
         font-size: var(--ac-type-label);
         line-height: 1.15;
         font-weight: var(--ac-font-weight-semibold);
@@ -350,7 +350,7 @@ const schoolMobileNav: readonly NavItem[] = [
 
       .nav-list a.active {
         background: var(--ac-color-primary);
-        color: #103443;
+        color: var(--ac-color-ink-f);
         font-weight: var(--ac-font-weight-semibold);
       }
 
@@ -722,7 +722,7 @@ const schoolMobileNav: readonly NavItem[] = [
       }
 
       .secondary {
-        border-top: 1px solid #c1d3dc;
+        border-top: 1px solid var(--ac-color-grey-pale);
         padding-top: 20px;
         margin-top: auto;
       }
@@ -755,7 +755,7 @@ const schoolMobileNav: readonly NavItem[] = [
         min-height: 100svh;
         margin-left: 292px;
         padding: 48px 56px 56px;
-        background: #f2f9fd;
+        background: var(--ac-color-tint-blue-faint);
       }
 
       .mobile-nav {

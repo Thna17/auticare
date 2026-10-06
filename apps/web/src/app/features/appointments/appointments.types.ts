@@ -28,8 +28,12 @@ export type StatusPresentation = {
 export const statusPresentation: Record<AppointmentStatus, StatusPresentation> = {
   REQUESTED: { label: 'Pending', foreground: '#9a6a00', background: '#fef3c7' },
   CONFIRMED: { label: 'Confirmed', foreground: '#15803d', background: '#dcfce7' },
-  COMPLETED: { label: 'Completed', foreground: '#1d4ed8', background: '#dbeafe' },
-  CANCELLED: { label: 'Cancelled', foreground: '#b91c1c', background: '#fee2e2' },
+  COMPLETED: { label: 'Completed', foreground: '#1d4ed8', background: 'var(--ac-color-blue-100)' },
+  CANCELLED: {
+    label: 'Cancelled',
+    foreground: 'var(--ac-color-alert-slate)',
+    background: '#fee2e2',
+  },
 };
 
 /**

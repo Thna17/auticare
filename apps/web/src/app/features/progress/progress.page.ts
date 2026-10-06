@@ -25,10 +25,10 @@ interface AttachmentDocument {
 }
 
 const METRIC_DEFS: { key: string; label: string; color: string }[] = [
-  { key: 'participation', label: 'Participation', color: '#10B981' },
-  { key: 'communication', label: 'Communication', color: '#3B82F6' },
+  { key: 'participation', label: 'Participation', color: 'var(--ac-color-green-500)' },
+  { key: 'communication', label: 'Communication', color: 'var(--ac-color-blue-500)' },
   { key: 'socialInteraction', label: 'Social Skills', color: '#8B5CF6' },
-  { key: 'attention', label: 'Attention', color: '#F59E0B' },
+  { key: 'attention', label: 'Attention', color: 'var(--ac-color-amber-500)' },
   { key: 'emotionalRegulation', label: 'Emotional Regulation', color: '#EC4899' },
   { key: 'taskCompletion', label: 'Task Completion', color: '#06B6D4' },
 ];
@@ -232,7 +232,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       .page-layout {
         display: flex;
         min-height: 100vh;
-        background: #f8fafc;
+        background: var(--ac-color-surface-slate);
       }
 
       /* Main Content */
@@ -259,27 +259,27 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       .child-switcher-label {
         font-size: 14px;
         font-weight: 600;
-        color: #475569;
+        color: var(--ac-color-slate-600);
       }
 
       .child-select {
         padding: 10px 16px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
         font-size: 14px;
         font-weight: 600;
         background: white;
-        color: #1e293b;
+        color: var(--ac-color-slate-800);
         outline: none;
         cursor: pointer;
       }
 
       .child-select:focus {
-        border-color: #3b82f6;
+        border-color: var(--ac-color-blue-500);
       }
 
       .back-link {
-        color: #2d6a7a;
+        color: var(--ac-color-action-alt);
         font-size: 14px;
         font-weight: 600;
         text-decoration: none;
@@ -299,7 +299,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         border-radius: 16px;
         padding: 48px 24px;
         text-align: center;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         display: flex;
@@ -313,15 +313,15 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       }
 
       .error-state p {
-        color: #b91c1c;
+        color: var(--ac-color-alert-slate);
         font-weight: 600;
       }
 
       .spinner {
         width: 32px;
         height: 32px;
-        border: 4px solid #e2e8f0;
-        border-top-color: #2d6a7a;
+        border: 4px solid var(--ac-color-border-slate);
+        border-top-color: var(--ac-color-action-alt);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
       }
@@ -345,7 +345,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         margin: 0 0 12px 0;
         font-size: 28px;
         font-weight: 700;
-        color: #1e293b;
+        color: var(--ac-color-slate-800);
       }
 
       .report-meta {
@@ -356,13 +356,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       }
 
       .date {
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
       }
 
       .school-chip {
-        background: #eef8fc;
-        color: #2d6a7a;
+        background: var(--ac-color-tint-blue-mist);
+        color: var(--ac-color-action-alt);
         font-size: 13px;
         font-weight: 600;
         padding: 6px 12px;
@@ -377,7 +377,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       }
 
       .status-badge.completed {
-        background: #d1fae5;
+        background: var(--ac-color-green-100);
         color: #059669;
       }
 
@@ -423,11 +423,11 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         margin: 0;
         font-size: 18px;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--ac-color-slate-800);
       }
 
       .card-content {
-        color: #475569;
+        color: var(--ac-color-slate-600);
         line-height: 1.7;
       }
 
@@ -447,8 +447,8 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       }
 
       .fact-chip {
-        background: #f1f5f9;
-        color: #475569;
+        background: var(--ac-color-slate-100);
+        color: var(--ac-color-slate-600);
         font-size: 12px;
         font-weight: 600;
         padding: 6px 12px;
@@ -499,16 +499,16 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         align-items: center;
         gap: 10px;
         padding: 12px 14px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 10px;
         text-decoration: none;
-        color: #334155;
+        color: var(--ac-color-slate-700);
         transition: all 0.2s;
       }
 
       .document-link:hover {
         background: #f0f7fa;
-        border-color: #2d6a7a;
+        border-color: var(--ac-color-action-alt);
       }
 
       .document-icon {
@@ -525,7 +525,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       .document-open {
         font-size: 12px;
         font-weight: 600;
-        color: #2d6a7a;
+        color: var(--ac-color-action-alt);
         white-space: nowrap;
       }
 
@@ -543,7 +543,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       .teacher-avatar {
         width: 44px;
         height: 44px;
-        background: #dbeafe;
+        background: var(--ac-color-blue-100);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -555,14 +555,14 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         margin: 0;
         font-size: 16px;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--ac-color-slate-800);
       }
 
       .observation-quote {
         margin: 0 0 16px 0;
         padding: 0;
         font-style: italic;
-        color: #475569;
+        color: var(--ac-color-slate-600);
         line-height: 1.8;
         border: none;
       }
@@ -574,7 +574,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       .teacher-name {
         font-style: normal;
         font-weight: 600;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 13px;
       }
 
@@ -599,13 +599,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
 
       .progress-bg {
         fill: none;
-        stroke: #e2e8f0;
+        stroke: var(--ac-color-border-slate);
         stroke-width: 8;
       }
 
       .progress-bar {
         fill: none;
-        stroke: #10b981;
+        stroke: var(--ac-color-green-500);
         stroke-width: 8;
         stroke-linecap: round;
         transition: stroke-dashoffset 0.5s ease;
@@ -623,13 +623,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         display: block;
         font-size: 32px;
         font-weight: 700;
-        color: #10b981;
+        color: var(--ac-color-green-500);
         line-height: 1;
       }
 
       .progress-label {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         margin-top: 4px;
       }
 
@@ -648,14 +648,14 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       .metric-label {
         width: 118px;
         font-size: 13px;
-        color: #475569;
+        color: var(--ac-color-slate-600);
         font-weight: 500;
       }
 
       .metric-bar-bg {
         flex: 1;
         height: 8px;
-        background: #e2e8f0;
+        background: var(--ac-color-border-slate);
         border-radius: 4px;
         overflow: hidden;
       }
@@ -671,14 +671,14 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         text-align: right;
         font-size: 13px;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--ac-color-slate-800);
       }
 
       /* Follow-up Card */
       .followup-intro {
         margin: 0 0 16px 0;
         font-size: 14px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       /* Action Buttons */
@@ -704,18 +704,18 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
       }
 
       .btn-primary {
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
       }
 
       .btn-primary:hover {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
 
       .btn-secondary {
         background: white;
-        color: #2d6a7a;
-        border: 1px solid #2d6a7a;
+        color: var(--ac-color-action-alt);
+        border: 1px solid var(--ac-color-action-alt);
       }
 
       .btn-secondary:hover {
@@ -776,7 +776,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         justify-content: center;
         border-radius: 10px;
         background: #e6f4f2;
-        color: #0f766e;
+        color: var(--ac-color-green-teal);
       }
       .report-header h1 {
         font-size: clamp(26px, 3vw, 34px);
@@ -794,13 +794,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         border-radius: 999px;
       }
       .metric-bar-fill {
-        background: #0f766e !important;
+        background: var(--ac-color-green-teal) !important;
         border-radius: 999px;
       }
       .observation-text,
       .summary-description {
         margin: 0;
-        color: #334155;
+        color: var(--ac-color-slate-700);
         font-size: 15px;
         line-height: 1.8;
         white-space: pre-wrap;
@@ -811,16 +811,16 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         gap: 12px;
         margin: 0;
         padding-left: 20px;
-        color: #334155;
+        color: var(--ac-color-slate-700);
         font-size: 14px;
         line-height: 1.65;
       }
       .recommendation-list li::marker {
-        color: #0f766e;
+        color: var(--ac-color-green-teal);
       }
       .empty-note {
         margin: 0;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
         line-height: 1.6;
       }
@@ -834,14 +834,14 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         flex-direction: column;
       }
       .btn-primary {
-        background: #0f766e;
+        background: var(--ac-color-green-teal);
       }
       .btn-primary:hover {
         background: #115e59;
       }
       .btn-secondary {
-        color: #0f766e;
-        border-color: #0f766e;
+        color: var(--ac-color-green-teal);
+        border-color: var(--ac-color-green-teal);
       }
       @media (max-width: 900px) {
         .report-grid {

@@ -80,13 +80,13 @@ import type { AppointmentResponse } from './appointments.types';
 
       h2 {
         margin: 0 0 6px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-card-title);
       }
 
       .lead {
         margin: 0 0 22px;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
@@ -96,7 +96,7 @@ import type { AppointmentResponse } from './appointments.types';
         gap: 12px;
         margin: 0 0 24px;
         border-radius: 12px;
-        background: #f0f7fb;
+        background: var(--ac-color-tint-blue-soft);
         padding: 18px;
         text-align: left;
       }
@@ -108,13 +108,13 @@ import type { AppointmentResponse } from './appointments.types';
       }
 
       dt {
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
       dd {
         margin: 0;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-weight: var(--ac-font-weight-semibold);
         text-align: right;
       }
@@ -138,8 +138,8 @@ import type { AppointmentResponse } from './appointments.types';
         min-height: 46px;
         border: 0;
         border-radius: 10px;
-        background: #294a5a;
-        color: #ffffff;
+        background: var(--ac-color-text-dark);
+        color: var(--ac-color-text-on-action);
         font-weight: var(--ac-font-weight-semibold);
         cursor: pointer;
       }

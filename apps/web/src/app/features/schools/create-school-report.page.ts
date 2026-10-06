@@ -421,7 +421,7 @@ export interface PendingFile {
           Ubuntu,
           Cantarell,
           sans-serif;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       /* Breadcrumbs */
@@ -430,11 +430,11 @@ export interface PendingFile {
         align-items: center;
         gap: 8px;
         font-size: 13px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         margin-bottom: 16px;
       }
       .breadcrumb-link {
-        color: #3d6375;
+        color: var(--ac-color-action);
         text-decoration: none;
         font-weight: 500;
       }
@@ -442,10 +442,10 @@ export interface PendingFile {
         text-decoration: underline;
       }
       .breadcrumb-separator {
-        color: #cbd5e1;
+        color: var(--ac-color-slate-300);
       }
       .breadcrumb-item.active {
-        color: #1e293b;
+        color: var(--ac-color-slate-800);
         font-weight: 600;
       }
 
@@ -471,10 +471,10 @@ export interface PendingFile {
         align-items: center;
         justify-content: center;
         padding: 10px 18px;
-        background: #ffffff;
-        border: 1px solid #cbd5e1;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-slate-300);
         border-radius: 10px;
-        color: #475569;
+        color: var(--ac-color-slate-600);
         font-weight: 600;
         font-size: 14px;
         text-decoration: none;
@@ -482,15 +482,15 @@ export interface PendingFile {
         transition: all 0.2s;
       }
       .btn-cancel:hover {
-        background: #f8fafc;
-        border-color: #94a3b8;
+        background: var(--ac-color-surface-slate);
+        border-color: var(--ac-color-slate-400);
       }
       .btn-save-draft {
         padding: 10px 18px;
-        background: #19465b;
+        background: var(--ac-color-ink-b);
         border: none;
         border-radius: 10px;
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
         font-weight: 600;
         font-size: 14px;
         cursor: pointer;
@@ -500,14 +500,14 @@ export interface PendingFile {
         background: #0f2c3b;
       }
       .btn-save-draft:disabled {
-        background: #94a3b8;
+        background: var(--ac-color-slate-400);
         cursor: not-allowed;
       }
 
       /* Profile section card */
       .profile-section-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 16px;
         padding: 20px;
         margin-bottom: 24px;
@@ -519,18 +519,18 @@ export interface PendingFile {
         gap: 12px;
         margin-bottom: 16px;
         padding-bottom: 16px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--ac-color-slate-100);
       }
       .selector-label {
         font-weight: 600;
         font-size: 14px;
-        color: #475569;
+        color: var(--ac-color-slate-600);
       }
       .child-select {
         padding: 8px 16px;
-        border: 1px solid #cbd5e1;
+        border: 1px solid var(--ac-color-slate-300);
         border-radius: 8px;
-        background: #f8fafc;
+        background: var(--ac-color-surface-slate);
         font-size: 14px;
         font-weight: 500;
         outline: none;
@@ -541,17 +541,17 @@ export interface PendingFile {
         cursor: wait;
       }
       .child-select:focus {
-        border-color: #3d6375;
+        border-color: var(--ac-color-action);
       }
       .selector-error {
         font-size: 12px;
-        color: #b91c1c;
+        color: var(--ac-color-alert-slate);
         font-weight: 600;
       }
       .no-student-hint {
         margin: 0;
         font-size: 13px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       /* Profile info grid */
@@ -564,8 +564,8 @@ export interface PendingFile {
       .student-avatar-container {
         width: 64px;
         height: 64px;
-        background: #eef8fc;
-        border: 1px solid #e2e8f0;
+        background: var(--ac-color-tint-blue-mist);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
         display: flex;
         align-items: center;
@@ -580,7 +580,7 @@ export interface PendingFile {
       .student-avatar-large {
         font-size: 24px;
         font-weight: 700;
-        color: #19465b;
+        color: var(--ac-color-ink-b);
       }
       .student-meta-block {
         display: flex;
@@ -590,17 +590,17 @@ export interface PendingFile {
       .student-name-title {
         font-size: 20px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
       .student-id-subtitle {
         font-size: 13px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-weight: 500;
       }
       .student-detail-group {
         display: flex;
         gap: 32px;
-        border-left: 1px solid #e2e8f0;
+        border-left: 1px solid var(--ac-color-border-slate);
         padding-left: 32px;
       }
       .detail-item {
@@ -611,13 +611,13 @@ export interface PendingFile {
       .detail-label {
         font-size: 11px;
         font-weight: 700;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         letter-spacing: 0.5px;
       }
       .detail-value {
         font-size: 15px;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--ac-color-slate-800);
         display: flex;
         align-items: center;
         gap: 6px;
@@ -627,7 +627,7 @@ export interface PendingFile {
         align-items: center;
         gap: 8px;
         padding: 6px 14px;
-        background: #d1fae5;
+        background: var(--ac-color-green-100);
         border-radius: 9999px;
         color: #065f46;
         font-size: 13px;
@@ -637,7 +637,7 @@ export interface PendingFile {
       .status-dot {
         width: 8px;
         height: 8px;
-        background: #10b981;
+        background: var(--ac-color-green-500);
         border-radius: 50%;
       }
 
@@ -656,8 +656,8 @@ export interface PendingFile {
 
       /* Card Section Styling */
       .form-section {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 16px;
         padding: 24px;
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
@@ -666,7 +666,7 @@ export interface PendingFile {
         margin: 0 0 20px 0;
         font-size: 18px;
         font-weight: 700;
-        color: #1e293b;
+        color: var(--ac-color-slate-800);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -690,24 +690,24 @@ export interface PendingFile {
       .form-group label {
         font-size: 13px;
         font-weight: 600;
-        color: #475569;
+        color: var(--ac-color-slate-600);
       }
       .form-group input,
       .form-group select,
       .form-section textarea {
         padding: 12px 16px;
-        border: 1px solid #cbd5e1;
+        border: 1px solid var(--ac-color-slate-300);
         border-radius: 10px;
         font-size: 14px;
         outline: none;
         transition: all 0.2s;
-        background: #f8fafc;
+        background: var(--ac-color-surface-slate);
       }
       .form-group input:focus,
       .form-group select:focus,
       .form-section textarea:focus {
-        border-color: #3d6375;
-        background: #ffffff;
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-surface);
         box-shadow: 0 0 0 3px rgb(61 99 117 / 0.15);
       }
       .form-section textarea {
@@ -730,8 +730,8 @@ export interface PendingFile {
       .scale-badge {
         font-size: 11px;
         font-weight: 700;
-        color: #64748b;
-        background: #f1f5f9;
+        color: var(--ac-color-text-slate);
+        background: var(--ac-color-slate-100);
         padding: 4px 8px;
         border-radius: 6px;
         letter-spacing: 0.5px;
@@ -754,19 +754,19 @@ export interface PendingFile {
       .metric-label {
         font-size: 14px;
         font-weight: 600;
-        color: #334155;
+        color: var(--ac-color-slate-700);
       }
       .metric-value {
         font-size: 15px;
         font-weight: 700;
-        color: #19465b;
+        color: var(--ac-color-ink-b);
       }
       .custom-slider {
         -webkit-appearance: none;
         width: 100%;
         height: 6px;
         border-radius: 3px;
-        background: #e2e8f0;
+        background: var(--ac-color-border-slate);
         outline: none;
         margin: 8px 0;
       }
@@ -776,7 +776,7 @@ export interface PendingFile {
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: #19465b;
+        background: var(--ac-color-ink-b);
         cursor: pointer;
         transition: transform 0.1s;
       }
@@ -787,7 +787,7 @@ export interface PendingFile {
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: #19465b;
+        background: var(--ac-color-ink-b);
         cursor: pointer;
         border: none;
         transition: transform 0.1s;
@@ -798,18 +798,18 @@ export interface PendingFile {
 
       /* Attachment upload */
       .upload-dragzone {
-        border: 2px dashed #cbd5e1;
+        border: 2px dashed var(--ac-color-slate-300);
         border-radius: 12px;
         padding: 24px;
         text-align: center;
         cursor: pointer;
         transition: all 0.2s;
-        background: #f8fafc;
+        background: var(--ac-color-surface-slate);
         margin-bottom: 16px;
       }
       .upload-dragzone:hover {
-        border-color: #19465b;
-        background: #eef8fc;
+        border-color: var(--ac-color-ink-b);
+        background: var(--ac-color-tint-blue-mist);
       }
       .upload-cloud-icon {
         font-size: 32px;
@@ -819,22 +819,22 @@ export interface PendingFile {
       .upload-main-text {
         font-size: 14px;
         font-weight: 600;
-        color: #334155;
+        color: var(--ac-color-slate-700);
         margin: 0 0 4px 0;
       }
       .browse-btn {
-        color: #3d6375;
+        color: var(--ac-color-action);
         text-decoration: underline;
       }
       .upload-sub-text {
         font-size: 11px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         margin: 0;
       }
       .upload-error {
         margin: 0 0 12px 0;
         font-size: 12px;
-        color: #b91c1c;
+        color: var(--ac-color-alert-slate);
         font-weight: 600;
       }
       .photo-previews-row {
@@ -844,9 +844,9 @@ export interface PendingFile {
       }
       .preview-box {
         aspect-ratio: 1;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
-        background: #f8fafc;
+        background: var(--ac-color-surface-slate);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -871,7 +871,7 @@ export interface PendingFile {
       }
       .preview-doc-name {
         font-size: 9px;
-        color: #475569;
+        color: var(--ac-color-slate-600);
         word-break: break-all;
         max-height: 2.6em;
         overflow: hidden;
@@ -887,8 +887,8 @@ export interface PendingFile {
       .spinner {
         width: 22px;
         height: 22px;
-        border: 3px solid #cbd5e1;
-        border-top-color: #19465b;
+        border: 3px solid var(--ac-color-slate-300);
+        border-top-color: var(--ac-color-ink-b);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
       }
@@ -903,7 +903,7 @@ export interface PendingFile {
         bottom: 4px;
         width: 20px;
         height: 20px;
-        background: #10b981;
+        background: var(--ac-color-green-500);
         color: white;
         border-radius: 50%;
         font-size: 11px;
@@ -917,7 +917,7 @@ export interface PendingFile {
         right: 4px;
         width: 24px;
         height: 24px;
-        background: #ef4444;
+        background: var(--ac-color-red-500);
         color: white;
         border: none;
         border-radius: 50%;
@@ -933,13 +933,13 @@ export interface PendingFile {
       }
       .preview-box-empty {
         aspect-ratio: 1;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
-        background: #f8fafc;
+        background: var(--ac-color-surface-slate);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #cbd5e1;
+        color: var(--ac-color-slate-300);
       }
       .preview-icon {
         font-size: 24px;
@@ -957,7 +957,7 @@ export interface PendingFile {
         margin-top: 24px;
       }
       .alert-message.error {
-        background: #fef2f2;
+        background: var(--ac-color-red-50);
         color: #991b1b;
         border: 1px solid #fee2e2;
       }
@@ -976,8 +976,8 @@ export interface PendingFile {
         bottom: 0;
         left: 292px;
         right: 0;
-        background: #ffffff;
-        border-top: 1px solid #e2e8f0;
+        background: var(--ac-color-surface);
+        border-top: 1px solid var(--ac-color-border-slate);
         padding: 16px 56px;
         box-shadow: 0 -4px 10px rgb(0 0 0 / 0.05);
         z-index: 10;
@@ -990,7 +990,7 @@ export interface PendingFile {
       .autosave-text {
         font-size: 12px;
         font-weight: 500;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
       .footer-actions {
         display: flex;
@@ -998,18 +998,18 @@ export interface PendingFile {
       }
       .btn-footer-save {
         padding: 12px 24px;
-        background: #ffffff;
-        border: 1px solid #cbd5e1;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-slate-300);
         border-radius: 10px;
-        color: #475569;
+        color: var(--ac-color-slate-600);
         font-weight: 600;
         font-size: 14px;
         cursor: pointer;
         transition: all 0.2s;
       }
       .btn-footer-save:hover {
-        background: #f8fafc;
-        border-color: #94a3b8;
+        background: var(--ac-color-surface-slate);
+        border-color: var(--ac-color-slate-400);
       }
       .btn-footer-save:disabled {
         opacity: 0.5;
@@ -1017,10 +1017,10 @@ export interface PendingFile {
       }
       .btn-footer-submit {
         padding: 12px 28px;
-        background: #19465b;
+        background: var(--ac-color-ink-b);
         border: none;
         border-radius: 10px;
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
         font-weight: 600;
         font-size: 14px;
         cursor: pointer;
@@ -1030,7 +1030,7 @@ export interface PendingFile {
         background: #0f2c3b;
       }
       .btn-footer-submit:disabled {
-        background: #94a3b8;
+        background: var(--ac-color-slate-400);
         cursor: not-allowed;
       }
 

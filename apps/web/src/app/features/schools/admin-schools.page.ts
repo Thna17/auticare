@@ -53,15 +53,15 @@ import { SchoolsApi } from './data-access/schools.api';
       }
       .page-header a {
         border-radius: 8px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         padding: 12px 16px;
         text-decoration: none;
         font-weight: var(--ac-font-weight-bold);
       }
       .eyebrow,
       .meta {
-        color: #3d6375;
+        color: var(--ac-color-action);
         font-weight: var(--ac-font-weight-bold);
       }
       h1 {
@@ -77,7 +77,7 @@ import { SchoolsApi } from './data-access/schools.api';
         gap: 18px;
       }
       .error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-weight: var(--ac-font-weight-semibold);
       }
       @media (max-width: 720px) {

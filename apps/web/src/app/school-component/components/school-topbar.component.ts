@@ -66,7 +66,7 @@ import { AuthService } from '../../core/auth/auth.service';
       .search-input {
         width: 100%;
         padding: 12px 16px 12px 44px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
         font-size: 14px;
         outline: none;
@@ -74,7 +74,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .search-input:focus {
-        border-color: #3b82f6;
+        border-color: var(--ac-color-blue-500);
       }
 
       .topbar-actions {
@@ -94,7 +94,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .icon-btn:hover {
-        background: #f1f5f9;
+        background: var(--ac-color-slate-100);
       }
 
       .icon {
@@ -107,7 +107,7 @@ import { AuthService } from '../../core/auth/auth.service';
         right: 6px;
         width: 8px;
         height: 8px;
-        background: #ef4444;
+        background: var(--ac-color-red-500);
         border-radius: 50%;
       }
 
@@ -116,7 +116,7 @@ import { AuthService } from '../../core/auth/auth.service';
         align-items: center;
         gap: 12px;
         padding-left: 16px;
-        border-left: 1px solid #e2e8f0;
+        border-left: 1px solid var(--ac-color-border-slate);
         text-decoration: none;
         color: inherit;
         cursor: pointer;
@@ -135,19 +135,19 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .user-name {
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         font-size: 14px;
       }
 
       .user-role {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .user-avatar {
         width: 40px;
         height: 40px;
-        background: #dbeafe;
+        background: var(--ac-color-blue-100);
         border-radius: 50%;
         display: flex;
         align-items: center;

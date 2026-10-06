@@ -131,8 +131,9 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         min-height: 100svh;
         background:
           linear-gradient(115deg, rgb(231 238 223 / 0.52), transparent 36%),
-          linear-gradient(245deg, rgb(232 246 255 / 0.65), transparent 34%), #faf8f2;
-        color: #001e2b;
+          linear-gradient(245deg, rgb(232 246 255 / 0.65), transparent 34%),
+          var(--ac-color-background);
+        color: var(--ac-color-text-strong);
       }
 
       .auth-page {
@@ -146,7 +147,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       .auth-card {
         width: min(100%, 540px);
         border-radius: 24px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: 0 18px 60px rgb(41 74 90 / 0.1);
         padding: 66px 64px 50px;
         display: grid;
@@ -154,7 +155,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .brand {
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         justify-self: center;
         display: inline-flex;
         align-items: center;
@@ -193,7 +194,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       header p {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-page-subtitle);
         line-height: 1.55;
       }
@@ -213,31 +214,31 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       input {
         width: 100%;
         height: 62px;
-        border: 1px solid #b8c2c8;
+        border: 1px solid var(--ac-color-border-grey);
         border-radius: 14px;
         background: #f2f9ff;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font: inherit;
         font-weight: var(--ac-font-weight-regular);
         padding: 0 24px;
       }
 
       input:focus {
-        border-color: #3d6375;
-        background: #ffffff;
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-surface);
         box-shadow: 0 0 0 4px rgb(61 99 117 / 0.12);
         outline: none;
       }
 
       input[aria-invalid='true'] {
-        border-color: #ba1a1a;
+        border-color: var(--ac-color-red-600);
       }
 
       .toggle-button {
         justify-self: start;
         border: 0;
         background: transparent;
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         cursor: pointer;
         font: inherit;
         font-weight: var(--ac-font-weight-bold);
@@ -263,8 +264,8 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
       .submit-button {
         border: 0;
-        background: #8db4c8;
-        color: #123f52;
+        background: var(--ac-color-primary);
+        color: var(--ac-color-ink-d);
         cursor: pointer;
         box-shadow: 0 14px 28px rgb(61 99 117 / 0.12);
       }
@@ -276,8 +277,8 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
       .submit-button:hover:not(:disabled),
       .primary-link:hover {
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
       }
 
       .submit-button:disabled {
@@ -286,14 +287,14 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .primary-link {
-        background: #8db4c8;
-        color: #123f52;
+        background: var(--ac-color-primary);
+        color: var(--ac-color-ink-d);
       }
 
       .success {
         border-radius: 16px;
-        background: #e7eedf;
-        color: #244b2d;
+        background: var(--ac-color-sage-light);
+        color: var(--ac-color-olive-darkest);
         display: grid;
         grid-template-columns: 30px minmax(0, 1fr);
         align-items: start;
@@ -309,7 +310,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
       .field-error,
       .form-error {
-        color: #ba1a1a;
+        color: var(--ac-color-red-600);
         font-size: var(--ac-type-label);
         line-height: 1.4;
         margin-top: -12px;
@@ -318,19 +319,19 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       .form-error {
         margin-top: 0;
         border-radius: 12px;
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
         padding: 14px 16px;
       }
 
       footer {
-        border-top: 1px solid #c1c7cc;
+        border-top: 1px solid var(--ac-color-grey-pale-alt);
         padding-top: 28px;
         text-align: center;
       }
 
       footer a {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         font-weight: var(--ac-font-weight-bold);
         text-decoration: none;
       }

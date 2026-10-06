@@ -204,7 +204,7 @@ const monthsToLabel = (months: number): string => {
 
       .eyebrow {
         margin: 0;
-        color: #3d6375;
+        color: var(--ac-color-action);
         font-weight: var(--ac-font-weight-bold);
       }
 
@@ -216,7 +216,7 @@ const monthsToLabel = (months: number): string => {
       .intro {
         margin: 0;
         max-width: 68ch;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         line-height: 1.55;
       }
 
@@ -230,18 +230,18 @@ const monthsToLabel = (months: number): string => {
         display: grid;
         gap: 6px;
         font-weight: var(--ac-font-weight-bold);
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       select,
       textarea {
         min-height: 44px;
         padding: 8px 12px;
-        border: 1px solid #b8c2c8;
+        border: 1px solid var(--ac-color-border-grey);
         border-radius: 10px;
-        background: #f8fcff;
+        background: var(--ac-color-tint-blue-pale);
         font: inherit;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       textarea {
@@ -270,13 +270,13 @@ const monthsToLabel = (months: number): string => {
         padding: 3px 10px;
         border-radius: 999px;
         background: #eef3f6;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
       }
 
       .ages {
-        color: #5b6569;
+        color: var(--ac-color-grey-b);
         font-size: var(--ac-type-meta);
       }
 
@@ -287,7 +287,7 @@ const monthsToLabel = (months: number): string => {
 
       .summary {
         margin: 0 0 14px;
-        color: #263238;
+        color: var(--ac-color-text);
         line-height: 1.55;
       }
 
@@ -311,8 +311,8 @@ const monthsToLabel = (months: number): string => {
       }
 
       .status.going {
-        background: #e8f6ff;
-        color: #294a5a;
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-text-dark);
       }
 
       .primary,
@@ -330,21 +330,21 @@ const monthsToLabel = (months: number): string => {
 
       .primary {
         border: 0;
-        background: #3d6375;
-        color: #fff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
       }
 
       .plain,
       .retry {
-        border: 1px solid #b8c2c8;
-        background: #fff;
-        color: #001e2b;
+        border: 1px solid var(--ac-color-border-grey);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
       }
 
       .cta {
         border: 0;
-        background: #3d6375;
-        color: #fff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         text-decoration: none;
       }
 
@@ -360,26 +360,26 @@ const monthsToLabel = (months: number): string => {
         margin-top: 14px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         justify-items: start;
       }
 
       .note em {
         font-style: normal;
         font-weight: var(--ac-font-weight-regular, 400);
-        color: #5b6569;
+        color: var(--ac-color-grey-b);
       }
 
       .error {
-        color: #b42318;
+        color: var(--ac-color-red-700);
       }
 
       .error.banner {
         margin: 16px 0 0;
         padding: 12px 16px;
         border-radius: 10px;
-        background: #fdecec;
-        border: 1px solid #eec2c2;
+        background: var(--ac-color-red-100);
+        border: 1px solid var(--ac-color-red-border);
       }
 
       @media (max-width: 640px) {

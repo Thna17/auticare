@@ -77,7 +77,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     `
       .sidebar {
         width: 260px;
-        background: #e8f4f8;
+        background: var(--ac-color-tint-blue-light);
         border-radius: 16px;
         padding: 24px 16px;
         display: flex;
@@ -108,7 +108,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       .logo-text {
         font-size: 20px;
         font-weight: 700;
-        color: #1a3a4a;
+        color: var(--ac-color-ink-e);
       }
 
       .menu-toggle {
@@ -116,7 +116,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         border: none;
         font-size: 20px;
         cursor: pointer;
-        color: #3d6375;
+        color: var(--ac-color-action);
       }
 
       .school-profile {
@@ -132,7 +132,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       .school-avatar {
         width: 40px;
         height: 40px;
-        background: #dbeafe;
+        background: var(--ac-color-blue-100);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -148,17 +148,17 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
       .school-name {
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         font-size: 14px;
       }
 
       .school-type {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .dropdown-arrow {
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .nav-menu {
@@ -174,7 +174,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         padding: 12px 16px;
         border-radius: 10px;
         text-decoration: none;
-        color: #3d6375;
+        color: var(--ac-color-action);
         font-weight: 500;
         font-size: 14px;
         transition: all 0.2s;
@@ -191,7 +191,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
       .nav-item.active {
         background: #a8d5e2;
-        color: #1a3a4a;
+        color: var(--ac-color-ink-e);
         font-weight: 600;
       }
 
@@ -208,7 +208,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       .add-activity-btn {
         width: 100%;
         padding: 14px;
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
         border: none;
         border-radius: 12px;
@@ -219,7 +219,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       }
 
       .add-activity-btn:hover {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
 
       .sidebar-footer {
@@ -230,7 +230,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       }
 
       .logout-btn {
-        color: #ef4444;
+        color: var(--ac-color-red-500);
       }
 
       .logout-btn:hover {

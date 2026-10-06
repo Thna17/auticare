@@ -107,7 +107,7 @@ import { SchoolsApi } from './data-access/schools.api';
         margin-bottom: 28px;
       }
       .eyebrow {
-        color: #3d6375;
+        color: var(--ac-color-action);
         font-weight: var(--ac-font-weight-bold);
       }
       h1 {
@@ -120,7 +120,7 @@ import { SchoolsApi } from './data-access/schools.api';
         gap: 16px;
       }
       fieldset {
-        border: 1px solid #d4e6ef;
+        border: 1px solid var(--ac-color-border-info);
         border-radius: 8px;
         padding: 18px;
       }
@@ -135,7 +135,7 @@ import { SchoolsApi } from './data-access/schools.api';
       }
       input,
       textarea {
-        border: 1px solid #c1d3dc;
+        border: 1px solid var(--ac-color-grey-pale);
         border-radius: 8px;
         padding: 12px;
         font: inherit;
@@ -144,22 +144,22 @@ import { SchoolsApi } from './data-access/schools.api';
         width: fit-content;
         border: 0;
         border-radius: 8px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         padding: 12px 18px;
         font-weight: var(--ac-font-weight-bold);
       }
       .error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-weight: var(--ac-font-weight-semibold);
       }
       .field-error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-semibold);
       }
       .success {
-        color: #236b43;
+        color: var(--ac-color-green-700);
         font-weight: var(--ac-font-weight-semibold);
       }
     `,

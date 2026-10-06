@@ -145,7 +145,7 @@ import { statusPresentation, statusTone } from '../appointments/appointments.typ
       h2 {
         margin: 0;
         font-size: var(--ac-type-card-title);
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       .close-button {
@@ -160,7 +160,7 @@ import { statusPresentation, statusTone } from '../appointments/appointments.typ
       .drawer-section h3 {
         margin: 0 0 10px;
         font-size: var(--ac-type-label);
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       .detail-list {

@@ -67,7 +67,7 @@ export type BadgeTone = 'positive' | 'caution' | 'alert' | 'neutral';
 
       .neutral {
         background: #dceaf0;
-        color: #103443;
+        color: var(--ac-color-ink-f);
       }
     `,
   ],

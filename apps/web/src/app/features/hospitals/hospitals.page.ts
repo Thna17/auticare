@@ -251,8 +251,8 @@ const SERVICE_FILTER_OPTIONS = [
         align-items: center;
         gap: 10px;
         padding: 0 16px;
-        background: #ffffff;
-        border: 1px solid #dfe9ee;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 10px;
         box-shadow: 0 2px 8px rgb(15 23 42 / 0.04);
       }
@@ -287,18 +287,18 @@ const SERVICE_FILTER_OPTIONS = [
       .user-text .name {
         font-size: 13px;
         font-weight: 700;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
       }
       .user-text .role {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
       .avatar-small {
         width: 38px;
         height: 38px;
         border-radius: 50%;
-        background: #2d6a7a;
-        color: #ffffff;
+        background: var(--ac-color-action-alt);
+        color: var(--ac-color-text-on-action);
         display: grid;
         place-items: center;
         font-size: 13px;
@@ -315,19 +315,19 @@ const SERVICE_FILTER_OPTIONS = [
       }
       .page-header h1 {
         font-size: 28px;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
         margin-bottom: 6px;
       }
       .page-header > div > p {
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
         max-width: 560px;
       }
       .view-toggle {
         display: flex;
         gap: 8px;
-        background: #ffffff;
-        border: 1px solid #dfe9ee;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 10px;
         padding: 4px;
       }
@@ -337,7 +337,7 @@ const SERVICE_FILTER_OPTIONS = [
         gap: 6px;
         border: none;
         background: transparent;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font: inherit;
         font-size: 13px;
         font-weight: 600;
@@ -346,8 +346,8 @@ const SERVICE_FILTER_OPTIONS = [
         cursor: pointer;
       }
       .toggle-btn.active {
-        background: #2d6a7a;
-        color: #ffffff;
+        background: var(--ac-color-action-alt);
+        color: var(--ac-color-text-on-action);
       }
 
       /* ── Layout: sidebar + list ──────────────────────────────── */
@@ -360,8 +360,8 @@ const SERVICE_FILTER_OPTIONS = [
       .filters-sidebar {
         width: 250px;
         flex-shrink: 0;
-        background: #ffffff;
-        border: 1px solid #dfe9ee;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 12px;
         padding: 20px;
         display: flex;
@@ -381,7 +381,7 @@ const SERVICE_FILTER_OPTIONS = [
       }
       .filters-header h2 {
         font-size: 16px;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
       }
       .filter-group {
         display: flex;
@@ -393,20 +393,20 @@ const SERVICE_FILTER_OPTIONS = [
         font-weight: 700;
         letter-spacing: 0.4px;
         text-transform: uppercase;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
       .filter-select {
         padding: 10px 12px;
-        border: 1px solid #dfe9ee;
+        border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 8px;
         font: inherit;
         font-size: 14px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         cursor: pointer;
         outline: none;
       }
       .filter-select:focus {
-        border-color: #2d6a7a;
+        border-color: var(--ac-color-action-alt);
       }
       .checkbox-group {
         display: flex;
@@ -418,18 +418,18 @@ const SERVICE_FILTER_OPTIONS = [
         align-items: center;
         gap: 8px;
         font-size: 14px;
-        color: #334155;
+        color: var(--ac-color-slate-700);
         cursor: pointer;
       }
       .checkbox-label input {
-        accent-color: #2d6a7a;
+        accent-color: var(--ac-color-action-alt);
         width: 16px;
         height: 16px;
       }
       .apply-filters-btn {
         padding: 12px;
-        background: #2d6a7a;
-        color: #ffffff;
+        background: var(--ac-color-action-alt);
+        color: var(--ac-color-text-on-action);
         border: none;
         border-radius: 8px;
         font: inherit;
@@ -439,13 +439,13 @@ const SERVICE_FILTER_OPTIONS = [
         transition: background 0.2s;
       }
       .apply-filters-btn:hover {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
       .clear-filters-btn {
         padding: 10px;
         background: transparent;
-        color: #64748b;
-        border: 1px solid #e2e8f0;
+        color: var(--ac-color-text-slate);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         font: inherit;
         font-weight: 600;
@@ -453,8 +453,8 @@ const SERVICE_FILTER_OPTIONS = [
         cursor: pointer;
       }
       .clear-filters-btn:hover {
-        color: #2d6a7a;
-        border-color: #2d6a7a;
+        color: var(--ac-color-action-alt);
+        border-color: var(--ac-color-action-alt);
       }
 
       /* ── Results list ────────────────────────────────────────── */
@@ -469,14 +469,14 @@ const SERVICE_FILTER_OPTIONS = [
         gap: 16px;
         margin-bottom: 20px;
         padding: 14px 18px;
-        background: #ffffff;
-        border: 1px solid #dfe9ee;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 12px;
         box-shadow: 0 2px 8px rgb(15 23 42 / 0.04);
       }
       .results-count {
         font-size: 14px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-weight: 500;
       }
       .sort-dropdown {
@@ -484,11 +484,11 @@ const SERVICE_FILTER_OPTIONS = [
         align-items: center;
         gap: 8px;
         font-size: 13px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
       .sort-dropdown select {
         padding: 7px 10px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         font: inherit;
         font-size: 13px;
@@ -500,17 +500,17 @@ const SERVICE_FILTER_OPTIONS = [
       .empty-state {
         padding: 40px 20px;
         text-align: center;
-        background: #ffffff;
-        border: 1px solid #dfe9ee;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
       }
       .error {
         padding: 14px 18px;
         border-radius: 12px;
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
         font-weight: 600;
         font-size: 14px;
       }
@@ -521,8 +521,8 @@ const SERVICE_FILTER_OPTIONS = [
         gap: 18px;
         padding: 20px;
         margin-bottom: 16px;
-        background: #ffffff;
-        border: 1px solid #dfe9ee;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 12px;
         box-shadow: 0 2px 8px rgb(15 23 42 / 0.04);
         transition: box-shadow 0.2s;
@@ -537,7 +537,7 @@ const SERVICE_FILTER_OPTIONS = [
         width: 96px;
         height: 96px;
         border-radius: 12px;
-        background: #e8f4f8;
+        background: var(--ac-color-tint-blue-light);
         display: grid;
         place-items: center;
       }
@@ -548,7 +548,7 @@ const SERVICE_FILTER_OPTIONS = [
       }
       .hospital-mark span::before,
       .hospital-mark span::after {
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         content: '';
         left: 50%;
         position: absolute;
@@ -572,13 +572,13 @@ const SERVICE_FILTER_OPTIONS = [
       }
       .hospital-header h3 {
         font-size: 18px;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
       }
       .hospital-location {
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
       }
       .location-icon {
@@ -591,8 +591,8 @@ const SERVICE_FILTER_OPTIONS = [
       }
       .service-tag {
         padding: 4px 10px;
-        background: #dbeafe;
-        color: #2563eb;
+        background: var(--ac-color-blue-100);
+        color: var(--ac-color-blue-600);
         border-radius: 6px;
         font-size: 12px;
         font-weight: 600;
@@ -603,8 +603,8 @@ const SERVICE_FILTER_OPTIONS = [
       }
       .booking-btn {
         padding: 11px 22px;
-        background: #2d6a7a;
-        color: #ffffff;
+        background: var(--ac-color-action-alt);
+        color: var(--ac-color-text-on-action);
         border: none;
         border-radius: 8px;
         font: inherit;
@@ -614,15 +614,15 @@ const SERVICE_FILTER_OPTIONS = [
         transition: background 0.2s;
       }
       .booking-btn:hover {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
 
       /* ── Admin panel (kept) ──────────────────────────────────── */
       .admin-panel {
         margin-top: 28px;
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 12px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: 0 8px 30px rgb(41 74 90 / 0.06);
         padding: 24px;
       }
@@ -631,11 +631,11 @@ const SERVICE_FILTER_OPTIONS = [
       }
       .admin-panel h2 {
         font-size: 20px;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
       }
       .admin-panel header p {
         margin-top: 6px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
       }
       form {
@@ -654,11 +654,11 @@ const SERVICE_FILTER_OPTIONS = [
         gap: 6px;
         font-size: 13px;
         font-weight: 600;
-        color: #334155;
+        color: var(--ac-color-slate-700);
       }
       .field input,
       .field textarea {
-        border: 1px solid #dfe9ee;
+        border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 8px;
         font: inherit;
         font-weight: 400;
@@ -667,7 +667,7 @@ const SERVICE_FILTER_OPTIONS = [
       }
       .field input:focus,
       .field textarea:focus {
-        border-color: #3d6375;
+        border-color: var(--ac-color-action);
         box-shadow: 0 0 0 4px rgb(61 99 117 / 0.12);
         outline: none;
       }
@@ -676,15 +676,15 @@ const SERVICE_FILTER_OPTIONS = [
         min-height: 46px;
         border: 0;
         border-radius: 8px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         cursor: pointer;
         font: inherit;
         font-weight: var(--ac-font-weight-bold);
         padding: 0 18px;
       }
       .admin-panel button[type='submit']:hover:not(:disabled) {
-        background: #244b5d;
+        background: var(--ac-color-ink-j);
       }
       .admin-panel button[type='submit']:disabled {
         cursor: progress;
@@ -697,12 +697,12 @@ const SERVICE_FILTER_OPTIONS = [
         font-size: 14px;
       }
       .form-error {
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
       }
       .success {
-        background: #e7eedf;
-        color: #244b2d;
+        background: var(--ac-color-sage-light);
+        color: var(--ac-color-olive-darkest);
       }
 
       /* ── Responsive ──────────────────────────────────────────── */

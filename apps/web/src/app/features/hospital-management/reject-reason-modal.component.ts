@@ -92,7 +92,7 @@ const presetReasons = [
       h2 {
         margin: 0 0 6px;
         font-size: var(--ac-type-card-title);
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       .summary {

@@ -74,7 +74,7 @@ export const defaultAnswerScale: readonly AnswerScaleOption[] = [
       .pill.selected {
         border-color: var(--scr-teal);
         background: var(--scr-teal);
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
       }
       .pill:focus-visible {
         outline: 3px solid var(--scr-teal);

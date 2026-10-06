@@ -122,13 +122,13 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
     `
       /* Local constants mirroring the app shell's hardcoded hex/px (no new tokens). */
       :host {
-        --hc-teal: #3d6375;
-        --hc-text: #263238;
-        --hc-text-muted: #66747a;
-        --hc-surface: #ffffff;
-        --hc-banner-bg: #e8f6ff;
-        --hc-banner-border: #d4e6ef;
-        --hc-avatar-bg: #8db4c8;
+        --hc-teal: var(--ac-color-action);
+        --hc-text: var(--ac-color-text);
+        --hc-text-muted: var(--ac-color-text-muted);
+        --hc-surface: var(--ac-color-surface);
+        --hc-banner-bg: var(--ac-color-surface-info);
+        --hc-banner-border: var(--ac-color-border-info);
+        --hc-avatar-bg: var(--ac-color-primary);
         --hc-radius: 12px;
         --hc-shadow-card: 0 12px 30px rgb(41 74 90 / 0.08);
         display: block;
@@ -206,7 +206,7 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
       .pill.active {
         border-color: var(--hc-teal);
         background: var(--hc-teal);
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
       }
       .pill:focus-visible {
         outline: 3px solid var(--hc-teal);
@@ -317,7 +317,7 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
         padding: 0 24px;
         border-radius: var(--hc-radius);
         background: var(--hc-teal);
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
         font-weight: 700;
         font-size: 15px;
         text-decoration: none;

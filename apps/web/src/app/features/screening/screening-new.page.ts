@@ -24,9 +24,9 @@ import { ScreeningApi } from './data-access/screening.api';
   styles: [
     `
       :host {
-        --scr-teal: #3d6375;
-        --scr-text-muted: #66747a;
-        --scr-error: #a23434;
+        --scr-teal: var(--ac-color-action);
+        --scr-text-muted: var(--ac-color-text-muted);
+        --scr-error: var(--ac-color-alert-text);
         display: block;
       }
       .wait {

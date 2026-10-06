@@ -142,19 +142,19 @@ import { ScreeningInfoBannerComponent } from './components/screening-info-banner
          hardcoded hex/px exactly (there is no token system). Child components in
          this feature inherit these custom properties. */
       :host {
-        --scr-teal: #3d6375;
-        --scr-teal-ink: #103443;
-        --scr-text: #263238;
-        --scr-text-muted: #66747a;
-        --scr-surface: #ffffff;
-        --scr-banner-bg: #e8f6ff;
-        --scr-banner-border: #d4e6ef;
-        --scr-avatar-bg: #8db4c8;
-        --scr-divider: #c1d3dc;
+        --scr-teal: var(--ac-color-action);
+        --scr-teal-ink: var(--ac-color-ink-f);
+        --scr-text: var(--ac-color-text);
+        --scr-text-muted: var(--ac-color-text-muted);
+        --scr-surface: var(--ac-color-surface);
+        --scr-banner-bg: var(--ac-color-surface-info);
+        --scr-banner-border: var(--ac-color-border-info);
+        --scr-avatar-bg: var(--ac-color-primary);
+        --scr-divider: var(--ac-color-grey-pale);
         --scr-radius: 12px;
         --scr-shadow-btn: 0 10px 26px rgb(61 99 117 / 0.18);
         --scr-shadow-card: 0 12px 30px rgb(41 74 90 / 0.08);
-        --scr-error: #a23434;
+        --scr-error: var(--ac-color-alert-text);
         display: block;
       }
 
@@ -303,7 +303,7 @@ import { ScreeningInfoBannerComponent } from './components/screening-info-banner
         border: 0;
         border-radius: var(--scr-radius);
         background: var(--scr-teal);
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
         font-weight: 700;
         font-size: 16px;
         cursor: pointer;

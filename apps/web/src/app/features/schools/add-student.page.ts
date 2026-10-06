@@ -137,12 +137,12 @@ import { SchoolsApi } from './data-access/schools.api';
         margin: 0 0 8px 0;
         font-size: 28px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .header-text p {
         margin: 0;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
       }
 
@@ -154,7 +154,7 @@ import { SchoolsApi } from './data-access/schools.api';
       fieldset {
         display: grid;
         gap: 16px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
         padding: 20px;
         background: white;
@@ -163,7 +163,7 @@ import { SchoolsApi } from './data-access/schools.api';
       legend {
         font-weight: 700;
         font-size: 16px;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         padding: 0 8px;
       }
 
@@ -172,12 +172,12 @@ import { SchoolsApi } from './data-access/schools.api';
         gap: 6px;
         font-weight: 600;
         font-size: 14px;
-        color: #334155;
+        color: var(--ac-color-slate-700);
       }
 
       input,
       textarea {
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         padding: 10px 14px;
         font: inherit;
@@ -188,7 +188,7 @@ import { SchoolsApi } from './data-access/schools.api';
       input:focus,
       textarea:focus {
         outline: none;
-        border-color: #2d6a7a;
+        border-color: var(--ac-color-action-alt);
         box-shadow: 0 0 0 3px rgba(45, 106, 122, 0.1);
       }
 
@@ -203,21 +203,21 @@ import { SchoolsApi } from './data-access/schools.api';
         align-items: center;
         gap: 12px;
         padding: 10px 14px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
+        background: var(--ac-color-surface-slate);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
       }
 
       .computed-label {
         font-weight: 600;
         font-size: 14px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .computed-value {
         font-weight: 700;
         font-size: 14px;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .form-actions {
@@ -230,7 +230,7 @@ import { SchoolsApi } from './data-access/schools.api';
       .btn-primary {
         border: 0;
         border-radius: 10px;
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
         padding: 12px 24px;
         font-weight: 700;
@@ -240,7 +240,7 @@ import { SchoolsApi } from './data-access/schools.api';
       }
 
       .btn-primary:hover {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
 
       .btn-primary:disabled {
@@ -251,10 +251,10 @@ import { SchoolsApi } from './data-access/schools.api';
       .btn-secondary {
         display: inline-flex;
         align-items: center;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 10px;
         background: white;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         padding: 12px 24px;
         font-weight: 600;
         font-size: 14px;
@@ -264,24 +264,24 @@ import { SchoolsApi } from './data-access/schools.api';
       }
 
       .btn-secondary:hover {
-        border-color: #cbd5e1;
-        background: #f8fafc;
+        border-color: var(--ac-color-slate-300);
+        background: var(--ac-color-surface-slate);
       }
 
       .error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-weight: 600;
         font-size: 14px;
       }
 
       .field-error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-size: 12px;
         font-weight: 600;
       }
 
       .success {
-        color: #236b43;
+        color: var(--ac-color-green-700);
         font-weight: 600;
         font-size: 14px;
       }

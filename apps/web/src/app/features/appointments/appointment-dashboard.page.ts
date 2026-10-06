@@ -222,7 +222,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       }
 
       .schedule-cta:hover {
-        background: #244b5d;
+        background: var(--ac-color-ink-j);
       }
 
       .stats {
@@ -326,7 +326,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         border-radius: 12px;
         padding: 16px;
         background: var(--ac-color-surface-info);
-        color: #163f52;
+        color: var(--ac-color-ink-c);
       }
 
       .error {
@@ -417,9 +417,9 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         margin: 0 0 12px;
         padding: 10px 14px;
         border-radius: 10px;
-        color: #b42318;
-        background: #fdecec;
-        border: 1px solid #eec2c2;
+        color: var(--ac-color-red-700);
+        background: var(--ac-color-red-100);
+        border: 1px solid var(--ac-color-red-border);
       }
 
       .reason-label {
@@ -454,7 +454,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
       .banner p {
         margin: 0;
-        color: #546343;
+        color: var(--ac-color-olive);
         font-size: var(--ac-type-meta);
       }
 

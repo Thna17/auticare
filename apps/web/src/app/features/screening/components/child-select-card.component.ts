@@ -116,7 +116,7 @@ const formatChildAge = (dateOfBirth: string): string => {
         height: 22px;
         border-radius: 999px;
         background: var(--scr-teal);
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
         display: flex;
         align-items: center;
         justify-content: center;

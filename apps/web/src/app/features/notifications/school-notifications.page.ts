@@ -194,7 +194,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
   styles: [
     `
       .notifications-card {
-        background: #fff;
+        background: var(--ac-color-surface);
         border: 1px solid #e3edf2;
         border-radius: 14px;
         padding: 20px;
@@ -214,18 +214,18 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
       }
       .tab-btn {
         padding: 7px 16px;
-        border: 1px solid #d7e3ea;
+        border: 1px solid var(--ac-color-tint-steel);
         border-radius: 999px;
-        background: #fff;
-        color: #5b7280;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-grey-a);
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
       }
       .tab-btn.active {
-        background: #2d6a7a;
-        border-color: #2d6a7a;
-        color: #fff;
+        background: var(--ac-color-action-alt);
+        border-color: var(--ac-color-action-alt);
+        color: var(--ac-color-text-on-action);
       }
       .filter-controls {
         display: flex;
@@ -234,10 +234,10 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
       }
       .advanced-filter-btn {
         padding: 7px 14px;
-        border: 1px solid #d7e3ea;
+        border: 1px solid var(--ac-color-tint-steel);
         border-radius: 8px;
-        background: #fff;
-        color: #2d6a7a;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-alt);
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
@@ -249,27 +249,27 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
       .icon-btn {
         width: 34px;
         height: 34px;
-        border: 1px solid #d7e3ea;
+        border: 1px solid var(--ac-color-tint-steel);
         border-radius: 8px;
-        background: #fff;
-        color: #5b7280;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-grey-a);
         cursor: pointer;
         font-size: 15px;
       }
 
       .state-card {
         padding: 36px;
-        border: 1px dashed #cbd5e1;
+        border: 1px dashed var(--ac-color-slate-300);
         border-radius: 12px;
-        background: #f8fafc;
-        color: #475569;
+        background: var(--ac-color-surface-slate);
+        color: var(--ac-color-slate-600);
         text-align: center;
         font-size: 14px;
       }
       .state-card--error {
         border-color: #fecaca;
-        background: #fef2f2;
-        color: #b91c1c;
+        background: var(--ac-color-red-50);
+        color: var(--ac-color-alert-slate);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -277,10 +277,10 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
       }
       .retry-btn {
         padding: 6px 18px;
-        border: 1px solid #b91c1c;
+        border: 1px solid var(--ac-color-alert-slate);
         border-radius: 8px;
-        background: #fff;
-        color: #b91c1c;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-alert-slate);
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
@@ -319,7 +319,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         height: 38px;
         border-radius: 10px;
         background: #e7f3f7;
-        color: #2d6a7a;
+        color: var(--ac-color-action-alt);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -340,7 +340,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
       }
       .sender-name {
         font-weight: 700;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
       }
       .student-name {
         font-size: 12px;
@@ -354,16 +354,16 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
       }
       .message-title {
         font-weight: 600;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
       }
       .message-body {
-        color: #5b7280;
+        color: var(--ac-color-grey-a);
         font-size: 12.5px;
         line-height: 1.45;
       }
       .date-cell {
         white-space: nowrap;
-        color: #5b7280;
+        color: var(--ac-color-grey-a);
         font-size: 12.5px;
       }
       .status-pill {
@@ -378,16 +378,16 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         color: #a4691a;
       }
       .status-pill--approved {
-        background: #e7f6ef;
-        color: #177a4c;
+        background: var(--ac-color-green-50);
+        color: var(--ac-color-green-600);
       }
       .status-pill--rejected {
-        background: #fdecec;
+        background: var(--ac-color-red-100);
         color: #b04343;
       }
       .status-pill--info {
         background: #eef2f6;
-        color: #5b7280;
+        color: var(--ac-color-grey-a);
       }
       .actions-cell {
         white-space: nowrap;
@@ -401,13 +401,13 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         cursor: pointer;
       }
       .status-link.approve {
-        color: #177a4c;
+        color: var(--ac-color-green-600);
       }
       .status-link.reject {
         color: #b04343;
       }
       .status-link.details {
-        color: #2d6a7a;
+        color: var(--ac-color-action-alt);
       }
       .acting-label {
         color: #6b8494;
@@ -421,13 +421,13 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         margin-top: 14px;
         padding: 10px 14px;
         border-radius: 8px;
-        background: #e7f6ef;
-        color: #177a4c;
+        background: var(--ac-color-green-50);
+        color: var(--ac-color-green-600);
         font-size: 13px;
         font-weight: 600;
       }
       .feedback-bar--error {
-        background: #fdecec;
+        background: var(--ac-color-red-100);
         color: #b04343;
       }
 

@@ -296,8 +296,8 @@ const autismNotes = [
     `
       :host {
         display: block;
-        background: #faf8f2;
-        color: #001e2b;
+        background: var(--ac-color-background);
+        color: var(--ac-color-text-strong);
       }
 
       h1,
@@ -311,7 +311,7 @@ const autismNotes = [
         min-height: 100svh;
         background:
           linear-gradient(120deg, rgb(250 248 242 / 0.96) 0 38%, rgb(232 246 255 / 0.72) 100%),
-          #faf8f2;
+          var(--ac-color-background);
       }
 
       .site-header {
@@ -331,7 +331,7 @@ const autismNotes = [
 
       .brand,
       .footer-brand {
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         display: inline-flex;
         align-items: center;
         gap: 10px;
@@ -359,7 +359,7 @@ const autismNotes = [
 
       .desktop-nav a,
       .login-link {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-semibold);
         text-decoration: none;
@@ -374,8 +374,8 @@ const autismNotes = [
 
       .desktop-nav a:hover,
       .desktop-nav a[aria-current='page'] {
-        color: #315d72;
-        border-bottom-color: #315d72;
+        color: var(--ac-color-action-mid);
+        border-bottom-color: var(--ac-color-action-mid);
       }
 
       .header-actions {
@@ -389,8 +389,8 @@ const autismNotes = [
       .cta-section a {
         min-height: 48px;
         border-radius: 12px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -428,7 +428,7 @@ const autismNotes = [
 
       .eyebrow {
         border-radius: 999px;
-        background: #d7e9c0;
+        background: var(--ac-color-olive-light);
         color: #586947;
         display: inline-flex;
         align-items: center;
@@ -447,7 +447,7 @@ const autismNotes = [
 
       .hero-section h1 {
         max-width: 620px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: clamp(40px, 6vw, 64px);
         line-height: 1.12;
         font-weight: var(--ac-font-weight-bold);
@@ -462,10 +462,10 @@ const autismNotes = [
 
       .medical-note {
         max-width: 460px;
-        border: 1px solid #c1d3dc;
+        border: 1px solid var(--ac-color-grey-pale);
         border-radius: 12px;
-        background: #ffffff;
-        color: #41484b;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-body);
         display: grid;
         grid-template-columns: 24px minmax(0, 1fr);
         gap: 12px;
@@ -482,8 +482,8 @@ const autismNotes = [
         width: 20px;
         height: 20px;
         border-radius: 999px;
-        border: 2px solid #8db4c8;
-        color: #315d72;
+        border: 2px solid var(--ac-color-primary);
+        color: var(--ac-color-action-mid);
         display: grid;
         place-items: center;
         font-size: 12px;
@@ -500,7 +500,7 @@ const autismNotes = [
         min-height: 48px;
         border: 2px solid #63899b;
         border-radius: 12px;
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -513,7 +513,7 @@ const autismNotes = [
       .hero-media {
         border-radius: 28px;
         overflow: hidden;
-        background: #e8f6ff;
+        background: var(--ac-color-surface-info);
         box-shadow: 0 24px 46px rgb(41 74 90 / 0.18);
       }
 
@@ -528,7 +528,7 @@ const autismNotes = [
       .process-section,
       .autism-section {
         padding: 88px clamp(24px, 5vw, 64px);
-        background: #ffffff;
+        background: var(--ac-color-surface);
       }
 
       .section-heading {
@@ -543,7 +543,7 @@ const autismNotes = [
       .process-section h2,
       .activities-section h2,
       .cta-section h2 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: clamp(32px, 4vw, 44px);
         line-height: 1.18;
         font-weight: var(--ac-font-weight-bold);
@@ -552,13 +552,13 @@ const autismNotes = [
       .section-heading p,
       .activities-section > div:first-child > p:last-child,
       .cta-section p {
-        color: #5b666b;
+        color: var(--ac-color-grey-d);
         font-size: 17px;
         line-height: 1.65;
       }
 
       .section-kicker {
-        color: #546343;
+        color: var(--ac-color-olive);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
@@ -574,7 +574,7 @@ const autismNotes = [
         min-height: 260px;
         border: 1px solid rgb(221 229 228 / 0.72);
         border-radius: 24px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         display: grid;
         align-content: start;
         gap: 18px;
@@ -583,7 +583,7 @@ const autismNotes = [
       }
 
       .tool-card h3 {
-        color: #123443;
+        color: var(--ac-color-ink-g);
         font-size: 20px;
         line-height: 1.3;
         font-weight: var(--ac-font-weight-bold);
@@ -598,8 +598,8 @@ const autismNotes = [
         width: 58px;
         height: 58px;
         border-radius: 14px;
-        background: #ceedff;
-        color: #3d6375;
+        background: var(--ac-color-tint-blue);
+        color: var(--ac-color-action);
         position: relative;
       }
 
@@ -626,17 +626,17 @@ const autismNotes = [
       }
 
       .tool-icon.map {
-        background: #d7e9c0;
-        color: #5a6949;
+        background: var(--ac-color-olive-light);
+        color: var(--ac-color-olive-mid);
       }
 
       .tool-icon.activity {
-        background: #d5c2a5;
+        background: var(--ac-color-beige);
         color: #4f412d;
       }
 
       .process-section {
-        background: #faf8f2;
+        background: var(--ac-color-background);
         display: grid;
         grid-template-columns: minmax(0, 0.9fr) minmax(340px, 1fr);
         align-items: center;
@@ -667,15 +667,15 @@ const autismNotes = [
         width: 48px;
         height: 48px;
         border-radius: 999px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         display: grid;
         place-items: center;
         font-weight: var(--ac-font-weight-bold);
       }
 
       .step-list h3 {
-        color: #123443;
+        color: var(--ac-color-ink-g);
         font-size: 18px;
         line-height: 1.3;
         font-weight: var(--ac-font-weight-bold);
@@ -683,27 +683,27 @@ const autismNotes = [
       }
 
       .step-list p {
-        color: #5b666b;
+        color: var(--ac-color-grey-d);
         line-height: 1.58;
       }
 
       .product-preview {
         border-radius: 28px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         padding: 18px;
         box-shadow: 0 18px 44px rgb(41 74 90 / 0.1);
       }
 
       .preview-window {
-        border: 1px solid #d4e6ef;
+        border: 1px solid var(--ac-color-border-info);
         border-radius: 20px;
         overflow: hidden;
-        background: #f2f9fd;
+        background: var(--ac-color-tint-blue-faint);
       }
 
       .preview-window header {
         min-height: 44px;
-        border-bottom: 1px solid #d4e6ef;
+        border-bottom: 1px solid var(--ac-color-border-info);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -714,7 +714,7 @@ const autismNotes = [
         width: 9px;
         height: 9px;
         border-radius: 999px;
-        background: #8db4c8;
+        background: var(--ac-color-primary);
       }
 
       .preview-body {
@@ -728,7 +728,7 @@ const autismNotes = [
         min-height: 118px;
         border: 1px solid rgb(193 211 220 / 0.72);
         border-radius: 16px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         display: grid;
         align-content: start;
         gap: 8px;
@@ -740,16 +740,16 @@ const autismNotes = [
       }
 
       .preview-panel.blue {
-        background: #e8f6ff;
+        background: var(--ac-color-surface-info);
       }
 
       .preview-panel p {
-        color: #5b666b;
+        color: var(--ac-color-grey-d);
         font-size: var(--ac-type-meta);
       }
 
       .preview-panel strong {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 20px;
       }
 
@@ -763,7 +763,7 @@ const autismNotes = [
       .preview-bars span {
         width: 42px;
         border-radius: 12px 12px 0 0;
-        background: #ceedff;
+        background: var(--ac-color-tint-blue);
       }
 
       .preview-bars span:nth-child(1) {
@@ -772,7 +772,7 @@ const autismNotes = [
 
       .preview-bars span:nth-child(2) {
         height: 116px;
-        background: #3d6375;
+        background: var(--ac-color-action);
       }
 
       .preview-bars span:nth-child(3) {
@@ -785,7 +785,7 @@ const autismNotes = [
         align-items: center;
         gap: clamp(42px, 7vw, 96px);
         padding: 88px clamp(24px, 5vw, 64px);
-        background: #ffffff;
+        background: var(--ac-color-surface);
       }
 
       .activities-section > div:first-child {
@@ -803,7 +803,7 @@ const autismNotes = [
         min-height: 86px;
         border: 1px solid rgb(193 211 220 / 0.7);
         border-radius: 18px;
-        background: #f2f9fd;
+        background: var(--ac-color-tint-blue-faint);
         display: grid;
         grid-template-columns: 46px minmax(0, 1fr);
         align-items: center;
@@ -815,7 +815,7 @@ const autismNotes = [
         width: 46px;
         height: 46px;
         border-radius: 14px;
-        background: #d7e9c0;
+        background: var(--ac-color-olive-light);
         position: relative;
       }
 
@@ -823,7 +823,7 @@ const autismNotes = [
       .activity-list span::after {
         content: '';
         position: absolute;
-        background: #5a6949;
+        background: var(--ac-color-olive-mid);
         border-radius: 3px;
       }
 
@@ -842,13 +842,13 @@ const autismNotes = [
       }
 
       .activity-list p {
-        color: #123443;
+        color: var(--ac-color-ink-g);
         font-size: 18px;
         font-weight: var(--ac-font-weight-semibold);
       }
 
       .autism-section {
-        background: #faf8f2;
+        background: var(--ac-color-background);
       }
 
       .autism-grid {
@@ -861,7 +861,7 @@ const autismNotes = [
         min-height: 210px;
         border: 1px solid rgb(221 229 228 / 0.74);
         border-radius: 24px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         display: grid;
         align-content: start;
         gap: 14px;
@@ -870,21 +870,21 @@ const autismNotes = [
       }
 
       .autism-grid h3 {
-        color: #123443;
+        color: var(--ac-color-ink-g);
         font-size: 20px;
         line-height: 1.3;
       }
 
       .autism-grid p {
-        color: #5b666b;
+        color: var(--ac-color-grey-d);
         line-height: 1.58;
       }
 
       .cta-section {
         margin: 88px clamp(24px, 5vw, 64px);
         border-radius: 28px;
-        background: #8db4c8;
-        color: #123443;
+        background: var(--ac-color-primary);
+        color: var(--ac-color-ink-g);
         display: grid;
         justify-items: center;
         gap: 22px;
@@ -895,7 +895,7 @@ const autismNotes = [
 
       .cta-section p {
         max-width: 720px;
-        color: #315d72;
+        color: var(--ac-color-action-mid);
       }
 
       .cta-section a {
@@ -904,7 +904,7 @@ const autismNotes = [
       }
 
       .site-footer {
-        background: #ceedff;
+        background: var(--ac-color-tint-blue);
         display: grid;
         grid-template-columns: 1.3fr 1fr 1fr 1.2fr;
         gap: clamp(32px, 6vw, 84px);
@@ -920,14 +920,14 @@ const autismNotes = [
       }
 
       .site-footer h2 {
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-bold);
       }
 
       .site-footer p,
       .site-footer a {
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         font-size: var(--ac-type-label);
         line-height: 1.55;
       }

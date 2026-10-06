@@ -168,7 +168,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
       }
 
       .breadcrumbs span[aria-current] {
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-weight: var(--ac-font-weight-semibold);
       }
 
@@ -178,7 +178,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
 
       h1 {
         margin: 0 0 8px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
         line-height: var(--ac-line-title);
       }
@@ -186,7 +186,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
       .page-header p {
         margin: 0;
         max-width: 640px;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-page-subtitle);
         line-height: var(--ac-line-body);
       }
@@ -219,7 +219,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
 
       .stat-value {
         margin: 0;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 2rem;
         font-weight: var(--ac-font-weight-bold);
       }
@@ -252,7 +252,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
         border: 1px solid var(--ac-color-border);
         border-radius: 999px;
         background: var(--ac-color-surface);
-        color: #41484b;
+        color: var(--ac-color-text-body);
         padding: 0 14px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
@@ -260,9 +260,9 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
       }
 
       .status-pills button.active {
-        background: #294a5a;
-        border-color: #294a5a;
-        color: #ffffff;
+        background: var(--ac-color-text-dark);
+        border-color: var(--ac-color-text-dark);
+        color: var(--ac-color-text-on-action);
       }
 
       .doctor-select {
@@ -279,13 +279,13 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
       .error {
         border-radius: 12px;
         padding: 16px;
-        background: #e8f6ff;
-        color: #163f52;
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-ink-c);
       }
 
       .error {
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
       }
 
       .table-wrap {

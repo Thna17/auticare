@@ -138,8 +138,8 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .profile-hero {
         border-radius: 8px;
-        background: #ffffff;
-        border: 1px solid #dde5e4;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
         box-shadow: 0 8px 30px rgb(41 74 90 / 0.06);
         padding: 26px;
         display: flex;
@@ -161,7 +161,7 @@ import { AuthService } from '../../core/auth/auth.service';
         height: 74px;
         border-radius: 24px;
         background: #c0e8fe;
-        color: #244b5d;
+        color: var(--ac-color-ink-j);
         display: grid;
         place-items: center;
         font-size: 28px;
@@ -177,7 +177,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .eyebrow {
-        color: #546343;
+        color: var(--ac-color-olive);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
@@ -186,22 +186,22 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       h1 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
         line-height: 1.2;
         letter-spacing: 0;
       }
 
       .identity p:last-child {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         margin-top: 8px;
       }
 
       .primary-link {
         min-height: 46px;
         border-radius: 999px;
-        background: #8db4c8;
-        color: #123f52;
+        background: var(--ac-color-primary);
+        color: var(--ac-color-ink-d);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -211,8 +211,8 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .primary-link:hover {
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
       }
 
       .summary-grid {
@@ -225,9 +225,9 @@ import { AuthService } from '../../core/auth/auth.service';
       .summary-grid article,
       .profile-panel,
       .side-panel {
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: 0 8px 30px rgb(41 74 90 / 0.05);
       }
 
@@ -239,14 +239,14 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .summary-grid span,
       .support-row span {
-        color: #71787c;
+        color: var(--ac-color-grey-c);
         font-size: var(--ac-type-label);
         line-height: 1.3;
       }
 
       .summary-grid strong,
       .support-row strong {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 18px;
       }
 
@@ -270,7 +270,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       h2 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 24px;
         line-height: 1.3;
       }
@@ -278,7 +278,7 @@ import { AuthService } from '../../core/auth/auth.service';
       header p,
       .calm-note p,
       .info-note {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         line-height: 1.55;
       }
 
@@ -291,7 +291,7 @@ import { AuthService } from '../../core/auth/auth.service';
       .field {
         display: grid;
         gap: 10px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-weight: var(--ac-font-weight-bold);
       }
 
@@ -302,17 +302,17 @@ import { AuthService } from '../../core/auth/auth.service';
       .field span em {
         font-style: normal;
         font-weight: var(--ac-font-weight-regular, 400);
-        color: #5b6569;
+        color: var(--ac-color-grey-b);
       }
 
       .field-hint {
         font-weight: var(--ac-font-weight-regular, 400);
-        color: #5b6569;
+        color: var(--ac-color-grey-b);
       }
 
       .field-error {
         font-weight: var(--ac-font-weight-regular, 400);
-        color: #b42318;
+        color: var(--ac-color-red-700);
       }
 
       .form-error,
@@ -324,9 +324,9 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .form-error {
-        color: #b42318;
-        background: #fdecec;
-        border: 1px solid #eec2c2;
+        color: var(--ac-color-red-700);
+        background: var(--ac-color-red-100);
+        border: 1px solid var(--ac-color-red-border);
       }
 
       .form-success {
@@ -353,14 +353,14 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .save-btn {
         border: 0;
-        background: #3d6375;
-        color: #fff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
       }
 
       .reset-btn {
-        border: 1px solid #b8c2c8;
-        background: #fff;
-        color: #001e2b;
+        border: 1px solid var(--ac-color-border-grey);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
       }
 
       .save-btn:disabled,
@@ -371,41 +371,41 @@ import { AuthService } from '../../core/auth/auth.service';
 
       input[readonly] {
         background: #eef3f6;
-        color: #41484b;
+        color: var(--ac-color-text-body);
       }
 
       input {
         width: 100%;
         min-height: 54px;
-        border: 1px solid #b8c2c8;
+        border: 1px solid var(--ac-color-border-grey);
         border-radius: 12px;
-        background: #f8fcff;
-        color: #001e2b;
+        background: var(--ac-color-tint-blue-pale);
+        color: var(--ac-color-text-strong);
         font: inherit;
         padding: 0 16px;
       }
 
       input:focus {
-        border-color: #3d6375;
+        border-color: var(--ac-color-action);
         box-shadow: 0 0 0 4px rgb(61 99 117 / 0.12);
         outline: none;
       }
 
       .info-note {
         border-radius: 12px;
-        background: #e8f6ff;
+        background: var(--ac-color-surface-info);
         padding: 14px 16px;
       }
 
       .support-row {
-        border-bottom: 1px solid #dde5e4;
+        border-bottom: 1px solid var(--ac-color-border);
         padding-bottom: 16px;
         display: grid;
         gap: 8px;
       }
 
       .support-row a {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         font-weight: var(--ac-font-weight-bold);
         text-decoration: none;
       }
@@ -416,7 +416,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .calm-note {
         border-radius: 8px;
-        background: #e7eedf;
+        background: var(--ac-color-sage-light);
         padding: 18px;
         display: grid;
         gap: 8px;

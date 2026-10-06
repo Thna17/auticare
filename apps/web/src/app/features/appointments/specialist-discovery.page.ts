@@ -72,17 +72,17 @@ import { specialtyCategories } from './appointments.types';
         display: flex;
         gap: 8px;
         margin-bottom: 12px;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
       .breadcrumbs a {
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         text-decoration: none;
       }
 
       .breadcrumbs span[aria-current] {
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-weight: var(--ac-font-weight-semibold);
       }
 
@@ -95,14 +95,14 @@ import { specialtyCategories } from './appointments.types';
 
       h1 {
         margin: 0;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
       }
 
       .count-tag {
         border-radius: 999px;
-        background: #f0f7fb;
-        color: #294a5a;
+        background: var(--ac-color-tint-blue-soft);
+        color: var(--ac-color-text-dark);
         padding: 4px 12px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-semibold);
@@ -117,10 +117,10 @@ import { specialtyCategories } from './appointments.types';
 
       .category-pills button {
         min-height: 40px;
-        border: 1.5px solid #dde5e4;
+        border: 1.5px solid var(--ac-color-border);
         border-radius: 999px;
-        background: #ffffff;
-        color: #41484b;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-body);
         padding: 0 16px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
@@ -128,16 +128,16 @@ import { specialtyCategories } from './appointments.types';
       }
 
       .category-pills button.active {
-        background: #294a5a;
-        border-color: #294a5a;
-        color: #ffffff;
+        background: var(--ac-color-text-dark);
+        border-color: var(--ac-color-text-dark);
+        color: var(--ac-color-text-on-action);
       }
 
       .status {
         border-radius: 12px;
         padding: 16px;
-        background: #e8f6ff;
-        color: #163f52;
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-ink-c);
       }
 
       .doctor-grid {
@@ -150,9 +150,9 @@ import { specialtyCategories } from './appointments.types';
         display: flex;
         flex-direction: column;
         gap: 10px;
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 12px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: var(--ac-shadow-sm);
         padding: 22px;
       }
@@ -162,7 +162,7 @@ import { specialtyCategories } from './appointments.types';
         height: 52px;
         border-radius: 999px;
         background: linear-gradient(135deg, #47758b, #9cc5d6);
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
         display: grid;
         place-items: center;
         font-weight: var(--ac-font-weight-bold);
@@ -170,7 +170,7 @@ import { specialtyCategories } from './appointments.types';
 
       .doctor-card h2 {
         margin: 0;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-card-title);
       }
 
@@ -178,7 +178,7 @@ import { specialtyCategories } from './appointments.types';
         align-self: flex-start;
         border-radius: 999px;
         background: var(--ac-color-sage-light);
-        color: #546343;
+        color: var(--ac-color-olive);
         padding: 4px 10px;
         font-size: 11px;
         font-weight: var(--ac-font-weight-bold);
@@ -187,13 +187,13 @@ import { specialtyCategories } from './appointments.types';
 
       .rating {
         margin: 0;
-        color: #d9a441;
+        color: var(--ac-color-warning);
         font-weight: var(--ac-font-weight-semibold);
       }
 
       .next-available {
         margin: 0 0 8px;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
@@ -201,8 +201,8 @@ import { specialtyCategories } from './appointments.types';
         min-height: 44px;
         border: 0;
         border-radius: 10px;
-        background: #294a5a;
-        color: #ffffff;
+        background: var(--ac-color-text-dark);
+        color: var(--ac-color-text-on-action);
         font-weight: var(--ac-font-weight-semibold);
         cursor: pointer;
       }
