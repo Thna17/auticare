@@ -451,8 +451,9 @@ export class ActivitiesPage implements OnInit {
         }));
         this.children.set(options);
         this.loadingChildren.set(false);
-        if (options.length > 0) {
-          this.selectedChildId.set(options[0]!.id);
+        const [firstChild] = options;
+        if (firstChild) {
+          this.selectedChildId.set(firstChild.id);
           this.load();
         }
       },

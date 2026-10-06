@@ -253,8 +253,8 @@ const quickActions: readonly QuickAction[] = [
           <p>
             @if (isParent()) {
               Welcome back to AutiCare.
-              @if (selectedChild()) {
-                Here's what's happening with {{ selectedChild()!.firstName }} today.
+              @if (selectedChild(); as child) {
+                Here's what's happening with {{ child.firstName }} today.
               } @else {
                 Create a child profile to personalize your care dashboard.
               }
@@ -264,16 +264,11 @@ const quickActions: readonly QuickAction[] = [
           </p>
         </div>
 
-        @if (isParent() && selectedChild()) {
-          <a class="child-switcher" [routerLink]="['/children', selectedChild()!.id]">
-            <span class="child-avatar" aria-hidden="true">{{
-              childInitials(selectedChild()!)
-            }}</span>
+        @if (isParent() && selectedChild(); as child) {
+          <a class="child-switcher" [routerLink]="['/children', child.id]">
+            <span class="child-avatar" aria-hidden="true">{{ childInitials(child) }}</span>
             <span>
-              <strong
-                >{{ selectedChild()!.firstName }},
-                {{ ageLabel(selectedChild()!.dateOfBirth) }}</strong
-              >
+              <strong>{{ child.firstName }}, {{ ageLabel(child.dateOfBirth) }}</strong>
               <small>Open profile</small>
             </span>
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">

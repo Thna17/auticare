@@ -176,6 +176,26 @@ pnpm --filter @auticare/web build
 - Keep production secrets in the deployment platform's secret manager, not in `.env` files committed to Git.
 - Do not treat screening output as a diagnosis or clinical recommendation.
 
+## Language scope
+
+The interface is **English only, by decision rather than by omission.**
+
+`@angular/localize` is not installed, no template carries an `i18n` attribute, and
+there are no translation files. The seed and test data are Cambodian, so Khmer is
+a plausible requirement, and it was considered and deliberately deferred. This is
+recorded here so it is not rediscovered later and filed as a defect.
+
+What reversing it costs, measured rather than guessed: 64 components with inline
+templates, roughly 27,700 lines of TypeScript, and no tagged strings to build on.
+Adding Khmer means installing `@angular/localize`, adding per-locale build
+configurations and a language switch, tagging every user-facing string, extracting
+the message catalogue, and having a person translate it. The last part is not
+optional and not automatable — much of the copy is guidance to parents about their
+autistic child, where a poor machine translation does real harm.
+
+The only locale-sensitive formatting in the app today is four `| date` pipes, so
+the formatting side of a retrofit is small. The copy side is the whole cost.
+
 ## Development conventions
 
 - Keep backend modules in `apps/api/src/modules/<feature>` with routes, controller, service, repository, schemas, and mapper responsibilities separated where useful.

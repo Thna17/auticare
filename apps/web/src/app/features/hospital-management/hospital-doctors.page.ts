@@ -24,7 +24,7 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
     </section>
 
     <section class="list-section">
-      <form class="add-form" (submit)="add($event)">
+      <form class="add-form" (submit)="add($event, name.value, specialty.value)">
         <label class="field">
           <span>Full name</span>
           <input #name required placeholder="Dr. Jane Smith" />
@@ -257,11 +257,14 @@ export class HospitalDoctorsPage {
       },
     });
   }
-  add(event: SubmitEvent) {
+  // Takes the two values from the template's own #name and #specialty refs. This
+  // used to read form.querySelectorAll('input') and index it by position, so
+  // adding or reordering a field in the markup would have silently swapped a
+  // doctor's name and specialty.
+  add(event: SubmitEvent, fullName: string, specialty: string) {
     event.preventDefault();
     const form = event.currentTarget as HTMLFormElement;
-    const inputs = form.querySelectorAll('input');
-    this.api.createDoctor({ fullName: inputs[0]!.value, specialty: inputs[1]!.value }).subscribe({
+    this.api.createDoctor({ fullName: fullName.trim(), specialty: specialty.trim() }).subscribe({
       next: () => {
         form.reset();
         this.load();
