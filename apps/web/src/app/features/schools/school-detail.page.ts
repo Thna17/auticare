@@ -7,6 +7,7 @@ import { ChildrenApi } from '../children/data-access/children.api';
 import { SchoolsApi } from './data-access/schools.api';
 import { EnrollmentRequestsApi } from './data-access/enrollment-requests.api';
 import { SchoolProfileViewComponent } from './components/school-profile-view.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 /**
  * Parent-facing, fully READ-ONLY school detail page (/schools/:id). It renders
@@ -16,7 +17,7 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
  */
 @Component({
   standalone: true,
-  imports: [RouterLink, UiCardComponent, SchoolProfileViewComponent],
+  imports: [RouterLink, UiCardComponent, SchoolProfileViewComponent, UiMessageComponent],
   template: `
     <a class="back" routerLink="/schools">← Back to schools</a>
 
@@ -24,7 +25,7 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
       <ac-ui-card><p>Loading school…</p></ac-ui-card>
     } @else if (error(); as loadError) {
       <ac-ui-card
-        ><p class="error" role="alert">{{ loadError }}</p></ac-ui-card
+        ><ac-ui-message tone="error">{{ loadError }}</ac-ui-message></ac-ui-card
       >
     } @else if (school(); as s) {
       <ac-school-profile-view [school]="s" [editable]="false" />
@@ -69,7 +70,7 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
             </label>
 
             @if (formError(); as formErr) {
-              <p class="error" role="alert">{{ formErr }}</p>
+              <ac-ui-message tone="error">{{ formErr }}</ac-ui-message>
             }
 
             <div class="actions-row">
@@ -97,12 +98,12 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
       .back {
         display: inline-block;
         margin-bottom: 18px;
-        color: #3d6375;
+        color: var(--ac-color-action);
         font-weight: var(--ac-font-weight-bold);
         text-decoration: none;
       }
       .error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-weight: var(--ac-font-weight-semibold);
       }
 
@@ -113,11 +114,11 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
       .enroll-title {
         margin: 0 0 10px;
         font-size: 18px;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
       }
       .enroll-hint {
         margin: 0;
-        color: #5b7280;
+        color: var(--ac-color-grey-a);
         font-size: 14px;
       }
       .enroll-form {
@@ -138,11 +139,11 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
       .field-input {
         width: 100%;
         padding: 9px 12px;
-        border: 1px solid #d7e3ea;
+        border: 1px solid var(--ac-color-tint-steel);
         border-radius: 8px;
         font-size: 14px;
-        color: #10303b;
-        background: #fff;
+        color: var(--ac-color-action-darkest);
+        background: var(--ac-color-surface);
         box-sizing: border-box;
       }
       .field-input:focus {
@@ -160,8 +161,8 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
         padding: 10px 22px;
         border: 0;
         border-radius: 9px;
-        background: #2d6a7a;
-        color: #fff;
+        background: var(--ac-color-action-alt);
+        color: var(--ac-color-text-on-action);
         font-size: 14px;
         font-weight: 700;
         cursor: pointer;
@@ -172,10 +173,10 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
       }
       .btn-secondary {
         padding: 8px 18px;
-        border: 1px solid #d7e3ea;
+        border: 1px solid var(--ac-color-tint-steel);
         border-radius: 9px;
-        background: #fff;
-        color: #2d6a7a;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-alt);
         font-size: 13px;
         font-weight: 700;
         cursor: pointer;
@@ -183,8 +184,8 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
       .success-box {
         padding: 12px 16px;
         border-radius: 9px;
-        background: #e7f6ef;
-        color: #177a4c;
+        background: var(--ac-color-green-50);
+        color: var(--ac-color-green-600);
         font-size: 14px;
         margin-bottom: 12px;
       }

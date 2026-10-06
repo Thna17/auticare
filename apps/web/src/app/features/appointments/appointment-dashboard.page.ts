@@ -7,6 +7,7 @@ import { AppointmentsFacade } from './state/appointments.facade';
 import type { AppointmentResponse } from '@auticare/contracts';
 import type { AppointmentStatus } from './appointments.types';
 import { statusPresentation, statusTone } from './appointments.types';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
 
@@ -19,7 +20,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent, UiBadgeComponent],
+  imports: [RouterLink, UiEmptyStateComponent, UiBadgeComponent, UiMessageComponent],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
       <span>Dashboard</span>
@@ -89,7 +90,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       @if (facade.loading()) {
         <p class="status" aria-live="polite">Loading appointments...</p>
       } @else if (facade.error()) {
-        <p class="error" role="alert">{{ facade.error() }}</p>
+        <ac-ui-message tone="error">{{ facade.error() }}</ac-ui-message>
       } @else if (visibleAppointments().length === 0) {
         <ac-ui-empty-state
           title="No appointments to show"
@@ -97,7 +98,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         />
       } @else {
         @if (cancelError(); as problem) {
-          <p class="cancel-error" role="alert">{{ problem }}</p>
+          <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
         }
         <ul class="appointment-list">
           @for (appointment of visibleAppointments(); track appointment.id) {
@@ -222,7 +223,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       }
 
       .schedule-cta:hover {
-        background: #244b5d;
+        background: var(--ac-color-ink-j);
       }
 
       .stats {
@@ -326,7 +327,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         border-radius: 12px;
         padding: 16px;
         background: var(--ac-color-surface-info);
-        color: #163f52;
+        color: var(--ac-color-ink-c);
       }
 
       .error {
@@ -417,9 +418,9 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         margin: 0 0 12px;
         padding: 10px 14px;
         border-radius: 10px;
-        color: #b42318;
-        background: #fdecec;
-        border: 1px solid #eec2c2;
+        color: var(--ac-color-red-700);
+        background: var(--ac-color-red-100);
+        border: 1px solid var(--ac-color-red-border);
       }
 
       .reason-label {
@@ -454,7 +455,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
       .banner p {
         margin: 0;
-        color: #546343;
+        color: var(--ac-color-olive);
         font-size: var(--ac-type-meta);
       }
 

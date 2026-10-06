@@ -24,20 +24,20 @@ export type BadgeTone = 'positive' | 'caution' | 'alert' | 'neutral';
         font-weight: 800;
         font-size: 13px;
         letter-spacing: 0.02em;
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
       }
       .positive {
-        background: #72a675;
+        background: var(--ac-color-success);
       }
       .caution {
-        background: #d9a441;
+        background: var(--ac-color-warning);
       }
       .alert {
-        background: #c96e62;
+        background: var(--ac-color-attention);
       }
       .neutral {
-        background: #8db4c8;
-        color: #103443;
+        background: var(--ac-color-primary);
+        color: var(--ac-color-ink-f);
       }
     `,
   ],

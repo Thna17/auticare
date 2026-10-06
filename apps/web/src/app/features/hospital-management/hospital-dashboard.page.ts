@@ -61,12 +61,12 @@ import { HospitalManagementApi } from './hospital-management.api';
         display: flex;
         gap: 8px;
         margin-bottom: 12px;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
       .breadcrumbs span[aria-current] {
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-weight: var(--ac-font-weight-semibold);
       }
 
@@ -76,7 +76,7 @@ import { HospitalManagementApi } from './hospital-management.api';
 
       .eyebrow {
         margin: 0 0 6px;
-        color: #3d6375;
+        color: var(--ac-color-action);
         font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
         font-size: var(--ac-type-meta);
@@ -84,7 +84,7 @@ import { HospitalManagementApi } from './hospital-management.api';
 
       h1 {
         margin: 0 0 8px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
         line-height: var(--ac-line-title);
       }
@@ -92,7 +92,7 @@ import { HospitalManagementApi } from './hospital-management.api';
       .page-header p {
         margin: 0;
         max-width: 640px;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-page-subtitle);
         line-height: var(--ac-line-body);
       }
@@ -105,16 +105,16 @@ import { HospitalManagementApi } from './hospital-management.api';
       }
 
       .stat-card {
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: var(--ac-shadow-sm);
         padding: var(--ac-space-6);
       }
 
       .stat-label {
         margin: 0 0 8px;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
         text-transform: uppercase;
@@ -122,7 +122,7 @@ import { HospitalManagementApi } from './hospital-management.api';
 
       .stat-value {
         margin: 0;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 2rem;
         font-weight: var(--ac-font-weight-bold);
       }
@@ -138,33 +138,33 @@ import { HospitalManagementApi } from './hospital-management.api';
         justify-content: space-between;
         align-items: center;
         gap: 16px;
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 10px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: var(--ac-shadow-sm);
         padding: 20px;
         text-decoration: none;
       }
 
       .link-card:hover {
-        border-color: #8db4c8;
+        border-color: var(--ac-color-primary);
       }
 
       .link-card h2 {
         margin: 0 0 4px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-card-title);
       }
 
       .link-card p {
         margin: 0;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
       .link-card span {
         flex: 0 0 auto;
-        color: #8db4c8;
+        color: var(--ac-color-primary);
         font-size: 1.5rem;
       }
     `,

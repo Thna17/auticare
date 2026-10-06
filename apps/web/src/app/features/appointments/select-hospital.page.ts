@@ -51,36 +51,36 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
         display: flex;
         gap: 8px;
         margin-bottom: 12px;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
       .breadcrumbs a {
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         text-decoration: none;
       }
 
       .breadcrumbs span[aria-current] {
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-weight: var(--ac-font-weight-semibold);
       }
 
       h1 {
         margin: 0 0 8px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
       }
 
       p {
         margin: 0 0 24px;
-        color: #41484b;
+        color: var(--ac-color-text-body);
       }
 
       .status {
         border-radius: 12px;
         padding: 16px;
-        background: #e8f6ff;
-        color: #163f52;
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-ink-c);
       }
 
       .hospital-list {
@@ -96,32 +96,32 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
         justify-content: space-between;
         align-items: center;
         gap: 16px;
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 10px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         padding: 18px;
         text-decoration: none;
         box-shadow: var(--ac-shadow-sm);
       }
 
       .hospital-card:hover {
-        border-color: #8db4c8;
+        border-color: var(--ac-color-primary);
       }
 
       .hospital-card h2 {
         margin: 0 0 4px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-card-title);
       }
 
       .hospital-card p {
         margin: 0;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
       .hospital-card span {
-        color: #8db4c8;
+        color: var(--ac-color-primary);
         font-size: 1.5rem;
       }
     `,

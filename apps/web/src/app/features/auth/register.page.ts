@@ -3,6 +3,7 @@ import type { AbstractControl, ValidationErrors } from '@angular/forms';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 const matchingPasswords = (control: AbstractControl): ValidationErrors | null => {
   const password = control.get('password')?.value;
@@ -15,7 +16,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
   template: `
     <main class="signup-page">
       <section class="form-panel" aria-labelledby="register-title">
@@ -133,7 +134,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
             }
 
             @if (error()) {
-              <p class="form-error" role="alert">{{ error() }}</p>
+              <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
             }
 
             <button class="submit-button" type="submit" [disabled]="loading()">
@@ -193,14 +194,14 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       :host {
         display: block;
         min-height: 100svh;
-        background: #f4faff;
-        color: #001e2b;
+        background: var(--ac-color-tint-blue-wash);
+        color: var(--ac-color-text-strong);
       }
 
       .signup-page {
         min-height: 100svh;
         display: grid;
-        background: #ffffff;
+        background: var(--ac-color-surface);
       }
 
       .form-panel {
@@ -209,7 +210,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         justify-content: center;
         min-width: 0;
         padding: 48px 24px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
       }
 
       .form-shell {
@@ -221,7 +222,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         align-items: center;
         gap: 10px;
         margin-bottom: 58px;
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         text-decoration: none;
       }
 
@@ -252,7 +253,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .intro h1 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 32px;
         line-height: 1.25;
         font-weight: var(--ac-font-weight-semibold);
@@ -262,7 +263,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
       .intro p {
         max-width: 510px;
-        color: #273a43;
+        color: var(--ac-color-ink-i);
         font-size: 18px;
         line-height: 1.55;
       }
@@ -275,7 +276,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       .field {
         display: grid;
         gap: 12px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-body);
         font-weight: var(--ac-font-weight-semibold);
       }
@@ -284,10 +285,10 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         width: 100%;
         min-width: 0;
         height: 60px;
-        border: 1px solid #b8c2c8;
+        border: 1px solid var(--ac-color-border-grey);
         border-radius: 12px;
-        background: #ffffff;
-        color: #001e2b;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
         font: inherit;
         font-weight: var(--ac-font-weight-regular);
         line-height: 1.3;
@@ -308,13 +309,13 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .field input:focus {
-        border-color: #3d6375;
+        border-color: var(--ac-color-action);
         box-shadow: 0 0 0 4px rgb(141 180 200 / 0.25);
         outline: none;
       }
 
       .field input[aria-invalid='true'] {
-        border-color: #ba1a1a;
+        border-color: var(--ac-color-red-600);
       }
 
       .password-grid {
@@ -331,7 +332,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         padding: 16px;
         border-radius: 12px;
         background: #e2f3ff;
-        color: #163f52;
+        color: var(--ac-color-ink-c);
       }
 
       .password-note svg {
@@ -350,7 +351,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         grid-template-columns: 30px minmax(0, 1fr);
         gap: 14px;
         align-items: start;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-body);
         line-height: 1.5;
       }
@@ -360,9 +361,9 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         width: 30px;
         height: 30px;
         margin: 0;
-        border: 1px solid #b8c2c8;
+        border: 1px solid var(--ac-color-border-grey);
         border-radius: 10px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         cursor: pointer;
         display: grid;
         place-items: center;
@@ -376,16 +377,16 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         content: '';
         width: 13px;
         height: 7px;
-        border-left: 2px solid #ffffff;
-        border-bottom: 2px solid #ffffff;
+        border-left: 2px solid var(--ac-color-surface);
+        border-bottom: 2px solid var(--ac-color-surface);
         transform: rotate(-45deg) scale(0);
         transform-origin: center;
         transition: transform 160ms ease;
       }
 
       .terms input:checked {
-        border-color: #3d6375;
-        background: #3d6375;
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-action);
       }
 
       .terms input:checked::after {
@@ -398,7 +399,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .terms a {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         font-weight: var(--ac-font-weight-semibold);
         text-decoration: none;
       }
@@ -409,7 +410,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
       .field-error,
       .form-error {
-        color: #ba1a1a;
+        color: var(--ac-color-red-600);
         font-size: var(--ac-type-label);
         line-height: 1.4;
         margin-top: -14px;
@@ -418,8 +419,8 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       .form-error {
         margin-top: 0;
         border-radius: 12px;
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
         padding: 14px 16px;
       }
 
@@ -428,8 +429,8 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         height: 70px;
         border: 0;
         border-radius: 24px;
-        background: #8db4c8;
-        color: #123f52;
+        background: var(--ac-color-primary);
+        color: var(--ac-color-ink-d);
         cursor: pointer;
         display: inline-flex;
         align-items: center;
@@ -452,8 +453,8 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .submit-button:hover:not(:disabled) {
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         box-shadow: 0 18px 34px rgb(61 99 117 / 0.22);
       }
 
@@ -473,16 +474,16 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         display: grid;
         justify-items: center;
         gap: 26px;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: 18px;
       }
 
       .signin-footer a {
         min-width: 138px;
         min-height: 64px;
-        border: 1.5px solid #164f68;
+        border: 1.5px solid var(--ac-color-action-deep);
         border-radius: 999px;
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -496,7 +497,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .signin-footer a:hover {
-        background: #e8f6ff;
+        background: var(--ac-color-surface-info);
       }
 
       .hero-panel {
@@ -548,8 +549,8 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         width: 62px;
         height: 62px;
         border-radius: 999px;
-        background: #d7e9c0;
-        color: #5a6949;
+        background: var(--ac-color-olive-light);
+        color: var(--ac-color-olive-mid);
         display: grid;
         place-items: center;
       }
@@ -560,7 +561,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .support-card h2 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 34px;
         line-height: 1.25;
         font-weight: var(--ac-font-weight-bold);
@@ -569,7 +570,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
       .support-card p {
         max-width: 470px;
-        color: #273a43;
+        color: var(--ac-color-ink-i);
         font-size: 18px;
         line-height: 1.6;
       }
@@ -588,7 +589,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       .dots span:first-child {
-        background: #3d6375;
+        background: var(--ac-color-action);
       }
 
       @media (min-width: 1024px) {

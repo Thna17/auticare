@@ -58,7 +58,7 @@ const filterOptions: readonly FilterOption[] = [
       .chip.selected {
         border-color: var(--scr-teal);
         background: var(--scr-teal);
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
       }
       .chip:focus-visible {
         outline: 3px solid var(--scr-teal);

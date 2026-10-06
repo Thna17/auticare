@@ -4,17 +4,18 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { ChildResponse } from '@auticare/contracts';
 import { ChildrenApi } from './data-access/children.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
   template: `
     <a class="back-link" routerLink="/children">Back to children</a>
 
     @if (loading()) {
       <p class="status" aria-live="polite">Loading child profile...</p>
     } @else if (error()) {
-      <p class="error" role="alert">{{ error() }}</p>
+      <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     } @else if (child()) {
       <section class="profile-hero">
         <div class="identity">
@@ -96,10 +97,10 @@ import { ChildrenApi } from './data-access/children.api';
           </label>
 
           @if (saveMessage()) {
-            <p class="success" role="status">{{ saveMessage() }}</p>
+            <ac-ui-message tone="success">{{ saveMessage() }}</ac-ui-message>
           }
           @if (saveError()) {
-            <p class="form-error" role="alert">{{ saveError() }}</p>
+            <ac-ui-message tone="error">{{ saveError() }}</ac-ui-message>
           }
 
           <button class="primary-button" type="submit" [disabled]="saving()">
@@ -135,7 +136,7 @@ import { ChildrenApi } from './data-access/children.api';
       }
 
       .back-link {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         display: inline-flex;
         margin-bottom: 22px;
         text-decoration: none;
@@ -148,8 +149,8 @@ import { ChildrenApi } from './data-access/children.api';
 
       .profile-hero {
         border-radius: 8px;
-        background: #ffffff;
-        border: 1px solid #dde5e4;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
         box-shadow: 0 8px 30px rgb(41 74 90 / 0.06);
         padding: 26px;
         display: flex;
@@ -170,8 +171,8 @@ import { ChildrenApi } from './data-access/children.api';
         width: 74px;
         height: 74px;
         border-radius: 24px;
-        background: #d7e9c0;
-        color: #3d4b2d;
+        background: var(--ac-color-olive-light);
+        color: var(--ac-color-olive-dark);
         display: grid;
         place-items: center;
         font-size: 28px;
@@ -187,7 +188,7 @@ import { ChildrenApi } from './data-access/children.api';
       }
 
       .eyebrow {
-        color: #546343;
+        color: var(--ac-color-olive);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
@@ -196,14 +197,14 @@ import { ChildrenApi } from './data-access/children.api';
       }
 
       h1 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
         line-height: 1.2;
         letter-spacing: 0;
       }
 
       .identity p:last-child {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         margin-top: 8px;
       }
 
@@ -223,29 +224,29 @@ import { ChildrenApi } from './data-access/children.api';
       }
 
       .secondary-button {
-        border: 1px solid #8db4c8;
-        background: #ffffff;
-        color: #164f68;
+        border: 1px solid var(--ac-color-primary);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-deep);
       }
 
       .danger-button {
-        border: 1px solid #ba1a1a;
-        background: #ffffff;
-        color: #93000a;
+        border: 1px solid var(--ac-color-red-600);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-alert-strong);
       }
 
       .primary-button {
         width: 100%;
         border: 0;
         border-radius: 14px;
-        background: #8db4c8;
-        color: #123f52;
+        background: var(--ac-color-primary);
+        color: var(--ac-color-ink-d);
         box-shadow: 0 14px 28px rgb(61 99 117 / 0.12);
       }
 
       .primary-button:hover:not(:disabled) {
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
       }
 
       button:disabled {
@@ -263,9 +264,9 @@ import { ChildrenApi } from './data-access/children.api';
       .summary-grid article,
       .profile-form,
       .profile-panel {
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: 0 8px 30px rgb(41 74 90 / 0.05);
       }
 
@@ -277,14 +278,14 @@ import { ChildrenApi } from './data-access/children.api';
 
       .summary-grid span,
       .snapshot-row span {
-        color: #71787c;
+        color: var(--ac-color-grey-c);
         font-size: var(--ac-type-label);
         line-height: 1.3;
       }
 
       .summary-grid strong,
       .snapshot-row strong {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 18px;
       }
 
@@ -308,31 +309,31 @@ import { ChildrenApi } from './data-access/children.api';
       }
 
       h2 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 24px;
         line-height: 1.3;
       }
 
       .profile-form header p,
       .note-box p {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         line-height: 1.55;
       }
 
       .field {
         display: grid;
         gap: 10px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-weight: var(--ac-font-weight-bold);
       }
 
       input,
       textarea {
         width: 100%;
-        border: 1px solid #b8c2c8;
+        border: 1px solid var(--ac-color-border-grey);
         border-radius: 12px;
-        background: #f8fcff;
-        color: #001e2b;
+        background: var(--ac-color-tint-blue-pale);
+        color: var(--ac-color-text-strong);
         font: inherit;
         font-weight: var(--ac-font-weight-regular);
         padding: 14px 16px;
@@ -349,14 +350,14 @@ import { ChildrenApi } from './data-access/children.api';
 
       input:focus,
       textarea:focus {
-        border-color: #3d6375;
-        background: #ffffff;
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-surface);
         box-shadow: 0 0 0 4px rgb(61 99 117 / 0.12);
         outline: none;
       }
 
       input[aria-invalid='true'] {
-        border-color: #ba1a1a;
+        border-color: var(--ac-color-red-600);
       }
 
       .field-error,
@@ -372,18 +373,18 @@ import { ChildrenApi } from './data-access/children.api';
       .field-error,
       .form-error,
       .error {
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
       }
 
       .success,
       .status {
-        background: #e7eedf;
-        color: #244b2d;
+        background: var(--ac-color-sage-light);
+        color: var(--ac-color-olive-darkest);
       }
 
       .snapshot-row {
-        border-bottom: 1px solid #dde5e4;
+        border-bottom: 1px solid var(--ac-color-border);
         padding-bottom: 16px;
         display: grid;
         gap: 6px;
@@ -391,7 +392,7 @@ import { ChildrenApi } from './data-access/children.api';
 
       .note-box {
         border-radius: 8px;
-        background: #e8f6ff;
+        background: var(--ac-color-surface-info);
         padding: 18px;
         display: grid;
         gap: 8px;

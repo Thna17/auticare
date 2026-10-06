@@ -11,6 +11,7 @@ import type { BadgeTone } from './components/screening-badge.component';
 import { ScreeningHistoryFilterComponent } from './components/screening-history-filter.component';
 import type { RiskFilter } from './components/screening-history-filter.component';
 import { ScreeningPaginationComponent } from './components/screening-pagination.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 const MAX_ANSWER_VALUE = 4;
 const PAGE_SIZE = 5;
@@ -36,6 +37,7 @@ const riskLabels: Record<RiskLevel, string> = {
     ScreeningBadgeComponent,
     ScreeningHistoryFilterComponent,
     ScreeningPaginationComponent,
+    UiMessageComponent,
   ],
   template: `
     <section class="history">
@@ -47,7 +49,7 @@ const riskLabels: Record<RiskLevel, string> = {
       @if (loading()) {
         <p class="status">Loading…</p>
       } @else if (error()) {
-        <p class="status error" role="alert">{{ error() }}</p>
+        <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       } @else {
         @if (children().length > 1) {
           <section class="select-child" role="group" aria-labelledby="history-child-label">
@@ -129,18 +131,18 @@ const riskLabels: Record<RiskLevel, string> = {
          hardcoded hex/px exactly (no token system). NOTE: duplicated across
          screening pages — candidate for extraction into a shared theme file. */
       :host {
-        --scr-teal: #3d6375;
-        --scr-teal-ink: #103443;
-        --scr-text: #263238;
-        --scr-text-muted: #66747a;
-        --scr-surface: #ffffff;
-        --scr-banner-bg: #e8f6ff;
-        --scr-banner-border: #d4e6ef;
-        --scr-avatar-bg: #8db4c8;
-        --scr-divider: #c1d3dc;
+        --scr-teal: var(--ac-color-action);
+        --scr-teal-ink: var(--ac-color-ink-f);
+        --scr-text: var(--ac-color-text);
+        --scr-text-muted: var(--ac-color-text-muted);
+        --scr-surface: var(--ac-color-surface);
+        --scr-banner-bg: var(--ac-color-surface-info);
+        --scr-banner-border: var(--ac-color-border-info);
+        --scr-avatar-bg: var(--ac-color-primary);
+        --scr-divider: var(--ac-color-grey-pale);
         --scr-radius: 12px;
         --scr-shadow-card: 0 12px 30px rgb(41 74 90 / 0.08);
-        --scr-error: #a23434;
+        --scr-error: var(--ac-color-alert-text);
         display: block;
       }
 

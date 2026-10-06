@@ -5,10 +5,11 @@ import type { ChildResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { ChildrenFacade } from './state/children.facade';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent],
+  imports: [RouterLink, UiEmptyStateComponent, UiMessageComponent],
   template: `
     <section class="page-header">
       <div>
@@ -24,7 +25,7 @@ import { ChildrenFacade } from './state/children.facade';
     @if (facade.loading()) {
       <p class="status" aria-live="polite">Loading children...</p>
     } @else if (facade.error()) {
-      <p class="error" role="alert">{{ facade.error() }}</p>
+      <ac-ui-message tone="error">{{ facade.error() }}</ac-ui-message>
     } @else if (facade.children().length === 0) {
       <ac-ui-empty-state
         title="No child profiles yet"
@@ -88,8 +89,8 @@ import { ChildrenFacade } from './state/children.facade';
       .empty-action {
         align-self: center;
         border-radius: 12px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         min-height: 46px;
         display: inline-flex;
         align-items: center;
@@ -101,7 +102,7 @@ import { ChildrenFacade } from './state/children.facade';
 
       .create-child:hover,
       .empty-action:hover {
-        background: #244b5d;
+        background: var(--ac-color-ink-j);
       }
 
       .empty-action {
@@ -110,7 +111,7 @@ import { ChildrenFacade } from './state/children.facade';
 
       .eyebrow {
         margin: 0 0 8px;
-        color: #546343;
+        color: var(--ac-color-olive);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
@@ -124,7 +125,7 @@ import { ChildrenFacade } from './state/children.facade';
       }
 
       h1 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
         line-height: 1.25;
         letter-spacing: 0;
@@ -132,7 +133,7 @@ import { ChildrenFacade } from './state/children.facade';
 
       .page-header p:last-child {
         margin-top: 10px;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-page-subtitle);
         line-height: 1.55;
       }
@@ -141,13 +142,13 @@ import { ChildrenFacade } from './state/children.facade';
       .error {
         border-radius: 12px;
         padding: 16px;
-        background: #e8f6ff;
-        color: #163f52;
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-ink-c);
       }
 
       .error {
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
       }
 
       .child-grid {
@@ -158,9 +159,9 @@ import { ChildrenFacade } from './state/children.facade';
 
       .child-card {
         min-height: 260px;
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: 0 8px 30px rgb(41 74 90 / 0.06);
         padding: 22px;
         display: grid;
@@ -171,8 +172,8 @@ import { ChildrenFacade } from './state/children.facade';
         width: 58px;
         height: 58px;
         border-radius: 18px;
-        background: #d7e9c0;
-        color: #3d4b2d;
+        background: var(--ac-color-olive-light);
+        color: var(--ac-color-olive-dark);
         display: grid;
         place-items: center;
         font-size: 22px;
@@ -185,32 +186,32 @@ import { ChildrenFacade } from './state/children.facade';
       }
 
       h2 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 24px;
         line-height: 1.3;
       }
 
       .card-content p {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         line-height: 1.5;
       }
 
       .notes {
         min-height: 72px;
         border-radius: 8px;
-        background: #f4faff;
+        background: var(--ac-color-tint-blue-wash);
         padding: 14px;
       }
 
       .muted {
-        color: #71787c;
+        color: var(--ac-color-grey-c);
       }
 
       .profile-link {
         align-self: end;
         min-height: 46px;
         border-radius: 999px;
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         display: inline-flex;
         align-items: center;
         justify-content: center;

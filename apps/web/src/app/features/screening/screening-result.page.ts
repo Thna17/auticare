@@ -9,6 +9,7 @@ import { ScreeningBadgeComponent } from './components/screening-badge.component'
 import type { BadgeTone } from './components/screening-badge.component';
 import { ScreeningInfoBannerComponent } from './components/screening-info-banner.component';
 import { observationFor } from './screening-observations';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 const MAX_ANSWER_VALUE = 4;
 
@@ -114,14 +115,20 @@ const formatAge = (dateOfBirth: string): string => {
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiCardComponent, ScreeningBadgeComponent, ScreeningInfoBannerComponent],
+  imports: [
+    RouterLink,
+    UiCardComponent,
+    ScreeningBadgeComponent,
+    ScreeningInfoBannerComponent,
+    UiMessageComponent,
+  ],
   template: `
     <section class="result">
       @if (loading()) {
         <p class="status">Loading…</p>
       } @else if (fatalError()) {
         <div class="fatal">
-          <p class="status error" role="alert">{{ fatalError() }}</p>
+          <ac-ui-message tone="error">{{ fatalError() }}</ac-ui-message>
           <button type="button" class="link" (click)="goToScreeningHome()">
             Back to Screening
           </button>
@@ -336,21 +343,21 @@ const formatAge = (dateOfBirth: string): string => {
     `
       /* Named constants mirroring the shell's hardcoded hex/px (no token system). */
       :host {
-        --scr-teal: #3d6375;
-        --scr-teal-ink: #103443;
-        --scr-text: #263238;
-        --scr-text-muted: #66747a;
-        --scr-surface: #ffffff;
-        --scr-banner-bg: #e8f6ff;
-        --scr-banner-border: #d4e6ef;
-        --scr-avatar-bg: #8db4c8;
-        --scr-divider: #c1d3dc;
+        --scr-teal: var(--ac-color-action);
+        --scr-teal-ink: var(--ac-color-ink-f);
+        --scr-text: var(--ac-color-text);
+        --scr-text-muted: var(--ac-color-text-muted);
+        --scr-surface: var(--ac-color-surface);
+        --scr-banner-bg: var(--ac-color-surface-info);
+        --scr-banner-border: var(--ac-color-border-info);
+        --scr-avatar-bg: var(--ac-color-primary);
+        --scr-divider: var(--ac-color-grey-pale);
         --scr-radius: 12px;
         --scr-shadow-card: 0 12px 30px rgb(41 74 90 / 0.08);
-        --scr-error: #a23434;
-        --scr-low: #72a675;
-        --scr-moderate: #d9a441;
-        --scr-high: #c96e62;
+        --scr-error: var(--ac-color-alert-text);
+        --scr-low: var(--ac-color-success);
+        --scr-moderate: var(--ac-color-warning);
+        --scr-high: var(--ac-color-attention);
         display: block;
       }
 

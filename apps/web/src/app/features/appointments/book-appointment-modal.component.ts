@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ChildrenFacade } from '../children/state/children.facade';
 import { AppointmentsFacade, visitReasons } from './state/appointments.facade';
 import { AppointmentConfirmationComponent } from './appointment-confirmation.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 type CalendarDay = {
   readonly iso: string;
@@ -16,7 +17,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, AppointmentConfirmationComponent],
+  imports: [RouterLink, AppointmentConfirmationComponent, UiMessageComponent],
   selector: 'ac-book-appointment-modal',
   template: `
     <div class="backdrop" (click)="close()">
@@ -151,7 +152,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
           }
 
           @if (facade.booking().error) {
-            <p class="error" role="alert">{{ facade.booking().error }}</p>
+            <ac-ui-message tone="error">{{ facade.booking().error }}</ac-ui-message>
           }
 
           <footer class="modal-footer">
@@ -187,7 +188,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         max-height: 90vh;
         overflow-y: auto;
         border-radius: 16px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         padding: 24px;
         box-shadow: 0 24px 60px rgb(0 30 43 / 0.25);
       }
@@ -201,7 +202,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 
       .modal-header h2 {
         margin: 0;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-card-title);
       }
 
@@ -210,8 +211,8 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         height: 32px;
         border: 0;
         border-radius: 999px;
-        background: #f0f7fb;
-        color: #41484b;
+        background: var(--ac-color-tint-blue-soft);
+        color: var(--ac-color-text-body);
         font-size: 1.25rem;
         line-height: 1;
         cursor: pointer;
@@ -223,7 +224,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 
       .section-title {
         margin: 0 0 10px;
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
@@ -240,9 +241,9 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
-        border: 1.5px solid #dde5e4;
+        border: 1.5px solid var(--ac-color-border);
         border-radius: 12px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         padding: 12px;
         cursor: pointer;
         text-decoration: none;
@@ -251,16 +252,16 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
       }
 
       .patient-card.selected {
-        border-color: #294a5a;
-        background: #f0f7fb;
+        border-color: var(--ac-color-text-dark);
+        background: var(--ac-color-tint-blue-soft);
       }
 
       .patient-card .avatar {
         width: 34px;
         height: 34px;
         border-radius: 999px;
-        background: #d7e9c0;
-        color: #3d4b2d;
+        background: var(--ac-color-olive-light);
+        color: var(--ac-color-olive-dark);
         display: grid;
         place-items: center;
         font-weight: var(--ac-font-weight-bold);
@@ -269,7 +270,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 
       .patient-card .avatar.plus {
         background: #e5f6ff;
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-size: 18px;
       }
 
@@ -277,12 +278,12 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         display: flex;
         flex-direction: column;
         gap: 2px;
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-size: var(--ac-type-meta);
       }
 
       .patient-copy strong {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-body);
       }
 
@@ -291,16 +292,16 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         flex-direction: column;
         gap: 2px;
         border-radius: 10px;
-        background: #f0f7fb;
+        background: var(--ac-color-tint-blue-soft);
         padding: 12px 14px;
       }
 
       .doctor-summary strong {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       .doctor-summary span {
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
@@ -309,7 +310,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 8px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-weight: var(--ac-font-weight-semibold);
       }
 
@@ -318,7 +319,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         height: 28px;
         border: 0;
         border-radius: 999px;
-        background: #f0f7fb;
+        background: var(--ac-color-tint-blue-soft);
         cursor: pointer;
         font-size: 1rem;
       }
@@ -332,7 +333,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 
       .weekday-row span {
         text-align: center;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: 11px;
         font-weight: var(--ac-font-weight-bold);
       }
@@ -342,7 +343,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         border: 0;
         border-radius: 8px;
         background: transparent;
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-size: var(--ac-type-meta);
         cursor: pointer;
       }
@@ -357,8 +358,8 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
       }
 
       .day-cell.selected {
-        background: #294a5a;
-        color: #ffffff;
+        background: var(--ac-color-text-dark);
+        color: var(--ac-color-text-on-action);
         font-weight: var(--ac-font-weight-bold);
       }
 
@@ -370,10 +371,10 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 
       .slot {
         min-height: 40px;
-        border: 1.5px solid #dde5e4;
+        border: 1.5px solid var(--ac-color-border);
         border-radius: 999px;
-        background: #ffffff;
-        color: #294a5a;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-dark);
         padding: 0 16px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
@@ -381,9 +382,9 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
       }
 
       .slot.selected {
-        border-color: #294a5a;
-        background: #294a5a;
-        color: #ffffff;
+        border-color: var(--ac-color-text-dark);
+        background: var(--ac-color-text-dark);
+        color: var(--ac-color-text-on-action);
       }
 
       .reason-row {
@@ -395,10 +396,10 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 
       .reason-chip {
         min-height: 36px;
-        border: 1.5px solid #dde5e4;
+        border: 1.5px solid var(--ac-color-border);
         border-radius: 999px;
-        background: #ffffff;
-        color: #294a5a;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-dark);
         padding: 0 14px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
@@ -408,20 +409,20 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
       .reason-chip.selected {
         border-color: var(--ac-color-sage);
         background: var(--ac-color-sage-light);
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
       }
 
       .notes-label {
         display: block;
         margin-bottom: 6px;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
       }
 
       .notes-input {
         width: 100%;
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: var(--ac-radius-md);
         padding: 10px 12px;
         font-family: inherit;
@@ -439,7 +440,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         margin: 0 0 16px;
         border-radius: 10px;
         background: #fee2e2;
-        color: #b91c1c;
+        color: var(--ac-color-alert-slate);
         padding: 10px 14px;
         font-size: var(--ac-type-meta);
       }
@@ -459,15 +460,15 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
       }
 
       .secondary {
-        border: 1.5px solid #dde5e4;
-        background: #ffffff;
-        color: #41484b;
+        border: 1.5px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-body);
       }
 
       .primary {
         border: 0;
-        background: #294a5a;
-        color: #ffffff;
+        background: var(--ac-color-text-dark);
+        color: var(--ac-color-text-on-action);
       }
 
       .primary:disabled {

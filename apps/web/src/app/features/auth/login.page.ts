@@ -3,10 +3,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
   template: `
     <main class="login-page">
       <section class="login-card" aria-labelledby="login-title">
@@ -90,7 +91,7 @@ import { AuthService } from '../../core/auth/auth.service';
           }
 
           @if (error()) {
-            <p class="form-error" role="alert">{{ error() }}</p>
+            <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
           }
 
           <button class="submit-button" type="submit" [disabled]="loading()">
@@ -161,7 +162,7 @@ import { AuthService } from '../../core/auth/auth.service';
         background:
           linear-gradient(135deg, rgb(250 248 242 / 1) 0%, rgb(250 248 242 / 1) 48%),
           linear-gradient(45deg, rgb(231 238 223 / 0.7), rgb(232 246 255 / 0.75));
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       :host::before {
@@ -187,7 +188,7 @@ import { AuthService } from '../../core/auth/auth.service';
         width: min(100%, 600px);
         min-height: 860px;
         border-radius: 24px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: 0 18px 60px rgb(41 74 90 / 0.1);
         padding: 104px 96px 76px;
       }
@@ -200,7 +201,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .brand {
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         display: inline-flex;
         align-items: center;
         gap: 10px;
@@ -226,7 +227,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       h1 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 32px;
         line-height: 1.25;
         font-weight: var(--ac-font-weight-semibold);
@@ -235,7 +236,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .login-header p {
-        color: #273a43;
+        color: var(--ac-color-ink-i);
         font-size: 18px;
         line-height: 1.5;
       }
@@ -253,7 +254,7 @@ import { AuthService } from '../../core/auth/auth.service';
       .field span,
       .password-label-row label,
       .password-label-row a {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-body);
         line-height: 1.2;
         font-weight: var(--ac-font-weight-semibold);
@@ -269,7 +270,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .password-label-row a {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         text-decoration: none;
       }
 
@@ -281,10 +282,10 @@ import { AuthService } from '../../core/auth/auth.service';
         width: 100%;
         height: 70px;
         min-width: 0;
-        border: 1px solid #b8c2c8;
+        border: 1px solid var(--ac-color-border-grey);
         border-radius: 14px;
         background: #f2f9ff;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font: inherit;
         font-size: 18px;
         line-height: 1.3;
@@ -305,14 +306,14 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       input:focus {
-        border-color: #3d6375;
-        background: #ffffff;
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-surface);
         box-shadow: 0 0 0 4px rgb(61 99 117 / 0.12);
         outline: none;
       }
 
       input[aria-invalid='true'] {
-        border-color: #ba1a1a;
+        border-color: var(--ac-color-red-600);
       }
 
       .password-field {
@@ -343,8 +344,8 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .visibility-button:hover {
-        background: #e8f6ff;
-        color: #164f68;
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-action-deep);
       }
 
       .visibility-button svg {
@@ -354,7 +355,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .field-error,
       .form-error {
-        color: #ba1a1a;
+        color: var(--ac-color-red-600);
         font-size: var(--ac-type-label);
         line-height: 1.4;
         margin-top: -14px;
@@ -363,8 +364,8 @@ import { AuthService } from '../../core/auth/auth.service';
       .form-error {
         margin-top: 0;
         border-radius: 12px;
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
         padding: 14px 16px;
       }
 
@@ -373,8 +374,8 @@ import { AuthService } from '../../core/auth/auth.service';
         height: 70px;
         border: 1px solid rgb(193 199 204 / 0.36);
         border-radius: 14px;
-        background: #ffffff;
-        color: #001e2b;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
         cursor: pointer;
         display: inline-flex;
         align-items: center;
@@ -399,9 +400,9 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .submit-button:hover:not(:disabled) {
-        border-color: #8db4c8;
-        background: #e8f6ff;
-        color: #164f68;
+        border-color: var(--ac-color-primary);
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-action-deep);
         box-shadow: 0 14px 34px rgb(41 74 90 / 0.12);
       }
 
@@ -424,7 +425,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .divider span {
         height: 1px;
-        background: #c1c7cc;
+        background: var(--ac-color-grey-pale-alt);
       }
 
       .divider strong {
@@ -435,14 +436,14 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .create-account {
-        color: #273a43;
+        color: var(--ac-color-ink-i);
         text-align: center;
         font-size: 18px;
         line-height: 1.5;
       }
 
       .create-account a {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         font-weight: var(--ac-font-weight-bold);
         text-decoration: none;
         margin-left: 6px;
@@ -455,12 +456,12 @@ import { AuthService } from '../../core/auth/auth.service';
       .trust-note {
         margin-top: 104px;
         padding-top: 58px;
-        border-top: 1px solid #c1c7cc;
+        border-top: 1px solid var(--ac-color-grey-pale-alt);
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 18px;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-label);
         line-height: 1.4;
       }
@@ -470,8 +471,8 @@ import { AuthService } from '../../core/auth/auth.service';
         height: 42px;
         flex: 0 0 auto;
         border-radius: 999px;
-        background: #d7e9c0;
-        color: #5a6949;
+        background: var(--ac-color-olive-light);
+        color: var(--ac-color-olive-mid);
         display: grid;
         place-items: center;
       }
@@ -506,7 +507,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       .login-footer a:hover {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         text-decoration: underline;
       }
 

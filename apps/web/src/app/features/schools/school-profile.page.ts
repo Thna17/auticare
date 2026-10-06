@@ -17,6 +17,7 @@ import { UiCardComponent } from '../../design-system/components/ui-card.componen
 import { SchoolsApi } from './data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { SchoolProfileViewComponent } from './components/school-profile-view.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 // Defined locally (not imported from @auticare/contracts as a runtime value) so the
 // web bundle keeps contracts a type-only dependency and never pulls zod client-side.
@@ -45,6 +46,7 @@ const specializationOptions: readonly string[] = [
     UiCardComponent,
     SchoolTopbarComponent,
     SchoolProfileViewComponent,
+    UiMessageComponent,
   ],
   template: `
     <ac-school-topbar />
@@ -58,7 +60,7 @@ const specializationOptions: readonly string[] = [
     @if (loading()) {
       <ac-ui-card><p>Loading profile...</p></ac-ui-card>
     } @else if (loadError()) {
-      <p class="error" role="alert">{{ loadError() }}</p>
+      <ac-ui-message tone="error">{{ loadError() }}</ac-ui-message>
     } @else if (school(); as current) {
       @if (mode() === 'view') {
         @if (savedFlash()) {
@@ -289,7 +291,7 @@ const specializationOptions: readonly string[] = [
         margin-bottom: 28px;
       }
       .eyebrow {
-        color: #3d6375;
+        color: var(--ac-color-action);
         font-weight: var(--ac-font-weight-bold);
       }
       h1 {
@@ -303,10 +305,10 @@ const specializationOptions: readonly string[] = [
       fieldset {
         display: grid;
         gap: 16px;
-        border: 1px solid #d4e6ef;
+        border: 1px solid var(--ac-color-border-info);
         border-radius: 8px;
         padding: 18px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
       }
       legend {
         font-weight: var(--ac-font-weight-bold);
@@ -323,21 +325,21 @@ const specializationOptions: readonly string[] = [
       input,
       textarea,
       select {
-        border: 1px solid #c1d3dc;
+        border: 1px solid var(--ac-color-grey-pale);
         border-radius: 8px;
         padding: 12px;
         font: inherit;
-        background: #ffffff;
+        background: var(--ac-color-surface);
       }
       input:focus-visible,
       textarea:focus-visible,
       select:focus-visible {
-        outline: 3px solid #3d6375;
+        outline: 3px solid var(--ac-color-action);
         outline-offset: 1px;
       }
       .hint {
         margin: 0;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-semibold);
       }
@@ -352,7 +354,7 @@ const specializationOptions: readonly string[] = [
         gap: 6px;
       }
       .previews figcaption {
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-semibold);
       }
@@ -361,8 +363,8 @@ const specializationOptions: readonly string[] = [
         height: 80px;
         object-fit: cover;
         border-radius: 8px;
-        border: 1px solid #d4e6ef;
-        background: #f4faff;
+        border: 1px solid var(--ac-color-border-info);
+        background: var(--ac-color-tint-blue-wash);
       }
       .pills {
         display: flex;
@@ -373,28 +375,28 @@ const specializationOptions: readonly string[] = [
         min-height: 38px;
         padding: 0 16px;
         border-radius: 999px;
-        border: 2px solid #d4e6ef;
-        background: #ffffff;
-        color: #263238;
+        border: 2px solid var(--ac-color-border-info);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text);
         font-weight: var(--ac-font-weight-bold);
         cursor: pointer;
       }
       .pill:hover:not(.active) {
-        border-color: #8db4c8;
+        border-color: var(--ac-color-primary);
       }
       .pill.active {
-        border-color: #3d6375;
-        background: #3d6375;
-        color: #ffffff;
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
       }
       .pill:focus-visible {
-        outline: 3px solid #3d6375;
+        outline: 3px solid var(--ac-color-action);
         outline-offset: 2px;
       }
 
       /* Read-only status block — visually distinct from editable fields. */
       .readonly {
-        background: #f4faff;
+        background: var(--ac-color-tint-blue-wash);
         border-style: dashed;
       }
       .ro-badge {
@@ -402,9 +404,9 @@ const specializationOptions: readonly string[] = [
         font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
         letter-spacing: 0.04em;
-        color: #66747a;
-        background: #e8f6ff;
-        border: 1px solid #d4e6ef;
+        color: var(--ac-color-text-muted);
+        background: var(--ac-color-surface-info);
+        border: 1px solid var(--ac-color-border-info);
         border-radius: 999px;
         padding: 2px 10px;
       }
@@ -418,12 +420,12 @@ const specializationOptions: readonly string[] = [
         gap: 6px;
       }
       .ro-label {
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-bold);
       }
       .ro-value {
-        color: #263238;
+        color: var(--ac-color-text);
         font-weight: var(--ac-font-weight-semibold);
       }
       .verify-badge {
@@ -433,19 +435,19 @@ const specializationOptions: readonly string[] = [
         font-weight: var(--ac-font-weight-bold);
         font-size: var(--ac-type-label);
         background: #eef1f2;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
       }
       .verify-badge.verified {
-        background: #72a675;
-        color: #ffffff;
+        background: var(--ac-color-success);
+        color: var(--ac-color-text-on-action);
       }
 
       button[type='submit'] {
         width: fit-content;
         border: 0;
         border-radius: 8px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         padding: 12px 22px;
         font-weight: var(--ac-font-weight-bold);
         cursor: pointer;
@@ -455,16 +457,16 @@ const specializationOptions: readonly string[] = [
         cursor: not-allowed;
       }
       .error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-weight: var(--ac-font-weight-semibold);
       }
       .field-error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-semibold);
       }
       .success {
-        color: #236b43;
+        color: var(--ac-color-green-700);
         font-weight: var(--ac-font-weight-semibold);
       }
       /* Prominent save confirmation / error banner (hard to miss). */
@@ -479,24 +481,24 @@ const specializationOptions: readonly string[] = [
       }
       .save-banner.ok {
         background: #e2efe3;
-        color: #236b43;
+        color: var(--ac-color-green-700);
         border: 1px solid #b7d8bd;
       }
       .save-banner.bad {
         background: #fbe9e9;
-        color: #a23434;
-        border: 1px solid #eec2c2;
+        color: var(--ac-color-alert-text);
+        border: 1px solid var(--ac-color-red-border);
       }
       .save-icon {
         font-size: 1.15rem;
       }
       .prompt {
         margin-bottom: 20px;
-        background: #e8f6ff;
-        border: 1px solid #d4e6ef;
+        background: var(--ac-color-surface-info);
+        border: 1px solid var(--ac-color-border-info);
         border-radius: 10px;
         padding: 14px 18px;
-        color: #263238;
+        color: var(--ac-color-text);
         font-weight: var(--ac-font-weight-semibold);
       }
       .form-actions {
@@ -505,10 +507,10 @@ const specializationOptions: readonly string[] = [
         align-items: center;
       }
       .cancel-btn {
-        border: 1px solid #c1d3dc;
+        border: 1px solid var(--ac-color-grey-pale);
         border-radius: 8px;
-        background: #ffffff;
-        color: #263238;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text);
         padding: 12px 22px;
         font-weight: var(--ac-font-weight-bold);
         cursor: pointer;

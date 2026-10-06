@@ -4,10 +4,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ChildrenApi } from './data-access/children.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
   template: `
     <a class="back-link" routerLink="/children">Back to children</a>
 
@@ -45,7 +46,7 @@ import { ChildrenApi } from './data-access/children.api';
       </label>
 
       @if (error()) {
-        <p class="form-error" role="alert">{{ error() }}</p>
+        <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       }
 
       <div class="form-actions">
@@ -67,7 +68,7 @@ import { ChildrenApi } from './data-access/children.api';
         margin: 0;
       }
       .back-link {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         display: inline-flex;
         margin-bottom: 22px;
         font-weight: var(--ac-font-weight-bold);
@@ -83,38 +84,38 @@ import { ChildrenApi } from './data-access/children.api';
         margin-bottom: 28px;
       }
       .eyebrow {
-        color: #546343;
+        color: var(--ac-color-olive);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
       }
       h1 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
         line-height: 1.2;
       }
       .page-header p:last-child {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-page-subtitle);
         line-height: 1.55;
       }
       .child-form {
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: 0 8px 30px rgb(41 74 90 / 0.06);
         display: grid;
         gap: 20px;
         padding: 26px;
       }
       .field {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         display: grid;
         font-weight: var(--ac-font-weight-bold);
         gap: 10px;
       }
       em {
-        color: #71787c;
+        color: var(--ac-color-grey-c);
         font-style: normal;
         font-weight: var(--ac-font-weight-semibold);
       }
@@ -122,10 +123,10 @@ import { ChildrenApi } from './data-access/children.api';
       textarea {
         box-sizing: border-box;
         width: 100%;
-        border: 1px solid #b8c2c8;
+        border: 1px solid var(--ac-color-border-grey);
         border-radius: 12px;
-        background: #f8fcff;
-        color: #001e2b;
+        background: var(--ac-color-tint-blue-pale);
+        color: var(--ac-color-text-strong);
         font: inherit;
         font-weight: var(--ac-font-weight-regular);
         padding: 14px 16px;
@@ -139,16 +140,16 @@ import { ChildrenApi } from './data-access/children.api';
       }
       input:focus,
       textarea:focus {
-        border-color: #3d6375;
-        background: #ffffff;
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-surface);
         box-shadow: 0 0 0 4px rgb(61 99 117 / 0.12);
         outline: none;
       }
       .field-error,
       .form-error {
         border-radius: 8px;
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
         margin: -8px 0 0;
         padding: 12px 14px;
       }
@@ -159,7 +160,7 @@ import { ChildrenApi } from './data-access/children.api';
         gap: 16px;
       }
       .form-actions a {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         font-weight: var(--ac-font-weight-bold);
         text-decoration: none;
       }
@@ -167,15 +168,15 @@ import { ChildrenApi } from './data-access/children.api';
         min-height: 48px;
         border: 0;
         border-radius: 12px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         cursor: pointer;
         font: inherit;
         font-weight: var(--ac-font-weight-bold);
         padding: 0 20px;
       }
       button:hover:not(:disabled) {
-        background: #244b5d;
+        background: var(--ac-color-ink-j);
       }
       button:disabled {
         cursor: progress;

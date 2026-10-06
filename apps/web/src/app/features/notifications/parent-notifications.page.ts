@@ -114,16 +114,16 @@ type ReadFilter = 'ALL' | 'UNREAD';
 
       .sub {
         margin: 4px 0 0;
-        color: #41484b;
+        color: var(--ac-color-text-body);
       }
 
       .unread-pill {
         padding: 6px 12px;
         border-radius: 999px;
-        background: #e8f6ff;
-        border: 1px solid #d4e6ef;
+        background: var(--ac-color-surface-info);
+        border: 1px solid var(--ac-color-border-info);
         font-weight: var(--ac-font-weight-bold);
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
       }
 
       .filters {
@@ -137,30 +137,30 @@ type ReadFilter = 'ALL' | 'UNREAD';
         min-height: 38px;
         padding: 0 14px;
         border-radius: 999px;
-        border: 1px solid #b8c2c8;
-        background: #fff;
-        color: #001e2b;
+        border: 1px solid var(--ac-color-border-grey);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
         cursor: pointer;
       }
 
       .filter.active {
-        background: #3d6375;
-        border-color: #3d6375;
-        color: #fff;
+        background: var(--ac-color-action);
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         font-weight: var(--ac-font-weight-bold);
       }
 
       .state {
         margin: 24px 0;
-        color: #41484b;
+        color: var(--ac-color-text-body);
       }
 
       .state.error {
         padding: 14px 18px;
         border-radius: 10px;
-        color: #b42318;
-        background: #fdecec;
-        border: 1px solid #eec2c2;
+        color: var(--ac-color-red-700);
+        background: var(--ac-color-red-100);
+        border: 1px solid var(--ac-color-red-border);
       }
 
       .retry {
@@ -168,9 +168,9 @@ type ReadFilter = 'ALL' | 'UNREAD';
         min-height: 36px;
         padding: 0 14px;
         border-radius: 8px;
-        border: 1px solid #eec2c2;
-        background: #fff;
-        color: #b42318;
+        border: 1px solid var(--ac-color-red-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-red-700);
         cursor: pointer;
       }
 
@@ -190,12 +190,12 @@ type ReadFilter = 'ALL' | 'UNREAD';
         padding: 16px 18px;
         border: 1px solid #dbe5e8;
         border-radius: 12px;
-        background: #fff;
+        background: var(--ac-color-surface);
       }
 
       .row.unread {
-        border-color: #d4e6ef;
-        background: #f8fcff;
+        border-color: var(--ac-color-border-info);
+        background: var(--ac-color-tint-blue-pale);
       }
 
       .row-head {
@@ -211,7 +211,7 @@ type ReadFilter = 'ALL' | 'UNREAD';
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
         background: #eef3f6;
-        color: #41484b;
+        color: var(--ac-color-text-body);
       }
 
       .type-badge[data-tone='positive'] {
@@ -225,32 +225,32 @@ type ReadFilter = 'ALL' | 'UNREAD';
       }
 
       .type-badge[data-tone='info'] {
-        background: #e8f6ff;
-        color: #294a5a;
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-text-dark);
       }
 
       .dot {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: #3d6375;
+        background: var(--ac-color-action);
       }
 
       .body {
         margin: 8px 0 0;
-        color: #263238;
+        color: var(--ac-color-text);
         line-height: 1.55;
       }
 
       .when {
         margin: 6px 0 0;
-        color: #5b6569;
+        color: var(--ac-color-grey-b);
         font-size: var(--ac-type-meta);
       }
 
       .row-link {
         flex: 0 0 auto;
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-weight: var(--ac-font-weight-bold);
         text-decoration: underline;
       }

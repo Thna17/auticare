@@ -13,6 +13,7 @@ import type {
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 interface EnrollmentViewModel {
   id: string;
@@ -27,7 +28,7 @@ interface EnrollmentViewModel {
 
 @Component({
   standalone: true,
-  imports: [UiCardComponent, SchoolTopbarComponent, RouterLink],
+  imports: [UiCardComponent, SchoolTopbarComponent, RouterLink, UiMessageComponent],
   selector: 'ac-school-enrollments-page',
   template: `
     <ac-school-topbar />
@@ -112,7 +113,7 @@ interface EnrollmentViewModel {
     @if (loading()) {
       <ac-ui-card><p>Loading enrollments...</p></ac-ui-card>
     } @else if (error()) {
-      <p class="error" role="alert">{{ error() }}</p>
+      <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     } @else if (!enrollments().length) {
       <ac-ui-card><p>No active child enrollments are available.</p></ac-ui-card>
     } @else {
@@ -319,7 +320,7 @@ interface EnrollmentViewModel {
           </label>
 
           @if (editError(); as err) {
-            <p class="dialog-error" role="alert">{{ err }}</p>
+            <ac-ui-message tone="error">{{ err }}</ac-ui-message>
           }
 
           <div class="dialog-actions">
@@ -356,7 +357,7 @@ interface EnrollmentViewModel {
           </p>
 
           @if (deleteError(); as err) {
-            <p class="dialog-error" role="alert">{{ err }}</p>
+            <ac-ui-message tone="error">{{ err }}</ac-ui-message>
           }
 
           <div class="dialog-actions">
@@ -393,12 +394,12 @@ interface EnrollmentViewModel {
         margin: 0 0 8px 0;
         font-size: 28px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .header-text p {
         margin: 0;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
       }
 
@@ -407,7 +408,7 @@ interface EnrollmentViewModel {
         align-items: center;
         gap: 8px;
         padding: 12px 20px;
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
         border: none;
         border-radius: 10px;
@@ -419,7 +420,7 @@ interface EnrollmentViewModel {
       }
 
       .btn-primary:hover {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
 
       .stats-grid {
@@ -439,7 +440,7 @@ interface EnrollmentViewModel {
       .stat-label {
         display: block;
         font-size: 13px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         margin-bottom: 8px;
       }
 
@@ -452,22 +453,22 @@ interface EnrollmentViewModel {
       .stat-number {
         font-size: 28px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .stat-number.warning {
-        color: #ef4444;
+        color: var(--ac-color-red-500);
       }
 
       .stat-trend {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .progress-bar-container {
         width: 100%;
         height: 8px;
-        background: #e2e8f0;
+        background: var(--ac-color-border-slate);
         border-radius: 4px;
         overflow: hidden;
         margin-top: 8px;
@@ -475,13 +476,13 @@ interface EnrollmentViewModel {
 
       .progress-bar {
         height: 100%;
-        background: #10b981;
+        background: var(--ac-color-green-500);
         border-radius: 4px;
         transition: width 0.3s;
       }
 
       .progress-bar.warning {
-        background: #ef4444;
+        background: var(--ac-color-red-500);
       }
 
       .filters-bar {
@@ -507,7 +508,7 @@ interface EnrollmentViewModel {
         gap: 8px;
         padding: 10px 16px;
         background: white;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         font-size: 14px;
         cursor: pointer;
@@ -515,12 +516,12 @@ interface EnrollmentViewModel {
       }
 
       .filter-btn:hover {
-        border-color: #3b82f6;
+        border-color: var(--ac-color-blue-500);
       }
 
       .filter-select {
         padding: 10px 16px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         font-size: 14px;
         outline: none;
@@ -528,7 +529,7 @@ interface EnrollmentViewModel {
       }
 
       .filter-select:focus {
-        border-color: #3b82f6;
+        border-color: var(--ac-color-blue-500);
       }
 
       .filters-right {
@@ -547,7 +548,7 @@ interface EnrollmentViewModel {
       }
 
       .icon-action-btn:hover {
-        background: #f1f5f9;
+        background: var(--ac-color-slate-100);
       }
 
       .table-container {
@@ -567,15 +568,15 @@ interface EnrollmentViewModel {
         padding: 16px 20px;
         font-size: 12px;
         font-weight: 600;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--ac-color-border-slate);
       }
 
       .data-table td {
         padding: 16px 20px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--ac-color-slate-100);
         font-size: 14px;
       }
 
@@ -592,7 +593,7 @@ interface EnrollmentViewModel {
       .student-avatar {
         width: 40px;
         height: 40px;
-        background: #dbeafe;
+        background: var(--ac-color-blue-100);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -607,12 +608,12 @@ interface EnrollmentViewModel {
 
       .student-name {
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .student-id {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .status-badge {
@@ -624,13 +625,13 @@ interface EnrollmentViewModel {
       }
 
       .status-badge.active {
-        background: #d1fae5;
+        background: var(--ac-color-green-100);
         color: #059669;
       }
 
       .status-badge.graduated {
-        background: #dbeafe;
-        color: #2563eb;
+        background: var(--ac-color-blue-100);
+        color: var(--ac-color-blue-600);
       }
 
       .status-badge.pending {
@@ -647,7 +648,7 @@ interface EnrollmentViewModel {
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .specialist-icon {
@@ -663,11 +664,11 @@ interface EnrollmentViewModel {
       .progress-text {
         min-width: 40px;
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .progress-text.warning {
-        color: #ef4444;
+        color: var(--ac-color-red-500);
       }
 
       .progress-cell .progress-bar-container {
@@ -676,7 +677,7 @@ interface EnrollmentViewModel {
       }
 
       .warning-icon {
-        color: #ef4444;
+        color: var(--ac-color-red-500);
         font-size: 16px;
       }
 
@@ -687,11 +688,11 @@ interface EnrollmentViewModel {
         cursor: pointer;
         padding: 4px 8px;
         border-radius: 6px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .kebab-btn:hover {
-        background: #f1f5f9;
+        background: var(--ac-color-slate-100);
       }
 
       .pagination {
@@ -699,12 +700,12 @@ interface EnrollmentViewModel {
         justify-content: space-between;
         align-items: center;
         padding: 16px 20px;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid var(--ac-color-border-slate);
       }
 
       .pagination-info {
         font-size: 13px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .pagination-controls {
@@ -714,7 +715,7 @@ interface EnrollmentViewModel {
 
       .page-btn {
         padding: 8px 14px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         background: white;
         border-radius: 8px;
         font-size: 13px;
@@ -723,13 +724,13 @@ interface EnrollmentViewModel {
       }
 
       .page-btn:hover {
-        border-color: #3b82f6;
+        border-color: var(--ac-color-blue-500);
       }
 
       .page-btn.active {
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
-        border-color: #2d6a7a;
+        border-color: var(--ac-color-action-alt);
       }
 
       .page-btn:disabled {
@@ -738,7 +739,7 @@ interface EnrollmentViewModel {
       }
 
       .error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-weight: 600;
         padding: 16px;
       }
@@ -753,7 +754,7 @@ interface EnrollmentViewModel {
         width: 34px;
         height: 34px;
         border-radius: 8px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         background: white;
         cursor: pointer;
         font-size: 14px;
@@ -763,12 +764,12 @@ interface EnrollmentViewModel {
       }
 
       .action-btn.edit:hover {
-        border-color: #2d6a7a;
-        background: #e8f4f8;
+        border-color: var(--ac-color-action-alt);
+        background: var(--ac-color-tint-blue-light);
       }
 
       .action-btn.delete:hover {
-        border-color: #a23434;
+        border-color: var(--ac-color-alert-text);
         background: #fbeaea;
       }
 
@@ -806,19 +807,19 @@ interface EnrollmentViewModel {
 
       .dialog h3 {
         margin: 0 0 4px;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
         font-size: 18px;
       }
 
       .dialog-subtitle {
         margin: 0 0 16px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
       }
 
       .dialog-warning {
         margin: 0 0 16px;
-        color: #5b7280;
+        color: var(--ac-color-grey-a);
         font-size: 14px;
         line-height: 1.5;
       }
@@ -838,14 +839,14 @@ interface EnrollmentViewModel {
         display: block;
         font-size: 13px;
         font-weight: 600;
-        color: #334155;
+        color: var(--ac-color-slate-700);
         margin-bottom: 6px;
       }
 
       .dialog-input {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid #d7e3ea;
+        border: 1px solid var(--ac-color-tint-steel);
         border-radius: 9px;
         font-size: 14px;
         font-family: inherit;
@@ -856,8 +857,8 @@ interface EnrollmentViewModel {
         margin: 0 0 12px;
         padding: 10px 12px;
         border-radius: 8px;
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
         font-size: 13px;
         font-weight: 600;
       }
@@ -873,7 +874,7 @@ interface EnrollmentViewModel {
         padding: 10px 18px;
         border: none;
         border-radius: 9px;
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
         font-size: 13px;
         font-weight: 700;
@@ -881,7 +882,7 @@ interface EnrollmentViewModel {
       }
 
       .btn-primary-small:hover:not(:disabled) {
-        background: #1f4f5c;
+        background: var(--ac-color-ink-a);
       }
 
       .btn-primary-small:disabled,
@@ -892,10 +893,10 @@ interface EnrollmentViewModel {
 
       .btn-secondary {
         padding: 10px 18px;
-        border: 1px solid #d7e3ea;
+        border: 1px solid var(--ac-color-tint-steel);
         border-radius: 9px;
-        background: #fff;
-        color: #2d6a7a;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-alt);
         font-size: 13px;
         font-weight: 700;
         cursor: pointer;
@@ -905,7 +906,7 @@ interface EnrollmentViewModel {
         padding: 10px 18px;
         border: none;
         border-radius: 9px;
-        background: #a23434;
+        background: var(--ac-color-alert-text);
         color: white;
         font-size: 13px;
         font-weight: 700;
@@ -922,7 +923,7 @@ interface EnrollmentViewModel {
         bottom: 24px;
         left: 50%;
         transform: translateX(-50%);
-        background: #10303b;
+        background: var(--ac-color-action-darkest);
         color: white;
         padding: 12px 20px;
         border-radius: 10px;

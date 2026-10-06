@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import type { OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ScreeningApi } from './data-access/screening.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 /**
  * Transient hand-off page. Creates a screening session for the given child
@@ -11,10 +12,11 @@ import { ScreeningApi } from './data-access/screening.api';
  */
 @Component({
   standalone: true,
+  imports: [UiMessageComponent],
   template: `
     <section class="wait">
       @if (error()) {
-        <p class="status error" role="alert">{{ error() }}</p>
+        <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
         <button type="button" class="link" (click)="goHome()">Back to Screening</button>
       } @else {
         <p class="status">Preparing your screening…</p>
@@ -24,9 +26,9 @@ import { ScreeningApi } from './data-access/screening.api';
   styles: [
     `
       :host {
-        --scr-teal: #3d6375;
-        --scr-text-muted: #66747a;
-        --scr-error: #a23434;
+        --scr-teal: var(--ac-color-action);
+        --scr-text-muted: var(--ac-color-text-muted);
+        --scr-error: var(--ac-color-alert-text);
         display: block;
       }
       .wait {
