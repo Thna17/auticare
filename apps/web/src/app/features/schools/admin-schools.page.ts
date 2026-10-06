@@ -4,10 +4,11 @@ import { RouterLink } from '@angular/router';
 import type { AdminSchoolAccountResponse } from '@auticare/contracts';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiCardComponent],
+  imports: [RouterLink, UiCardComponent, UiMessageComponent],
   template: `
     <section class="page-header">
       <div>
@@ -21,7 +22,7 @@ import { SchoolsApi } from './data-access/schools.api';
     @if (loading()) {
       <ac-ui-card><p>Loading school accounts...</p></ac-ui-card>
     } @else if (error()) {
-      <p class="error" role="alert">{{ error() }}</p>
+      <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     } @else if (!accounts().length) {
       <ac-ui-card><p>No school accounts have been created yet.</p></ac-ui-card>
     } @else {

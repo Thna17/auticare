@@ -7,10 +7,11 @@ import { ChildrenApi } from '../children/data-access/children.api';
 import { ScreeningApi } from './data-access/screening.api';
 import { ChildSelectCardComponent } from './components/child-select-card.component';
 import { ScreeningInfoBannerComponent } from './components/screening-info-banner.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, ChildSelectCardComponent, ScreeningInfoBannerComponent],
+  imports: [RouterLink, ChildSelectCardComponent, ScreeningInfoBannerComponent, UiMessageComponent],
   template: `
     <section class="intro">
       <header class="head">
@@ -28,7 +29,7 @@ import { ScreeningInfoBannerComponent } from './components/screening-info-banner
       @if (loading()) {
         <p class="status">Loading…</p>
       } @else if (error()) {
-        <p class="status error" role="alert">{{ error() }}</p>
+        <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       } @else {
         <section class="select-child" role="group" aria-labelledby="select-child-label">
           <p id="select-child-label" class="section-label">SELECT CHILD</p>

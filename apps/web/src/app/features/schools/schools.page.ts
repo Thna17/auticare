@@ -8,6 +8,7 @@ import { ChildrenApi } from '../children/data-access/children.api';
 import { SchoolsApi } from './data-access/schools.api';
 import { EnrollmentRequestsApi } from './data-access/enrollment-requests.api';
 import type { ChildResponse } from '@auticare/contracts';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 interface SchoolViewModel extends SchoolResponse {
   rating: number | null;
@@ -26,7 +27,7 @@ const SPECIALIZATION_OPTIONS = [
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, UiMessageComponent],
   selector: 'ac-parent-schools-page',
   template: `
     <div class="page-layout">
@@ -150,7 +151,7 @@ const SPECIALIZATION_OPTIONS = [
                 <p>Loading schools...</p>
               </div>
             } @else if (error()) {
-              <p class="error" role="alert">{{ error() }}</p>
+              <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
             } @else if (!schools().length) {
               <div class="empty-state">
                 <p>No schools are available yet.</p>
@@ -324,7 +325,7 @@ const SPECIALIZATION_OPTIONS = [
                   </label>
 
                   @if (requestError(); as dialogErr) {
-                    <p class="error" role="alert">{{ dialogErr }}</p>
+                    <ac-ui-message tone="error">{{ dialogErr }}</ac-ui-message>
                   }
 
                   <div class="dialog-actions">

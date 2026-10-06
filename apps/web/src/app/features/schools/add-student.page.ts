@@ -3,10 +3,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, UiCardComponent, RouterLink],
+  imports: [ReactiveFormsModule, UiCardComponent, RouterLink, UiMessageComponent],
   selector: 'ac-add-student-page',
   template: `
     <section class="page-header">
@@ -109,10 +110,10 @@ import { SchoolsApi } from './data-access/schools.api';
         </fieldset>
 
         @if (error()) {
-          <p class="error" role="alert">{{ error() }}</p>
+          <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
         }
         @if (success()) {
-          <p class="success" role="status">{{ success() }}</p>
+          <ac-ui-message tone="success">{{ success() }}</ac-ui-message>
         }
 
         <div class="form-actions">

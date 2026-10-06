@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { HospitalResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 import { HospitalsApi } from './data-access/hospitals.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 /** Card view model — `services` split into badge tags. */
 interface HospitalViewModel {
@@ -25,7 +26,7 @@ const SERVICE_FILTER_OPTIONS = [
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, UiMessageComponent],
   template: `
     <!-- Top Bar -->
     <header class="topbar">
@@ -132,7 +133,7 @@ const SERVICE_FILTER_OPTIONS = [
         @if (loading()) {
           <div class="loading-state"><p>Loading hospitals...</p></div>
         } @else if (error(); as loadError) {
-          <p class="error" role="alert">{{ loadError }}</p>
+          <ac-ui-message tone="error">{{ loadError }}</ac-ui-message>
         } @else if (filteredHospitals().length === 0) {
           <div class="empty-state">
             <p>
@@ -209,13 +210,15 @@ const SERVICE_FILTER_OPTIONS = [
             ></textarea>
           </label>
           @if (form.touched && form.invalid) {
-            <p class="form-error" role="alert">Complete the hospital details before publishing.</p>
+            <ac-ui-message tone="error"
+              >Complete the hospital details before publishing.</ac-ui-message
+            >
           }
           @if (formError()) {
-            <p class="form-error" role="alert">{{ formError() }}</p>
+            <ac-ui-message tone="error">{{ formError() }}</ac-ui-message>
           }
           @if (formMessage()) {
-            <p class="success" role="status">{{ formMessage() }}</p>
+            <ac-ui-message tone="success">{{ formMessage() }}</ac-ui-message>
           }
           <button type="submit" [disabled]="saving()">
             {{ saving() ? 'Publishing...' : 'Add hospital' }}

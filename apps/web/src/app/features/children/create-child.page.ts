@@ -4,10 +4,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ChildrenApi } from './data-access/children.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
   template: `
     <a class="back-link" routerLink="/children">Back to children</a>
 
@@ -45,7 +46,7 @@ import { ChildrenApi } from './data-access/children.api';
       </label>
 
       @if (error()) {
-        <p class="form-error" role="alert">{{ error() }}</p>
+        <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       }
 
       <div class="form-actions">

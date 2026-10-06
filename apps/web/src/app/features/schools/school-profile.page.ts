@@ -17,6 +17,7 @@ import { UiCardComponent } from '../../design-system/components/ui-card.componen
 import { SchoolsApi } from './data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { SchoolProfileViewComponent } from './components/school-profile-view.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 // Defined locally (not imported from @auticare/contracts as a runtime value) so the
 // web bundle keeps contracts a type-only dependency and never pulls zod client-side.
@@ -45,6 +46,7 @@ const specializationOptions: readonly string[] = [
     UiCardComponent,
     SchoolTopbarComponent,
     SchoolProfileViewComponent,
+    UiMessageComponent,
   ],
   template: `
     <ac-school-topbar />
@@ -58,7 +60,7 @@ const specializationOptions: readonly string[] = [
     @if (loading()) {
       <ac-ui-card><p>Loading profile...</p></ac-ui-card>
     } @else if (loadError()) {
-      <p class="error" role="alert">{{ loadError() }}</p>
+      <ac-ui-message tone="error">{{ loadError() }}</ac-ui-message>
     } @else if (school(); as current) {
       @if (mode() === 'view') {
         @if (savedFlash()) {

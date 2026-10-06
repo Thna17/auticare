@@ -11,6 +11,7 @@ import type { BadgeTone } from './components/screening-badge.component';
 import { ScreeningHistoryFilterComponent } from './components/screening-history-filter.component';
 import type { RiskFilter } from './components/screening-history-filter.component';
 import { ScreeningPaginationComponent } from './components/screening-pagination.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 const MAX_ANSWER_VALUE = 4;
 const PAGE_SIZE = 5;
@@ -36,6 +37,7 @@ const riskLabels: Record<RiskLevel, string> = {
     ScreeningBadgeComponent,
     ScreeningHistoryFilterComponent,
     ScreeningPaginationComponent,
+    UiMessageComponent,
   ],
   template: `
     <section class="history">
@@ -47,7 +49,7 @@ const riskLabels: Record<RiskLevel, string> = {
       @if (loading()) {
         <p class="status">Loading…</p>
       } @else if (error()) {
-        <p class="status error" role="alert">{{ error() }}</p>
+        <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       } @else {
         @if (children().length > 1) {
           <section class="select-child" role="group" aria-labelledby="history-child-label">

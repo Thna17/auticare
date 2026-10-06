@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ChildrenFacade } from '../children/state/children.facade';
 import { AppointmentsFacade, visitReasons } from './state/appointments.facade';
 import { AppointmentConfirmationComponent } from './appointment-confirmation.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 type CalendarDay = {
   readonly iso: string;
@@ -16,7 +17,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, AppointmentConfirmationComponent],
+  imports: [RouterLink, AppointmentConfirmationComponent, UiMessageComponent],
   selector: 'ac-book-appointment-modal',
   template: `
     <div class="backdrop" (click)="close()">
@@ -151,7 +152,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
           }
 
           @if (facade.booking().error) {
-            <p class="error" role="alert">{{ facade.booking().error }}</p>
+            <ac-ui-message tone="error">{{ facade.booking().error }}</ac-ui-message>
           }
 
           <footer class="modal-footer">
