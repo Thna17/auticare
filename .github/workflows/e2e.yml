@@ -1,9 +1,39 @@
 name: E2E
+
+# Runs on pull requests, not just on request. The accessibility and dialog specs
+# added in the a11y work only guard anything if they actually run, and
+# workflow_dispatch meant they never did.
 on:
+  pull_request:
   workflow_dispatch:
+
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: auticare
+          MYSQL_USER: auticare
+          MYSQL_PASSWORD: auticare_dev_password
+          MYSQL_ROOT_PASSWORD: auticare_root_dev_password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      # The suite signs in, so it needs a real API and database behind the web
+      # server — the previous workflow started only Angular, which is why it could
+      # never have run the authenticated specs.
+      DATABASE_URL: mysql://auticare:auticare_dev_password@127.0.0.1:3306/auticare
+      NODE_ENV: test
+      APP_ORIGIN: http://localhost:4200
+      API_ORIGIN: http://localhost:3000
+      JWT_ACCESS_SECRET: test-access-secret-with-at-least-32-characters
+      JWT_REFRESH_SECRET: test-refresh-secret-with-at-least-32-characters
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -11,5 +41,37 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+
+      # db:push rather than migrate deploy, matching ci.yml: this is a throwaway
+      # database and the schema is the source of truth for it.
+      - run: pnpm --filter @auticare/api db:push
+
+      # The specs sign in as the seeded demo parent and school accounts, so the
+      # seed is a prerequisite rather than a convenience.
+      - run: pnpm db:seed
+
       - run: pnpm --filter @auticare/web exec playwright install --with-deps chromium
+
+      # Start the API and wait for it, rather than racing Playwright's own
+      # webServer (which only brings up the Angular dev server).
+      - name: Start API
+        run: pnpm dev:api &
+      - name: Wait for API
+        run: |
+          for _ in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:3000/health/live; then
+              echo "API is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready in time"; exit 1
+
       - run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
