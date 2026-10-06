@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import type { PaginationMeta } from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
 import type {
@@ -13,9 +14,16 @@ export class AppointmentsApi {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
 
-  listAppointments() {
+  /**
+   * One page of the parent's appointments. The endpoint is paginated because an
+   * appointment history only grows; `page` defaults to 1 and `limit` is capped
+   * server-side, so an omitted argument still returns a bounded page.
+   */
+  listAppointments(page = 1, limit = 20) {
     return this.http
-      .get<{ data: AppointmentResponse[] }>(`${this.apiBaseUrl}/appointments`)
+      .get<{ data: { appointments: AppointmentResponse[]; pagination: PaginationMeta } }>(
+        `${this.apiBaseUrl}/appointments?page=${page}&limit=${limit}`,
+      )
       .pipe(map((response) => response.data));
   }
 

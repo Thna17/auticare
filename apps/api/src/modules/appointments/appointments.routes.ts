@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { createAppointmentRequestSchema } from '@auticare/contracts';
+import { createAppointmentRequestSchema, paginationQuerySchema } from '@auticare/contracts';
 import { validateBody } from '../../common/middleware/validate.js';
+import { validateQuery } from '../../common/middleware/validate-query.js';
 import { requireAuth, requireRole } from '../auth/index.js';
 import {
   cancelAppointment,
@@ -10,7 +11,12 @@ import {
 } from './appointments.controller.js';
 export const appointmentsRoutes = Router();
 appointmentsRoutes.use(requireAuth);
-appointmentsRoutes.get('/', requireRole('PARENT'), listAppointments);
+appointmentsRoutes.get(
+  '/',
+  requireRole('PARENT'),
+  validateQuery(paginationQuerySchema),
+  listAppointments,
+);
 appointmentsRoutes.post(
   '/',
   requireRole('PARENT'),

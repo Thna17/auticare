@@ -2,6 +2,8 @@ import type { CreateAppointmentRequest, UserRole } from '@auticare/contracts';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { AppointmentsRepository } from './appointments.repository.js';
 import type { AppointmentWithRelations } from './appointments.repository.js';
+import type { PaginationQuery } from '@auticare/contracts';
+import { toPaginationMeta, toSkipTake } from '../../common/http/pagination.js';
 type Actor = { parentId: string; role: UserRole };
 const map = (item: AppointmentWithRelations) => ({
   id: item.id,
@@ -54,9 +56,10 @@ export class AppointmentsService {
       }),
     );
   }
-  async list(actor: Actor) {
+  async list(actor: Actor, query: PaginationQuery) {
     if (actor.role !== 'PARENT') throw forbidden();
-    return (await this.repository.listForParent(actor.parentId)).map(map);
+    const { items, total } = await this.repository.listForParent(actor.parentId, toSkipTake(query));
+    return { appointments: items.map(map), pagination: toPaginationMeta(query, total) };
   }
   async cancel(actor: Actor, id: string) {
     if (actor.role !== 'PARENT') throw forbidden();

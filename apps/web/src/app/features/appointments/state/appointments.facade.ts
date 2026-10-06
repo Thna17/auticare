@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import type { PaginationMeta } from '@auticare/contracts';
 import { AppointmentsApi } from '../data-access/appointments.api';
 import type {
   AppointmentResponse,
@@ -106,12 +107,26 @@ export class AppointmentsFacade {
     });
   }
 
+  /** Current page and the server's counts, so the view can offer paging controls. */
+  readonly page = signal(1);
+  readonly pagination = signal<PaginationMeta | null>(null);
+  readonly hasMorePages = computed(() => {
+    const meta = this.pagination();
+    return meta !== null && meta.page < meta.totalPages;
+  });
+
+  goToPage(page: number) {
+    this.page.set(Math.max(1, page));
+    this.loadAppointments();
+  }
+
   loadAppointments() {
     this.loading.set(true);
     this.error.set(null);
-    this.api.listAppointments().subscribe({
-      next: (appointments) => {
+    this.api.listAppointments(this.page()).subscribe({
+      next: ({ appointments, pagination }) => {
         this.appointments.set(appointments);
+        this.pagination.set(pagination);
         this.loading.set(false);
       },
       error: () => {

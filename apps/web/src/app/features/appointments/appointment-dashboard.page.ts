@@ -156,6 +156,32 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
             </li>
           }
         </ul>
+
+        @if (facade.pagination(); as meta) {
+          @if (meta.totalPages > 1) {
+            <nav class="pager" aria-label="Appointment pages">
+              <button
+                type="button"
+                class="pager-btn"
+                [disabled]="meta.page <= 1"
+                (click)="facade.goToPage(meta.page - 1)"
+              >
+                Previous
+              </button>
+              <span class="pager-status" aria-live="polite">
+                Page {{ meta.page }} of {{ meta.totalPages }} · {{ meta.total }} appointments
+              </span>
+              <button
+                type="button"
+                class="pager-btn"
+                [disabled]="!facade.hasMorePages()"
+                (click)="facade.goToPage(meta.page + 1)"
+              >
+                Next
+              </button>
+            </nav>
+          }
+        }
       }
     </section>
 
@@ -370,6 +396,36 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
       .meta {
         margin: 0;
+        color: var(--ac-color-text-muted);
+        font-size: var(--ac-type-meta);
+      }
+
+      .pager {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--ac-space-4);
+        margin-top: var(--ac-space-4);
+        flex-wrap: wrap;
+      }
+
+      .pager-btn {
+        min-height: 40px;
+        padding: 0 var(--ac-space-4);
+        border-radius: var(--ac-radius-md);
+        border: 1px solid var(--ac-color-border-grey);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font-weight: var(--ac-font-weight-bold);
+        cursor: pointer;
+      }
+
+      .pager-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .pager-status {
         color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
