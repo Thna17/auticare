@@ -12,6 +12,54 @@
   --ac-color-warning: #d9a441;
   --ac-color-attention: #c96e62;
   --ac-color-border: #dde5e4;
+
+  /* ──────────────────────────────────────────────────────────────────────
+   * Palette extracted from the feature styles (see output/audit/AUDIT.md).
+   *
+   * The app had 1424 hardcoded colour literals across 50 files against 342 token
+   * uses — 187 distinct values, 73 of them used exactly once. Several were exact
+   * duplicates of tokens that already existed above (#294a5a, #66747a, #dde5e4,
+   * #8db4c8, #263238), so the token layer was being bypassed rather than missing.
+   *
+   * Every value below is byte-identical to the literal it replaces, so adopting
+   * these tokens changes no rendered colour. Collapsing the near-duplicates noted
+   * below WOULD change rendering, so that is deliberately left as a decision
+   * rather than folded into a refactor.
+   *
+   * KNOWN INCONSISTENCY — two palettes are mixed. Alongside the hand-rolled
+   * teal/sage set there is a Tailwind slate/red scale (#64748b, #e2e8f0, #0f172a,
+   * #f8fafc, #b91c1c). They are named *-slate below so the split is visible
+   * rather than implied. Picking one is a design decision, not a refactor.
+   * ────────────────────────────────────────────────────────────────────── */
+
+  /* Text. --ac-color-text (#263238) above remains the default body colour. */
+  --ac-color-text-strong: #001e2b; /* x76, always `color` — headings and strong body */
+  --ac-color-text-body: #41484b; /* x36, always `color` — secondary body copy */
+  --ac-color-text-slate: #64748b; /* x65, always `color` — slate palette */
+  --ac-color-text-slate-strong: #0f172a; /* x25 — slate palette */
+  --ac-color-text-on-action: #ffffff; /* white used as foreground, not as a surface */
+
+  /* Brand / action. NEAR-DUPLICATES: action and action-alt are two teals doing
+   * the same job (background, text and border alike). Worth collapsing to one,
+   * which is a visual change. */
+  --ac-color-action: #3d6375; /* x71 */
+  --ac-color-action-alt: #2d6a7a; /* x56 */
+  --ac-color-action-mid: #315d72; /* x19 */
+  --ac-color-action-deep: #164f68; /* x25 */
+  --ac-color-action-darkest: #10303b; /* x16 */
+
+  /* Surfaces and borders */
+  --ac-color-surface-info: #e8f6ff; /* x27, always a background */
+  --ac-color-surface-slate: #f8fafc; /* x16 — slate palette */
+  --ac-color-border-info: #d4e6ef; /* x20 */
+  --ac-color-border-grey: #b8c2c8; /* x15 */
+  --ac-color-border-slate: #e2e8f0; /* x48 — slate palette */
+
+  /* Alert. NEAR-DUPLICATES: four reds across two palettes. */
+  --ac-color-alert-text: #a23434; /* x19 */
+  --ac-color-alert-strong: #93000a; /* x15 */
+  --ac-color-alert-surface: #ffdad6; /* x14 */
+  --ac-color-alert-slate: #b91c1c; /* x14 — slate palette */
   --ac-font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --ac-font-weight-regular: 400;

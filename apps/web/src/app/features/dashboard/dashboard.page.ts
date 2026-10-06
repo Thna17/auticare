@@ -555,7 +555,7 @@ const quickActions: readonly QuickAction[] = [
         display: flex;
         gap: 24px;
         padding: 24px 0;
-        background: #f8fafc;
+        background: var(--ac-color-surface-slate);
         min-height: 100vh;
         width: 100%;
         max-width: 100%;
@@ -580,7 +580,7 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .loading-state p {
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 15px;
       }
 
@@ -591,7 +591,7 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .empty-message {
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
         padding: 24px;
       }
@@ -604,12 +604,12 @@ const quickActions: readonly QuickAction[] = [
         margin: 0 0 8px 0;
         font-size: 32px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .greeting-section p {
         margin: 0;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 15px;
       }
 
@@ -674,7 +674,7 @@ const quickActions: readonly QuickAction[] = [
       .stat-label {
         font-size: 12px;
         font-weight: 600;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 8px;
@@ -683,7 +683,7 @@ const quickActions: readonly QuickAction[] = [
       .stat-value {
         font-size: 36px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         line-height: 1;
       }
 
@@ -693,14 +693,14 @@ const quickActions: readonly QuickAction[] = [
 
       .stat-footer {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         margin-top: 8px;
       }
 
       .progress-bar-mini {
         width: 100%;
         height: 4px;
-        background: #e2e8f0;
+        background: var(--ac-color-border-slate);
         border-radius: 2px;
         margin-top: 12px;
         overflow: hidden;
@@ -743,7 +743,7 @@ const quickActions: readonly QuickAction[] = [
         margin: 0;
         font-size: 18px;
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -755,7 +755,7 @@ const quickActions: readonly QuickAction[] = [
 
       .view-all {
         font-size: 13px;
-        color: #2d6a7a;
+        color: var(--ac-color-action-alt);
         text-decoration: none;
         font-weight: 600;
       }
@@ -774,10 +774,10 @@ const quickActions: readonly QuickAction[] = [
         padding: 12px 16px;
         font-size: 11px;
         font-weight: 600;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--ac-color-border-slate);
       }
 
       .reports-table td {
@@ -810,7 +810,7 @@ const quickActions: readonly QuickAction[] = [
 
       .student-name {
         font-weight: 500;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .status-badge {
@@ -827,7 +827,7 @@ const quickActions: readonly QuickAction[] = [
 
       .status-badge.draft {
         background: #f1f5f9;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .activities-timeline {
@@ -861,7 +861,7 @@ const quickActions: readonly QuickAction[] = [
       .activity-content p {
         margin: 0 0 4px 0;
         font-size: 14px;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         line-height: 1.5;
       }
 
@@ -871,7 +871,7 @@ const quickActions: readonly QuickAction[] = [
 
       .activity-time {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .reminders-card {
@@ -888,8 +888,8 @@ const quickActions: readonly QuickAction[] = [
       .reminder-item {
         padding: 16px;
         border-radius: 10px;
-        background: #f8fafc;
-        border-left: 4px solid #e2e8f0;
+        background: var(--ac-color-surface-slate);
+        border-left: 4px solid var(--ac-color-border-slate);
       }
 
       .reminder-item.today {
@@ -903,8 +903,8 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .reminder-item.upcoming {
-        background: #f8fafc;
-        border-left-color: #64748b;
+        background: var(--ac-color-surface-slate);
+        border-left-color: var(--ac-color-text-slate);
       }
 
       .reminder-header {
@@ -916,7 +916,7 @@ const quickActions: readonly QuickAction[] = [
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .reminder-when.today {
@@ -930,21 +930,21 @@ const quickActions: readonly QuickAction[] = [
       .reminder-title {
         font-size: 14px;
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         margin-bottom: 4px;
       }
 
       .reminder-time {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .manage-calendar-btn {
         width: 100%;
         padding: 12px;
         background: white;
-        border: 1px solid #2d6a7a;
-        color: #2d6a7a;
+        border: 1px solid var(--ac-color-action-alt);
+        color: var(--ac-color-action-alt);
         border-radius: 8px;
         font-weight: 600;
         font-size: 13px;
@@ -953,12 +953,12 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .manage-calendar-btn:hover {
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
       }
 
       .engagement-card {
-        background: linear-gradient(135deg, #2d6a7a 0%, #1e4a5a 100%);
+        background: linear-gradient(135deg, var(--ac-color-action-alt) 0%, #1e4a5a 100%);
         border-radius: 12px;
         padding: 24px;
         color: white;
@@ -1042,7 +1042,7 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .dashboard-header h1 {
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         font-size: 40px;
         line-height: 1.15;
         font-weight: 700;
@@ -1051,17 +1051,17 @@ const quickActions: readonly QuickAction[] = [
 
       .dashboard-header p {
         margin-top: 12px;
-        color: #263238;
+        color: var(--ac-color-text);
         font-size: 16px;
         line-height: 1.55;
       }
 
       .child-switcher {
         min-width: 230px;
-        border: 1px solid #b8c2c8;
+        border: 1px solid var(--ac-color-border-grey);
         border-radius: 24px;
-        background: #e8f6ff;
-        color: #001e2b;
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-text-strong);
         display: grid;
         grid-template-columns: 50px minmax(0, 1fr) 20px;
         align-items: center;
@@ -1098,7 +1098,7 @@ const quickActions: readonly QuickAction[] = [
 
       .child-switcher small {
         margin-top: 4px;
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         font-size: 13px;
         font-weight: 600;
       }
@@ -1110,8 +1110,8 @@ const quickActions: readonly QuickAction[] = [
 
       .error {
         border-radius: 12px;
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
         padding: 14px 16px;
         margin-bottom: 20px;
       }
@@ -1132,7 +1132,7 @@ const quickActions: readonly QuickAction[] = [
         min-height: 280px;
         border: 1px solid rgb(221 229 228 / 0.72);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: 0 12px 34px rgb(41 74 90 / 0.07);
         display: grid;
         align-content: start;
@@ -1142,17 +1142,17 @@ const quickActions: readonly QuickAction[] = [
 
       .admin-overview article:first-child {
         border-color: #b9d6e5;
-        background: #e8f6ff;
+        background: var(--ac-color-surface-info);
       }
 
       .admin-overview h2 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 24px;
         line-height: 1.3;
       }
 
       .admin-overview p:not(.admin-label) {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         line-height: 1.55;
       }
 
@@ -1224,7 +1224,7 @@ const quickActions: readonly QuickAction[] = [
       .card {
         border: 1px solid rgb(221 229 228 / 0.72);
         border-radius: 24px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: 0 12px 34px rgb(41 74 90 / 0.07);
         padding: 28px;
       }
@@ -1257,11 +1257,11 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .progress-track {
-        stroke: #e7eedf;
+        stroke: var(--ac-color-sage-light);
       }
 
       .progress-value {
-        stroke: #a8b993;
+        stroke: var(--ac-color-sage);
         stroke-linecap: butt;
         stroke-dasharray: 301.59;
         stroke-dashoffset: 105.56;
@@ -1307,7 +1307,7 @@ const quickActions: readonly QuickAction[] = [
       .screening-copy h2,
       .action-card h2,
       .appointment-card h2 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 26px;
         line-height: 1.3;
         font-weight: 600;
@@ -1318,7 +1318,7 @@ const quickActions: readonly QuickAction[] = [
       .action-card p,
       .appointment-card p,
       .weekly-card p {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: 16px;
         line-height: 1.58;
       }
@@ -1326,8 +1326,8 @@ const quickActions: readonly QuickAction[] = [
       .primary-button {
         min-height: 46px;
         border-radius: 12px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1349,7 +1349,7 @@ const quickActions: readonly QuickAction[] = [
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        color: #164f68;
+        color: var(--ac-color-action-deep);
       }
 
       .section-title h2 {
@@ -1384,14 +1384,14 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .bar-chart span.active {
-        background: #3d6375;
+        background: var(--ac-color-action);
       }
 
       .bar-chart strong {
         position: absolute;
         left: 50%;
         top: -26px;
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         transform: translateX(-50%);
       }
 
@@ -1400,7 +1400,7 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .weekly-card p strong {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       .action-card {
@@ -1421,7 +1421,7 @@ const quickActions: readonly QuickAction[] = [
         width: 180px;
         height: 180px;
         border-radius: 0 0 0 180px;
-        background: #e7eedf;
+        background: var(--ac-color-sage-light);
         opacity: 0.44;
       }
 
@@ -1441,7 +1441,7 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .text-link {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         display: inline-flex;
         align-items: center;
         gap: 10px;
@@ -1457,7 +1457,7 @@ const quickActions: readonly QuickAction[] = [
         grid-column: span 6;
         min-height: 300px;
         border-color: #b6dceb;
-        background: #e8f6ff;
+        background: var(--ac-color-surface-info);
         display: grid;
         align-content: center;
         gap: 18px;
@@ -1472,7 +1472,7 @@ const quickActions: readonly QuickAction[] = [
 
       .appointment-top span,
       .appointment-meta span {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -1490,7 +1490,7 @@ const quickActions: readonly QuickAction[] = [
       .appointment-top strong {
         border-radius: 999px;
         background: #5a6949;
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
         padding: 6px 14px;
         font-size: 13px;
       }
@@ -1502,7 +1502,7 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .appointment-meta span {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 14px;
         text-transform: none;
       }
@@ -1511,7 +1511,7 @@ const quickActions: readonly QuickAction[] = [
         margin-top: 26px;
         border: 1px solid #c1c7cc;
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         padding: 24px;
         display: grid;
         justify-items: start;
@@ -1519,12 +1519,12 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .empty-state h2 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 22px;
       }
 
       .empty-state p {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         line-height: 1.55;
       }
 
@@ -1533,7 +1533,7 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .quick-actions h2 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 26px;
         line-height: 1.25;
         margin-bottom: 28px;
@@ -1549,8 +1549,8 @@ const quickActions: readonly QuickAction[] = [
         min-height: 126px;
         border: 1px solid rgb(221 229 228 / 0.72);
         border-radius: 24px;
-        background: #ffffff;
-        color: #001e2b;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
         box-shadow: 0 12px 34px rgb(41 74 90 / 0.06);
         display: grid;
         grid-template-columns: 58px minmax(0, 1fr);
@@ -1561,7 +1561,7 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .quick-card:hover {
-        border-color: #8db4c8;
+        border-color: var(--ac-color-primary);
       }
 
       .quick-card strong,
@@ -1577,7 +1577,7 @@ const quickActions: readonly QuickAction[] = [
 
       .quick-card small {
         margin-top: 4px;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         line-height: 1.35;
       }
 
@@ -1586,7 +1586,7 @@ const quickActions: readonly QuickAction[] = [
         height: 50px;
         border-radius: 999px;
         background: #ceedff;
-        color: #3d6375;
+        color: var(--ac-color-action);
         display: grid;
         place-items: center;
         position: relative;
@@ -1662,13 +1662,13 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .dashboard-footer h2 {
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         font-size: 26px;
         line-height: 1.2;
       }
 
       .dashboard-footer h3 {
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 16px;
         line-height: 1.2;
         margin-bottom: 18px;
@@ -1676,7 +1676,7 @@ const quickActions: readonly QuickAction[] = [
 
       .dashboard-footer p,
       .dashboard-footer a {
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: 16px;
         line-height: 1.55;
       }
@@ -1688,7 +1688,7 @@ const quickActions: readonly QuickAction[] = [
       }
 
       .dashboard-footer a:hover {
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         text-decoration: underline;
       }
 
@@ -1702,7 +1702,7 @@ const quickActions: readonly QuickAction[] = [
         height: 46px;
         border-radius: 999px;
         background: #ceedff;
-        color: #164f68;
+        color: var(--ac-color-action-deep);
         display: grid;
         place-items: center;
       }
