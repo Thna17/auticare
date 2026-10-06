@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HospitalManagementApi } from './hospital-management.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, UiMessageComponent, UiSpinnerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -19,20 +21,27 @@ import { HospitalManagementApi } from './hospital-management.api';
       </div>
     </section>
 
-    <section class="stats" aria-label="Appointment summary">
-      <article class="stat-card">
-        <p class="stat-label">Pending Review</p>
-        <p class="stat-value">{{ requested() }}</p>
-      </article>
-      <article class="stat-card">
-        <p class="stat-label">Approved</p>
-        <p class="stat-value">{{ confirmed() }}</p>
-      </article>
-      <article class="stat-card">
-        <p class="stat-label">Completed</p>
-        <p class="stat-value">{{ completed() }}</p>
-      </article>
-    </section>
+    @if (loading()) {
+      <ac-ui-spinner label="Loading your appointment summary…" />
+    } @else if (error(); as problem) {
+      <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
+      <button type="button" class="retry" (click)="load()">Try again</button>
+    } @else {
+      <section class="stats" aria-label="Appointment summary">
+        <article class="stat-card">
+          <p class="stat-label">Pending Review</p>
+          <p class="stat-value">{{ requested() }}</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Approved</p>
+          <p class="stat-value">{{ confirmed() }}</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Completed</p>
+          <p class="stat-value">{{ completed() }}</p>
+        </article>
+      </section>
+    }
 
     <section class="quick-links">
       <a class="link-card" routerLink="/hospital/appointments">
@@ -176,13 +185,32 @@ export class HospitalDashboardPage {
   readonly requested = signal(0);
   readonly confirmed = signal(0);
   readonly completed = signal(0);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+
   constructor() {
+    this.load();
+  }
+
+  /**
+   * The appointments request had no error handler, so a failure left every count
+   * at its initial 0 — indistinguishable from a hospital with nothing to review,
+   * which is the wrong thing to tell someone triaging requests.
+   */
+  load() {
+    this.loading.set(true);
+    this.error.set(null);
     this.api.me().subscribe({ next: (v) => this.name.set(v.hospital.name) });
     this.api.appointments().subscribe({
       next: (v) => {
         this.requested.set(v.filter((a) => a.status === 'REQUESTED').length);
         this.confirmed.set(v.filter((a) => a.status === 'CONFIRMED').length);
         this.completed.set(v.filter((a) => a.status === 'COMPLETED').length);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Your appointment summary could not be loaded.');
+        this.loading.set(false);
       },
     });
   }

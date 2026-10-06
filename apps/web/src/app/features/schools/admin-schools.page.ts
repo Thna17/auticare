@@ -6,10 +6,17 @@ import { UiCardComponent } from '../../design-system/components/ui-card.componen
 import { SchoolsApi } from './data-access/schools.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiCardComponent, UiMessageComponent, UiSpinnerComponent],
+  imports: [
+    RouterLink,
+    UiCardComponent,
+    UiMessageComponent,
+    UiSpinnerComponent,
+    UiEmptyStateComponent,
+  ],
   template: `
     <section class="page-header">
       <div>
@@ -25,7 +32,12 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
     } @else if (error()) {
       <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     } @else if (!accounts().length) {
-      <ac-ui-card><p>No school accounts have been created yet.</p></ac-ui-card>
+      <ac-ui-empty-state
+        title="No school accounts yet"
+        message="A school account lets a school manage its own students, reports and enrollment requests."
+      >
+        <a class="cta" routerLink="/schools/admin/new">Create a school account</a>
+      </ac-ui-empty-state>
     } @else {
       <section class="grid" aria-label="School accounts">
         @for (item of accounts(); track item.staff.id) {
@@ -46,6 +58,18 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
   `,
   styles: [
     `
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 var(--ac-space-4);
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        font-weight: var(--ac-font-weight-bold);
+        text-decoration: none;
+      }
+
       .page-header {
         display: flex;
         justify-content: space-between;

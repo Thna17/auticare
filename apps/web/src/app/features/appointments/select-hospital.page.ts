@@ -5,10 +5,11 @@ import type { HospitalResponse } from '@auticare/contracts';
 import { HospitalsApi } from '../hospitals/data-access/hospitals.api';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent, UiSpinnerComponent],
+  imports: [RouterLink, UiEmptyStateComponent, UiSpinnerComponent, UiMessageComponent],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
       <a routerLink="/appointments">Hospital Appointments</a>
@@ -21,6 +22,9 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
 
     @if (loading()) {
       <ac-ui-spinner label="Loading hospitals…" />
+    } @else if (error(); as problem) {
+      <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
+      <button type="button" class="retry" (click)="load()">Try again</button>
     } @else if (hospitals().length === 0) {
       <ac-ui-empty-state
         title="No hospitals available yet"
@@ -133,14 +137,29 @@ export class SelectHospitalPage implements OnInit {
   private readonly hospitalsApi = inject(HospitalsApi);
   protected readonly hospitals = signal<readonly HospitalResponse[]>([]);
   protected readonly loading = signal(true);
+  protected readonly error = signal<string | null>(null);
 
   ngOnInit() {
+    this.load();
+  }
+
+  /**
+   * The failure branch used only to clear `loading`, so a failed request looked
+   * exactly like a hospital list that happened to be empty — the parent was told
+   * to "check back soon" when the real problem was that the request failed.
+   */
+  protected load() {
+    this.loading.set(true);
+    this.error.set(null);
     this.hospitalsApi.listHospitals().subscribe({
       next: (hospitals) => {
         this.hospitals.set(hospitals);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.error.set('Hospitals could not be loaded.');
+        this.loading.set(false);
+      },
     });
   }
 }
