@@ -415,7 +415,7 @@ const SPECIALIZATION_OPTIONS = [
       .avatar {
         width: 40px;
         height: 40px;
-        background: #3d6375;
+        background: var(--ac-color-action);
         color: white;
         border-radius: 50%;
         display: flex;
@@ -433,17 +433,17 @@ const SPECIALIZATION_OPTIONS = [
 
       .user-name {
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         font-size: 14px;
       }
 
       .user-role {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .dropdown {
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .nav-menu {
@@ -459,7 +459,7 @@ const SPECIALIZATION_OPTIONS = [
         padding: 12px 16px;
         border-radius: 10px;
         text-decoration: none;
-        color: #3d6375;
+        color: var(--ac-color-action);
         font-weight: 500;
         font-size: 14px;
         transition: all 0.2s;
@@ -489,7 +489,7 @@ const SPECIALIZATION_OPTIONS = [
       .new-screening-btn {
         width: 100%;
         padding: 14px;
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
         border: none;
         border-radius: 12px;
@@ -554,7 +554,7 @@ const SPECIALIZATION_OPTIONS = [
       .search-input {
         width: 100%;
         padding: 12px 16px 12px 44px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
         font-size: 14px;
         outline: none;
@@ -582,7 +582,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .icon-btn:hover {
-        background: #e2e8f0;
+        background: var(--ac-color-border-slate);
       }
 
       .user-profile-small {
@@ -590,7 +590,7 @@ const SPECIALIZATION_OPTIONS = [
         align-items: center;
         gap: 12px;
         padding-left: 16px;
-        border-left: 1px solid #e2e8f0;
+        border-left: 1px solid var(--ac-color-border-slate);
       }
 
       .user-text {
@@ -601,13 +601,13 @@ const SPECIALIZATION_OPTIONS = [
 
       .name {
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         font-size: 14px;
       }
 
       .role {
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .avatar-small {
@@ -634,12 +634,12 @@ const SPECIALIZATION_OPTIONS = [
         margin: 0 0 8px 0;
         font-size: 32px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .page-header p {
         margin: 0;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 15px;
         max-width: 600px;
       }
@@ -650,7 +650,7 @@ const SPECIALIZATION_OPTIONS = [
         background: white;
         padding: 4px;
         border-radius: 10px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
       }
 
       .toggle-btn {
@@ -664,7 +664,7 @@ const SPECIALIZATION_OPTIONS = [
         font-size: 14px;
         font-weight: 500;
         cursor: pointer;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         transition: all 0.2s;
       }
 
@@ -673,7 +673,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .toggle-btn.active {
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
       }
 
@@ -700,7 +700,7 @@ const SPECIALIZATION_OPTIONS = [
         gap: 10px;
         margin-bottom: 24px;
         padding-bottom: 16px;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--ac-color-border-slate);
       }
 
       .filter-icon {
@@ -711,7 +711,7 @@ const SPECIALIZATION_OPTIONS = [
         margin: 0;
         font-size: 18px;
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .filter-group {
@@ -721,7 +721,7 @@ const SPECIALIZATION_OPTIONS = [
       .filter-label {
         display: block;
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         font-size: 13px;
         margin-bottom: 10px;
       }
@@ -729,7 +729,7 @@ const SPECIALIZATION_OPTIONS = [
       .filter-select {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         font-size: 14px;
         outline: none;
@@ -748,7 +748,7 @@ const SPECIALIZATION_OPTIONS = [
         width: 100%;
         height: 6px;
         border-radius: 3px;
-        background: #e2e8f0;
+        background: var(--ac-color-border-slate);
         outline: none;
         -webkit-appearance: none;
       }
@@ -759,7 +759,7 @@ const SPECIALIZATION_OPTIONS = [
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         cursor: pointer;
       }
 
@@ -767,7 +767,7 @@ const SPECIALIZATION_OPTIONS = [
         display: flex;
         justify-content: space-between;
         font-size: 12px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         margin-top: 6px;
       }
 
@@ -790,7 +790,7 @@ const SPECIALIZATION_OPTIONS = [
         width: 18px;
         height: 18px;
         cursor: pointer;
-        accent-color: #2d6a7a;
+        accent-color: var(--ac-color-action-alt);
       }
 
       .tags-group {
@@ -802,7 +802,7 @@ const SPECIALIZATION_OPTIONS = [
       .tag-btn {
         padding: 6px 12px;
         background: #f1f5f9;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 6px;
         font-size: 13px;
         cursor: pointer;
@@ -810,14 +810,14 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .tag-btn:hover {
-        background: #e2e8f0;
-        border-color: #2d6a7a;
+        background: var(--ac-color-border-slate);
+        border-color: var(--ac-color-action-alt);
       }
 
       .apply-filters-btn {
         width: 100%;
         padding: 12px;
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
         border: none;
         border-radius: 8px;
@@ -849,7 +849,7 @@ const SPECIALIZATION_OPTIONS = [
 
       .results-count {
         font-size: 14px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-weight: 500;
       }
 
@@ -858,12 +858,12 @@ const SPECIALIZATION_OPTIONS = [
         align-items: center;
         gap: 10px;
         font-size: 14px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .sort-dropdown select {
         padding: 8px 12px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         font-size: 14px;
         cursor: pointer;
@@ -935,7 +935,7 @@ const SPECIALIZATION_OPTIONS = [
         margin: 0;
         font-size: 22px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .rating {
@@ -951,12 +951,12 @@ const SPECIALIZATION_OPTIONS = [
 
       .rating-value {
         font-weight: 700;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
         font-size: 16px;
       }
 
       .rating-count {
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 13px;
       }
 
@@ -964,7 +964,7 @@ const SPECIALIZATION_OPTIONS = [
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
       }
 
@@ -991,7 +991,7 @@ const SPECIALIZATION_OPTIONS = [
         display: flex;
         gap: 32px;
         padding-top: 8px;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid var(--ac-color-border-slate);
       }
 
       .meta-item {
@@ -1007,7 +1007,7 @@ const SPECIALIZATION_OPTIONS = [
       .meta-label {
         display: block;
         font-size: 11px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -1017,7 +1017,7 @@ const SPECIALIZATION_OPTIONS = [
         display: block;
         font-size: 14px;
         font-weight: 600;
-        color: #0f172a;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .meta-value.waitlist {
@@ -1025,12 +1025,12 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .meta-value.closed {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
       }
 
       .school-description {
         margin: 0;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -1043,8 +1043,8 @@ const SPECIALIZATION_OPTIONS = [
         margin-top: 8px;
         padding: 10px;
         background: transparent;
-        color: #64748b;
-        border: 1px solid #e2e8f0;
+        color: var(--ac-color-text-slate);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         font-weight: 600;
         font-size: 13px;
@@ -1052,8 +1052,8 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .clear-filters-btn:hover {
-        color: #2d6a7a;
-        border-color: #2d6a7a;
+        color: var(--ac-color-action-alt);
+        border-color: var(--ac-color-action-alt);
       }
 
       /* Enrollment request dialog */
@@ -1079,13 +1079,13 @@ const SPECIALIZATION_OPTIONS = [
 
       .dialog h3 {
         margin: 0 0 4px;
-        color: #10303b;
+        color: var(--ac-color-action-darkest);
         font-size: 18px;
       }
 
       .dialog-school {
         margin: 0 0 16px;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         font-size: 14px;
       }
 
@@ -1133,8 +1133,8 @@ const SPECIALIZATION_OPTIONS = [
         padding: 10px 18px;
         border: 1px solid #d7e3ea;
         border-radius: 9px;
-        background: #fff;
-        color: #2d6a7a;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-alt);
         font-size: 13px;
         font-weight: 700;
         cursor: pointer;
@@ -1150,13 +1150,13 @@ const SPECIALIZATION_OPTIONS = [
 
       .waitlist-time {
         font-weight: 500;
-        color: #64748b;
+        color: var(--ac-color-text-slate);
       }
 
       .enrollment-btn {
         align-self: flex-start;
         padding: 12px 24px;
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
         border: none;
         border-radius: 8px;
@@ -1187,7 +1187,7 @@ const SPECIALIZATION_OPTIONS = [
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--ac-color-border-slate);
         background: white;
         border-radius: 8px;
         font-size: 14px;
@@ -1201,13 +1201,13 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .page-btn.active {
-        background: #2d6a7a;
+        background: var(--ac-color-action-alt);
         color: white;
-        border-color: #2d6a7a;
+        border-color: var(--ac-color-action-alt);
       }
 
       .ellipsis {
-        color: #64748b;
+        color: var(--ac-color-text-slate);
         padding: 0 8px;
       }
 
@@ -1222,7 +1222,7 @@ const SPECIALIZATION_OPTIONS = [
       }
 
       .error {
-        color: #a23434;
+        color: var(--ac-color-alert-text);
         font-weight: 600;
         padding: 16px;
         background: #ffebee;

@@ -176,12 +176,12 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         display: flex;
         gap: 8px;
         margin-bottom: 12px;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
       .breadcrumbs span[aria-current] {
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-weight: var(--ac-font-weight-semibold);
       }
 
@@ -195,7 +195,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
       h1 {
         margin: 0 0 8px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
         line-height: var(--ac-line-title);
       }
@@ -203,7 +203,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       .page-header p {
         margin: 0;
         max-width: 640px;
-        color: #41484b;
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-page-subtitle);
         line-height: var(--ac-line-body);
       }
@@ -212,8 +212,8 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         flex: 0 0 auto;
         min-height: 46px;
         border-radius: 12px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         display: inline-flex;
         align-items: center;
         padding: 0 20px;
@@ -233,16 +233,16 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       }
 
       .stat-card {
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: var(--ac-shadow-sm);
         padding: var(--ac-space-6);
       }
 
       .stat-label {
         margin: 0 0 8px;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
         text-transform: uppercase;
@@ -250,15 +250,15 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
       .stat-value {
         margin: 0;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-size: 2rem;
         font-weight: var(--ac-font-weight-bold);
       }
 
       .list-section {
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--ac-color-surface);
         box-shadow: var(--ac-shadow-sm);
         padding: var(--ac-space-6);
         margin-bottom: 28px;
@@ -280,10 +280,10 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       .time-pills button,
       .filters-toggle {
         min-height: 38px;
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 999px;
-        background: #ffffff;
-        color: #41484b;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-body);
         padding: 0 14px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
@@ -291,9 +291,9 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       }
 
       .time-pills button.active {
-        background: #294a5a;
-        border-color: #294a5a;
-        color: #ffffff;
+        background: var(--ac-color-text-dark);
+        border-color: var(--ac-color-text-dark);
+        color: var(--ac-color-text-on-action);
       }
 
       .status-pills {
@@ -305,10 +305,10 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
       .status-pills button {
         min-height: 34px;
-        border: 1px solid #dde5e4;
+        border: 1px solid var(--ac-color-border);
         border-radius: 999px;
-        background: #ffffff;
-        color: #41484b;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-body);
         padding: 0 12px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
@@ -318,20 +318,20 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       .status-pills button.active {
         background: var(--ac-color-sage-light);
         border-color: var(--ac-color-sage);
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
       }
 
       .status,
       .error {
         border-radius: 12px;
         padding: 16px;
-        background: #e8f6ff;
+        background: var(--ac-color-surface-info);
         color: #163f52;
       }
 
       .error {
-        background: #ffdad6;
-        color: #93000a;
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-strong);
       }
 
       .appointment-list {
@@ -354,13 +354,13 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
       .doctor-name {
         margin: 0 0 4px;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
         font-weight: var(--ac-font-weight-semibold);
       }
 
       .meta {
         margin: 0;
-        color: #66747a;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
@@ -383,8 +383,8 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       }
 
       .cancel-btn {
-        border: 1px solid #b8c2c8;
-        background: #fff;
+        border: 1px solid var(--ac-color-border-grey);
+        background: var(--ac-color-surface);
         color: #8b3d3d;
       }
 
@@ -399,13 +399,13 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       .cancel-yes {
         border: 0;
         background: #8b3d3d;
-        color: #fff;
+        color: var(--ac-color-text-on-action);
       }
 
       .cancel-no {
-        border: 1px solid #b8c2c8;
-        background: #fff;
-        color: #001e2b;
+        border: 1px solid var(--ac-color-border-grey);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
       }
 
       .cancel-yes:disabled {
@@ -449,7 +449,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       .banner h2 {
         margin: 0 0 6px;
         font-size: var(--ac-type-label);
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
       }
 
       .banner p {
@@ -460,7 +460,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
       .banner a {
         flex: 0 0 auto;
-        color: #294a5a;
+        color: var(--ac-color-text-dark);
         font-weight: var(--ac-font-weight-bold);
         text-decoration: underline;
       }

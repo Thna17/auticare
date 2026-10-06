@@ -166,7 +166,7 @@ const schoolMobileNav: readonly NavItem[] = [
         display: block;
         min-height: 100svh;
         background: #f2f9fd;
-        color: #001e2b;
+        color: var(--ac-color-text-strong);
       }
 
       .skip {
@@ -175,8 +175,8 @@ const schoolMobileNav: readonly NavItem[] = [
         top: 12px;
         z-index: 100;
         border-radius: 8px;
-        background: #ffffff;
-        color: #001e2b;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
         padding: 10px 14px;
       }
 
@@ -206,7 +206,7 @@ const schoolMobileNav: readonly NavItem[] = [
       }
 
       .brand {
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         text-decoration: none;
         font-size: 24px;
         line-height: 1.1;
@@ -273,7 +273,7 @@ const schoolMobileNav: readonly NavItem[] = [
         height: 40px;
         border-radius: 999px;
         background: linear-gradient(135deg, #47758b, #9cc5d6);
-        color: #ffffff;
+        color: var(--ac-color-text-on-action);
         display: grid;
         place-items: center;
         font-size: 12px;
@@ -300,7 +300,7 @@ const schoolMobileNav: readonly NavItem[] = [
         width: fit-content;
         border-radius: 999px;
         background: #d5eaf3;
-        color: #315d72;
+        color: var(--ac-color-action-mid);
         font-size: 11px;
         font-weight: var(--ac-font-weight-medium);
         line-height: 1;
@@ -310,8 +310,8 @@ const schoolMobileNav: readonly NavItem[] = [
       .chevron {
         width: 8px;
         height: 8px;
-        border-right: 2px solid #315d72;
-        border-bottom: 2px solid #315d72;
+        border-right: 2px solid var(--ac-color-action-mid);
+        border-bottom: 2px solid var(--ac-color-action-mid);
         transform: rotate(45deg) translateY(-2px);
       }
 
@@ -349,7 +349,7 @@ const schoolMobileNav: readonly NavItem[] = [
       }
 
       .nav-list a.active {
-        background: #8db4c8;
+        background: var(--ac-color-primary);
         color: #103443;
         font-weight: var(--ac-font-weight-semibold);
       }
@@ -362,7 +362,7 @@ const schoolMobileNav: readonly NavItem[] = [
         bottom: 14px;
         width: 4px;
         border-radius: 999px;
-        background: #315d72;
+        background: var(--ac-color-action-mid);
       }
 
       .nav-icon,
@@ -403,8 +403,8 @@ const schoolMobileNav: readonly NavItem[] = [
         margin-left: auto;
         min-width: 22px;
         border-radius: 999px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         font-size: 12px;
         font-weight: var(--ac-font-weight-semibold);
         line-height: 1;
@@ -708,8 +708,8 @@ const schoolMobileNav: readonly NavItem[] = [
       .role-action {
         min-height: 54px;
         border-radius: 14px;
-        background: #3d6375;
-        color: #ffffff;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -779,7 +779,7 @@ const schoolMobileNav: readonly NavItem[] = [
           right: 0;
           bottom: 0;
           min-height: 72px;
-          border-top: 1px solid #dde5e4;
+          border-top: 1px solid var(--ac-color-border);
           background: rgb(255 255 255 / 0.96);
           display: grid;
           grid-template-columns: 1fr 1fr 72px 1fr 1fr;
@@ -789,7 +789,7 @@ const schoolMobileNav: readonly NavItem[] = [
         }
 
         .mobile-nav a {
-          color: #66747a;
+          color: var(--ac-color-text-muted);
           display: grid;
           justify-items: center;
           gap: 4px;
@@ -800,15 +800,15 @@ const schoolMobileNav: readonly NavItem[] = [
         }
 
         .mobile-nav a.active {
-          color: #3d6375;
+          color: var(--ac-color-action);
         }
 
         .mobile-action {
           width: 58px;
           height: 58px;
           border-radius: 999px;
-          background: #3d6375;
-          color: #ffffff !important;
+          background: var(--ac-color-action);
+          color: var(--ac-color-text-on-action) !important;
           place-self: start center;
           transform: translateY(-22px);
           box-shadow: 0 12px 28px rgb(61 99 117 / 0.28);
