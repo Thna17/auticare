@@ -72,6 +72,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
           }
         </div>
         <select
+          aria-label="Filter appointments by doctor"
           class="doctor-select"
           [value]="doctorFilter()"
           (change)="doctorFilter.set($any($event.target).value)"

@@ -12,6 +12,7 @@ import { AuthService } from '../../core/auth/auth.service';
       <div class="search-box">
         <span class="search-icon">🔍</span>
         <input
+          aria-label="Search students, therapists or records"
           type="text"
           placeholder="Search students, therapists, or records..."
           class="search-input"

@@ -154,6 +154,7 @@ export interface PendingFile {
             <div class="form-section">
               <h2><span class="section-icon">👁️</span> 3. Teacher Observations</h2>
               <textarea
+                aria-label="Teacher observations"
                 formControlName="teacherObservations"
                 rows="6"
                 placeholder="Describe how the student engaged with the activity, any notable breakthroughs, or challenges faced..."
@@ -164,6 +165,7 @@ export interface PendingFile {
             <div class="form-section">
               <h2><span class="section-icon">💡</span> 4. Parent Recommendations</h2>
               <textarea
+                aria-label="Recommendations for parents"
                 formControlName="parentRecommendations"
                 rows="6"
                 placeholder="Actionable steps for parents to reinforce these skills at home..."
@@ -187,6 +189,7 @@ export interface PendingFile {
                     <span class="metric-value">{{ form.controls.participation.value }}</span>
                   </div>
                   <input
+                    aria-label="Participation rating, 0 to 10"
                     type="range"
                     min="0"
                     max="10"
@@ -201,6 +204,7 @@ export interface PendingFile {
                     <span class="metric-value">{{ form.controls.communication.value }}</span>
                   </div>
                   <input
+                    aria-label="Communication rating, 0 to 10"
                     type="range"
                     min="0"
                     max="10"
@@ -215,6 +219,7 @@ export interface PendingFile {
                     <span class="metric-value">{{ form.controls.socialInteraction.value }}</span>
                   </div>
                   <input
+                    aria-label="Social interaction rating, 0 to 10"
                     type="range"
                     min="0"
                     max="10"
@@ -229,6 +234,7 @@ export interface PendingFile {
                     <span class="metric-value">{{ form.controls.attention.value }}</span>
                   </div>
                   <input
+                    aria-label="Attention rating, 0 to 10"
                     type="range"
                     min="0"
                     max="10"
@@ -243,6 +249,7 @@ export interface PendingFile {
                     <span class="metric-value">{{ form.controls.emotionalRegulation.value }}</span>
                   </div>
                   <input
+                    aria-label="Emotional regulation rating, 0 to 10"
                     type="range"
                     min="0"
                     max="10"
@@ -257,6 +264,7 @@ export interface PendingFile {
                     <span class="metric-value">{{ form.controls.taskCompletion.value }}</span>
                   </div>
                   <input
+                    aria-label="Task completion rating, 0 to 10"
                     type="range"
                     min="0"
                     max="10"
@@ -284,6 +292,7 @@ export interface PendingFile {
                 <p class="upload-sub-text">JPG, PNG, PDF, Word, text, CSV — up to 10MB each</p>
               </div>
               <input
+                aria-label="Choose files to attach"
                 #fileInput
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,.pdf,.doc,.docx,.txt,.csv"

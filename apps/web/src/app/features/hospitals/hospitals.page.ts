@@ -33,6 +33,7 @@ const SERVICE_FILTER_OPTIONS = [
       <div class="search-box">
         <span class="search-icon">🔍</span>
         <input
+          aria-label="Search hospitals by name, city or specialization"
           type="text"
           placeholder="Search for hospitals, cities, or specializations..."
           class="search-input"
@@ -83,6 +84,7 @@ const SERVICE_FILTER_OPTIONS = [
         <div class="filter-group">
           <label class="filter-label">City/Province</label>
           <select
+            aria-label="Filter hospitals by city"
             class="filter-select"
             [value]="selectedCity()"
             (change)="selectedCity.set($any($event.target).value)"
@@ -122,7 +124,11 @@ const SERVICE_FILTER_OPTIONS = [
           <span class="results-count">Showing {{ filteredHospitals().length }} results</span>
           <div class="sort-dropdown">
             <label>Sort by:</label>
-            <select [value]="sortBy()" (change)="onSortChange($any($event.target).value)">
+            <select
+              aria-label="Sort hospitals"
+              [value]="sortBy()"
+              (change)="onSortChange($any($event.target).value)"
+            >
               <option value="name">Name A-Z</option>
               <option value="city">City A-Z</option>
               <option value="services">Most services</option>

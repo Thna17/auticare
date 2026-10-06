@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  effect,
+  inject,
+  input,
+} from '@angular/core';
 
 /**
  * A labelled form field: label, the control itself, an optional hint, and an
@@ -33,10 +40,10 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       <ng-content />
 
       @if (hint() && !error()) {
-        <small class="hint">{{ hint() }}</small>
+        <small class="hint" [id]="hintId">{{ hint() }}</small>
       }
       @if (error()) {
-        <small class="error" role="alert">{{ error() }}</small>
+        <small class="error" [id]="errorId" role="alert">{{ error() }}</small>
       }
     </label>
   `,
@@ -76,6 +83,16 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UiFieldComponent {
+  /**
+   * Ids for the hint and error so the projected control can point at them with
+   * aria-describedby. Instance-unique, because a page holds many fields and a
+   * duplicate id would make a screen reader announce the wrong message.
+   */
+  private static nextId = 0;
+  private readonly uid = `ac-field-${UiFieldComponent.nextId++}`;
+  protected readonly hintId = `${this.uid}-hint`;
+  protected readonly errorId = `${this.uid}-error`;
+
   readonly label = input.required<string>();
   readonly hint = input<string | null>(null);
   /** Shown instead of the hint when present, so the two never compete for space. */
@@ -83,4 +100,39 @@ export class UiFieldComponent {
   readonly optional = input(false);
   /** Span the full width of a grid-based field layout. */
   readonly full = input(false);
+
+  /**
+   * Wire the projected control to this field's state.
+   *
+   * Angular cannot add attributes to projected content, so the control is found
+   * and annotated directly: aria-invalid so the control itself reports the
+   * error, and aria-describedby pointing at whichever of the hint or error is
+   * showing. Without this the error is visible but unannounced — the control
+   * reads as valid and the message is just loose text beside it.
+   *
+   * Any aria-describedby the caller set is preserved, so a field can still point
+   * at context of its own.
+   */
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    effect(() => {
+      const error = this.error();
+      const hint = this.hint();
+      const control = this.host.nativeElement.querySelector<HTMLElement>('input, select, textarea');
+      if (!control) return;
+
+      if (error) control.setAttribute('aria-invalid', 'true');
+      else control.removeAttribute('aria-invalid');
+
+      const theirs = (control.getAttribute('aria-describedby') ?? '')
+        .split(' ')
+        .filter((id) => id !== '' && id !== this.hintId && id !== this.errorId);
+      const ours = error ? [this.errorId] : hint ? [this.hintId] : [];
+      const all = [...theirs, ...ours];
+
+      if (all.length > 0) control.setAttribute('aria-describedby', all.join(' '));
+      else control.removeAttribute('aria-describedby');
+    });
+  }
 }
