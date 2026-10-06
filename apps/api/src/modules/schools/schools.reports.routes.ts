@@ -4,6 +4,7 @@ import { requireRole } from '../auth/index.js';
 import { validateQuery } from '../../common/middleware/validate-query.js';
 import {
   createReport,
+  deleteReport,
   listReports,
   getReportById,
   getReportAttachment,
@@ -72,3 +73,9 @@ schoolsReportsRoutes.patch(
   validateBody(updateActivityReportRequestSchema),
   updateReport,
 );
+
+/**
+ * DELETE /api/v1/schools/reports/:id
+ * Remove a report belonging to the authenticated staff member's school.
+ */
+schoolsReportsRoutes.delete('/reports/:id', requireRole('SCHOOL'), deleteReport);

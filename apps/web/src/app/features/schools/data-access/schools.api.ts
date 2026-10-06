@@ -120,7 +120,7 @@ export class SchoolsApi {
   /** Create a DRAFT or SUBMITTED activity report. */
   createActivityReport(input: CreateActivityReportRequest) {
     return this.http
-      .post<{ data: ActivityReportResponse }>(`${this.apiBaseUrl}/schools/activity-reports`, input)
+      .post<{ data: ActivityReportResponse }>(`${this.apiBaseUrl}/schools/reports`, input)
       .pipe(map((response) => response.data));
   }
 
@@ -287,7 +287,7 @@ export class SchoolsApi {
 
   deleteActivityReport(id: string) {
     return this.http
-      .delete<{ data: { success: boolean } }>(`${this.apiBaseUrl}/schools/activity-reports/${id}`)
+      .delete<{ data: { success: boolean } }>(`${this.apiBaseUrl}/schools/reports/${id}`)
       .pipe(map(() => undefined));
   }
 

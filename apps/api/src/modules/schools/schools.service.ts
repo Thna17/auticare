@@ -1,22 +1,18 @@
 import type {
   CreateSchoolAccountRequest,
-  CreateActivityReportRequest,
   CreateSchoolChildEnrollmentRequest,
-  PaginationQuery,
   ParentSchoolSearchQuery,
   SchoolAvailabilityStatus,
   UpdateSchoolProfileRequest,
   UpdateSchoolRequest,
   UserRole,
 } from '@auticare/contracts';
-import type { Prisma } from '@prisma/client';
 import { toPaginationMeta, toSkipTake } from '../../common/http/pagination.js';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { PasswordService } from '../auth/password.service.js';
 import { SchoolsRepository } from './schools.repository.js';
 import {
   toSchoolAccountResponse,
-  toActivityReportResponse,
   toSchoolChildEnrollmentResponse,
   toSchoolDetailResponse,
   toSchoolResponse,
@@ -24,14 +20,6 @@ import {
 } from './schools.mapper.js';
 
 type Actor = { parentId: string; role: UserRole };
-
-const parseActivityDate = (activityDate: string): Date => {
-  const parsed = new Date(`${activityDate}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new AppError('VALIDATION_ERROR', 'The activity date is invalid.', 400);
-  }
-  return parsed;
-};
 
 export class SchoolsService {
   constructor(
@@ -236,93 +224,5 @@ export class SchoolsService {
       return enrollments.map(toSchoolChildEnrollmentResponse);
     }
     throw forbidden();
-  }
-
-  async createActivityReport(actor: Actor, input: CreateActivityReportRequest) {
-    if (actor.role !== 'SCHOOL') throw forbidden();
-    const staff = await this.repository.findStaffForParent(actor.parentId);
-    if (!staff) throw forbidden();
-    const enrollment = await this.repository.findReportableEnrollment({
-      schoolId: staff.schoolId,
-      childId: input.childId,
-    });
-    if (!enrollment) throw forbidden();
-    // activityName is canonical; title/summary/activityDate are derived when
-    // omitted so the frontend payload can stay lean.
-    const title = input.activityName ?? input.title ?? input.activityCategory;
-    const summary =
-      input.summary ??
-      [input.activityName ?? input.title ?? input.activityCategory, input.activityCategory]
-        .filter(Boolean)
-        .join(' — ');
-    const activityDate = input.activityDate ?? new Date().toISOString().slice(0, 10);
-
-    const report = await this.repository.createActivityReport({
-      schoolId: staff.schoolId,
-      childId: input.childId,
-      reporterId: actor.parentId,
-      activityCategory: input.activityCategory,
-      title,
-      summary,
-      activityDate: parseActivityDate(activityDate),
-      ...(input.duration !== undefined && { duration: input.duration }),
-      ...(input.performanceMetrics !== undefined && {
-        performanceMetrics: input.performanceMetrics as Prisma.InputJsonValue,
-      }),
-      ...(input.teacherObservation !== undefined && {
-        teacherObservation: input.teacherObservation,
-      }),
-      ...(input.recommendations !== undefined && { recommendations: input.recommendations }),
-      ...(input.photoUrls !== undefined && { photoUrls: input.photoUrls }),
-      // This line was missing, and it is the whole bug. POST /schools/reports has
-      // it; this endpoint is a near-copy of that one and the UI posts here. So a
-      // school filled in a report, pressed "Submit Report", was navigated away as
-      // if it had worked — and the row was written with Prisma's DRAFT default.
-      // The parent's progress page lists SUBMITTED reports only, so the report the
-      // school wrote never reached the family and nothing said so.
-      status: input.status ?? 'DRAFT',
-    });
-    return toActivityReportResponse(report);
-  }
-
-  /**
-   * GET /schools/activity-reports.
-   *
-   * NOTE: this duplicates GET /schools/reports (SchoolReportsService.listReports),
-   * which returns the same rows with child and reporter names and supports
-   * childId/status filters. Nothing in the web app calls this one. It is bounded
-   * here rather than removed, because removing a reachable endpoint is a decision
-   * for whoever owns the API surface.
-   */
-  async listActivityReports(actor: Actor, query: PaginationQuery) {
-    const page = toSkipTake(query);
-    const paged = async () => {
-      if (actor.role === 'PARENT') {
-        return this.repository.listReportsForParent(actor.parentId, {}, page);
-      }
-      if (actor.role === 'SCHOOL') {
-        const staff = await this.repository.findStaffForParent(actor.parentId);
-        if (!staff) throw forbidden();
-        return this.repository.listReportsForSchool(staff.schoolId, {}, page);
-      }
-      if (actor.role === 'ADMIN') return this.repository.listAllReports({}, page);
-      throw forbidden();
-    };
-    const { items, total } = await paged();
-    return {
-      reports: items.map(toActivityReportResponse),
-      pagination: toPaginationMeta(query, total),
-    };
-  }
-
-  async deleteActivityReport(actor: Actor, reportId: string) {
-    if (actor.role !== 'SCHOOL') throw forbidden();
-    const staff = await this.repository.findStaffForParent(actor.parentId);
-    if (!staff) throw forbidden();
-    const report = await this.repository.findActivityReportById(reportId);
-    if (!report) throw notFound('Activity report was not found.');
-    if (report.schoolId !== staff.schoolId) throw forbidden();
-    await this.repository.deleteActivityReport(reportId);
-    return { success: true };
   }
 }

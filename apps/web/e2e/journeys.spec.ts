@@ -87,6 +87,9 @@ test.describe('journey: register, add a child, complete a screening, read the re
       // "Sometimes" rather than an extreme, so the result is a real mixed score
       // rather than the all-0 or all-4 edge the unit tests already cover.
       await page.getByRole('radio', { name: 'Sometimes' }).click();
+      // Playwright waits for the button to be enabled, and it is disabled until
+      // the answer has been stored — so this also covers the race that made the
+      // last Finish submit an incomplete session on a slow connection.
       const advance = question === total ? /finish/i : /next/i;
       await page.getByRole('button', { name: advance }).click();
     }
@@ -97,6 +100,38 @@ test.describe('journey: register, add a child, complete a screening, read the re
     // the request succeeded and the user still learned nothing.
     await expect(page.locator('.score')).toContainText(/\d/);
     await expect(page.locator('.score-caption')).toContainText(/overall indicator/i);
+  });
+});
+
+test.describe('screening answers are stored before the session can advance', () => {
+  test.setTimeout(120_000);
+
+  test('the advance button waits for a slow answer to save', async ({ page }) => {
+    const id = stamp();
+    const childName = `Slow${id.slice(-5)}`;
+
+    await register(page, 'Slow Parent', `journey-slow-${id}@auticare.test`);
+    await addChild(page, childName, '2021-04-15');
+
+    // Answers are saved in the background while local state updates
+    // immediately, so on a slow connection Finish could fire before the last
+    // answer landed and the server refused the session as incomplete — the
+    // person had answered everything and was told it could not be submitted.
+    // CI reproduced this by being slow; this reproduces it on purpose.
+    await page.route('**/screening/sessions/*/answers', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await route.continue();
+    });
+
+    await page.goto('/screening');
+    await page.getByRole('button', { name: /start new screening/i }).click();
+    await expect(page).toHaveURL(/\/screening\/session\//);
+
+    const advance = page.getByRole('button', { name: /next|finish/i });
+    await page.getByRole('radio', { name: 'Sometimes' }).click();
+
+    await expect(advance).toBeDisabled();
+    await expect(advance).toBeEnabled({ timeout: 10_000 });
   });
 });
 

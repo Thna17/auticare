@@ -43,3 +43,6 @@ export const getReportAttachment = async (req: Request, res: Response) => {
 
 export const updateReport = async (req: Request, res: Response) =>
   ok(res, await service.updateReport(req.auth!, requiredParam(req.params.id), req.body));
+
+export const deleteReport = async (req: Request, res: Response) =>
+  ok(res, await service.deleteReport(req.auth!, requiredParam(req.params.id)));

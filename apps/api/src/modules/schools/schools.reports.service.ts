@@ -145,6 +145,25 @@ export class SchoolsReportsService {
   }
 
   /**
+   * Delete a report owned by the caller's school.
+   *
+   * Moved here from SchoolsService, which was the only thing DELETE
+   * /schools/activity-reports/:id still provided that this module did not.
+   */
+  async deleteReport(actor: Actor, reportId: string) {
+    if (actor.role !== 'SCHOOL') throw forbidden();
+    const staff = await this.requireSchoolStaff(actor);
+    const report = await this.repository.findActivityReportById(reportId);
+    // notFound rather than forbidden for the cross-school case, matching
+    // getReportById: a 403 would confirm the id exists to a caller probing it.
+    if (!report || report.schoolId !== staff.schoolId) {
+      throw notFound('Activity report was not found.');
+    }
+    await this.repository.deleteActivityReport(reportId);
+    return { success: true };
+  }
+
+  /**
    * Get a single activity report by ID with child and reporter info.
    */
   async getReportById(actor: Actor, reportId: string) {
