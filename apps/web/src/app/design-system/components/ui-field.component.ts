@@ -6,6 +6,7 @@ import {
   inject,
   input,
 } from '@angular/core';
+import type { AfterContentInit } from '@angular/core';
 
 /**
  * A labelled form field: label, the control itself, an optional hint, and an
@@ -17,25 +18,28 @@ import {
  * in exactly two places across the whole app, which is why validation feedback is
  * so uneven.
  *
- * The control stays WRAPPED by the label rather than linked with for/id. That is a
- * valid implicit association, it is what the app already does, and it cannot drift
- * out of sync the way a hand-written for/id pair can when a field is copied.
- *
- * Prompt 10 builds on this: aria-invalid and aria-describedby wiring belongs here,
- * once every form is using it, so the behaviour is defined in one place instead of
- * being added field by field.
+ * The component generates the label/control association and the ARIA links, so a
+ * copied field cannot silently lose its accessible name or point at another
+ * field's validation message.
  */
 @Component({
   selector: 'ac-ui-field',
   standalone: true,
   template: `
-    <label class="field" [class.field--full]="full()">
-      <span class="label">
-        {{ label() }}
-        @if (optional()) {
-          <em class="optional">(optional)</em>
-        }
-      </span>
+    <div class="field" [class.field--full]="full()">
+      <div class="label-row">
+        <label class="label" [for]="controlId">
+          {{ label() }}
+          @if (required()) {
+            <span class="required-indicator" aria-hidden="true">*</span>
+            <span class="visually-hidden">(required)</span>
+          }
+          @if (optional()) {
+            <em class="optional">(optional)</em>
+          }
+        </label>
+        <ng-content select="[fieldAction]" />
+      </div>
 
       <ng-content />
 
@@ -45,13 +49,24 @@ import {
       @if (error()) {
         <small class="error" [id]="errorId" role="alert">{{ error() }}</small>
       }
-    </label>
+    </div>
   `,
   styles: [
     `
+      :host {
+        display: block;
+      }
+
       .field {
         display: grid;
         gap: var(--ac-space-2);
+      }
+
+      .label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ac-space-3);
       }
 
       .field--full {
@@ -69,6 +84,22 @@ import {
         color: var(--ac-color-text-muted);
       }
 
+      .required-indicator {
+        color: var(--ac-color-alert-strong);
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
       .hint {
         font-weight: var(--ac-font-weight-regular);
         color: var(--ac-color-text-muted);
@@ -82,7 +113,7 @@ import {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UiFieldComponent {
+export class UiFieldComponent implements AfterContentInit {
   /**
    * Ids for the hint and error so the projected control can point at them with
    * aria-describedby. Instance-unique, because a page holds many fields and a
@@ -90,6 +121,7 @@ export class UiFieldComponent {
    */
   private static nextId = 0;
   private readonly uid = `ac-field-${UiFieldComponent.nextId++}`;
+  protected readonly controlId = `${this.uid}-control`;
   protected readonly hintId = `${this.uid}-hint`;
   protected readonly errorId = `${this.uid}-error`;
 
@@ -97,6 +129,8 @@ export class UiFieldComponent {
   readonly hint = input<string | null>(null);
   /** Shown instead of the hint when present, so the two never compete for space. */
   readonly error = input<string | null>(null);
+  /** Adds the native required state and a visible, announced indicator. */
+  readonly required = input(false);
   readonly optional = input(false);
   /** Span the full width of a grid-based field layout. */
   readonly full = input(false);
@@ -114,25 +148,42 @@ export class UiFieldComponent {
    * at context of its own.
    */
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private control: HTMLElement | null = null;
 
   constructor() {
     effect(() => {
-      const error = this.error();
-      const hint = this.hint();
-      const control = this.host.nativeElement.querySelector<HTMLElement>('input, select, textarea');
-      if (!control) return;
-
-      if (error) control.setAttribute('aria-invalid', 'true');
-      else control.removeAttribute('aria-invalid');
-
-      const theirs = (control.getAttribute('aria-describedby') ?? '')
-        .split(' ')
-        .filter((id) => id !== '' && id !== this.hintId && id !== this.errorId);
-      const ours = error ? [this.errorId] : hint ? [this.hintId] : [];
-      const all = [...theirs, ...ours];
-
-      if (all.length > 0) control.setAttribute('aria-describedby', all.join(' '));
-      else control.removeAttribute('aria-describedby');
+      this.error();
+      this.hint();
+      this.required();
+      this.syncControl();
     });
+  }
+
+  ngAfterContentInit() {
+    this.control = this.host.nativeElement.querySelector<HTMLElement>('input, select, textarea');
+    this.syncControl();
+  }
+
+  private syncControl() {
+    const control = this.control;
+    if (!control) return;
+
+    control.id = this.controlId;
+
+    if (this.required()) control.setAttribute('required', '');
+
+    const error = this.error();
+    const hint = this.hint();
+    if (error) control.setAttribute('aria-invalid', 'true');
+    else control.removeAttribute('aria-invalid');
+
+    const theirs = (control.getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .filter((id) => id !== '' && id !== this.hintId && id !== this.errorId);
+    const ours = error ? [this.errorId] : hint ? [this.hintId] : [];
+    const all = [...theirs, ...ours];
+
+    if (all.length > 0) control.setAttribute('aria-describedby', all.join(' '));
+    else control.removeAttribute('aria-describedby');
   }
 }

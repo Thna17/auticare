@@ -5,10 +5,18 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ChildrenApi } from './data-access/children.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    UiMessageComponent,
+    UiFieldComponent,
+    AccessibleFormDirective,
+  ],
   template: `
     <a class="back-link" routerLink="/children">Back to children</a>
 
@@ -18,32 +26,39 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
       <p>Create a profile with the details that help AutiCare keep support organised.</p>
     </section>
 
-    <form class="child-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <label class="field">
-        <span>First name</span>
+    <form class="child-form" [formGroup]="form" (ngSubmit)="submit()" acAccessibleForm novalidate>
+      <ac-ui-field
+        label="First name"
+        [required]="true"
+        [error]="
+          form.controls.firstName.touched && form.controls.firstName.invalid
+            ? 'Enter a first name.'
+            : null
+        "
+      >
         <input type="text" formControlName="firstName" autocomplete="off" maxlength="80" />
-      </label>
-      @if (form.controls.firstName.touched && form.controls.firstName.invalid) {
-        <p class="field-error">Enter a first name.</p>
-      }
+      </ac-ui-field>
 
-      <label class="field">
-        <span>Date of birth</span>
+      <ac-ui-field
+        label="Date of birth"
+        [required]="true"
+        [error]="
+          form.controls.dateOfBirth.touched && form.controls.dateOfBirth.invalid
+            ? 'Enter a date of birth.'
+            : null
+        "
+      >
         <input type="date" formControlName="dateOfBirth" [max]="today" />
-      </label>
-      @if (form.controls.dateOfBirth.touched && form.controls.dateOfBirth.invalid) {
-        <p class="field-error">Enter a date of birth.</p>
-      }
+      </ac-ui-field>
 
-      <label class="field">
-        <span>Support notes <em>(optional)</em></span>
+      <ac-ui-field label="Support notes" [optional]="true">
         <textarea
           rows="6"
           formControlName="notes"
           maxlength="2000"
           placeholder="Sensory preferences, communication needs, routines, or anything useful for support."
         ></textarea>
-      </label>
+      </ac-ui-field>
 
       @if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>

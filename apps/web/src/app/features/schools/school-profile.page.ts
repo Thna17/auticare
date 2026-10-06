@@ -18,6 +18,8 @@ import { SchoolsApi } from './data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { SchoolProfileViewComponent } from './components/school-profile-view.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
 // Defined locally (not imported from @auticare/contracts as a runtime value) so the
 // web bundle keeps contracts a type-only dependency and never pulls zod client-side.
@@ -47,6 +49,8 @@ const specializationOptions: readonly string[] = [
     SchoolTopbarComponent,
     SchoolProfileViewComponent,
     UiMessageComponent,
+    UiFieldComponent,
+    AccessibleFormDirective,
   ],
   template: `
     <ac-school-topbar />
@@ -76,33 +80,30 @@ const specializationOptions: readonly string[] = [
             Complete your school profile so parents can find and choose your school.
           </div>
         }
-        <form [formGroup]="form" (ngSubmit)="submit()">
+        <form [formGroup]="form" (ngSubmit)="submit()" acAccessibleForm novalidate>
           <!-- BASIC INFO -->
           <fieldset>
             <legend>Basic info</legend>
-            <label>
-              School name
+            <ac-ui-field
+              label="School name"
+              [required]="true"
+              [error]="showError('name') ? 'School name is required.' : null"
+            >
               <input type="text" formControlName="name" />
-              @if (showError('name')) {
-                <span class="field-error">School name is required.</span>
-              }
-            </label>
-            <label>
-              Description
+            </ac-ui-field>
+            <ac-ui-field label="Description" [optional]="true">
               <textarea
                 rows="4"
                 formControlName="description"
                 placeholder="A short bio families will see."
               ></textarea>
-            </label>
-            <label>
-              Logo image URL
+            </ac-ui-field>
+            <ac-ui-field label="Logo image URL" [optional]="true">
               <input type="url" formControlName="logoUrl" placeholder="https://…" />
-            </label>
-            <label>
-              Cover image URL
+            </ac-ui-field>
+            <ac-ui-field label="Cover image URL" [optional]="true">
               <input type="url" formControlName="coverImageUrl" placeholder="https://…" />
-            </label>
+            </ac-ui-field>
             @if (form.controls.logoUrl.value || form.controls.coverImageUrl.value) {
               <div class="previews" aria-label="Image previews">
                 @if (form.controls.logoUrl.value) {
@@ -124,66 +125,61 @@ const specializationOptions: readonly string[] = [
           <!-- LOCATION & CONTACT -->
           <fieldset>
             <legend>Location &amp; contact</legend>
-            <label>
-              City / Province
+            <ac-ui-field
+              label="City / province"
+              [required]="true"
+              [error]="showError('city') ? 'City is required.' : null"
+            >
               <input type="text" formControlName="city" />
-              @if (showError('city')) {
-                <span class="field-error">City is required.</span>
-              }
-            </label>
-            <label>
-              Address
+            </ac-ui-field>
+            <ac-ui-field
+              label="Address"
+              [required]="true"
+              [error]="showError('address') ? 'Address is required.' : null"
+            >
               <input type="text" formControlName="address" />
-              @if (showError('address')) {
-                <span class="field-error">Address is required.</span>
-              }
-            </label>
-            <label>
-              Email
+            </ac-ui-field>
+            <ac-ui-field
+              label="Email"
+              [optional]="true"
+              [error]="showError('email') ? 'Enter a valid email address.' : null"
+            >
               <input type="email" formControlName="email" placeholder="contact@school.example" />
-              @if (showError('email')) {
-                <span class="field-error">Enter a valid email address.</span>
-              }
-            </label>
-            <label>
-              Website
+            </ac-ui-field>
+            <ac-ui-field label="Website" [optional]="true">
               <input type="url" formControlName="website" placeholder="https://…" />
-            </label>
+            </ac-ui-field>
           </fieldset>
 
           <!-- ENROLLMENT DETAILS -->
           <fieldset>
             <legend>Enrollment details</legend>
-            <label>
-              Student : teacher ratio
+            <ac-ui-field label="Student to teacher ratio" [optional]="true">
               <input type="text" formControlName="studentTeacherRatio" placeholder="e.g. 5:1" />
-            </label>
-            <label>
-              Availability status
+            </ac-ui-field>
+            <ac-ui-field label="Availability status">
               <select formControlName="availabilityStatus">
                 @for (option of availabilityOptions; track option.value) {
                   <option [value]="option.value">{{ option.label }}</option>
                 }
               </select>
-            </label>
+            </ac-ui-field>
             @if (form.controls.availabilityStatus.value === 'WAITLIST') {
-              <label>
-                Estimated waitlist
+              <ac-ui-field label="Estimated waitlist" [optional]="true">
                 <input
                   type="text"
                   formControlName="waitlistEstimate"
                   placeholder="e.g. ~2 months"
                 />
-              </label>
+              </ac-ui-field>
             }
-            <label>
-              Admission requirements
+            <ac-ui-field label="Admission requirements" [optional]="true">
               <textarea
                 rows="4"
                 formControlName="admissionRequirements"
                 placeholder="What families need to apply."
               ></textarea>
-            </label>
+            </ac-ui-field>
           </fieldset>
 
           <!-- SPECIALIZATIONS & THERAPIES -->
@@ -208,23 +204,24 @@ const specializationOptions: readonly string[] = [
           <!-- OPERATING INFO -->
           <fieldset>
             <legend>Operating info</legend>
-            <label>
-              Operating hours
+            <ac-ui-field label="Operating hours" [optional]="true">
               <input
                 type="text"
                 formControlName="operatingHours"
                 placeholder="e.g. Mon–Fri, 8am–4pm"
               />
-            </label>
-            <label>
-              Facilities &amp; amenities
+            </ac-ui-field>
+            <ac-ui-field
+              label="Facilities and amenities"
+              hint="One facility per line."
+              [optional]="true"
+            >
               <textarea
                 rows="4"
                 formControlName="facilities"
                 placeholder="One per line (e.g. Sensory room)"
               ></textarea>
-              <span class="hint">One facility per line.</span>
-            </label>
+            </ac-ui-field>
           </fieldset>
 
           <!-- READ-ONLY STATUS -->
@@ -339,7 +336,7 @@ const specializationOptions: readonly string[] = [
       }
       .hint {
         margin: 0;
-        color: var(--ac-color-text-muted);
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-semibold);
       }
@@ -354,7 +351,7 @@ const specializationOptions: readonly string[] = [
         gap: 6px;
       }
       .previews figcaption {
-        color: var(--ac-color-text-muted);
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-label);
         font-weight: var(--ac-font-weight-semibold);
       }
@@ -404,7 +401,7 @@ const specializationOptions: readonly string[] = [
         font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
         letter-spacing: 0.04em;
-        color: var(--ac-color-text-muted);
+        color: var(--ac-color-text-body);
         background: var(--ac-color-surface-info);
         border: 1px solid var(--ac-color-border-info);
         border-radius: 999px;
@@ -435,7 +432,7 @@ const specializationOptions: readonly string[] = [
         font-weight: var(--ac-font-weight-bold);
         font-size: var(--ac-type-label);
         background: #eef1f2;
-        color: var(--ac-color-text-muted);
+        color: var(--ac-color-text-body);
       }
       .verify-badge.verified {
         background: var(--ac-color-success);

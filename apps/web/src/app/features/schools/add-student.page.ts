@@ -4,10 +4,19 @@ import { Router, RouterLink } from '@angular/router';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, UiCardComponent, RouterLink, UiMessageComponent],
+  imports: [
+    ReactiveFormsModule,
+    UiCardComponent,
+    RouterLink,
+    UiMessageComponent,
+    UiFieldComponent,
+    AccessibleFormDirective,
+  ],
   selector: 'ac-add-student-page',
   template: `
     <section class="page-header">
@@ -18,26 +27,26 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
     </section>
 
     <ac-ui-card>
-      <form [formGroup]="form" (ngSubmit)="submit()">
+      <form [formGroup]="form" (ngSubmit)="submit()" acAccessibleForm novalidate>
         <!-- Student Information -->
         <fieldset formGroupName="student">
           <legend>Student Information</legend>
 
-          <label>
-            First Name *
+          <ac-ui-field
+            label="First name"
+            [required]="true"
+            [error]="showError('student.firstName') ? 'First name is required.' : null"
+          >
             <input type="text" formControlName="firstName" placeholder="e.g. Leo" />
-            @if (showError('student.firstName')) {
-              <span class="field-error">First name is required.</span>
-            }
-          </label>
+          </ac-ui-field>
 
-          <label>
-            Date of Birth *
+          <ac-ui-field
+            label="Date of birth"
+            [required]="true"
+            [error]="showError('student.dateOfBirth') ? 'Date of birth is required.' : null"
+          >
             <input type="date" formControlName="dateOfBirth" />
-            @if (showError('student.dateOfBirth')) {
-              <span class="field-error">Date of birth is required.</span>
-            }
-          </label>
+          </ac-ui-field>
 
           @if (ageDisplay()) {
             <div class="computed-field">
@@ -46,18 +55,17 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
             </div>
           }
 
-          <label>
-            Photo URL
+          <ac-ui-field
+            label="Photo URL"
+            [optional]="true"
+            [error]="showError('student.photoUrl') ? 'Enter a valid URL.' : null"
+          >
             <input type="url" formControlName="photoUrl" placeholder="https://..." />
-            @if (showError('student.photoUrl')) {
-              <span class="field-error">Enter a valid URL.</span>
-            }
-          </label>
+          </ac-ui-field>
 
-          <label>
-            Address
+          <ac-ui-field label="Address" [optional]="true">
             <textarea rows="2" formControlName="address" placeholder="Home address..."></textarea>
-          </label>
+          </ac-ui-field>
         </fieldset>
 
         <!-- Guardian Information -->
@@ -65,48 +73,46 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
           <legend>Guardian Information</legend>
 
           <div class="form-row">
-            <label>
-              First Name *
+            <ac-ui-field
+              label="First name"
+              [required]="true"
+              [error]="showError('guardian.guardianFirstName') ? 'First name is required.' : null"
+            >
               <input type="text" formControlName="guardianFirstName" placeholder="e.g. Sarah" />
-              @if (showError('guardian.guardianFirstName')) {
-                <span class="field-error">Required.</span>
-              }
-            </label>
+            </ac-ui-field>
 
-            <label>
-              Last Name *
+            <ac-ui-field
+              label="Last name"
+              [required]="true"
+              [error]="showError('guardian.guardianLastName') ? 'Last name is required.' : null"
+            >
               <input type="text" formControlName="guardianLastName" placeholder="e.g. Bennett" />
-              @if (showError('guardian.guardianLastName')) {
-                <span class="field-error">Required.</span>
-              }
-            </label>
+            </ac-ui-field>
           </div>
 
-          <label>
-            Email *
+          <ac-ui-field
+            label="Email"
+            [required]="true"
+            [error]="showError('guardian.guardianEmail') ? 'Enter a valid email address.' : null"
+          >
             <input
               type="email"
               formControlName="guardianEmail"
               placeholder="guardian@example.com"
             />
-            @if (showError('guardian.guardianEmail')) {
-              <span class="field-error">Enter a valid email address.</span>
-            }
-          </label>
+          </ac-ui-field>
 
-          <label>
-            Phone Number
+          <ac-ui-field label="Phone number" [optional]="true">
             <input type="tel" formControlName="guardianPhone" placeholder="+1 (555) 123-4567" />
-          </label>
+          </ac-ui-field>
 
-          <label>
-            Social Media
+          <ac-ui-field label="Social media" [optional]="true">
             <input
               type="text"
               formControlName="guardianSocialMedia"
               placeholder="@username or profile URL"
             />
-          </label>
+          </ac-ui-field>
         </fieldset>
 
         @if (error()) {
@@ -143,7 +149,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 
       .header-text p {
         margin: 0;
-        color: var(--ac-color-text-slate);
+        color: var(--ac-color-text-slate-strong);
         font-size: 14px;
       }
 

@@ -6,6 +6,8 @@ import type { ActivityReportDetailResponse } from '@auticare/contracts';
 import { SchoolsApi, type EnrolledStudentOption } from './data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { attachmentUrl } from '../../core/config/attachment-url';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
 /** A file that has been accepted but not yet uploaded to the server. */
 export interface PendingFile {
@@ -17,7 +19,13 @@ export interface PendingFile {
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, SchoolTopbarComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    SchoolTopbarComponent,
+    UiFieldComponent,
+    AccessibleFormDirective,
+  ],
   template: `
     <div class="create-report-container">
       <ac-school-topbar />
@@ -44,26 +52,28 @@ export interface PendingFile {
         </div>
       </header>
 
-      <form [formGroup]="form" (ngSubmit)="submit()">
+      <form [formGroup]="form" (ngSubmit)="submit()" acAccessibleForm novalidate>
         <!-- Student Selector & Profile Card -->
         <div class="profile-section-card">
           <div class="selector-row">
-            <label for="child-select" class="selector-label">Select Student:</label>
-            <select
-              id="child-select"
-              formControlName="childId"
-              class="child-select"
-              [disabled]="loadingStudents()"
+            <ac-ui-field
+              label="Select student"
+              [required]="true"
+              [error]="showError('childId') ? 'Select a student.' : null"
             >
-              @if (loadingStudents()) {
-                <option value="" disabled>Loading students…</option>
-              } @else {
-                <option value="" disabled>Select a student</option>
-              }
-              @for (student of students(); track student.id) {
-                <option [value]="student.id">{{ student.firstName }} {{ student.lastName }}</option>
-              }
-            </select>
+              <select formControlName="childId" class="child-select" [disabled]="loadingStudents()">
+                @if (loadingStudents()) {
+                  <option value="" disabled>Loading students…</option>
+                } @else {
+                  <option value="" disabled>Select a student</option>
+                }
+                @for (student of students(); track student.id) {
+                  <option [value]="student.id">
+                    {{ student.firstName }} {{ student.lastName }}
+                  </option>
+                }
+              </select>
+            </ac-ui-field>
             @if (studentsError()) {
               <span class="selector-error">{{ studentsError() }}</span>
             }
@@ -120,56 +130,72 @@ export interface PendingFile {
             <div class="form-section">
               <h2><span class="section-icon">📝</span> 1. Activity Details</h2>
               <div class="row-2-col">
-                <div class="form-group">
-                  <label for="category">Activity Category</label>
-                  <select id="category" formControlName="category">
+                <ac-ui-field
+                  label="Activity category"
+                  [required]="true"
+                  [error]="showError('category') ? 'Select an activity category.' : null"
+                >
+                  <select formControlName="category">
                     <option value="" disabled selected>Select a category</option>
                     @for (cat of categories; track cat) {
                       <option [value]="cat">{{ cat }}</option>
                     }
                   </select>
-                </div>
-                <div class="form-group">
-                  <label for="duration">Duration (Minutes)</label>
-                  <input
-                    id="duration"
-                    type="number"
-                    formControlName="duration"
-                    placeholder="e.g. 45"
-                  />
-                </div>
+                </ac-ui-field>
+                <ac-ui-field
+                  label="Duration (minutes)"
+                  [required]="true"
+                  [error]="showError('duration') ? 'Enter a duration of at least 1 minute.' : null"
+                >
+                  <input type="number" formControlName="duration" placeholder="e.g. 45" />
+                </ac-ui-field>
               </div>
-              <div class="form-group full-width">
-                <label for="activityName">Activity Name</label>
+              <ac-ui-field
+                label="Activity name"
+                [required]="true"
+                [full]="true"
+                [error]="showError('activityName') ? 'Enter an activity name.' : null"
+              >
                 <input
-                  id="activityName"
                   type="text"
                   formControlName="activityName"
                   placeholder="e.g. Cooperative Block Building"
                 />
-              </div>
+              </ac-ui-field>
             </div>
 
             <!-- 3. Teacher Observations -->
             <div class="form-section">
               <h2><span class="section-icon">👁️</span> 3. Teacher Observations</h2>
-              <textarea
-                aria-label="Teacher observations"
-                formControlName="teacherObservations"
-                rows="6"
-                placeholder="Describe how the student engaged with the activity, any notable breakthroughs, or challenges faced..."
-              ></textarea>
+              <ac-ui-field
+                label="Teacher observations"
+                [required]="true"
+                [error]="showError('teacherObservations') ? 'Enter teacher observations.' : null"
+              >
+                <textarea
+                  formControlName="teacherObservations"
+                  rows="6"
+                  placeholder="Describe how the student engaged with the activity, any notable breakthroughs, or challenges faced..."
+                ></textarea>
+              </ac-ui-field>
             </div>
 
             <!-- 4. Parent Recommendations -->
             <div class="form-section">
               <h2><span class="section-icon">💡</span> 4. Parent Recommendations</h2>
-              <textarea
-                aria-label="Recommendations for parents"
-                formControlName="parentRecommendations"
-                rows="6"
-                placeholder="Actionable steps for parents to reinforce these skills at home..."
-              ></textarea>
+              <ac-ui-field
+                label="Recommendations for parents"
+                [required]="true"
+                [error]="
+                  showError('parentRecommendations') ? 'Enter recommendations for parents.' : null
+                "
+              >
+                <textarea
+                  formControlName="parentRecommendations"
+                  rows="6"
+                  placeholder="Actionable steps for parents to reinforce these skills at home..."
+                ></textarea>
+              </ac-ui-field>
             </div>
           </div>
 
@@ -191,6 +217,7 @@ export interface PendingFile {
                   <input
                     aria-label="Participation rating, 0 to 10"
                     type="range"
+                    required
                     min="0"
                     max="10"
                     formControlName="participation"
@@ -206,6 +233,7 @@ export interface PendingFile {
                   <input
                     aria-label="Communication rating, 0 to 10"
                     type="range"
+                    required
                     min="0"
                     max="10"
                     formControlName="communication"
@@ -221,6 +249,7 @@ export interface PendingFile {
                   <input
                     aria-label="Social interaction rating, 0 to 10"
                     type="range"
+                    required
                     min="0"
                     max="10"
                     formControlName="socialInteraction"
@@ -236,6 +265,7 @@ export interface PendingFile {
                   <input
                     aria-label="Attention rating, 0 to 10"
                     type="range"
+                    required
                     min="0"
                     max="10"
                     formControlName="attention"
@@ -251,6 +281,7 @@ export interface PendingFile {
                   <input
                     aria-label="Emotional regulation rating, 0 to 10"
                     type="range"
+                    required
                     min="0"
                     max="10"
                     formControlName="emotionalRegulation"
@@ -266,6 +297,7 @@ export interface PendingFile {
                   <input
                     aria-label="Task completion rating, 0 to 10"
                     type="range"
+                    required
                     min="0"
                     max="10"
                     formControlName="taskCompletion"
@@ -279,9 +311,9 @@ export interface PendingFile {
             <div class="form-section photos-section">
               <h2><span class="section-icon">📷</span> 5. Activity Photos</h2>
 
-              <div
+              <label
                 class="upload-dragzone"
-                (click)="fileInput.click()"
+                for="activity-attachments"
                 (dragover)="$event.preventDefault()"
                 (drop)="onFileDrop($event)"
               >
@@ -290,15 +322,16 @@ export interface PendingFile {
                   Drag & drop files or <span class="browse-btn">browse</span>
                 </p>
                 <p class="upload-sub-text">JPG, PNG, PDF, Word, text, CSV — up to 10MB each</p>
-              </div>
+              </label>
               <input
+                id="activity-attachments"
                 aria-label="Choose files to attach"
                 #fileInput
+                class="visually-hidden-file"
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,.pdf,.doc,.docx,.txt,.csv"
                 multiple
                 (change)="onFilesSelected($event)"
-                style="display: none"
               />
 
               @if (uploadError()) {
@@ -701,8 +734,8 @@ export interface PendingFile {
         font-weight: 600;
         color: var(--ac-color-slate-600);
       }
-      .form-group input,
-      .form-group select,
+      .form-section ac-ui-field input,
+      .form-section ac-ui-field select,
       .form-section textarea {
         padding: 12px 16px;
         border: 1px solid var(--ac-color-slate-300);
@@ -712,8 +745,8 @@ export interface PendingFile {
         transition: all 0.2s;
         background: var(--ac-color-surface-slate);
       }
-      .form-group input:focus,
-      .form-group select:focus,
+      .form-section ac-ui-field input:focus,
+      .form-section ac-ui-field select:focus,
       .form-section textarea:focus {
         border-color: var(--ac-color-action);
         background: var(--ac-color-surface);
@@ -739,7 +772,7 @@ export interface PendingFile {
       .scale-badge {
         font-size: 11px;
         font-weight: 700;
-        color: var(--ac-color-text-slate);
+        color: var(--ac-color-text-slate-strong);
         background: var(--ac-color-slate-100);
         padding: 4px 8px;
         border-radius: 6px;
@@ -819,6 +852,17 @@ export interface PendingFile {
       .upload-dragzone:hover {
         border-color: var(--ac-color-ink-b);
         background: var(--ac-color-tint-blue-mist);
+      }
+      .visually-hidden-file {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
       .upload-cloud-icon {
         font-size: 32px;
@@ -1114,6 +1158,11 @@ export class CreateSchoolReportPage implements OnInit {
     emotionalRegulation: [5, [Validators.required]],
     taskCompletion: [5, [Validators.required]],
   });
+
+  showError(controlName: keyof typeof this.form.controls): boolean {
+    const control = this.form.controls[controlName];
+    return control.invalid && (control.touched || control.dirty);
+  }
 
   readonly selectedChild = computed(() => {
     const childId = this.form.controls.childId.value;

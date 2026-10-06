@@ -4,6 +4,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
 const matchingPasswords = (control: AbstractControl): ValidationErrors | null => {
   const password = control.get('password')?.value;
@@ -16,7 +18,13 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    UiMessageComponent,
+    UiFieldComponent,
+    AccessibleFormDirective,
+  ],
   template: `
     <main class="signup-page">
       <section class="form-panel" aria-labelledby="register-title">
@@ -31,72 +39,86 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
             <p>Join our supportive community and start your child's journey today.</p>
           </header>
 
-          <form class="register-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <label class="field">
-              <span>Full Name</span>
+          <form
+            class="register-form"
+            [formGroup]="form"
+            (ngSubmit)="submit()"
+            acAccessibleForm
+            novalidate
+          >
+            <ac-ui-field
+              label="Full name"
+              [required]="true"
+              [error]="
+                form.controls.fullName.touched && form.controls.fullName.invalid
+                  ? 'Enter your full name.'
+                  : null
+              "
+            >
               <input
                 type="text"
                 formControlName="fullName"
                 autocomplete="name"
                 placeholder="Leo Miller"
-                [attr.aria-invalid]="
-                  form.controls.fullName.touched && form.controls.fullName.invalid
-                "
               />
-            </label>
-            @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
-              <p class="field-error">Enter your full name.</p>
-            }
+            </ac-ui-field>
 
-            <label class="field">
-              <span>Email Address</span>
+            <ac-ui-field
+              label="Email address"
+              [required]="true"
+              [error]="
+                form.controls.email.touched && form.controls.email.invalid
+                  ? 'Enter a valid email address.'
+                  : null
+              "
+            >
               <input
                 type="email"
                 formControlName="email"
                 autocomplete="email"
                 placeholder="leo@example.com"
-                [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
               />
-            </label>
-            @if (form.controls.email.touched && form.controls.email.invalid) {
-              <p class="field-error">Enter a valid email address.</p>
-            }
+            </ac-ui-field>
 
             <div class="password-grid">
-              <label class="field">
-                <span>Password</span>
+              <ac-ui-field
+                label="Password"
+                hint="Use at least 12 characters."
+                [required]="true"
+                [error]="
+                  form.controls.password.touched && form.controls.password.invalid
+                    ? 'Use at least 12 characters.'
+                    : null
+                "
+              >
                 <input
                   type="password"
                   formControlName="password"
                   autocomplete="new-password"
                   placeholder="••••••••••••"
-                  aria-describedby="password-help"
-                  [attr.aria-invalid]="
-                    form.controls.password.touched && form.controls.password.invalid
-                  "
                 />
-              </label>
+              </ac-ui-field>
 
-              <label class="field">
-                <span>Confirm Password</span>
+              <ac-ui-field
+                label="Confirm password"
+                [required]="true"
+                [error]="
+                  form.controls.confirmPassword.touched &&
+                  (form.controls.confirmPassword.invalid || form.hasError('passwordMismatch'))
+                    ? form.hasError('passwordMismatch')
+                      ? 'Passwords must match.'
+                      : 'Confirm your password.'
+                    : null
+                "
+              >
                 <input
                   type="password"
                   formControlName="confirmPassword"
                   autocomplete="new-password"
                   placeholder="••••••••••••"
-                  [attr.aria-invalid]="
-                    form.controls.confirmPassword.touched &&
-                    (form.controls.confirmPassword.invalid || form.hasError('passwordMismatch'))
-                  "
                 />
-              </label>
+              </ac-ui-field>
             </div>
-            @if (form.controls.password.touched && form.controls.password.invalid) {
-              <p class="field-error">Use at least 12 characters.</p>
-            }
-            @if (form.controls.confirmPassword.touched && form.hasError('passwordMismatch')) {
-              <p class="field-error">Passwords must match.</p>
-            }
 
             <div class="password-note" id="password-help">
               <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
@@ -123,14 +145,24 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
             </div>
 
             <label class="terms">
-              <input type="checkbox" formControlName="terms" />
+              <input
+                type="checkbox"
+                formControlName="terms"
+                required
+                [attr.aria-invalid]="form.controls.terms.touched && form.controls.terms.invalid"
+                [attr.aria-describedby]="
+                  form.controls.terms.touched && form.controls.terms.invalid ? 'terms-error' : null
+                "
+              />
               <span>
                 I agree to the <a routerLink="/terms">Terms of Service</a> and
                 <a routerLink="/privacy">Privacy Policy</a>.
+                <span class="required-indicator" aria-hidden="true">*</span>
+                <span class="visually-hidden">(required)</span>
               </span>
             </label>
             @if (form.controls.terms.touched && form.controls.terms.invalid) {
-              <p class="field-error">Accept the terms to continue.</p>
+              <p id="terms-error" class="field-error" role="alert">Accept the terms to continue.</p>
             }
 
             @if (error()) {
@@ -281,7 +313,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         font-weight: var(--ac-font-weight-semibold);
       }
 
-      .field input {
+      ac-ui-field input {
         width: 100%;
         min-width: 0;
         height: 60px;
@@ -299,22 +331,22 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
           background 160ms ease;
       }
 
-      .field input::placeholder {
+      ac-ui-field input::placeholder {
         color: #6a7486;
         opacity: 1;
       }
 
-      .field input:hover {
+      ac-ui-field input:hover {
         border-color: #8da0aa;
       }
 
-      .field input:focus {
+      ac-ui-field input:focus {
         border-color: var(--ac-color-action);
         box-shadow: 0 0 0 4px rgb(141 180 200 / 0.25);
         outline: none;
       }
 
-      .field input[aria-invalid='true'] {
+      ac-ui-field input[aria-invalid='true'] {
         border-color: var(--ac-color-red-600);
       }
 
@@ -322,6 +354,22 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         gap: 20px;
+      }
+
+      .required-indicator {
+        color: var(--ac-color-alert-strong);
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
 
       .password-note {
@@ -687,6 +735,7 @@ export class RegisterPage {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.error.set('Fix the highlighted fields before creating your account.');
       return;
     }
 

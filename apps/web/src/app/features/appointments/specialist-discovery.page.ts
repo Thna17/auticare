@@ -187,7 +187,7 @@ import { specialtyCategories } from './appointments.types';
 
       .rating {
         margin: 0;
-        color: var(--ac-color-warning);
+        color: var(--ac-color-olive-dark);
         font-weight: var(--ac-font-weight-semibold);
       }
 

@@ -32,6 +32,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
           <div
             class="track"
             role="progressbar"
+            aria-label="Screening progress"
             [attr.aria-valuenow]="currentIndex() + 1"
             aria-valuemin="1"
             [attr.aria-valuemax]="total()"
@@ -44,7 +45,10 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
           @if (question.category) {
             <p class="category">{{ question.category }}</p>
           }
-          <h1 class="question">{{ question.questionText }}</h1>
+          <h1 class="question">
+            {{ question.questionText }} <span class="required-indicator" aria-hidden="true">*</span>
+            <span class="visually-hidden">(required)</span>
+          </h1>
 
           <ac-screening-answer-scale
             [value]="currentValue()"
@@ -122,6 +126,22 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
         display: flex;
         flex-direction: column;
         gap: 24px;
+      }
+
+      .required-indicator {
+        color: var(--scr-error);
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
 
       .status {

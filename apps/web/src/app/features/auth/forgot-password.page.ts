@@ -4,10 +4,18 @@ import { RouterLink } from '@angular/router';
 import type { PasswordResetResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    UiMessageComponent,
+    UiFieldComponent,
+    AccessibleFormDirective,
+  ],
   template: `
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="forgot-title">
@@ -39,20 +47,23 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
             <a class="dev-link" [href]="result()?.resetUrl">Open development reset link</a>
           }
         } @else {
-          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <label class="field">
-              <span>Email Address</span>
+          <form [formGroup]="form" (ngSubmit)="submit()" acAccessibleForm novalidate>
+            <ac-ui-field
+              label="Email address"
+              [required]="true"
+              [error]="
+                form.controls.email.touched && form.controls.email.invalid
+                  ? 'Enter a valid email address.'
+                  : null
+              "
+            >
               <input
                 type="email"
                 formControlName="email"
                 autocomplete="email"
                 placeholder="leo.parent@example.com"
-                [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
               />
-            </label>
-            @if (form.controls.email.touched && form.controls.email.invalid) {
-              <p class="field-error">Enter a valid email address.</p>
-            }
+            </ac-ui-field>
 
             @if (error()) {
               <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
@@ -314,6 +325,7 @@ export class ForgotPasswordPage {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.error.set('Fix the highlighted field before requesting a reset link.');
       return;
     }
 
