@@ -1,104 +1,177 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
-/**
- * Accessibility checks for the forms a parent actually has to get through.
- *
- * Two kinds of assertion, because they catch different things. The accessible-name
- * checks are specific: they fail with the name of the control that lost its label,
- * which is the regression most likely to be reintroduced by a copy-paste. The axe
- * scans are broad: they catch contrast, landmark and ARIA problems nobody thought
- * to assert.
- *
- * Both are scoped to pages reachable without signing in, so this suite needs no
- * fixtures or seeded account. The authenticated forms — settings, add child,
- * activity report — are covered by the ui-field component's own behaviour and are
- * worth adding here once the suite has a login fixture.
- */
-
-const PUBLIC_PAGES = [
+const PUBLIC_FORMS = [
   { path: '/login', name: 'Sign in' },
   { path: '/register', name: 'Create account' },
   { path: '/forgot-password', name: 'Forgot password' },
-];
+  { path: '/reset-password', name: 'Reset password' },
+] as const;
 
-test.describe('form controls have accessible names', () => {
-  for (const page of PUBLIC_PAGES) {
-    test(`${page.name}: every control is named`, async ({ page: p }) => {
-      await p.goto(page.path);
+const ACCOUNTS = {
+  parent: {
+    email: 'demo.parent@auticare.local',
+    password: 'AutiCareDemoPassword123',
+  },
+  school: {
+    email: 'school@auticare.local',
+    password: 'AutiCareSchoolPassword123',
+  },
+} as const;
 
-      const controls = p.locator('input, select, textarea');
-      // Angular renders the form after hydration, so count() can run against an
-      // empty DOM and pass vacuously. Wait for the first control to exist first.
-      await controls.first().waitFor({ state: 'attached' });
-
-      const count = await controls.count();
-      expect(count, 'page should have form controls').toBeGreaterThan(0);
-
-      for (let i = 0; i < count; i += 1) {
-        const control = controls.nth(i);
-        // A placeholder is not a name: it disappears the moment someone types.
-        const accessibleName = await control.evaluate((el) => {
-          const labelled = el.getAttribute('aria-label');
-          if (labelled) return labelled;
-          const describedBy = el.getAttribute('aria-labelledby');
-          if (describedBy) return document.getElementById(describedBy)?.textContent ?? '';
-          const id = el.getAttribute('id');
-          if (id) {
-            const explicit = document.querySelector(`label[for="${id}"]`);
-            if (explicit) return explicit.textContent ?? '';
-          }
-          return el.closest('label')?.textContent ?? '';
-        });
-
-        const descriptor = await control.evaluate(
-          (el) => `${el.tagName.toLowerCase()}[${el.getAttribute('type') ?? 'text'}]`,
-        );
-        expect(
-          accessibleName.trim(),
-          `${descriptor} on ${page.path} has no accessible name`,
-        ).not.toBe('');
-      }
-    });
-  }
-});
-
-test.describe('axe scan', () => {
-  for (const page of PUBLIC_PAGES) {
-    test(`${page.name}: no serious or critical violations`, async ({ page: p }) => {
-      await p.goto(page.path);
-
-      const results = await new AxeBuilder({ page: p })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-        .analyze();
-
-      // Serious and critical only. Minor and moderate findings are worth fixing but
-      // would make this gate noisy enough to be ignored, which is worse than not
-      // having it.
-      const blocking = results.violations.filter(
-        (v) => v.impact === 'serious' || v.impact === 'critical',
-      );
-
-      expect(
-        blocking.map((v) => `${v.id} (${v.impact}): ${v.nodes.length} node(s)`),
-        `axe violations on ${page.path}`,
-      ).toEqual([]);
-    });
-  }
-});
-
-test('an invalid field reports itself, not just its message', async ({ page }) => {
+async function login(page: Page, account: (typeof ACCOUNTS)[keyof typeof ACCOUNTS]) {
   await page.goto('/login');
-
-  // Submitting empty should mark the control invalid, not only colour the text.
+  await page.getByRole('textbox', { name: /email address/i }).fill(account.email);
+  await page.locator('input[autocomplete="current-password"]').fill(account.password);
   await page.getByRole('button', { name: /log in/i }).click();
+  await expect(page).not.toHaveURL(/\/login$/);
+}
 
-  const email = page.locator('input[type="email"]');
-  const describedBy = await email.getAttribute('aria-describedby');
-  const invalid = await email.getAttribute('aria-invalid');
+async function expectEveryControlNamed(scope: Page | Locator) {
+  const controls = scope.locator('input, select, textarea');
+  await controls.first().waitFor({ state: 'attached' });
+  const count = await controls.count();
+  expect(count, 'page should have form controls').toBeGreaterThan(0);
 
-  // Either the browser's own validation blocks submission, or the app marks the
-  // field — both are acceptable; silently doing neither is not.
-  const blocked = await email.evaluate((el: HTMLInputElement) => !el.validity.valid);
-  expect(blocked || invalid === 'true' || describedBy !== null).toBe(true);
+  for (let index = 0; index < count; index += 1) {
+    await expect(
+      controls.nth(index),
+      `control ${index + 1} should have an accessible name`,
+    ).toHaveAccessibleName(/\S/);
+  }
+}
+
+async function expectNoBlockingAxeViolations(page: Page) {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) => violation.impact === 'serious' || violation.impact === 'critical',
+  );
+  expect(
+    blocking.map(
+      (violation) =>
+        `${violation.id} (${violation.impact}): ${violation.nodes
+          .map((node) => node.target.join(' > '))
+          .join(', ')}`,
+    ),
+  ).toEqual([]);
+}
+
+test.describe('public forms', () => {
+  for (const form of PUBLIC_FORMS) {
+    test(`${form.name}: controls are named and the flow passes axe`, async ({ page }) => {
+      await page.goto(form.path);
+      await expectEveryControlNamed(page.locator('form'));
+      await expectNoBlockingAxeViolations(page);
+    });
+  }
+
+  test('failed login announces errors, exposes state, and focuses the first field', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    await page.getByRole('button', { name: /log in/i }).click();
+
+    const email = page.getByRole('textbox', { name: /email address/i });
+    await expect(email).toBeFocused();
+    await expect(email).toHaveAttribute('required', '');
+    await expect(email).toHaveAttribute('aria-invalid', 'true');
+    const describedBy = await email.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    await expect(page.locator(`#${describedBy}`)).toHaveText(/valid email/i);
+    await expect(page.getByRole('alert').filter({ hasText: /valid email/i })).toBeVisible();
+    await expect(
+      page.getByRole('alert').filter({ hasText: /fix the highlighted fields/i }),
+    ).toBeVisible();
+  });
+});
+
+test('parent forms and screening are accessible', async ({ page }) => {
+  await login(page, ACCOUNTS.parent);
+
+  await page.goto('/children/new');
+  await expectEveryControlNamed(page.locator('form'));
+  await page.getByRole('button', { name: /create child profile/i }).click();
+  await expect(page.getByRole('textbox', { name: /first name/i })).toBeFocused();
+  await expect(
+    page.getByRole('alert').filter({ hasText: /fix the highlighted fields/i }),
+  ).toBeVisible();
+  await expectNoBlockingAxeViolations(page);
+
+  await page.goto('/settings');
+  await expectEveryControlNamed(page.locator('form'));
+  await expectNoBlockingAxeViolations(page);
+
+  await page.goto('/screening');
+  const continueButton = page.getByRole('button', { name: 'Continue' });
+  if (await continueButton.isVisible()) await continueButton.click();
+  else await page.getByRole('button', { name: /start new screening/i }).click();
+  await expect(page).toHaveURL(/\/screening\/session\//);
+  const answers = page.getByRole('radiogroup');
+  await expect(answers).toHaveAccessibleName(/\S/);
+  await expect(answers).toHaveAttribute('aria-required', 'true');
+  for (const radio of await page.getByRole('radio').all()) {
+    await expect(radio).toHaveAccessibleName(/\S/);
+  }
+  await expectNoBlockingAxeViolations(page);
+
+  await page.goto('/appointments/new');
+  await page.locator('.hospital-card').first().click();
+  await page
+    .getByRole('button', { name: /request appointment/i })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+
+  await dialog.getByRole('button', { name: /confirm booking/i }).click();
+  const patientGroup = dialog.getByRole('radiogroup', { name: /who is this visit for/i });
+  await expect(patientGroup.getByRole('radio').first()).toBeFocused();
+  await expect(dialog.getByRole('alert')).toContainText(/choose a child, date, and time/i);
+
+  await patientGroup.getByRole('radio').first().click();
+  const dateGroup = dialog.getByRole('radiogroup', { name: /choose a date/i });
+  await dateGroup.locator('button[role="radio"]:not([disabled])').first().click();
+  const timeGroup = dialog.getByRole('radiogroup', { name: /available slots/i });
+  await expect(timeGroup).toBeVisible();
+  await timeGroup.getByRole('radio').first().click();
+
+  await expectEveryControlNamed(dialog);
+  for (const group of await dialog.getByRole('radiogroup').all()) {
+    await expect(group).toHaveAccessibleName(/\S/);
+    await expect(group).toHaveAttribute('aria-required', 'true');
+  }
+  await expectNoBlockingAxeViolations(page);
+});
+
+test('school forms are named, announce validation, focus errors, and pass axe', async ({
+  page,
+}) => {
+  await login(page, ACCOUNTS.school);
+
+  await page.goto('/schools/students/add');
+  await expectEveryControlNamed(page.locator('form'));
+  await page.getByRole('button', { name: /add student/i }).click();
+  await expect(page.getByRole('textbox', { name: /first name/i }).first()).toBeFocused();
+  await expect(
+    page.getByRole('alert').filter({ hasText: /fix the highlighted fields/i }),
+  ).toBeVisible();
+  await expectNoBlockingAxeViolations(page);
+
+  await page.goto('/schools/profile');
+  const editProfile = page.getByRole('button', { name: /edit profile/i });
+  await expect(editProfile.or(page.locator('form'))).toBeVisible();
+  if (await editProfile.isVisible()) await editProfile.click();
+  await expectEveryControlNamed(page.locator('form'));
+  await expectNoBlockingAxeViolations(page);
+
+  await page.goto('/schools/reports/new');
+  await expectEveryControlNamed(page.locator('form'));
+  await page.getByRole('button', { name: /submit report/i }).click();
+  await expect(page.getByRole('combobox', { name: /select student/i })).toBeFocused();
+  await expect(
+    page.getByRole('alert').filter({ hasText: /fill in all required fields/i }),
+  ).toBeVisible();
+  await expectNoBlockingAxeViolations(page);
 });

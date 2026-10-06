@@ -5,3 +5,5 @@ coverage
 .env
 pnpm-lock.yaml
 apps/api/prisma/migrations
+test-results/
+playwright-report/

@@ -10,10 +10,12 @@ import type {
   LeadSpecialistResponse,
   SchoolChildEnrollmentStatus,
 } from '@auticare/contracts';
-import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 
 interface EnrollmentViewModel {
   id: string;
@@ -28,7 +30,14 @@ interface EnrollmentViewModel {
 
 @Component({
   standalone: true,
-  imports: [UiCardComponent, SchoolTopbarComponent, RouterLink, UiMessageComponent],
+  imports: [
+    SchoolTopbarComponent,
+    RouterLink,
+    UiMessageComponent,
+    UiDialogComponent,
+    UiSpinnerComponent,
+    UiEmptyStateComponent,
+  ],
   selector: 'ac-school-enrollments-page',
   template: `
     <ac-school-topbar />
@@ -119,11 +128,19 @@ interface EnrollmentViewModel {
 
     <!-- Data Table -->
     @if (loading()) {
-      <ac-ui-card><p>Loading enrollments...</p></ac-ui-card>
+      <ac-ui-spinner label="Loading enrollments…" />
     } @else if (error()) {
       <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     } @else if (!enrollments().length) {
-      <ac-ui-card><p>No active child enrollments are available.</p></ac-ui-card>
+      <ac-ui-empty-state
+        title="No enrollments found"
+        message="No students match the current filters. Add a new student or adjust your filter selection."
+      >
+        <a class="btn-primary" routerLink="/schools/students/add">
+          <span>👤+</span>
+          <span>Add New Student</span>
+        </a>
+      </ac-ui-empty-state>
     } @else {
       <div class="table-container">
         <table class="data-table">
@@ -243,146 +260,134 @@ interface EnrollmentViewModel {
 
     <!-- Edit student dialog -->
     @if (editing(); as student) {
-      <div class="dialog-backdrop" (click)="closeEditDialog()">
-        <div
-          class="dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-student-title"
-          (click)="$event.stopPropagation()"
-        >
-          <h3 id="edit-student-title">Edit student</h3>
-          <p class="dialog-subtitle">{{ student.childName }}</p>
+      <ac-ui-dialog
+        heading="Edit student"
+        [description]="student.childName"
+        size="md"
+        (close)="closeEditDialog()"
+      >
+        <label class="dialog-field">
+          <span class="dialog-label">First name</span>
+          <input
+            class="dialog-input"
+            type="text"
+            maxlength="80"
+            [value]="editFirstName()"
+            (input)="editFirstName.set($any($event.target).value)"
+          />
+        </label>
 
+        <label class="dialog-field">
+          <span class="dialog-label">Last name</span>
+          <input
+            class="dialog-input"
+            type="text"
+            maxlength="80"
+            [value]="editLastName()"
+            (input)="editLastName.set($any($event.target).value)"
+          />
+        </label>
+
+        <label class="dialog-field">
+          <span class="dialog-label">Date of birth</span>
+          <input
+            class="dialog-input"
+            type="date"
+            [value]="editDateOfBirth()"
+            (input)="editDateOfBirth.set($any($event.target).value)"
+          />
+        </label>
+
+        <div class="dialog-row">
           <label class="dialog-field">
-            <span class="dialog-label">First name</span>
-            <input
+            <span class="dialog-label">Enrollment status</span>
+            <select
               class="dialog-input"
-              type="text"
-              maxlength="80"
-              [value]="editFirstName()"
-              (input)="editFirstName.set($any($event.target).value)"
-            />
-          </label>
-
-          <label class="dialog-field">
-            <span class="dialog-label">Last name</span>
-            <input
-              class="dialog-input"
-              type="text"
-              maxlength="80"
-              [value]="editLastName()"
-              (input)="editLastName.set($any($event.target).value)"
-            />
-          </label>
-
-          <label class="dialog-field">
-            <span class="dialog-label">Date of birth</span>
-            <input
-              class="dialog-input"
-              type="date"
-              [value]="editDateOfBirth()"
-              (input)="editDateOfBirth.set($any($event.target).value)"
-            />
-          </label>
-
-          <div class="dialog-row">
-            <label class="dialog-field">
-              <span class="dialog-label">Enrollment status</span>
-              <select
-                class="dialog-input"
-                [value]="editStatus()"
-                (change)="editStatus.set($any($event.target).value)"
-              >
-                <option value="PENDING">Pending</option>
-                <option value="ACTIVE">Active</option>
-                <option value="GRADUATED">Graduated</option>
-                <option value="REJECTED">Rejected</option>
-              </select>
-            </label>
-
-            <label class="dialog-field">
-              <span class="dialog-label">Lead specialist</span>
-              <select
-                class="dialog-input"
-                [value]="editSpecialistId()"
-                (change)="editSpecialistId.set($any($event.target).value)"
-              >
-                <option value="">Unassigned</option>
-                @for (spec of specialists(); track spec.id) {
-                  <option [value]="spec.id">{{ spec.firstName }} {{ spec.lastName }}</option>
-                }
-              </select>
-            </label>
-          </div>
-
-          <label class="dialog-field">
-            <span class="dialog-label">Notes (shared with the guardian's profile)</span>
-            <textarea
-              class="dialog-input"
-              rows="3"
-              maxlength="2000"
-              [value]="editNotes()"
-              (input)="editNotes.set($any($event.target).value)"
-            ></textarea>
-          </label>
-
-          @if (editError(); as err) {
-            <ac-ui-message tone="error">{{ err }}</ac-ui-message>
-          }
-
-          <div class="dialog-actions">
-            <button type="button" class="btn-secondary" (click)="closeEditDialog()">Cancel</button>
-            <button
-              type="button"
-              class="btn-primary-small"
-              (click)="saveEdit()"
-              [disabled]="savingEdit()"
+              [value]="editStatus()"
+              (change)="editStatus.set($any($event.target).value)"
             >
-              {{ savingEdit() ? 'Saving…' : 'Save changes' }}
-            </button>
-          </div>
+              <option value="PENDING">Pending</option>
+              <option value="ACTIVE">Active</option>
+              <option value="GRADUATED">Graduated</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+          </label>
+
+          <label class="dialog-field">
+            <span class="dialog-label">Lead specialist</span>
+            <select
+              class="dialog-input"
+              [value]="editSpecialistId()"
+              (change)="editSpecialistId.set($any($event.target).value)"
+            >
+              <option value="">Unassigned</option>
+              @for (spec of specialists(); track spec.id) {
+                <option [value]="spec.id">{{ spec.firstName }} {{ spec.lastName }}</option>
+              }
+            </select>
+          </label>
         </div>
-      </div>
+
+        <label class="dialog-field">
+          <span class="dialog-label">Notes (shared with the guardian's profile)</span>
+          <textarea
+            class="dialog-input"
+            rows="3"
+            maxlength="2000"
+            [value]="editNotes()"
+            (input)="editNotes.set($any($event.target).value)"
+          ></textarea>
+        </label>
+
+        @if (editError(); as err) {
+          <ac-ui-message tone="error">{{ err }}</ac-ui-message>
+        }
+
+        <div dialogFooter class="dialog-actions">
+          <button type="button" class="btn-secondary" (click)="closeEditDialog()">Cancel</button>
+          <button
+            type="button"
+            class="btn-primary-small"
+            (click)="saveEdit()"
+            [disabled]="savingEdit()"
+          >
+            {{ savingEdit() ? 'Saving…' : 'Save changes' }}
+          </button>
+        </div>
+      </ac-ui-dialog>
     }
 
     <!-- Delete confirmation dialog -->
     @if (deleting(); as student) {
-      <div class="dialog-backdrop" (click)="closeDeleteDialog()">
-        <div
-          class="dialog dialog-narrow"
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="delete-student-title"
-          (click)="$event.stopPropagation()"
-        >
-          <h3 id="delete-student-title">Remove student</h3>
-          <p class="dialog-subtitle">{{ student.childName }}</p>
-          <p class="dialog-warning">
-            This removes {{ student.childName }} from your school's enrollment list. The student's
-            profile and history stay safe with their guardian — only the enrollment at your school
-            is ended.
-          </p>
+      <ac-ui-dialog
+        heading="Remove student"
+        [description]="student.childName"
+        dialogRole="alertdialog"
+        size="sm"
+        (close)="closeDeleteDialog()"
+      >
+        <p class="dialog-warning">
+          This removes {{ student.childName }} from your school's enrollment list. The student's
+          profile and history stay safe with their guardian — only the enrollment at your school is
+          ended.
+        </p>
 
-          @if (deleteError(); as err) {
-            <ac-ui-message tone="error">{{ err }}</ac-ui-message>
-          }
+        @if (deleteError(); as err) {
+          <ac-ui-message tone="error">{{ err }}</ac-ui-message>
+        }
 
-          <div class="dialog-actions">
-            <button type="button" class="btn-secondary" (click)="closeDeleteDialog()">
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn-danger"
-              (click)="confirmDelete()"
-              [disabled]="deletingInProgress()"
-            >
-              {{ deletingInProgress() ? 'Removing…' : 'Remove student' }}
-            </button>
-          </div>
+        <div dialogFooter class="dialog-actions">
+          <button type="button" class="btn-secondary" (click)="closeDeleteDialog()">Cancel</button>
+          <button
+            type="button"
+            class="btn-danger"
+            (click)="confirmDelete()"
+            [disabled]="deletingInProgress()"
+          >
+            {{ deletingInProgress() ? 'Removing…' : 'Remove student' }}
+          </button>
         </div>
-      </div>
+      </ac-ui-dialog>
     }
 
     @if (actionMessage(); as message) {

@@ -1,10 +1,19 @@
 import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ChildrenFacade } from '../children/state/children.facade';
 import { AppointmentsFacade, visitReasons } from './state/appointments.facade';
 import { AppointmentConfirmationComponent } from './appointment-confirmation.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 
 type CalendarDay = {
   readonly iso: string;
@@ -17,130 +26,152 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, AppointmentConfirmationComponent, UiMessageComponent],
+  imports: [
+    RouterLink,
+    AppointmentConfirmationComponent,
+    UiMessageComponent,
+    UiFieldComponent,
+    UiDialogComponent,
+  ],
   selector: 'ac-book-appointment-modal',
   template: `
-    <div class="backdrop" (click)="close()">
-      <div
-        class="modal"
-        role="dialog"
-        aria-modal="true"
-        [attr.aria-label]="dialogLabel()"
-        (click)="$event.stopPropagation()"
-      >
-        @if (facade.booking().step === 'confirmed' && facade.booking().confirmed) {
-          <ac-appointment-confirmation
-            [appointment]="facade.booking().confirmed!"
-            (done)="close()"
-          />
-        } @else {
-          <header class="modal-header">
-            <h2>Book Appointment</h2>
-            <button type="button" class="close-button" aria-label="Close" (click)="close()">
-              ×
-            </button>
-          </header>
+    <ac-ui-dialog
+      [heading]="facade.booking().step === 'confirmed' ? '' : 'Book Appointment'"
+      [ariaLabel]="dialogLabel()"
+      [showCloseButton]="true"
+      size="md"
+      (close)="close()"
+    >
+      @if (facade.booking().step === 'confirmed' && facade.booking().confirmed) {
+        <ac-appointment-confirmation [appointment]="facade.booking().confirmed!" (done)="close()" />
+      } @else {
+        <section class="section">
+          <p id="booking-patient-label" class="section-title">
+            Who is this visit for? <span aria-hidden="true">*</span>
+          </p>
+          <div
+            class="patient-grid"
+            role="radiogroup"
+            aria-labelledby="booking-patient-label"
+            aria-required="true"
+            data-booking-required="child"
+          >
+            @for (child of children.children(); track child.id) {
+              <button
+                type="button"
+                role="radio"
+                [attr.aria-checked]="facade.booking().childId === child.id"
+                class="patient-card"
+                [class.selected]="facade.booking().childId === child.id"
+                (click)="facade.selectChild(child.id)"
+              >
+                <span class="avatar" aria-hidden="true">{{ initials(child.firstName) }}</span>
+                <span class="patient-copy">
+                  <strong>{{ child.firstName }}</strong>
+                  <span>{{ ageLabel(child.dateOfBirth) }}</span>
+                </span>
+              </button>
+            }
+            <a class="patient-card add-new" routerLink="/children/new">
+              <span class="avatar plus" aria-hidden="true">+</span>
+              <span class="patient-copy"><strong>Add New</strong></span>
+            </a>
+          </div>
+        </section>
 
-          <section class="section">
-            <p class="section-title">Who is this visit for?</p>
-            <div class="patient-grid">
-              @for (child of children.children(); track child.id) {
+        <section class="section">
+          <p class="section-title">Specialist</p>
+          <div class="doctor-summary">
+            <strong>{{ facade.booking().doctor?.fullName }}</strong>
+            <span>{{ facade.booking().doctor?.specialty }}</span>
+          </div>
+        </section>
+
+        <section class="section">
+          <p id="booking-date-label" class="section-title">
+            Choose a date <span aria-hidden="true">*</span>
+          </p>
+          <div class="calendar">
+            <div class="calendar-header">
+              <button type="button" (click)="shiftMonth(-1)" aria-label="Previous month">‹</button>
+              <span>{{ monthLabel() }}</span>
+              <button type="button" (click)="shiftMonth(1)" aria-label="Next month">›</button>
+            </div>
+            <div class="weekday-row">
+              @for (day of weekdayLabels; track day) {
+                <span>{{ day }}</span>
+              }
+            </div>
+            <div
+              class="day-grid"
+              role="radiogroup"
+              aria-labelledby="booking-date-label"
+              aria-required="true"
+              data-booking-required="date"
+            >
+              @for (day of calendarDays(); track day.iso) {
                 <button
                   type="button"
-                  class="patient-card"
-                  [class.selected]="facade.booking().childId === child.id"
-                  (click)="facade.selectChild(child.id)"
+                  role="radio"
+                  [attr.aria-checked]="facade.booking().date === day.iso"
+                  class="day-cell"
+                  [class.muted]="!day.isCurrentMonth"
+                  [class.selected]="facade.booking().date === day.iso"
+                  [disabled]="day.isPast"
+                  (click)="facade.selectDate(day.iso)"
                 >
-                  <span class="avatar" aria-hidden="true">{{ initials(child.firstName) }}</span>
-                  <span class="patient-copy">
-                    <strong>{{ child.firstName }}</strong>
-                    <span>{{ ageLabel(child.dateOfBirth) }}</span>
-                  </span>
+                  {{ day.label }}
                 </button>
               }
-              <a class="patient-card add-new" routerLink="/children/new">
-                <span class="avatar plus" aria-hidden="true">+</span>
-                <span class="patient-copy"><strong>Add New</strong></span>
-              </a>
             </div>
-          </section>
+          </div>
+        </section>
 
+        @if (facade.booking().date) {
           <section class="section">
-            <p class="section-title">Specialist</p>
-            <div class="doctor-summary">
-              <strong>{{ facade.booking().doctor?.fullName }}</strong>
-              <span>{{ facade.booking().doctor?.specialty }}</span>
-            </div>
-          </section>
-
-          <section class="section">
-            <p class="section-title">Choose a date</p>
-            <div class="calendar">
-              <div class="calendar-header">
-                <button type="button" (click)="shiftMonth(-1)" aria-label="Previous month">
-                  ‹
+            <p id="booking-time-label" class="section-title">
+              Available slots <span aria-hidden="true">*</span>
+            </p>
+            <div
+              class="slot-row"
+              role="radiogroup"
+              aria-labelledby="booking-time-label"
+              aria-required="true"
+              data-booking-required="time"
+            >
+              @for (slot of timeSlots; track slot) {
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="facade.booking().time === slot"
+                  class="slot"
+                  [class.selected]="facade.booking().time === slot"
+                  (click)="facade.selectTime(slot)"
+                >
+                  {{ slot }}
                 </button>
-                <span>{{ monthLabel() }}</span>
-                <button type="button" (click)="shiftMonth(1)" aria-label="Next month">›</button>
-              </div>
-              <div class="weekday-row">
-                @for (day of weekdayLabels; track day) {
-                  <span>{{ day }}</span>
-                }
-              </div>
-              <div class="day-grid">
-                @for (day of calendarDays(); track day.iso) {
-                  <button
-                    type="button"
-                    class="day-cell"
-                    [class.muted]="!day.isCurrentMonth"
-                    [class.selected]="facade.booking().date === day.iso"
-                    [disabled]="day.isPast"
-                    (click)="facade.selectDate(day.iso)"
-                  >
-                    {{ day.label }}
-                  </button>
-                }
-              </div>
+              }
             </div>
           </section>
+        }
 
-          @if (facade.booking().date) {
-            <section class="section">
-              <p class="section-title">Available slots</p>
-              <div class="slot-row">
-                @for (slot of timeSlots; track slot) {
-                  <button
-                    type="button"
-                    class="slot"
-                    [class.selected]="facade.booking().time === slot"
-                    (click)="facade.selectTime(slot)"
-                  >
-                    {{ slot }}
-                  </button>
-                }
-              </div>
-            </section>
-          }
-
-          @if (facade.booking().time) {
-            <section class="section">
-              <p class="section-title">Reason for visit</p>
-              <div class="reason-row">
-                @for (reason of visitReasons; track reason) {
-                  <button
-                    type="button"
-                    class="reason-chip"
-                    [class.selected]="facade.booking().visitReason === reason"
-                    (click)="facade.selectVisitReason(reason)"
-                  >
-                    {{ reason }}
-                  </button>
-                }
-              </div>
-              <label class="notes-label" for="visit-notes">Notes (optional)</label>
+        @if (facade.booking().time) {
+          <section class="section">
+            <p class="section-title">Reason for visit</p>
+            <div class="reason-row">
+              @for (reason of visitReasons; track reason) {
+                <button
+                  type="button"
+                  class="reason-chip"
+                  [class.selected]="facade.booking().visitReason === reason"
+                  (click)="facade.selectVisitReason(reason)"
+                >
+                  {{ reason }}
+                </button>
+              }
+            </div>
+            <ac-ui-field label="Notes" [optional]="true">
               <textarea
-                id="visit-notes"
                 class="notes-input"
                 rows="3"
                 maxlength="2000"
@@ -148,76 +179,30 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
                 [value]="facade.booking().notes"
                 (input)="facade.setNotes($any($event.target).value)"
               ></textarea>
-            </section>
-          }
-
-          @if (facade.booking().error) {
-            <ac-ui-message tone="error">{{ facade.booking().error }}</ac-ui-message>
-          }
-
-          <footer class="modal-footer">
-            <button type="button" class="secondary" (click)="close()">Cancel</button>
-            <button
-              type="button"
-              class="primary"
-              [disabled]="facade.booking().step === 'submitting'"
-              (click)="facade.confirmBooking()"
-            >
-              {{ facade.booking().step === 'submitting' ? 'Booking...' : 'Confirm Booking' }}
-            </button>
-          </footer>
+            </ac-ui-field>
+          </section>
         }
-      </div>
-    </div>
+
+        @if (facade.booking().error) {
+          <ac-ui-message tone="error">{{ facade.booking().error }}</ac-ui-message>
+        }
+
+        <div dialogFooter class="modal-footer">
+          <button type="button" class="secondary" (click)="close()">Cancel</button>
+          <button
+            type="button"
+            class="primary"
+            [disabled]="facade.booking().step === 'submitting'"
+            (click)="confirmBooking()"
+          >
+            {{ facade.booking().step === 'submitting' ? 'Booking...' : 'Confirm Booking' }}
+          </button>
+        </div>
+      }
+    </ac-ui-dialog>
   `,
   styles: [
     `
-      .backdrop {
-        position: fixed;
-        inset: 0;
-        z-index: 50;
-        background: rgb(0 30 43 / 0.45);
-        display: grid;
-        place-items: center;
-        padding: 20px;
-      }
-
-      .modal {
-        width: 100%;
-        max-width: 480px;
-        max-height: 90vh;
-        overflow-y: auto;
-        border-radius: 16px;
-        background: var(--ac-color-surface);
-        padding: 24px;
-        box-shadow: 0 24px 60px rgb(0 30 43 / 0.25);
-      }
-
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 18px;
-      }
-
-      .modal-header h2 {
-        margin: 0;
-        color: var(--ac-color-text-strong);
-        font-size: var(--ac-type-card-title);
-      }
-
-      .close-button {
-        width: 32px;
-        height: 32px;
-        border: 0;
-        border-radius: 999px;
-        background: var(--ac-color-tint-blue-soft);
-        color: var(--ac-color-text-body);
-        font-size: 1.25rem;
-        line-height: 1;
-        cursor: pointer;
-      }
-
       .section {
         margin-bottom: 20px;
       }
@@ -301,7 +286,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
       }
 
       .doctor-summary span {
-        color: var(--ac-color-text-muted);
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-meta);
       }
 
@@ -482,6 +467,7 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 export class BookAppointmentModalComponent implements OnInit {
   protected readonly facade = inject(AppointmentsFacade);
   protected readonly children = inject(ChildrenFacade);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly timeSlots = timeSlots;
   protected readonly visitReasons = visitReasons;
   protected readonly weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -528,6 +514,24 @@ export class BookAppointmentModalComponent implements OnInit {
 
   protected close() {
     this.facade.closeBooking();
+  }
+
+  protected confirmBooking() {
+    this.facade.confirmBooking();
+    queueMicrotask(() => {
+      const booking = this.facade.booking();
+      const missing = !booking.childId
+        ? 'child'
+        : !booking.date
+          ? 'date'
+          : !booking.time
+            ? 'time'
+            : null;
+      if (!missing || !booking.error) return;
+      this.host.nativeElement
+        .querySelector<HTMLElement>(`[data-booking-required="${missing}"] button:not(:disabled)`)
+        ?.focus();
+    });
   }
 
   protected initials(firstName: string): string {

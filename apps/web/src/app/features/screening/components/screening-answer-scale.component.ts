@@ -29,7 +29,7 @@ export const defaultAnswerScale: readonly AnswerScaleOption[] = [
   selector: 'ac-screening-answer-scale',
   standalone: true,
   template: `
-    <div class="scale" role="radiogroup" [attr.aria-label]="ariaLabel()">
+    <div class="scale" role="radiogroup" aria-required="true" [attr.aria-label]="ariaLabel()">
       @for (option of options(); track option.value) {
         <button
           type="button"

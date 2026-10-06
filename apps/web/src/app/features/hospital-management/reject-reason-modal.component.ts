@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { UiButtonComponent } from '../../design-system/components/ui-button.component';
+import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import type { AppointmentResponse } from '@auticare/contracts';
 
 const presetReasons = [
@@ -13,97 +14,68 @@ const presetReasons = [
 @Component({
   standalone: true,
   selector: 'ac-reject-reason-modal',
-  imports: [UiButtonComponent],
+  imports: [UiButtonComponent, UiDialogComponent],
   template: `
-    <div class="backdrop" (click)="cancel.emit()">
-      <div
-        class="modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="reject-modal-title"
-        (click)="$event.stopPropagation()"
+    <ac-ui-dialog
+      heading="Reject appointment request"
+      dialogRole="alertdialog"
+      size="sm"
+      (close)="cancel.emit()"
+    >
+      <p class="summary">
+        {{ appointment().childName ?? 'Patient' }} ·
+        {{ appointment().doctorName ?? 'Specialist TBD' }} ·
+        {{ formattedDate() }}
+      </p>
+
+      <label class="field-label" for="reject-reason-select">Reason</label>
+      <select
+        id="reject-reason-select"
+        class="reason-select"
+        [value]="selectedPreset()"
+        (change)="selectedPreset.set($any($event.target).value)"
       >
-        <h2 id="reject-modal-title">Reject appointment request</h2>
-        <p class="summary">
-          {{ appointment().childName ?? 'Patient' }} ·
-          {{ appointment().doctorName ?? 'Specialist TBD' }} ·
-          {{ formattedDate() }}
-        </p>
+        @for (reason of presetReasons; track reason) {
+          <option [value]="reason">{{ reason }}</option>
+        }
+      </select>
 
-        <label class="field-label" for="reject-reason-select">Reason</label>
-        <select
-          id="reject-reason-select"
-          class="reason-select"
-          [value]="selectedPreset()"
-          (change)="selectedPreset.set($any($event.target).value)"
+      <label class="field-label" for="reject-reason-notes">
+        Note to patient {{ selectedPreset() === 'Other' ? '(required)' : '(optional)' }}
+      </label>
+      <textarea
+        id="reject-reason-notes"
+        class="reason-notes"
+        rows="3"
+        maxlength="500"
+        placeholder="Short, patient-facing explanation"
+        [value]="notes()"
+        (input)="notes.set($any($event.target).value)"
+      ></textarea>
+
+      <div dialogFooter class="modal-footer">
+        <ac-ui-button variant="secondary" (click)="cancel.emit()">Cancel</ac-ui-button>
+        <ac-ui-button
+          variant="destructive"
+          [disabled]="!canConfirm()"
+          (click)="confirm.emit(finalReason())"
         >
-          @for (reason of presetReasons; track reason) {
-            <option [value]="reason">{{ reason }}</option>
-          }
-        </select>
-
-        <label class="field-label" for="reject-reason-notes">
-          Note to patient {{ selectedPreset() === 'Other' ? '(required)' : '(optional)' }}
-        </label>
-        <textarea
-          id="reject-reason-notes"
-          class="reason-notes"
-          rows="3"
-          maxlength="500"
-          placeholder="Short, patient-facing explanation"
-          [value]="notes()"
-          (input)="notes.set($any($event.target).value)"
-        ></textarea>
-
-        <footer class="modal-footer">
-          <ac-ui-button variant="secondary" (click)="cancel.emit()">Cancel</ac-ui-button>
-          <ac-ui-button
-            variant="destructive"
-            [disabled]="!canConfirm()"
-            (click)="confirm.emit(finalReason())"
-          >
-            Confirm rejection
-          </ac-ui-button>
-        </footer>
+          Confirm rejection
+        </ac-ui-button>
       </div>
-    </div>
+    </ac-ui-dialog>
   `,
   styles: [
     `
-      .backdrop {
-        position: fixed;
-        inset: 0;
-        z-index: 60;
-        background: rgb(0 30 43 / 0.45);
-        display: grid;
-        place-items: center;
-        padding: 20px;
-      }
-
-      .modal {
-        width: 100%;
-        max-width: 400px;
-        border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface);
-        box-shadow: var(--ac-shadow-sm);
-        padding: 20px;
-      }
-
-      h2 {
-        margin: 0 0 6px;
-        font-size: var(--ac-type-card-title);
-        color: var(--ac-color-text-strong);
-      }
-
       .summary {
-        margin: 0 0 18px;
+        margin: 0 0 var(--ac-space-4);
         color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
       }
 
       .field-label {
         display: block;
-        margin: 0 0 6px;
+        margin: 0 0 var(--ac-space-2);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
         color: var(--ac-color-text-muted);
@@ -118,7 +90,8 @@ const presetReasons = [
         font-family: inherit;
         font-size: var(--ac-type-meta);
         color: var(--ac-color-text);
-        margin-bottom: 16px;
+        margin-bottom: var(--ac-space-4);
+        background: var(--ac-color-surface);
       }
 
       .reason-notes {
@@ -128,8 +101,7 @@ const presetReasons = [
       .modal-footer {
         display: flex;
         justify-content: flex-end;
-        gap: 8px;
-        margin-top: 4px;
+        gap: var(--ac-space-2);
       }
     `,
   ],

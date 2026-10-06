@@ -6,10 +6,11 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
 import { AppointmentsFacade } from './state/appointments.facade';
 import { BookAppointmentModalComponent } from './book-appointment-modal.component';
 import { specialtyCategories } from './appointments.types';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent, BookAppointmentModalComponent],
+  imports: [RouterLink, UiEmptyStateComponent, BookAppointmentModalComponent, UiSpinnerComponent],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
       <a routerLink="/appointments">Hospital Appointments</a>
@@ -35,7 +36,7 @@ import { specialtyCategories } from './appointments.types';
     </div>
 
     @if (facade.doctorsLoading()) {
-      <p class="status" aria-live="polite">Loading specialists...</p>
+      <ac-ui-spinner label="Loading specialists…" />
     } @else if (facade.filteredDoctors().length === 0) {
       <ac-ui-empty-state
         title="No specialists in this category"
@@ -187,7 +188,7 @@ import { specialtyCategories } from './appointments.types';
 
       .rating {
         margin: 0;
-        color: var(--ac-color-warning);
+        color: var(--ac-color-olive-dark);
         font-weight: var(--ac-font-weight-semibold);
       }
 

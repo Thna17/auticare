@@ -8,6 +8,7 @@ import { RejectReasonModalComponent } from './reject-reason-modal.component';
 import { AppointmentDetailDrawerComponent } from './appointment-detail-drawer.component';
 import { statusPresentation, statusTone } from '../appointments/appointments.types';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 type StatusFilter = 'ALL' | AppointmentStatus;
 
@@ -28,6 +29,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
     RejectReasonModalComponent,
     AppointmentDetailDrawerComponent,
     UiMessageComponent,
+    UiSpinnerComponent,
   ],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -85,7 +87,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
       </div>
 
       @if (loading()) {
-        <p class="status" aria-live="polite">Loading requests...</p>
+        <ac-ui-spinner label="Loading appointment requests…" />
       } @else if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       } @else if (visibleAppointments().length === 0) {

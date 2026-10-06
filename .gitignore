@@ -11,3 +11,5 @@ output
 apps.zip
 apps/api/uploads/
 dev-server.log
+test-results/
+playwright-report/

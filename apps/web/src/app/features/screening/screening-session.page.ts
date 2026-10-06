@@ -8,14 +8,21 @@ import type {
 import { ScreeningApi } from './data-access/screening.api';
 import { ScreeningAnswerScaleComponent } from './components/screening-answer-scale.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 @Component({
   standalone: true,
-  imports: [ScreeningAnswerScaleComponent, UiMessageComponent],
+  imports: [
+    ScreeningAnswerScaleComponent,
+    UiMessageComponent,
+    UiDialogComponent,
+    UiSpinnerComponent,
+  ],
   template: `
     <section class="session">
       @if (loading()) {
-        <p class="status">Loading…</p>
+        <ac-ui-spinner label="Loading screening…" />
       } @else if (fatalError()) {
         <div class="fatal">
           <ac-ui-message tone="error">{{ fatalError() }}</ac-ui-message>
@@ -32,6 +39,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
           <div
             class="track"
             role="progressbar"
+            aria-label="Screening progress"
             [attr.aria-valuenow]="currentIndex() + 1"
             aria-valuemin="1"
             [attr.aria-valuemax]="total()"
@@ -44,7 +52,10 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
           @if (question.category) {
             <p class="category">{{ question.category }}</p>
           }
-          <h1 class="question">{{ question.questionText }}</h1>
+          <h1 class="question">
+            {{ question.questionText }} <span class="required-indicator" aria-hidden="true">*</span>
+            <span class="visually-hidden">(required)</span>
+          </h1>
 
           <ac-screening-answer-scale
             [value]="currentValue()"
@@ -74,22 +85,20 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
       }
 
       @if (showExitModal()) {
-        <div class="overlay" (click)="cancelExit()">
-          <div
-            class="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="exit-title"
-            (click)="$event.stopPropagation()"
-          >
-            <h2 id="exit-title">Save and exit?</h2>
-            <p>Your progress is saved automatically. You can continue this screening later.</p>
-            <div class="modal-actions">
-              <button type="button" class="btn-back" (click)="cancelExit()">Keep going</button>
-              <button type="button" class="btn-next" (click)="confirmExit()">Save and exit</button>
-            </div>
+        <ac-ui-dialog
+          heading="Save and exit?"
+          description="Your progress is saved automatically. You can continue this screening later."
+          dialogRole="alertdialog"
+          size="sm"
+          (close)="cancelExit()"
+        >
+          <div dialogFooter class="modal-actions">
+            <button type="button" class="btn-back" (click)="cancelExit()">Keep going</button>
+            <button type="button" class="btn-next" acAutofocus (click)="confirmExit()">
+              Save and exit
+            </button>
           </div>
-        </div>
+        </ac-ui-dialog>
       }
     </section>
   `,
@@ -122,6 +131,22 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
         display: flex;
         flex-direction: column;
         gap: 24px;
+      }
+
+      .required-indicator {
+        color: var(--scr-error);
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
 
       .status {

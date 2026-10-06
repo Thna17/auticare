@@ -12,6 +12,7 @@ import { ScreeningHistoryFilterComponent } from './components/screening-history-
 import type { RiskFilter } from './components/screening-history-filter.component';
 import { ScreeningPaginationComponent } from './components/screening-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 const MAX_ANSWER_VALUE = 4;
 const PAGE_SIZE = 5;
@@ -38,6 +39,7 @@ const riskLabels: Record<RiskLevel, string> = {
     ScreeningHistoryFilterComponent,
     ScreeningPaginationComponent,
     UiMessageComponent,
+    UiSpinnerComponent,
   ],
   template: `
     <section class="history">
@@ -47,7 +49,7 @@ const riskLabels: Record<RiskLevel, string> = {
       </header>
 
       @if (loading()) {
-        <p class="status">Loading…</p>
+        <ac-ui-spinner label="Loading screening history…" />
       } @else if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       } @else {
@@ -74,7 +76,9 @@ const riskLabels: Record<RiskLevel, string> = {
         </div>
 
         @if (!filteredSessions().length) {
-          <ac-ui-empty-state title="No screenings to show" [message]="emptyMessage()" />
+          <ac-ui-empty-state title="No screenings to show" [message]="emptyMessage()">
+            <a class="primary-link" routerLink="/screening/new">Start a screening</a>
+          </ac-ui-empty-state>
         } @else {
           <ul class="list">
             @for (session of pagedSessions(); track session.id) {

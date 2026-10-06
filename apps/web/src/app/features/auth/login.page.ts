@@ -4,10 +4,18 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    UiMessageComponent,
+    UiFieldComponent,
+    AccessibleFormDirective,
+  ],
   template: `
     <main class="login-page">
       <section class="login-card" aria-labelledby="login-title">
@@ -20,75 +28,86 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
           <p>Let's continue supporting your child.</p>
         </header>
 
-        <form class="login-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-          <label class="field">
-            <span>Email Address</span>
+        <form
+          class="login-form"
+          [formGroup]="form"
+          (ngSubmit)="submit()"
+          acAccessibleForm
+          novalidate
+        >
+          <ac-ui-field
+            label="Email address"
+            [required]="true"
+            [error]="
+              form.controls.email.touched && form.controls.email.invalid
+                ? 'Enter a valid email address.'
+                : null
+            "
+          >
             <input
               type="email"
               formControlName="email"
               autocomplete="email"
               placeholder="leo.parent@example.com"
-              [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
             />
-          </label>
-          @if (form.controls.email.touched && form.controls.email.invalid) {
-            <p class="field-error">Enter a valid email address.</p>
-          }
+          </ac-ui-field>
 
-          <div class="password-label-row">
-            <label for="login-password">Password</label>
-            <a routerLink="/forgot-password">Forgot password?</a>
-          </div>
-          <div class="password-field">
-            <input
-              id="login-password"
-              [type]="showPassword() ? 'text' : 'password'"
-              formControlName="password"
-              autocomplete="current-password"
-              placeholder="••••••••"
-              [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
-            />
-            <button
-              type="button"
-              class="visibility-button"
-              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
-              (click)="togglePasswordVisibility()"
-            >
-              @if (showPassword()) {
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M3.5 3.5 20.5 20.5M10.6 10.6a2 2 0 0 0 2.8 2.8M8.7 5.3A9.8 9.8 0 0 1 12 4.7c5.2 0 8.6 4.4 9.8 6.3.3.6.3 1.3 0 1.9a17 17 0 0 1-2.7 3.2M6.4 6.7A17 17 0 0 0 2.2 11c-.3.6-.3 1.3 0 1.9 1.2 1.9 4.6 6.3 9.8 6.3 1.6 0 3-.4 4.3-1"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                </svg>
-              } @else {
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M2.2 11c-.3.6-.3 1.3 0 1.9 1.2 1.9 4.6 6.3 9.8 6.3s8.6-4.4 9.8-6.3c.3-.6.3-1.3 0-1.9-1.2-1.9-4.6-6.3-9.8-6.3S3.4 9.1 2.2 11Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="3"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  />
-                </svg>
-              }
-            </button>
-          </div>
-          @if (form.controls.password.touched && form.controls.password.invalid) {
-            <p class="field-error">Enter your password.</p>
-          }
+          <ac-ui-field
+            label="Password"
+            [required]="true"
+            [error]="
+              form.controls.password.touched && form.controls.password.invalid
+                ? 'Enter your password.'
+                : null
+            "
+          >
+            <a fieldAction routerLink="/forgot-password">Forgot password?</a>
+            <div class="password-field">
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="current-password"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                class="visibility-button"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                (click)="togglePasswordVisibility()"
+              >
+                @if (showPassword()) {
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                      d="M3.5 3.5 20.5 20.5M10.6 10.6a2 2 0 0 0 2.8 2.8M8.7 5.3A9.8 9.8 0 0 1 12 4.7c5.2 0 8.6 4.4 9.8 6.3.3.6.3 1.3 0 1.9a17 17 0 0 1-2.7 3.2M6.4 6.7A17 17 0 0 0 2.2 11c-.3.6-.3 1.3 0 1.9 1.2 1.9 4.6 6.3 9.8 6.3 1.6 0 3-.4 4.3-1"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                    />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                      d="M2.2 11c-.3.6-.3 1.3 0 1.9 1.2 1.9 4.6 6.3 9.8 6.3s8.6-4.4 9.8-6.3c.3-.6.3-1.3 0-1.9-1.2-1.9-4.6-6.3-9.8-6.3S3.4 9.1 2.2 11c-.3.6-.3 1.3 0 1.9Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                  </svg>
+                }
+              </button>
+            </div>
+          </ac-ui-field>
 
           @if (error()) {
             <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
@@ -275,6 +294,16 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
       }
 
       .password-label-row a:hover {
+        text-decoration: underline;
+      }
+
+      [fieldAction] {
+        color: var(--ac-color-action-deep);
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+      }
+
+      [fieldAction]:hover {
         text-decoration: underline;
       }
 
@@ -615,6 +644,7 @@ export class LoginPage {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.error.set('Fix the highlighted fields before logging in.');
       return;
     }
 

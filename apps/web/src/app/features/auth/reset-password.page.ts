@@ -4,6 +4,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
 const matchingPasswords = (control: AbstractControl): ValidationErrors | null => {
   const password = control.get('password')?.value;
@@ -16,7 +18,13 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    UiMessageComponent,
+    UiFieldComponent,
+    AccessibleFormDirective,
+  ],
   template: `
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="reset-title">
@@ -45,55 +53,63 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
           </div>
           <a class="primary-link" routerLink="/login">Continue to log in</a>
         } @else {
-          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <form [formGroup]="form" (ngSubmit)="submit()" acAccessibleForm novalidate>
             @if (!tokenFromUrl()) {
-              <label class="field">
-                <span>Reset Token</span>
+              <ac-ui-field
+                label="Reset token"
+                [required]="true"
+                [error]="
+                  form.controls.token.touched && form.controls.token.invalid
+                    ? 'Enter the reset token from your email.'
+                    : null
+                "
+              >
                 <input
                   type="text"
                   formControlName="token"
                   autocomplete="one-time-code"
                   placeholder="Paste your reset token"
-                  [attr.aria-invalid]="form.controls.token.touched && form.controls.token.invalid"
                 />
-              </label>
-              @if (form.controls.token.touched && form.controls.token.invalid) {
-                <p class="field-error">Enter the reset token from your email.</p>
-              }
+              </ac-ui-field>
             }
 
-            <label class="field">
-              <span>New Password</span>
+            <ac-ui-field
+              label="New password"
+              hint="Use at least 12 characters."
+              [required]="true"
+              [error]="
+                form.controls.password.touched && form.controls.password.invalid
+                  ? 'Use at least 12 characters.'
+                  : null
+              "
+            >
               <input
                 [type]="showPassword() ? 'text' : 'password'"
                 formControlName="password"
                 autocomplete="new-password"
                 placeholder="••••••••••••"
-                [attr.aria-invalid]="
-                  form.controls.password.touched && form.controls.password.invalid
-                "
               />
-            </label>
-            @if (form.controls.password.touched && form.controls.password.invalid) {
-              <p class="field-error">Use at least 12 characters.</p>
-            }
+            </ac-ui-field>
 
-            <label class="field">
-              <span>Confirm Password</span>
+            <ac-ui-field
+              label="Confirm password"
+              [required]="true"
+              [error]="
+                form.controls.confirmPassword.touched &&
+                (form.controls.confirmPassword.invalid || form.hasError('passwordMismatch'))
+                  ? form.hasError('passwordMismatch')
+                    ? 'Passwords must match.'
+                    : 'Confirm your password.'
+                  : null
+              "
+            >
               <input
                 [type]="showPassword() ? 'text' : 'password'"
                 formControlName="confirmPassword"
                 autocomplete="new-password"
                 placeholder="••••••••••••"
-                [attr.aria-invalid]="
-                  form.controls.confirmPassword.touched &&
-                  (form.controls.confirmPassword.invalid || form.hasError('passwordMismatch'))
-                "
               />
-            </label>
-            @if (form.controls.confirmPassword.touched && form.hasError('passwordMismatch')) {
-              <p class="field-error">Passwords must match.</p>
-            }
+            </ac-ui-field>
 
             <button class="toggle-button" type="button" (click)="togglePasswordVisibility()">
               {{ showPassword() ? 'Hide password' : 'Show password' }}
@@ -382,6 +398,7 @@ export class ResetPasswordPage {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.error.set('Fix the highlighted fields before resetting your password.');
       return;
     }
 

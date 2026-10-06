@@ -8,6 +8,7 @@ import { SchoolsApi } from './data-access/schools.api';
 import { EnrollmentRequestsApi } from './data-access/enrollment-requests.api';
 import { SchoolProfileViewComponent } from './components/school-profile-view.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 /**
  * Parent-facing, fully READ-ONLY school detail page (/schools/:id). It renders
@@ -17,12 +18,18 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
  */
 @Component({
   standalone: true,
-  imports: [RouterLink, UiCardComponent, SchoolProfileViewComponent, UiMessageComponent],
+  imports: [
+    RouterLink,
+    UiCardComponent,
+    SchoolProfileViewComponent,
+    UiMessageComponent,
+    UiSpinnerComponent,
+  ],
   template: `
     <a class="back" routerLink="/schools">← Back to schools</a>
 
     @if (loading()) {
-      <ac-ui-card><p>Loading school…</p></ac-ui-card>
+      <ac-ui-card><ac-ui-spinner label="Loading school…" /></ac-ui-card>
     } @else if (error(); as loadError) {
       <ac-ui-card
         ><ac-ui-message tone="error">{{ loadError }}</ac-ui-message></ac-ui-card

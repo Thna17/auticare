@@ -8,10 +8,17 @@ import { ScreeningApi } from './data-access/screening.api';
 import { ChildSelectCardComponent } from './components/child-select-card.component';
 import { ScreeningInfoBannerComponent } from './components/screening-info-banner.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, ChildSelectCardComponent, ScreeningInfoBannerComponent, UiMessageComponent],
+  imports: [
+    RouterLink,
+    ChildSelectCardComponent,
+    ScreeningInfoBannerComponent,
+    UiMessageComponent,
+    UiSpinnerComponent,
+  ],
   template: `
     <section class="intro">
       <header class="head">
@@ -27,7 +34,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
       </ac-screening-info-banner>
 
       @if (loading()) {
-        <p class="status">Loading…</p>
+        <ac-ui-spinner label="Loading screening…" />
       } @else if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       } @else {

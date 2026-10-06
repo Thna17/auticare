@@ -2,7 +2,6 @@ import type { OnInit } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   computed,
   effect,
   inject,
@@ -12,12 +11,19 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { RouterLink } from '@angular/router';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 import type { ParentResponse, UpdateMyProfileRequest } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, UiFieldComponent, UiMessageComponent],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    UiFieldComponent,
+    UiMessageComponent,
+    AccessibleFormDirective,
+  ],
   template: `
     <section class="profile-hero">
       <div class="identity">
@@ -55,16 +61,18 @@ import { AuthService } from '../../core/auth/auth.service';
           </p>
         </header>
 
-        <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+        <form [formGroup]="form" (ngSubmit)="save()" acAccessibleForm novalidate>
           <div class="field-grid">
             <ac-ui-field
               label="First name"
+              [required]="true"
               [error]="showError('firstName') ? 'First name is required.' : null"
             >
               <input formControlName="firstName" autocomplete="given-name" />
             </ac-ui-field>
             <ac-ui-field
               label="Last name"
+              [required]="true"
               [error]="showError('lastName') ? 'Last name is required.' : null"
             >
               <input formControlName="lastName" autocomplete="family-name" />
@@ -238,7 +246,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
       .summary-grid span,
       .support-row span {
-        color: var(--ac-color-grey-c);
+        color: var(--ac-color-text-body);
         font-size: var(--ac-type-label);
         line-height: 1.3;
       }
@@ -476,8 +484,6 @@ export class SettingsPage implements OnInit {
     socialMediaAccount: this.fb.control('', [Validators.maxLength(160)]),
   });
 
-  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-
   constructor() {
     // Keep the form in step with whoever is signed in: the parent signal is
     // populated asynchronously by loadCurrentUser, and is refreshed again after a
@@ -521,14 +527,7 @@ export class SettingsPage implements OnInit {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      // Move focus to the first problem. Without this a keyboard or screen-reader
-      // user is left wherever they were — usually on the submit button — with no
-      // indication of which field stopped the save.
-      queueMicrotask(() => {
-        const firstInvalid =
-          this.host.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]');
-        firstInvalid?.focus();
-      });
+      this.saveError.set('Fix the highlighted fields before saving your profile.');
       return;
     }
 

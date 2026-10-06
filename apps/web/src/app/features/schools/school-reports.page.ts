@@ -12,6 +12,9 @@ import type { ActivityReportListItem } from '@auticare/contracts';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { attachmentUrl } from '../../core/config/attachment-url';
+import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 interface MetricRow {
   label: string;
@@ -31,7 +34,14 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 
 @Component({
   standalone: true,
-  imports: [RouterLink, DatePipe, SchoolTopbarComponent],
+  imports: [
+    RouterLink,
+    DatePipe,
+    SchoolTopbarComponent,
+    UiEmptyStateComponent,
+    UiMessageComponent,
+    UiSpinnerComponent,
+  ],
   template: `
     <ac-school-topbar />
 
@@ -84,21 +94,23 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 
     <!-- States -->
     @if (loading()) {
-      <div class="state-card">Loading reports…</div>
+      <ac-ui-spinner label="Loading reports…" />
     } @else if (error(); as loadError) {
-      <div class="state-card state-card--error">
+      <ac-ui-message tone="error">
         {{ loadError }}
         <button type="button" class="retry-btn" (click)="loadReports()">Retry</button>
-      </div>
+      </ac-ui-message>
     } @else if (filteredReports().length === 0) {
-      <div class="state-card">
-        @if (reports().length === 0) {
-          No reports yet.
-          <a routerLink="/schools/reports/new" class="inline-link">Create the first one</a>.
-        } @else {
-          No reports match the current filters.
-        }
-      </div>
+      <ac-ui-empty-state
+        title="No reports found"
+        [message]="
+          reports().length === 0
+            ? 'No activity reports have been created yet.'
+            : 'No reports match the current filters.'
+        "
+      >
+        <a routerLink="/schools/reports/new" class="inline-link">Create school report</a>
+      </ac-ui-empty-state>
     } @else {
       <!-- Report list -->
       <div class="report-list">

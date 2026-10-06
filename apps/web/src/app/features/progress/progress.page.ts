@@ -6,6 +6,9 @@ import type { ParentActivityReportResponse } from '@auticare/contracts';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ParentActivityApi } from './data-access/parent-activity.api';
 import { attachmentUrl } from '../../core/config/attachment-url';
+import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 interface EngagementMetric {
   label: string;
@@ -35,7 +38,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, UiEmptyStateComponent, UiMessageComponent, UiSpinnerComponent],
   selector: 'ac-parent-report-detail-page',
   template: `
     <div class="page-layout">
@@ -68,23 +71,19 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
           </div>
         </header>
         @if (loading()) {
-          <div class="state-block">
-            <span class="spinner"></span>
-            <p>Loading report…</p>
-          </div>
+          <ac-ui-spinner label="Loading report…" />
         } @else if (error()) {
-          <div class="state-block error-state">
-            <p>{{ error() }}</p>
+          <ac-ui-message tone="error">
+            {{ error() }}
             <button type="button" class="btn-secondary" (click)="loadReports()">Try again</button>
-          </div>
+          </ac-ui-message>
         } @else if (!report()) {
-          <div class="state-block">
-            <span class="state-icon">▤</span>
-            <p>
-              No submitted activity reports yet.<br />Reports appear here once your child's school
-              shares them.
-            </p>
-          </div>
+          <ac-ui-empty-state
+            title="No activity reports yet"
+            message="Reports will appear here once your child's school shares them."
+          >
+            <a class="btn-secondary" routerLink="/dashboard">Return to dashboard</a>
+          </ac-ui-empty-state>
         } @else if (report(); as r) {
           <div class="report-container">
             <header class="report-header">

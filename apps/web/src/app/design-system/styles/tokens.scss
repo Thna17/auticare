@@ -12,6 +12,7 @@
   --ac-color-warning: #d9a441;
   --ac-color-attention: #c96e62;
   --ac-color-border: #dde5e4;
+  --ac-color-overlay: rgb(0 30 43 / 0.45);
 
   /* ──────────────────────────────────────────────────────────────────────
    * Palette extracted from the feature styles (see output/audit/AUDIT.md).
@@ -172,13 +173,18 @@
   --ac-space-2: 0.5rem;
   --ac-space-3: 0.75rem;
   --ac-space-4: 1rem;
+  --ac-space-5: 1.25rem;
   --ac-space-6: 1.5rem;
   --ac-space-8: 2rem;
   --ac-radius-sm: 0.25rem;
   --ac-radius-md: 0.5rem;
+  --ac-radius-lg: 0.75rem;
   --ac-shadow-sm: 0 1px 2px rgb(38 50 56 / 0.08);
+  --ac-shadow-md: 0 18px 48px rgb(0 30 43 / 0.2);
+  --ac-shadow-lg: 0 24px 64px rgb(0 30 43 / 0.28);
   --ac-border-subtle: 1px solid var(--ac-color-border);
   --ac-motion-fast: 120ms ease;
+  --ac-motion-dialog: 180ms cubic-bezier(0.16, 1, 0.3, 1);
   --ac-breakpoint-md: 48rem;
   --ac-z-header: 10;
 }

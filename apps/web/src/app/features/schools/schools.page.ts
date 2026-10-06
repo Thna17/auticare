@@ -9,6 +9,9 @@ import { SchoolsApi } from './data-access/schools.api';
 import { EnrollmentRequestsApi } from './data-access/enrollment-requests.api';
 import type { ChildResponse } from '@auticare/contracts';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 
 interface SchoolViewModel extends SchoolResponse {
   rating: number | null;
@@ -27,7 +30,13 @@ const SPECIALIZATION_OPTIONS = [
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiMessageComponent],
+  imports: [
+    RouterLink,
+    UiMessageComponent,
+    UiDialogComponent,
+    UiSpinnerComponent,
+    UiEmptyStateComponent,
+  ],
   selector: 'ac-parent-schools-page',
   template: `
     <div class="page-layout">
@@ -150,15 +159,18 @@ const SPECIALIZATION_OPTIONS = [
           <!-- Schools List -->
           <div class="schools-list">
             @if (loading()) {
-              <div class="loading-state">
-                <p>Loading schools...</p>
-              </div>
+              <ac-ui-spinner label="Loading schools…" />
             } @else if (error()) {
               <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
             } @else if (!schools().length) {
-              <div class="empty-state">
-                <p>No schools are available yet.</p>
-              </div>
+              <ac-ui-empty-state
+                title="No schools found"
+                message="Try adjusting your search query or location filters to find matching schools."
+              >
+                <button type="button" class="btn-secondary" (click)="clearFilters()">
+                  Clear filters
+                </button>
+              </ac-ui-empty-state>
             } @else {
               <div class="list-header">
                 <span class="results-count"
@@ -270,83 +282,77 @@ const SPECIALIZATION_OPTIONS = [
 
           <!-- Enrollment request dialog -->
           @if (requestDialogSchool(); as dialogSchool) {
-            <div class="dialog-backdrop" (click)="closeRequestDialog()">
-              <div
-                class="dialog"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="request-dialog-title"
-                (click)="$event.stopPropagation()"
-              >
-                <h3 id="request-dialog-title">Request Enrollment</h3>
-                <p class="dialog-school">{{ dialogSchool.name }} — {{ dialogSchool.city }}</p>
+            <ac-ui-dialog
+              heading="Request Enrollment"
+              [description]="dialogSchool.name + ' — ' + dialogSchool.city"
+              size="md"
+              (close)="closeRequestDialog()"
+            >
+              @if (children().length === 0) {
+                <p class="dialog-hint">
+                  Add a child to your family profile first — then you can request enrollment here.
+                </p>
+                <div dialogFooter class="dialog-actions">
+                  <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
+                    Close
+                  </button>
+                </div>
+              } @else if (requestSubmitted(); as done) {
+                <div class="success-box" role="status">
+                  <strong>Request sent.</strong>
+                  {{ done.childName }}'s enrollment request was delivered — {{ done.schoolName }}
+                  will review it and respond on your notifications.
+                </div>
+                <div dialogFooter class="dialog-actions">
+                  <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
+                    Done
+                  </button>
+                </div>
+              } @else {
+                <label class="dialog-field">
+                  <span class="dialog-label">Child</span>
+                  <select
+                    class="dialog-input"
+                    [value]="selectedChildId()"
+                    (change)="selectedChildId.set($any($event.target).value)"
+                  >
+                    @for (child of children(); track child.id) {
+                      <option [value]="child.id">{{ child.firstName }}</option>
+                    }
+                  </select>
+                </label>
 
-                @if (children().length === 0) {
-                  <p class="dialog-hint">
-                    Add a child to your family profile first — then you can request enrollment here.
-                  </p>
-                  <div class="dialog-actions">
-                    <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
-                      Close
-                    </button>
-                  </div>
-                } @else if (requestSubmitted(); as done) {
-                  <div class="success-box" role="status">
-                    <strong>Request sent.</strong>
-                    {{ done.childName }}'s enrollment request was delivered — {{ done.schoolName }}
-                    will review it and respond on your notifications.
-                  </div>
-                  <div class="dialog-actions">
-                    <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
-                      Done
-                    </button>
-                  </div>
-                } @else {
-                  <label class="dialog-field">
-                    <span class="dialog-label">Child</span>
-                    <select
-                      class="dialog-input"
-                      [value]="selectedChildId()"
-                      (change)="selectedChildId.set($any($event.target).value)"
-                    >
-                      @for (child of children(); track child.id) {
-                        <option [value]="child.id">{{ child.firstName }}</option>
-                      }
-                    </select>
-                  </label>
+                <label class="dialog-field">
+                  <span class="dialog-label">Message to the school (optional)</span>
+                  <textarea
+                    class="dialog-input"
+                    rows="3"
+                    maxlength="2000"
+                    placeholder="Share anything that helps the school — your child's needs, goals, or questions."
+                    [value]="requestMessage()"
+                    (input)="requestMessage.set($any($event.target).value)"
+                  ></textarea>
+                </label>
 
-                  <label class="dialog-field">
-                    <span class="dialog-label">Message to the school (optional)</span>
-                    <textarea
-                      class="dialog-input"
-                      rows="3"
-                      maxlength="2000"
-                      placeholder="Share anything that helps the school — your child's needs, goals, or questions."
-                      [value]="requestMessage()"
-                      (input)="requestMessage.set($any($event.target).value)"
-                    ></textarea>
-                  </label>
-
-                  @if (requestError(); as dialogErr) {
-                    <ac-ui-message tone="error">{{ dialogErr }}</ac-ui-message>
-                  }
-
-                  <div class="dialog-actions">
-                    <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      class="apply-filters-btn dialog-submit"
-                      (click)="submitRequest()"
-                      [disabled]="requestSubmitting() || !selectedChildId()"
-                    >
-                      {{ requestSubmitting() ? 'Sending…' : 'Send request' }}
-                    </button>
-                  </div>
+                @if (requestError(); as dialogErr) {
+                  <ac-ui-message tone="error">{{ dialogErr }}</ac-ui-message>
                 }
-              </div>
-            </div>
+
+                <div dialogFooter class="dialog-actions">
+                  <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="apply-filters-btn dialog-submit"
+                    (click)="submitRequest()"
+                    [disabled]="requestSubmitting() || !selectedChildId()"
+                  >
+                    {{ requestSubmitting() ? 'Sending…' : 'Send request' }}
+                  </button>
+                </div>
+              }
+            </ac-ui-dialog>
           }
         </div>
       </main>
