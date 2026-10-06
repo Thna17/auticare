@@ -89,14 +89,22 @@ interface EnrollmentViewModel {
           <span>⚙</span>
           <span>Filters</span>
         </button>
-        <select class="filter-select" (change)="onStatusFilterChange($event)">
+        <select
+          class="filter-select"
+          aria-label="Filter students by enrollment status"
+          (change)="onStatusFilterChange($event)"
+        >
           <option value="ALL">Enrollment: All Status</option>
           <option value="ACTIVE">Active</option>
           <option value="GRADUATED">Graduated</option>
           <option value="PENDING">Pending</option>
           <option value="REJECTED">Rejected</option>
         </select>
-        <select class="filter-select" (change)="onSpecialistFilterChange($event)">
+        <select
+          class="filter-select"
+          aria-label="Filter students by lead specialist"
+          (change)="onSpecialistFilterChange($event)"
+        >
           <option value="">Lead Specialist: All</option>
           @for (spec of specialists(); track spec.id) {
             <option [value]="spec.id">{{ spec.firstName }} {{ spec.lastName }}</option>

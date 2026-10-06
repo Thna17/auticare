@@ -38,6 +38,7 @@ const SPECIALIZATION_OPTIONS = [
           <div class="search-box">
             <span class="search-icon">🔍</span>
             <input
+              aria-label="Search schools by name, city or specialization"
               type="text"
               placeholder="Search for school names, cities, or specializations..."
               class="search-input"
@@ -95,6 +96,7 @@ const SPECIALIZATION_OPTIONS = [
             <div class="filter-group">
               <label class="filter-label">Province/Region</label>
               <select
+                aria-label="Filter schools by province"
                 class="filter-select"
                 [value]="province()"
                 (change)="province.set($any($event.target).value); applyFilters()"
@@ -109,6 +111,7 @@ const SPECIALIZATION_OPTIONS = [
             <div class="filter-group">
               <label class="filter-label">Availability</label>
               <select
+                aria-label="Filter schools by availability"
                 class="filter-select"
                 [value]="availability()"
                 (change)="availability.set($any($event.target).value); applyFilters()"
@@ -163,7 +166,7 @@ const SPECIALIZATION_OPTIONS = [
                 >
                 <div class="sort-dropdown">
                   <label>Sort by:</label>
-                  <select>
+                  <select aria-label="Sort schools">
                     <option>Highest Rated</option>
                     <option>Nearest</option>
                     <option>Most Reviews</option>

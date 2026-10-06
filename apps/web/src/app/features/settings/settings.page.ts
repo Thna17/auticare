@@ -2,6 +2,7 @@ import type { OnInit } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
   effect,
   inject,
@@ -475,6 +476,8 @@ export class SettingsPage implements OnInit {
     socialMediaAccount: this.fb.control('', [Validators.maxLength(160)]),
   });
 
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
   constructor() {
     // Keep the form in step with whoever is signed in: the parent signal is
     // populated asynchronously by loadCurrentUser, and is refreshed again after a
@@ -518,6 +521,14 @@ export class SettingsPage implements OnInit {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      // Move focus to the first problem. Without this a keyboard or screen-reader
+      // user is left wherever they were — usually on the submit button — with no
+      // indication of which field stopped the save.
+      queueMicrotask(() => {
+        const firstInvalid =
+          this.host.nativeElement.querySelector<HTMLElement>('[aria-invalid="true"]');
+        firstInvalid?.focus();
+      });
       return;
     }
 
