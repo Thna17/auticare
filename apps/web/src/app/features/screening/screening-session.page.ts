@@ -7,17 +7,18 @@ import type {
 } from '@auticare/contracts';
 import { ScreeningApi } from './data-access/screening.api';
 import { ScreeningAnswerScaleComponent } from './components/screening-answer-scale.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ScreeningAnswerScaleComponent],
+  imports: [ScreeningAnswerScaleComponent, UiMessageComponent],
   template: `
     <section class="session">
       @if (loading()) {
         <p class="status">Loading…</p>
       } @else if (fatalError()) {
         <div class="fatal">
-          <p class="status error" role="alert">{{ fatalError() }}</p>
+          <ac-ui-message tone="error">{{ fatalError() }}</ac-ui-message>
           <button type="button" class="link" (click)="goToScreeningHome()">
             Back to Screening
           </button>
@@ -53,7 +54,7 @@ import { ScreeningAnswerScaleComponent } from './components/screening-answer-sca
           />
 
           @if (saveError()) {
-            <p class="save-error" role="alert">{{ saveError() }}</p>
+            <ac-ui-message tone="error">{{ saveError() }}</ac-ui-message>
           }
         </article>
 

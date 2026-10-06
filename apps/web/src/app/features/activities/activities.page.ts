@@ -7,6 +7,7 @@ import { UiCardComponent } from '../../design-system/components/ui-card.componen
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ActivitiesApi } from './data-access/activities.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 interface ChildOption {
   readonly id: string;
@@ -29,7 +30,7 @@ const monthsToLabel = (months: number): string => {
 @Component({
   standalone: true,
   selector: 'ac-activities-page',
-  imports: [FormsModule, RouterLink, UiCardComponent, UiEmptyStateComponent],
+  imports: [FormsModule, RouterLink, UiCardComponent, UiEmptyStateComponent, UiMessageComponent],
   template: `
     <section class="page-header">
       <p class="eyebrow">Home support</p>
@@ -43,7 +44,7 @@ const monthsToLabel = (months: number): string => {
 
     @if (childrenError(); as problem) {
       <ac-ui-card>
-        <p class="error" role="alert">{{ problem }}</p>
+        <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
       </ac-ui-card>
     } @else if (children().length === 0 && !loadingChildren()) {
       <ac-ui-empty-state
@@ -90,7 +91,7 @@ const monthsToLabel = (months: number): string => {
         <ac-ui-card><p>Loading activities…</p></ac-ui-card>
       } @else if (error(); as problem) {
         <ac-ui-card>
-          <p class="error" role="alert">{{ problem }}</p>
+          <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
           <button type="button" class="retry" (click)="load()">Try again</button>
         </ac-ui-card>
       } @else if (rows().length === 0) {

@@ -9,6 +9,7 @@ import { ScreeningBadgeComponent } from './components/screening-badge.component'
 import type { BadgeTone } from './components/screening-badge.component';
 import { ScreeningInfoBannerComponent } from './components/screening-info-banner.component';
 import { observationFor } from './screening-observations';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 const MAX_ANSWER_VALUE = 4;
 
@@ -114,14 +115,20 @@ const formatAge = (dateOfBirth: string): string => {
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiCardComponent, ScreeningBadgeComponent, ScreeningInfoBannerComponent],
+  imports: [
+    RouterLink,
+    UiCardComponent,
+    ScreeningBadgeComponent,
+    ScreeningInfoBannerComponent,
+    UiMessageComponent,
+  ],
   template: `
     <section class="result">
       @if (loading()) {
         <p class="status">Loading…</p>
       } @else if (fatalError()) {
         <div class="fatal">
-          <p class="status error" role="alert">{{ fatalError() }}</p>
+          <ac-ui-message tone="error">{{ fatalError() }}</ac-ui-message>
           <button type="button" class="link" (click)="goToScreeningHome()">
             Back to Screening
           </button>

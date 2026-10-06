@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import type { DoctorResponse } from '@auticare/contracts';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { HospitalManagementApi } from './hospital-management.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [UiEmptyStateComponent],
+  imports: [UiEmptyStateComponent, UiMessageComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -35,7 +36,7 @@ import { HospitalManagementApi } from './hospital-management.api';
       </form>
 
       @if (error()) {
-        <p class="error" role="alert">{{ error() }}</p>
+        <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       }
 
       @if (loading()) {

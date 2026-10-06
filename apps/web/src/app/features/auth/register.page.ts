@@ -3,6 +3,7 @@ import type { AbstractControl, ValidationErrors } from '@angular/forms';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 const matchingPasswords = (control: AbstractControl): ValidationErrors | null => {
   const password = control.get('password')?.value;
@@ -15,7 +16,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
   template: `
     <main class="signup-page">
       <section class="form-panel" aria-labelledby="register-title">
@@ -133,7 +134,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
             }
 
             @if (error()) {
-              <p class="form-error" role="alert">{{ error() }}</p>
+              <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
             }
 
             <button class="submit-button" type="submit" [disabled]="loading()">

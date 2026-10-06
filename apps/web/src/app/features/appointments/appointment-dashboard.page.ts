@@ -7,6 +7,7 @@ import { AppointmentsFacade } from './state/appointments.facade';
 import type { AppointmentResponse } from '@auticare/contracts';
 import type { AppointmentStatus } from './appointments.types';
 import { statusPresentation, statusTone } from './appointments.types';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
 
@@ -19,7 +20,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent, UiBadgeComponent],
+  imports: [RouterLink, UiEmptyStateComponent, UiBadgeComponent, UiMessageComponent],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
       <span>Dashboard</span>
@@ -89,7 +90,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       @if (facade.loading()) {
         <p class="status" aria-live="polite">Loading appointments...</p>
       } @else if (facade.error()) {
-        <p class="error" role="alert">{{ facade.error() }}</p>
+        <ac-ui-message tone="error">{{ facade.error() }}</ac-ui-message>
       } @else if (visibleAppointments().length === 0) {
         <ac-ui-empty-state
           title="No appointments to show"
@@ -97,7 +98,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
         />
       } @else {
         @if (cancelError(); as problem) {
-          <p class="cancel-error" role="alert">{{ problem }}</p>
+          <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
         }
         <ul class="appointment-list">
           @for (appointment of visibleAppointments(); track appointment.id) {

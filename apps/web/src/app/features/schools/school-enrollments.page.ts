@@ -13,6 +13,7 @@ import type {
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 interface EnrollmentViewModel {
   id: string;
@@ -27,7 +28,7 @@ interface EnrollmentViewModel {
 
 @Component({
   standalone: true,
-  imports: [UiCardComponent, SchoolTopbarComponent, RouterLink],
+  imports: [UiCardComponent, SchoolTopbarComponent, RouterLink, UiMessageComponent],
   selector: 'ac-school-enrollments-page',
   template: `
     <ac-school-topbar />
@@ -112,7 +113,7 @@ interface EnrollmentViewModel {
     @if (loading()) {
       <ac-ui-card><p>Loading enrollments...</p></ac-ui-card>
     } @else if (error()) {
-      <p class="error" role="alert">{{ error() }}</p>
+      <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     } @else if (!enrollments().length) {
       <ac-ui-card><p>No active child enrollments are available.</p></ac-ui-card>
     } @else {
@@ -319,7 +320,7 @@ interface EnrollmentViewModel {
           </label>
 
           @if (editError(); as err) {
-            <p class="dialog-error" role="alert">{{ err }}</p>
+            <ac-ui-message tone="error">{{ err }}</ac-ui-message>
           }
 
           <div class="dialog-actions">
@@ -356,7 +357,7 @@ interface EnrollmentViewModel {
           </p>
 
           @if (deleteError(); as err) {
-            <p class="dialog-error" role="alert">{{ err }}</p>
+            <ac-ui-message tone="error">{{ err }}</ac-ui-message>
           }
 
           <div class="dialog-actions">

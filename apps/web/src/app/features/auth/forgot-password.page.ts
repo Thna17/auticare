@@ -3,10 +3,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import type { PasswordResetResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
   template: `
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="forgot-title">
@@ -54,7 +55,7 @@ import { AuthService } from '../../core/auth/auth.service';
             }
 
             @if (error()) {
-              <p class="form-error" role="alert">{{ error() }}</p>
+              <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
             }
 
             <button class="submit-button" type="submit" [disabled]="loading()">

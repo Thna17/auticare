@@ -3,10 +3,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
   template: `
     <main class="login-page">
       <section class="login-card" aria-labelledby="login-title">
@@ -90,7 +91,7 @@ import { AuthService } from '../../core/auth/auth.service';
           }
 
           @if (error()) {
-            <p class="form-error" role="alert">{{ error() }}</p>
+            <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
           }
 
           <button class="submit-button" type="submit" [disabled]="loading()">

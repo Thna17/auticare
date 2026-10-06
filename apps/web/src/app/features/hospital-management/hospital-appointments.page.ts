@@ -7,6 +7,7 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
 import { RejectReasonModalComponent } from './reject-reason-modal.component';
 import { AppointmentDetailDrawerComponent } from './appointment-detail-drawer.component';
 import { statusPresentation, statusTone } from '../appointments/appointments.types';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 type StatusFilter = 'ALL' | AppointmentStatus;
 
@@ -26,6 +27,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
     UiEmptyStateComponent,
     RejectReasonModalComponent,
     AppointmentDetailDrawerComponent,
+    UiMessageComponent,
   ],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -84,7 +86,7 @@ const statusFilters: ReadonlyArray<{ value: StatusFilter; label: string }> = [
       @if (loading()) {
         <p class="status" aria-live="polite">Loading requests...</p>
       } @else if (error()) {
-        <p class="error" role="alert">{{ error() }}</p>
+        <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       } @else if (visibleAppointments().length === 0) {
         <ac-ui-empty-state
           title="No requests to show"

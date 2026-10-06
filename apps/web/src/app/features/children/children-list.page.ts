@@ -5,10 +5,11 @@ import type { ChildResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { ChildrenFacade } from './state/children.facade';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent],
+  imports: [RouterLink, UiEmptyStateComponent, UiMessageComponent],
   template: `
     <section class="page-header">
       <div>
@@ -24,7 +25,7 @@ import { ChildrenFacade } from './state/children.facade';
     @if (facade.loading()) {
       <p class="status" aria-live="polite">Loading children...</p>
     } @else if (facade.error()) {
-      <p class="error" role="alert">{{ facade.error() }}</p>
+      <ac-ui-message tone="error">{{ facade.error() }}</ac-ui-message>
     } @else if (facade.children().length === 0) {
       <ac-ui-empty-state
         title="No child profiles yet"

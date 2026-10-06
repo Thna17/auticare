@@ -7,6 +7,7 @@ import { ChildrenApi } from '../children/data-access/children.api';
 import { SchoolsApi } from './data-access/schools.api';
 import { EnrollmentRequestsApi } from './data-access/enrollment-requests.api';
 import { SchoolProfileViewComponent } from './components/school-profile-view.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 /**
  * Parent-facing, fully READ-ONLY school detail page (/schools/:id). It renders
@@ -16,7 +17,7 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
  */
 @Component({
   standalone: true,
-  imports: [RouterLink, UiCardComponent, SchoolProfileViewComponent],
+  imports: [RouterLink, UiCardComponent, SchoolProfileViewComponent, UiMessageComponent],
   template: `
     <a class="back" routerLink="/schools">← Back to schools</a>
 
@@ -24,7 +25,7 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
       <ac-ui-card><p>Loading school…</p></ac-ui-card>
     } @else if (error(); as loadError) {
       <ac-ui-card
-        ><p class="error" role="alert">{{ loadError }}</p></ac-ui-card
+        ><ac-ui-message tone="error">{{ loadError }}</ac-ui-message></ac-ui-card
       >
     } @else if (school(); as s) {
       <ac-school-profile-view [school]="s" [editable]="false" />
@@ -69,7 +70,7 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
             </label>
 
             @if (formError(); as formErr) {
-              <p class="error" role="alert">{{ formErr }}</p>
+              <ac-ui-message tone="error">{{ formErr }}</ac-ui-message>
             }
 
             <div class="actions-row">

@@ -6,6 +6,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { SchoolsApi } from '../schools/data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 type QuickAction = {
   readonly title: string;
@@ -33,7 +34,7 @@ const quickActions: readonly QuickAction[] = [
 
 @Component({
   standalone: true,
-  imports: [RouterLink, SchoolTopbarComponent],
+  imports: [RouterLink, SchoolTopbarComponent, UiMessageComponent],
   host: {
     '[class.school-dashboard]': 'isSchoolStaff()',
   },
@@ -301,7 +302,7 @@ const quickActions: readonly QuickAction[] = [
       </section>
 
       @if (childrenError()) {
-        <p class="error" role="alert">{{ childrenError() }}</p>
+        <ac-ui-message tone="error">{{ childrenError() }}</ac-ui-message>
       }
 
       @if (isParent()) {

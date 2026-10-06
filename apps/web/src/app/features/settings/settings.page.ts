@@ -9,12 +9,14 @@ import {
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { UiFieldComponent } from '../../design-system/components/ui-field.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import type { ParentResponse, UpdateMyProfileRequest } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, UiFieldComponent, UiMessageComponent],
   template: `
     <section class="profile-hero">
       <div class="identity">
@@ -54,42 +56,38 @@ import { AuthService } from '../../core/auth/auth.service';
 
         <form [formGroup]="form" (ngSubmit)="save()" novalidate>
           <div class="field-grid">
-            <label class="field">
-              <span>First name</span>
+            <ac-ui-field
+              label="First name"
+              [error]="showError('firstName') ? 'First name is required.' : null"
+            >
               <input formControlName="firstName" autocomplete="given-name" />
-              @if (showError('firstName')) {
-                <small class="field-error" role="alert">First name is required.</small>
-              }
-            </label>
-            <label class="field">
-              <span>Last name</span>
+            </ac-ui-field>
+            <ac-ui-field
+              label="Last name"
+              [error]="showError('lastName') ? 'Last name is required.' : null"
+            >
               <input formControlName="lastName" autocomplete="family-name" />
-              @if (showError('lastName')) {
-                <small class="field-error" role="alert">Last name is required.</small>
-              }
-            </label>
-            <label class="field">
-              <span>Phone number <em>(optional)</em></span>
+            </ac-ui-field>
+            <ac-ui-field label="Phone number" [optional]="true">
               <input formControlName="phoneNumber" autocomplete="tel" inputmode="tel" />
-            </label>
-            <label class="field">
-              <span>Social media <em>(optional)</em></span>
+            </ac-ui-field>
+            <ac-ui-field label="Social media" [optional]="true">
               <input formControlName="socialMediaAccount" />
-            </label>
-            <label class="field full">
-              <span>Email address</span>
-              <input [value]="parent()?.email || ''" readonly aria-describedby="email-note" />
-              <small id="email-note" class="field-hint">
-                Your email is your sign-in and cannot be changed here.
-              </small>
-            </label>
+            </ac-ui-field>
+            <ac-ui-field
+              label="Email address"
+              hint="Your email is your sign-in and cannot be changed here."
+              [full]="true"
+            >
+              <input [value]="parent()?.email || ''" readonly />
+            </ac-ui-field>
           </div>
 
-          @if (saveError()) {
-            <p class="form-error" role="alert">{{ saveError() }}</p>
+          @if (saveError(); as problem) {
+            <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
           }
           @if (saved()) {
-            <p class="form-success" role="status">Your profile has been updated.</p>
+            <ac-ui-message tone="success">Your profile has been updated.</ac-ui-message>
           }
 
           <div class="form-actions">

@@ -4,17 +4,18 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { ChildResponse } from '@auticare/contracts';
 import { ChildrenApi } from './data-access/children.api';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
   template: `
     <a class="back-link" routerLink="/children">Back to children</a>
 
     @if (loading()) {
       <p class="status" aria-live="polite">Loading child profile...</p>
     } @else if (error()) {
-      <p class="error" role="alert">{{ error() }}</p>
+      <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     } @else if (child()) {
       <section class="profile-hero">
         <div class="identity">
@@ -96,10 +97,10 @@ import { ChildrenApi } from './data-access/children.api';
           </label>
 
           @if (saveMessage()) {
-            <p class="success" role="status">{{ saveMessage() }}</p>
+            <ac-ui-message tone="success">{{ saveMessage() }}</ac-ui-message>
           }
           @if (saveError()) {
-            <p class="form-error" role="alert">{{ saveError() }}</p>
+            <ac-ui-message tone="error">{{ saveError() }}</ac-ui-message>
           }
 
           <button class="primary-button" type="submit" [disabled]="saving()">
