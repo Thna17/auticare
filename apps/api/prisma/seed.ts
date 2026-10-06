@@ -523,18 +523,27 @@ async function main() {
       reason: 'Follow-up consultation',
     },
   });
-  await prisma.activity.createMany({
-    data: [
-      {
-        title: 'Calm Sorting Game',
-        category: 'fine-motor',
-        minAgeMonths: 36,
-        maxAgeMonths: 84,
-        summary: 'A low-pressure sorting activity using familiar household objects.',
-      },
-    ],
-    skipDuplicates: true,
-  });
+  // Upsert on a stable id, not createMany+skipDuplicates. Activity has no unique
+  // constraint beyond its id, so skipDuplicates had nothing to match on and every
+  // seed run inserted another copy — a dev database that had been seeded ten times
+  // showed the same activity ten times on the activities page.
+  //
+  // Deleting and re-inserting is not an option either: ActivityProgress cascades
+  // from Activity, so that would erase families' tracked progress on every seed.
+  const demoActivities = [
+    {
+      id: 'demo-activity-1',
+      title: 'Calm Sorting Game',
+      category: 'fine-motor',
+      minAgeMonths: 36,
+      maxAgeMonths: 84,
+      summary: 'A low-pressure sorting activity using familiar household objects.',
+    },
+  ];
+  for (const activity of demoActivities) {
+    const { id, ...fields } = activity;
+    await prisma.activity.upsert({ where: { id }, update: fields, create: { id, ...fields } });
+  }
 
   // ── Seed ActivityReports for the school dashboard ──────────────────────
   const now = new Date();
