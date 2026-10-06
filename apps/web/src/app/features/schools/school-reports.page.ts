@@ -8,11 +8,12 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SchoolsApi } from './data-access/schools.api';
 import type { EnrolledStudentOption } from './data-access/schools.api';
-import type { ActivityReportListItem } from '@auticare/contracts';
+import type { ActivityReportListItem, PaginationMeta } from '@auticare/contracts';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { attachmentUrl } from '../../core/config/attachment-url';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
@@ -40,6 +41,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
     SchoolTopbarComponent,
     UiEmptyStateComponent,
     UiMessageComponent,
+    UiPaginationComponent,
     UiSpinnerComponent,
   ],
   template: `
@@ -85,7 +87,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
           }
         </select>
       </div>
-      <span class="filter-count">{{ filteredReports().length }} report(s)</span>
+      <span class="filter-count">{{ pagination()?.total ?? reports().length }} report(s)</span>
     </div>
 
     @if (actionMessage()) {
@@ -100,7 +102,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         {{ loadError }}
         <button type="button" class="retry-btn" (click)="loadReports()">Retry</button>
       </ac-ui-message>
-    } @else if (filteredReports().length === 0) {
+    } @else if (reports().length === 0) {
       <ac-ui-empty-state
         title="No reports found"
         [message]="
@@ -114,7 +116,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
     } @else {
       <!-- Report list -->
       <div class="report-list">
-        @for (report of filteredReports(); track report.id) {
+        @for (report of reports(); track report.id) {
           <article class="report-card">
             <button
               type="button"
@@ -262,6 +264,17 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
               </div>
             }
           </article>
+        }
+        @if (pagination(); as meta) {
+          <ac-ui-pagination
+            [page]="meta.page"
+            [totalPages]="meta.totalPages"
+            [total]="meta.total"
+            [perPage]="meta.limit"
+            itemNoun="reports"
+            label="Report pages"
+            (pageChange)="goToPage($event)"
+          />
         }
       </div>
     }
@@ -683,15 +696,13 @@ export class SchoolReportsPage implements OnInit {
   readonly actionMessage = signal<string | null>(null);
   readonly canManageReports = computed(() => this.auth.parent()?.role === 'SCHOOL');
 
-  readonly filteredReports = computed(() => {
-    const status = this.statusFilter();
-    const childId = this.childFilter();
-    return this.reports().filter(
-      (report) =>
-        (status === 'ALL' || report.status === status) &&
-        (childId === '' || report.childId === childId),
-    );
-  });
+  readonly pagination = signal<PaginationMeta | null>(null);
+  readonly page = signal(1);
+
+  goToPage(page: number) {
+    this.page.set(page);
+    void this.loadReports();
+  }
 
   ngOnInit() {
     void this.loadReports();
@@ -706,26 +717,39 @@ export class SchoolReportsPage implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.api.listReportsWithChild().subscribe({
-      next: (reports) => {
-        this.reports.set(reports);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.error.set('Could not load reports. Check your connection and try again.');
-      },
-    });
+    const status = this.statusFilter();
+    const childId = this.childFilter();
+    this.api
+      .listReportsWithChild({
+        ...(status !== 'ALL' && { status }),
+        ...(childId !== '' && { childId }),
+        page: this.page(),
+      })
+      .subscribe({
+        next: ({ reports, pagination }) => {
+          this.reports.set(reports);
+          this.pagination.set(pagination);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.error.set('Could not load reports. Check your connection and try again.');
+        },
+      });
   }
 
   onStatusChange(event: Event) {
     this.statusFilter.set(
       (event.target as HTMLSelectElement).value as 'ALL' | 'SUBMITTED' | 'DRAFT',
     );
+    this.page.set(1);
+    void this.loadReports();
   }
 
   onChildChange(event: Event) {
     this.childFilter.set((event.target as HTMLSelectElement).value);
+    this.page.set(1);
+    void this.loadReports();
   }
 
   toggleExpanded(reportId: string) {

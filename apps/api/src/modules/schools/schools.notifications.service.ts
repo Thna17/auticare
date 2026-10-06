@@ -3,6 +3,7 @@ import type {
   NotificationDecisionResponse,
   SchoolNotificationItem,
 } from '@auticare/contracts';
+import { toPaginationMeta, toSkipTake } from '../../common/http/pagination.js';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { SchoolsRepository } from './schools.repository.js';
 import { toNotificationResponse } from './schools.mapper.js';
@@ -13,7 +14,7 @@ export class SchoolNotificationsService {
   constructor(private readonly repository = new SchoolsRepository()) {}
 
   /**
-   * Fetch all notifications for the authenticated school, ordered newest first,
+   * Fetch one page of notifications for the authenticated school, newest first,
    * enriched with the sender's name and — for enrollment requests — the linked
    * admission request details. Optionally filter by isRead.
    * Strictly scoped to the staff member's school — no schoolId accepted.
@@ -22,11 +23,13 @@ export class SchoolNotificationsService {
     if (actor.role !== 'SCHOOL') throw forbidden();
     const staff = await this.requireSchoolStaff(actor);
 
-    const filters: { isRead?: boolean } = {};
+    const filters: { isRead?: boolean; view?: 'PENDING' | 'DECIDED' } = {};
     if (query.isRead !== undefined) filters.isRead = query.isRead;
-    const notifications = await this.repository.listNotificationsWithSender(
+    if (query.view !== undefined) filters.view = query.view;
+    const { items: notifications, total } = await this.repository.listNotificationsWithSender(
       staff.schoolId,
       filters,
+      toSkipTake(query),
     );
 
     const items: SchoolNotificationItem[] = [];
@@ -70,7 +73,7 @@ export class SchoolNotificationsService {
       });
     }
 
-    return items;
+    return { notifications: items, pagination: toPaginationMeta(query, total) };
   }
 
   /**

@@ -16,6 +16,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 
 interface EnrollmentViewModel {
   id: string;
@@ -35,6 +36,7 @@ interface EnrollmentViewModel {
     RouterLink,
     UiMessageComponent,
     UiDialogComponent,
+    UiPaginationComponent,
     UiSpinnerComponent,
     UiEmptyStateComponent,
   ],
@@ -222,39 +224,15 @@ interface EnrollmentViewModel {
           </tbody>
         </table>
 
-        <!-- Pagination -->
-        <div class="pagination">
-          <span class="pagination-info">
-            Showing {{ (currentPage() - 1) * pageSize() + 1 }} to
-            {{ Math.min(currentPage() * pageSize(), totalStudents()) }} of
-            {{ totalStudents() }} students
-          </span>
-          <div class="pagination-controls">
-            <button
-              class="page-btn"
-              [disabled]="currentPage() <= 1"
-              (click)="goToPage(currentPage() - 1)"
-            >
-              Previous
-            </button>
-            @for (p of [].constructor(totalPages()); track p; let i = $index) {
-              <button
-                class="page-btn"
-                [class.active]="currentPage() === i + 1"
-                (click)="goToPage(i + 1)"
-              >
-                {{ i + 1 }}
-              </button>
-            }
-            <button
-              class="page-btn"
-              [disabled]="currentPage() >= totalPages()"
-              (click)="goToPage(currentPage() + 1)"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <ac-ui-pagination
+          [page]="currentPage()"
+          [totalPages]="totalPages()"
+          [total]="totalStudents()"
+          [perPage]="pageSize()"
+          itemNoun="students"
+          label="Student pages"
+          (pageChange)="goToPage($event)"
+        />
       </div>
     }
 
@@ -950,7 +928,6 @@ interface EnrollmentViewModel {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SchoolEnrollmentsPage implements OnInit, OnDestroy {
-  readonly Math = Math;
   private readonly api = inject(SchoolsApi);
   private readonly destroy$ = new Subject<void>();
   readonly enrollments = signal<EnrollmentViewModel[]>([]);

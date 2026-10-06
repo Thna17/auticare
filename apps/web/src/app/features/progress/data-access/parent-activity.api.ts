@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { ParentActivityReportResponse } from '@auticare/contracts';
+import type { ParentActivityReportListResponse } from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
 
@@ -9,11 +9,12 @@ export class ParentActivityApi {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
 
-  /** All SUBMITTED activity reports for one of the logged-in parent's children. */
-  listActivityReports(childId: string) {
+  /** One page of SUBMITTED activity reports for an owned child. */
+  listActivityReports(childId: string, page = 1) {
     return this.http
-      .get<{ data: ParentActivityReportResponse[] }>(
+      .get<{ data: ParentActivityReportListResponse }>(
         `${this.apiBaseUrl}/parents/activity-reports/${childId}`,
+        { params: { page } },
       )
       .pipe(map((response) => response.data));
   }

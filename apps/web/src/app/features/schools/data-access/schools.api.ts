@@ -9,11 +9,12 @@ import type {
   CreateSchoolStudentResponse,
   ActivityReportResponse,
   ActivityReportDetailResponse,
-  ActivityReportListItem,
+  ActivityReportListResponse,
   UploadPhotosResponse,
   SchoolChildEnrollmentResponse,
   SchoolDashboardResponse,
   SchoolDetailResponse,
+  SchoolListResponse,
   SchoolResponse,
   SchoolStaffResponse,
   UpdateSchoolProfileRequest,
@@ -22,7 +23,8 @@ import type {
   EnrolledStudentsListResponse,
   EnrolledStudentOption,
   LeadSpecialistResponse,
-  SchoolNotificationItem,
+  SchoolNotificationListResponse,
+  SchoolNotificationView,
   NotificationDecisionResponse,
   NotificationResponse,
   UpdateSchoolEnrollmentRequest,
@@ -49,10 +51,11 @@ export class SchoolsApi {
       province?: string;
       availability?: string;
       specializations?: string;
+      page?: number;
     } = {},
   ) {
     return this.http
-      .get<{ data: SchoolResponse[] }>(`${this.apiBaseUrl}/schools`, {
+      .get<{ data: SchoolListResponse }>(`${this.apiBaseUrl}/schools`, {
         params: Object.fromEntries(
           Object.entries(params).filter(([, v]) => v !== undefined && v !== ''),
         ),
@@ -100,19 +103,13 @@ export class SchoolsApi {
       .pipe(map((response) => response.data));
   }
 
-  listReports() {
-    return this.http
-      .get<{ data: ActivityReportResponse[] }>(`${this.apiBaseUrl}/schools/activity-reports`)
-      .pipe(map((response) => response.data));
-  }
-
   /**
    * Enriched reports list from GET /schools/reports — includes child name,
    * photo, and reporter name. Supports optional childId/status filters.
    */
-  listReportsWithChild(params: { childId?: string; status?: string } = {}) {
+  listReportsWithChild(params: { childId?: string; status?: string; page?: number } = {}) {
     return this.http
-      .get<{ data: ActivityReportListItem[] }>(`${this.apiBaseUrl}/schools/reports`, {
+      .get<{ data: ActivityReportListResponse }>(`${this.apiBaseUrl}/schools/reports`, {
         params: Object.fromEntries(
           Object.entries(params).filter(([, v]) => v !== undefined && v !== ''),
         ),
@@ -142,9 +139,11 @@ export class SchoolsApi {
   /** ── Notifications (school side) ───────────────────────────────────── */
 
   /** Enriched notification list: sender name + linked admission request. */
-  listNotifications(params: { isRead?: boolean } = {}) {
+  listNotifications(
+    params: { isRead?: boolean; view?: SchoolNotificationView; page?: number } = {},
+  ) {
     return this.http
-      .get<{ data: SchoolNotificationItem[] }>(`${this.apiBaseUrl}/schools/notifications`, {
+      .get<{ data: SchoolNotificationListResponse }>(`${this.apiBaseUrl}/schools/notifications`, {
         params: Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined)),
       })
       .pipe(map((response) => response.data));

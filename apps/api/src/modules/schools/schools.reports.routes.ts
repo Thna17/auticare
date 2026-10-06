@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { validateBody } from '../../common/middleware/validate.js';
 import { requireRole } from '../auth/index.js';
 import { validateQuery } from '../../common/middleware/validate-query.js';
@@ -10,17 +9,11 @@ import {
   getReportAttachment,
   updateReport,
 } from './schools.reports.controller.js';
+import { listActivityReportsQuerySchema } from '@auticare/contracts';
 import {
   createActivityReportRequestSchema,
-  reportStatuses,
   updateActivityReportRequestSchema,
 } from './schools.reports.schemas.js';
-
-// Query-param validation (separate from body validation).
-const listReportsQuerySchema = z.object({
-  childId: z.string().optional(),
-  status: z.enum(reportStatuses).optional(),
-});
 
 // Sub-router mounted inside schoolsRoutes which already applies requireAuth.
 export const schoolsReportsRoutes = Router();
@@ -47,7 +40,7 @@ schoolsReportsRoutes.post(
 schoolsReportsRoutes.get(
   '/reports',
   requireRole('SCHOOL', 'PARENT', 'ADMIN'),
-  validateQuery(listReportsQuerySchema),
+  validateQuery(listActivityReportsQuerySchema),
   listReports,
 );
 

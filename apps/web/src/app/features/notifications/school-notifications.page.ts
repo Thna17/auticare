@@ -4,12 +4,17 @@
 // PATCH /schools/notifications/:id/decision, which atomically updates the
 // admission request, marks the notification read, upserts the enrollment, and
 // notifies the parent.
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import type { SchoolNotificationItem } from '@auticare/contracts';
+import type {
+  PaginationMeta,
+  SchoolNotificationItem,
+  SchoolNotificationView,
+} from '@auticare/contracts';
 import { SchoolsApi } from '../schools/data-access/schools.api';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
@@ -17,7 +22,13 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
 
 @Component({
   standalone: true,
-  imports: [DatePipe, UiEmptyStateComponent, UiMessageComponent, UiSpinnerComponent],
+  imports: [
+    DatePipe,
+    UiEmptyStateComponent,
+    UiMessageComponent,
+    UiPaginationComponent,
+    UiSpinnerComponent,
+  ],
   selector: 'ac-school-notifications',
   template: `
     <div class="notifications-card">
@@ -27,28 +38,28 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
           <button
             class="tab-btn"
             [class.active]="statusFilter() === 'ALL'"
-            (click)="statusFilter.set('ALL')"
+            (click)="setFilter('ALL')"
           >
             All
           </button>
           <button
             class="tab-btn"
             [class.active]="statusFilter() === 'PENDING'"
-            (click)="statusFilter.set('PENDING')"
+            (click)="setFilter('PENDING')"
           >
             Pending
           </button>
           <button
             class="tab-btn"
             [class.active]="statusFilter() === 'DECIDED'"
-            (click)="statusFilter.set('DECIDED')"
+            (click)="setFilter('DECIDED')"
           >
             Decided
           </button>
           <button
             class="tab-btn"
             [class.active]="statusFilter() === 'READ'"
-            (click)="statusFilter.set('READ')"
+            (click)="setFilter('READ')"
           >
             Read
           </button>
@@ -71,11 +82,11 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
           {{ loadError }}
           <button type="button" class="retry-btn" (click)="load()">Retry</button>
         </ac-ui-message>
-      } @else if (filtered().length === 0) {
+      } @else if (notifications().length === 0) {
         <ac-ui-empty-state
-          [title]="notifications().length === 0 ? 'You are all caught up' : 'No matches'"
+          [title]="statusFilter() === 'ALL' ? 'You are all caught up' : 'No matches'"
           [message]="
-            notifications().length === 0
+            statusFilter() === 'ALL'
               ? 'Enrollment requests and other school updates will appear here.'
               : 'No notifications match this filter. Choose another filter to see more.'
           "
@@ -93,7 +104,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
             </tr>
           </thead>
           <tbody>
-            @for (notification of filtered(); track notification.id) {
+            @for (notification of notifications(); track notification.id) {
               <tr [class.unread-row]="notification.status === 'UNREAD'">
                 <td>
                   <div class="sender-cell">
@@ -185,6 +196,18 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
             }
           </tbody>
         </table>
+
+        @if (pagination(); as meta) {
+          <ac-ui-pagination
+            [page]="meta.page"
+            [totalPages]="meta.totalPages"
+            [total]="meta.total"
+            [perPage]="meta.limit"
+            itemNoun="notifications"
+            label="Notification pages"
+            (pageChange)="goToPage($event)"
+          />
+        }
 
         <!-- Feedback -->
         @if (feedback(); as note) {
@@ -469,26 +492,39 @@ export class SchoolNotificationsPage implements OnInit {
   readonly feedback = signal<string | null>(null);
   readonly feedbackIsError = signal(false);
 
-  readonly filtered = computed(() => {
-    const filter = this.statusFilter();
-    const items = this.notifications();
+  readonly pagination = signal<PaginationMeta | null>(null);
+  readonly page = signal(1);
+
+  /**
+   * Every tab is a server-side filter now. They used to narrow the fetched array,
+   * which stops being correct once the list is a page: "No matches" would show
+   * whenever the newest 20 rows happened to contain none of the wanted kind, even
+   * with hundreds of matches further back.
+   */
+  private queryFor(filter: StatusFilter): { isRead?: boolean; view?: SchoolNotificationView } {
     switch (filter) {
       case 'PENDING':
-        return items.filter(
-          (n) => n.type === 'ENROLLMENT_REQUEST' && n.admissionStatus === 'REQUESTED',
-        );
+        return { view: 'PENDING' };
       case 'DECIDED':
-        return items.filter(
-          (n) =>
-            n.type === 'ENROLLMENT_REQUEST' &&
-            (n.admissionStatus === 'APPROVED' || n.admissionStatus === 'REJECTED'),
-        );
+        return { view: 'DECIDED' };
       case 'READ':
-        return items.filter((n) => n.status === 'READ');
+        return { isRead: true };
       default:
-        return items;
+        return {};
     }
-  });
+  }
+
+  setFilter(filter: StatusFilter) {
+    if (this.statusFilter() === filter) return;
+    this.statusFilter.set(filter);
+    this.page.set(1);
+    this.load();
+  }
+
+  goToPage(page: number) {
+    this.page.set(page);
+    this.load();
+  }
 
   ngOnInit() {
     this.load();
@@ -497,16 +533,19 @@ export class SchoolNotificationsPage implements OnInit {
   load() {
     this.loading.set(true);
     this.error.set(null);
-    this.api.listNotifications().subscribe({
-      next: (items) => {
-        this.notifications.set(items);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.error.set('Could not load notifications. Check your connection and try again.');
-      },
-    });
+    this.api
+      .listNotifications({ ...this.queryFor(this.statusFilter()), page: this.page() })
+      .subscribe({
+        next: ({ notifications, pagination }) => {
+          this.notifications.set(notifications);
+          this.pagination.set(pagination);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.error.set('Could not load notifications. Check your connection and try again.');
+        },
+      });
   }
 
   decide(notification: SchoolNotificationItem, decision: 'APPROVED' | 'REJECTED' | 'PENDING') {

@@ -265,7 +265,7 @@ describe('parent notifications', () => {
     const res = await ownerAgent.get('/api/v1/parents/notifications');
     expect(res.status).toBe(200);
 
-    const titles = (res.body.data as { title: string }[]).map((n) => n.title);
+    const titles = (res.body.data.notifications as { title: string }[]).map((n) => n.title);
     expect(titles).toEqual(
       expect.arrayContaining(['New activity report', 'Appointment confirmed']),
     );
@@ -274,7 +274,7 @@ describe('parent notifications', () => {
 
   it('returns the full notification shape the web client expects', async () => {
     const res = await ownerAgent.get('/api/v1/parents/notifications');
-    const first = res.body.data[0];
+    const first = res.body.data.notifications[0];
     // enrollmentId and reportId were missing before, so the response did not
     // match the NotificationResponse contract the web side reuses.
     for (const key of [
@@ -293,9 +293,42 @@ describe('parent notifications', () => {
 
   it('is newest first', async () => {
     const res = await ownerAgent.get('/api/v1/parents/notifications');
-    const dates = (res.body.data as { createdAt: string }[]).map((n) => Date.parse(n.createdAt));
+    const dates = (res.body.data.notifications as { createdAt: string }[]).map((n) =>
+      Date.parse(n.createdAt),
+    );
     const sorted = [...dates].sort((a, b) => b - a);
     expect(dates).toEqual(sorted);
+  });
+
+  it('returns pagination meta alongside the page', async () => {
+    const res = await ownerAgent.get('/api/v1/parents/notifications');
+    expect(res.body.data.pagination).toEqual({
+      total: expect.any(Number),
+      page: 1,
+      limit: 20,
+      totalPages: expect.any(Number),
+    });
+    expect(res.body.data.pagination.total).toBeGreaterThanOrEqual(
+      res.body.data.notifications.length,
+    );
+  });
+
+  it('filters unread on the server, not in the page', async () => {
+    const all = await ownerAgent.get('/api/v1/parents/notifications');
+    const unread = await ownerAgent.get('/api/v1/parents/notifications?isRead=false');
+    expect(unread.status).toBe(200);
+    for (const notification of unread.body.data.notifications as { status: string }[]) {
+      expect(notification.status).toBe('UNREAD');
+    }
+    // The unread total is the whole unread set, not a count of rows on this page —
+    // that distinction is the reason the filter moved to the query at all.
+    expect(unread.body.data.pagination.total).toBeLessThanOrEqual(all.body.data.pagination.total);
+  });
+
+  it('bounds the page size a caller can ask for', async () => {
+    const res = await ownerAgent.get('/api/v1/parents/notifications?limit=5000');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
   it('refuses a non-parent account', async () => {

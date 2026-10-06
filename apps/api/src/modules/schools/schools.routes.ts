@@ -26,7 +26,7 @@ import {
   updateSchoolProfileRequestSchema,
   updateSchoolRequestSchema,
 } from './schools.schemas.js';
-import { parentSchoolSearchQuerySchema } from '@auticare/contracts';
+import { paginationQuerySchema, parentSchoolSearchQuerySchema } from '@auticare/contracts';
 import { schoolsProfileRoutes } from './schools.profile.routes.js';
 import { schoolsStudentsRoutes } from './schools.students.routes.js';
 import { schoolsReportsRoutes } from './schools.reports.routes.js';
@@ -96,6 +96,7 @@ schoolsRoutes.get('/enrollments', requireRole('PARENT', 'SCHOOL'), listEnrollmen
 schoolsRoutes.get(
   '/activity-reports',
   requireRole('PARENT', 'SCHOOL', 'ADMIN'),
+  validateQuery(paginationQuerySchema),
   listActivityReports,
 );
 schoolsRoutes.post(

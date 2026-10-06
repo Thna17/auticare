@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { PaginationMeta } from '@auticare/contracts';
+import type { AppointmentListResponse } from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
 import type {
@@ -21,7 +21,7 @@ export class AppointmentsApi {
    */
   listAppointments(page = 1, limit = 20) {
     return this.http
-      .get<{ data: { appointments: AppointmentResponse[]; pagination: PaginationMeta } }>(
+      .get<{ data: AppointmentListResponse }>(
         `${this.apiBaseUrl}/appointments?page=${page}&limit=${limit}`,
       )
       .pipe(map((response) => response.data));

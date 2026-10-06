@@ -110,11 +110,6 @@ export class AppointmentsFacade {
   /** Current page and the server's counts, so the view can offer paging controls. */
   readonly page = signal(1);
   readonly pagination = signal<PaginationMeta | null>(null);
-  readonly hasMorePages = computed(() => {
-    const meta = this.pagination();
-    return meta !== null && meta.page < meta.totalPages;
-  });
-
   goToPage(page: number) {
     this.page.set(Math.max(1, page));
     this.loadAppointments();

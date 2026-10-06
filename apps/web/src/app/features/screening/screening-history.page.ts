@@ -10,7 +10,7 @@ import { ScreeningBadgeComponent } from './components/screening-badge.component'
 import type { BadgeTone } from './components/screening-badge.component';
 import { ScreeningHistoryFilterComponent } from './components/screening-history-filter.component';
 import type { RiskFilter } from './components/screening-history-filter.component';
-import { ScreeningPaginationComponent } from './components/screening-pagination.component';
+import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
@@ -37,7 +37,7 @@ const riskLabels: Record<RiskLevel, string> = {
     ChildSelectCardComponent,
     ScreeningBadgeComponent,
     ScreeningHistoryFilterComponent,
-    ScreeningPaginationComponent,
+    UiPaginationComponent,
     UiMessageComponent,
     UiSpinnerComponent,
   ],
@@ -118,13 +118,15 @@ const riskLabels: Record<RiskLevel, string> = {
             }
           </ul>
 
-          @if (totalPages() > 1) {
-            <ac-screening-pagination
-              [page]="page()"
-              [totalPages]="totalPages()"
-              (pageChange)="onPageChange($event)"
-            />
-          }
+          <ac-ui-pagination
+            [page]="page()"
+            [totalPages]="totalPages()"
+            [total]="filteredSessions().length"
+            [perPage]="pageSize"
+            itemNoun="screenings"
+            label="Screening history pages"
+            (pageChange)="onPageChange($event)"
+          />
         }
       }
     </section>
@@ -284,6 +286,9 @@ export class ScreeningHistoryPage implements OnInit {
     if (filter === 'ALL') return all;
     return all.filter((session) => session.result?.riskLevel === filter);
   });
+
+  /** Exposed so the pager can show a row range without recomputing it. */
+  protected readonly pageSize = PAGE_SIZE;
 
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.filteredSessions().length / PAGE_SIZE)),

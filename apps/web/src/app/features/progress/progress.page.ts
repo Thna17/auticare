@@ -2,11 +2,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { ParentActivityReportResponse } from '@auticare/contracts';
+import type { PaginationMeta, ParentActivityReportResponse } from '@auticare/contracts';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ParentActivityApi } from './data-access/parent-activity.api';
 import { attachmentUrl } from '../../core/config/attachment-url';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
@@ -38,7 +39,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent, UiMessageComponent, UiSpinnerComponent],
+  imports: [
+    RouterLink,
+    UiEmptyStateComponent,
+    UiMessageComponent,
+    UiPaginationComponent,
+    UiSpinnerComponent,
+  ],
   selector: 'ac-parent-report-detail-page',
   template: `
     <div class="page-layout">
@@ -69,6 +76,19 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
             }
             <a class="back-link" routerLink="/dashboard">← Back to Dashboard</a>
           </div>
+          @if (pagination(); as meta) {
+            @if (meta.totalPages > 1) {
+              <ac-ui-pagination
+                [page]="meta.page"
+                [totalPages]="meta.totalPages"
+                [total]="meta.total"
+                [perPage]="meta.limit"
+                itemNoun="reports"
+                label="Report pages"
+                (pageChange)="goToReportPage($event)"
+              />
+            }
+          }
         </header>
         @if (loading()) {
           <ac-ui-spinner label="Loading report…" />
@@ -869,6 +889,8 @@ export class ProgressPage implements OnInit {
   readonly children = signal<{ id: string; firstName: string }[]>([]);
   readonly selectedChildId = signal<string | null>(null);
   readonly reports = signal<ParentActivityReportResponse[]>([]);
+  readonly pagination = signal<PaginationMeta | null>(null);
+  readonly reportPage = signal(1);
   readonly selectedReportId = signal<string | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -1029,6 +1051,7 @@ export class ProgressPage implements OnInit {
   onChildChange(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     this.selectedChildId.set(value);
+    this.reportPage.set(1);
     this.loadReports();
   }
 
@@ -1036,14 +1059,20 @@ export class ProgressPage implements OnInit {
     this.selectedReportId.set((event.target as HTMLSelectElement).value);
   }
 
+  goToReportPage(page: number) {
+    this.reportPage.set(page);
+    this.loadReports();
+  }
+
   loadReports() {
     const childId = this.selectedChildId();
     if (!childId) return;
     this.loading.set(true);
     this.error.set(null);
-    this.activityApi.listActivityReports(childId).subscribe({
-      next: (reports) => {
+    this.activityApi.listActivityReports(childId, this.reportPage()).subscribe({
+      next: ({ reports, pagination }) => {
         this.reports.set(reports);
+        this.pagination.set(pagination);
         this.selectedReportId.set(reports[0]?.id ?? null);
         this.loading.set(false);
       },
