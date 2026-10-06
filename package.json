@@ -17,7 +17,7 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/contracts typecheck && pnpm --filter @auticare/api typecheck && pnpm --filter @auticare/web typecheck",
     "test": "pnpm test:unit && pnpm test:integration",
-    "test:unit": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api test:unit",
+    "test:unit": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api test:unit && pnpm --filter @auticare/web test",
     "test:integration": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api test:integration",
     "test:e2e": "pnpm --filter @auticare/web e2e",
     "db:generate": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api db:generate",
