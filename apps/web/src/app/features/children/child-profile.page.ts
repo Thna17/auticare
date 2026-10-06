@@ -5,15 +5,16 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { ChildResponse } from '@auticare/contracts';
 import { ChildrenApi } from './data-access/children.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent],
+  imports: [ReactiveFormsModule, RouterLink, UiMessageComponent, UiSpinnerComponent],
   template: `
     <a class="back-link" routerLink="/children">Back to children</a>
 
     @if (loading()) {
-      <p class="status" aria-live="polite">Loading child profile...</p>
+      <ac-ui-spinner label="Loading child profile…" />
     } @else if (error()) {
       <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     } @else if (child()) {

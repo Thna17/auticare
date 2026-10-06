@@ -5,6 +5,8 @@ import type { HospitalResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 import { HospitalsApi } from './data-access/hospitals.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 /** Card view model — `services` split into badge tags. */
 interface HospitalViewModel {
@@ -26,7 +28,7 @@ const SERVICE_FILTER_OPTIONS = [
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, UiMessageComponent],
+  imports: [ReactiveFormsModule, UiMessageComponent, UiEmptyStateComponent, UiSpinnerComponent],
   template: `
     <!-- Top Bar -->
     <header class="topbar">
@@ -137,19 +139,22 @@ const SERVICE_FILTER_OPTIONS = [
         </div>
 
         @if (loading()) {
-          <div class="loading-state"><p>Loading hospitals...</p></div>
+          <ac-ui-spinner label="Loading hospitals…" />
         } @else if (error(); as loadError) {
           <ac-ui-message tone="error">{{ loadError }}</ac-ui-message>
         } @else if (filteredHospitals().length === 0) {
-          <div class="empty-state">
-            <p>
-              {{
-                hospitals().length === 0
-                  ? 'No hospitals are listed yet.'
-                  : 'No hospitals match your filters. Try resetting them.'
-              }}
-            </p>
-          </div>
+          <ac-ui-empty-state
+            title="No hospitals found"
+            [message]="
+              hospitals().length === 0
+                ? 'No hospitals are listed yet.'
+                : 'No hospitals match your filters. Try resetting them.'
+            "
+          >
+            <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+              Reset filters
+            </button>
+          </ac-ui-empty-state>
         } @else {
           @for (hospital of filteredHospitals(); track hospital.id) {
             <article class="hospital-card">

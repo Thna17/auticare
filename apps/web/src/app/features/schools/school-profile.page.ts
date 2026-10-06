@@ -20,6 +20,7 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 // Defined locally (not imported from @auticare/contracts as a runtime value) so the
 // web bundle keeps contracts a type-only dependency and never pulls zod client-side.
@@ -51,6 +52,7 @@ const specializationOptions: readonly string[] = [
     UiMessageComponent,
     UiFieldComponent,
     AccessibleFormDirective,
+    UiSpinnerComponent,
   ],
   template: `
     <ac-school-topbar />
@@ -62,7 +64,7 @@ const specializationOptions: readonly string[] = [
     </section>
 
     @if (loading()) {
-      <ac-ui-card><p>Loading profile...</p></ac-ui-card>
+      <ac-ui-card><ac-ui-spinner label="Loading profile…" /></ac-ui-card>
     } @else if (loadError()) {
       <ac-ui-message tone="error">{{ loadError() }}</ac-ui-message>
     } @else if (school(); as current) {

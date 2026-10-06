@@ -8,6 +8,7 @@ import type { AppointmentResponse } from '@auticare/contracts';
 import type { AppointmentStatus } from './appointments.types';
 import { statusPresentation, statusTone } from './appointments.types';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
 
@@ -20,7 +21,13 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent, UiBadgeComponent, UiMessageComponent],
+  imports: [
+    RouterLink,
+    UiEmptyStateComponent,
+    UiBadgeComponent,
+    UiMessageComponent,
+    UiSpinnerComponent,
+  ],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
       <span>Dashboard</span>
@@ -88,14 +95,16 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       }
 
       @if (facade.loading()) {
-        <p class="status" aria-live="polite">Loading appointments...</p>
+        <ac-ui-spinner label="Loading appointments…" />
       } @else if (facade.error()) {
         <ac-ui-message tone="error">{{ facade.error() }}</ac-ui-message>
       } @else if (visibleAppointments().length === 0) {
         <ac-ui-empty-state
           title="No appointments to show"
           message="Schedule a visit with a specialist to see it listed here."
-        />
+        >
+          <a class="schedule-cta" routerLink="/appointments/new">Schedule appointment</a>
+        </ac-ui-empty-state>
       } @else {
         @if (cancelError(); as problem) {
           <ac-ui-message tone="error">{{ problem }}</ac-ui-message>

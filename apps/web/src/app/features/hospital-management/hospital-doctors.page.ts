@@ -3,10 +3,11 @@ import type { DoctorResponse } from '@auticare/contracts';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { HospitalManagementApi } from './hospital-management.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 @Component({
   standalone: true,
-  imports: [UiEmptyStateComponent, UiMessageComponent],
+  imports: [UiEmptyStateComponent, UiMessageComponent, UiSpinnerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -40,7 +41,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
       }
 
       @if (loading()) {
-        <p class="status" aria-live="polite">Loading doctors...</p>
+        <ac-ui-spinner label="Loading doctors…" />
       } @else if (doctors().length === 0) {
         <ac-ui-empty-state
           title="No doctors added yet"

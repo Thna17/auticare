@@ -3,6 +3,7 @@ import type { OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ScreeningApi } from './data-access/screening.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 /**
  * Transient hand-off page. Creates a screening session for the given child
@@ -12,14 +13,14 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
  */
 @Component({
   standalone: true,
-  imports: [UiMessageComponent],
+  imports: [UiMessageComponent, UiSpinnerComponent],
   template: `
     <section class="wait">
       @if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
         <button type="button" class="link" (click)="goHome()">Back to Screening</button>
       } @else {
-        <p class="status">Preparing your screening…</p>
+        <ac-ui-spinner label="Preparing your screening…" />
       }
     </section>
   `,

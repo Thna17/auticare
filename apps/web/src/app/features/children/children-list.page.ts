@@ -6,10 +6,11 @@ import { AuthService } from '../../core/auth/auth.service';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { ChildrenFacade } from './state/children.facade';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent, UiMessageComponent],
+  imports: [RouterLink, UiEmptyStateComponent, UiMessageComponent, UiSpinnerComponent],
   template: `
     <section class="page-header">
       <div>
@@ -23,17 +24,18 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
     </section>
 
     @if (facade.loading()) {
-      <p class="status" aria-live="polite">Loading children...</p>
+      <ac-ui-spinner label="Loading children…" />
     } @else if (facade.error()) {
       <ac-ui-message tone="error">{{ facade.error() }}</ac-ui-message>
     } @else if (facade.children().length === 0) {
       <ac-ui-empty-state
         title="No child profiles yet"
         message="Create a profile when you are ready to track support plans."
-      />
-      @if (canCreateChildren()) {
-        <a class="empty-action" routerLink="/children/new">Create child profile</a>
-      }
+      >
+        @if (canCreateChildren()) {
+          <a class="empty-action" routerLink="/children/new">Create child profile</a>
+        }
+      </ac-ui-empty-state>
     } @else {
       <section class="child-grid" aria-label="Child profiles">
         @for (child of facade.children(); track child.id) {

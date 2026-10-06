@@ -7,6 +7,7 @@ import { ChildrenApi } from '../children/data-access/children.api';
 import { SchoolsApi } from '../schools/data-access/schools.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 type QuickAction = {
   readonly title: string;
@@ -34,7 +35,7 @@ const quickActions: readonly QuickAction[] = [
 
 @Component({
   standalone: true,
-  imports: [RouterLink, SchoolTopbarComponent, UiMessageComponent],
+  imports: [RouterLink, SchoolTopbarComponent, UiMessageComponent, UiSpinnerComponent],
   host: {
     '[class.school-dashboard]': 'isSchoolStaff()',
   },
@@ -46,13 +47,9 @@ const quickActions: readonly QuickAction[] = [
           <ac-school-topbar />
 
           @if (dashboardLoading()) {
-            <div class="loading-state">
-              <p>Loading dashboard...</p>
-            </div>
+            <ac-ui-spinner label="Loading dashboard…" />
           } @else if (dashboardError()) {
-            <div class="error-state" role="alert">
-              <p>{{ dashboardError() }}</p>
-            </div>
+            <ac-ui-message tone="error">{{ dashboardError() }}</ac-ui-message>
           } @else {
             <!-- Greeting Section -->
             <section class="greeting-section">

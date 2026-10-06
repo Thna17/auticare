@@ -4,6 +4,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import type { NotificationResponse, NotificationType } from '@auticare/contracts';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { ParentNotificationsApi } from './data-access/parent-notifications.api';
 
 /** Plain-language label and tone per notification type. */
@@ -23,7 +25,7 @@ type ReadFilter = 'ALL' | 'UNREAD';
 @Component({
   standalone: true,
   selector: 'ac-parent-notifications',
-  imports: [DatePipe, RouterLink, UiEmptyStateComponent],
+  imports: [DatePipe, RouterLink, UiEmptyStateComponent, UiMessageComponent, UiSpinnerComponent],
   template: `
     <section class="notifications">
       <header class="head">
@@ -51,19 +53,19 @@ type ReadFilter = 'ALL' | 'UNREAD';
       </div>
 
       @if (loading()) {
-        <p class="state">Loading your notifications…</p>
+        <ac-ui-spinner label="Loading your notifications…" />
       } @else if (error(); as problem) {
-        <div class="state error" role="alert">
-          <p>{{ problem }}</p>
+        <ac-ui-message tone="error">
+          {{ problem }}
           <button type="button" class="retry" (click)="load()">Try again</button>
-        </div>
+        </ac-ui-message>
       } @else if (visible().length === 0) {
         <ac-ui-empty-state
           [title]="filter() === 'UNREAD' ? 'Nothing unread' : 'No notifications yet'"
           [message]="
             filter() === 'UNREAD'
               ? 'You have read everything. Switch to All to see earlier updates.'
-              : 'When a school or clinic has an update about your child, it will appear here.'
+              : 'You are all caught up. New updates from schools and clinics will appear here.'
           "
         />
       } @else {

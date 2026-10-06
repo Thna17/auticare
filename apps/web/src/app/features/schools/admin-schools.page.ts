@@ -5,10 +5,11 @@ import type { AdminSchoolAccountResponse } from '@auticare/contracts';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiCardComponent, UiMessageComponent],
+  imports: [RouterLink, UiCardComponent, UiMessageComponent, UiSpinnerComponent],
   template: `
     <section class="page-header">
       <div>
@@ -20,7 +21,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
     </section>
 
     @if (loading()) {
-      <ac-ui-card><p>Loading school accounts...</p></ac-ui-card>
+      <ac-ui-card><ac-ui-spinner label="Loading school accounts…" /></ac-ui-card>
     } @else if (error()) {
       <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     } @else if (!accounts().length) {

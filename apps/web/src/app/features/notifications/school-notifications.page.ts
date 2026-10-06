@@ -9,12 +9,15 @@ import type { OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import type { SchoolNotificationItem } from '@auticare/contracts';
 import { SchoolsApi } from '../schools/data-access/schools.api';
+import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
 
 @Component({
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, UiEmptyStateComponent, UiMessageComponent, UiSpinnerComponent],
   selector: 'ac-school-notifications',
   template: `
     <div class="notifications-card">
@@ -62,20 +65,21 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
 
       <!-- States -->
       @if (loading()) {
-        <div class="state-card">Loading notifications…</div>
+        <ac-ui-spinner label="Loading notifications…" />
       } @else if (error(); as loadError) {
-        <div class="state-card state-card--error">
+        <ac-ui-message tone="error">
           {{ loadError }}
           <button type="button" class="retry-btn" (click)="load()">Retry</button>
-        </div>
+        </ac-ui-message>
       } @else if (filtered().length === 0) {
-        <div class="state-card">
-          @if (notifications().length === 0) {
-            No notifications yet. Enrollment requests from parents will appear here.
-          } @else {
-            No notifications match this filter.
-          }
-        </div>
+        <ac-ui-empty-state
+          [title]="notifications().length === 0 ? 'You are all caught up' : 'No matches'"
+          [message]="
+            notifications().length === 0
+              ? 'Enrollment requests and other school updates will appear here.'
+              : 'No notifications match this filter. Choose another filter to see more.'
+          "
+        />
       } @else {
         <!-- Table -->
         <table class="notifications-table">

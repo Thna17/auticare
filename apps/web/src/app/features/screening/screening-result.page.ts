@@ -10,6 +10,7 @@ import type { BadgeTone } from './components/screening-badge.component';
 import { ScreeningInfoBannerComponent } from './components/screening-info-banner.component';
 import { observationFor } from './screening-observations';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 const MAX_ANSWER_VALUE = 4;
 
@@ -121,11 +122,12 @@ const formatAge = (dateOfBirth: string): string => {
     ScreeningBadgeComponent,
     ScreeningInfoBannerComponent,
     UiMessageComponent,
+    UiSpinnerComponent,
   ],
   template: `
     <section class="result">
       @if (loading()) {
-        <p class="status">Loading…</p>
+        <ac-ui-spinner label="Loading screening result…" />
       } @else if (fatalError()) {
         <div class="fatal">
           <ac-ui-message tone="error">{{ fatalError() }}</ac-ui-message>

@@ -4,10 +4,11 @@ import { RouterLink } from '@angular/router';
 import type { HospitalResponse } from '@auticare/contracts';
 import { HospitalsApi } from '../hospitals/data-access/hospitals.api';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent],
+  imports: [RouterLink, UiEmptyStateComponent, UiSpinnerComponent],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
       <a routerLink="/appointments">Hospital Appointments</a>
@@ -19,7 +20,7 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
     <p>Pick a hospital to see its available specialists and request an appointment.</p>
 
     @if (loading()) {
-      <p class="status" aria-live="polite">Loading hospitals...</p>
+      <ac-ui-spinner label="Loading hospitals…" />
     } @else if (hospitals().length === 0) {
       <ac-ui-empty-state
         title="No hospitals available yet"
