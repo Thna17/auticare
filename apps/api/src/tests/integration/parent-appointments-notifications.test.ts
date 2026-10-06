@@ -197,6 +197,69 @@ describe('parent appointment cancellation', () => {
   });
 });
 
+describe('appointment list pagination', () => {
+  // The list was unbounded: every appointment a family had ever made came back on
+  // every request. These assert the page is actually applied, the cap cannot be
+  // argued past, and the boundary between pages neither repeats nor skips a row.
+
+  it('applies the default page size and reports the totals', async () => {
+    const res = await ownerAgent.get('/api/v1/appointments');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data.appointments)).toBe(true);
+    expect(res.body.data.pagination).toMatchObject({ page: 1, limit: 20 });
+    expect(res.body.data.pagination.total).toBeGreaterThanOrEqual(
+      res.body.data.appointments.length,
+    );
+  });
+
+  it('enforces the requested limit', async () => {
+    const res = await ownerAgent.get('/api/v1/appointments?limit=1');
+    expect(res.status).toBe(200);
+    expect(res.body.data.appointments).toHaveLength(1);
+    expect(res.body.data.pagination.limit).toBe(1);
+  });
+
+  it('refuses a limit above the maximum rather than honouring it', async () => {
+    const res = await ownerAgent.get('/api/v1/appointments?limit=1000');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('rejects a page below 1', async () => {
+    const res = await ownerAgent.get('/api/v1/appointments?page=0');
+    expect(res.status).toBe(400);
+  });
+
+  it('returns different rows either side of a page boundary', async () => {
+    const first = await ownerAgent.get('/api/v1/appointments?limit=1&page=1');
+    const second = await ownerAgent.get('/api/v1/appointments?limit=1&page=2');
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+
+    const firstId = first.body.data.appointments[0]?.id;
+    const secondId = second.body.data.appointments[0]?.id;
+    expect(firstId).toBeTruthy();
+    expect(secondId).toBeTruthy();
+    // A skip computed with an off-by-one would repeat this row rather than move on.
+    expect(secondId).not.toBe(firstId);
+  });
+
+  it('reports totalPages consistently with total and limit', async () => {
+    const res = await ownerAgent.get('/api/v1/appointments?limit=1');
+    const { total, limit, totalPages } = res.body.data.pagination;
+    expect(totalPages).toBe(Math.max(1, Math.ceil(total / limit)));
+    // Never 0, so a client never renders "page 1 of 0".
+    expect(totalPages).toBeGreaterThanOrEqual(1);
+  });
+
+  it('returns an empty page past the end without failing', async () => {
+    const res = await ownerAgent.get('/api/v1/appointments?limit=1&page=999');
+    expect(res.status).toBe(200);
+    expect(res.body.data.appointments).toHaveLength(0);
+    expect(res.body.data.pagination.total).toBeGreaterThan(0);
+  });
+});
+
 describe('parent notifications', () => {
   it('returns only the caller’s own notifications', async () => {
     const res = await ownerAgent.get('/api/v1/parents/notifications');

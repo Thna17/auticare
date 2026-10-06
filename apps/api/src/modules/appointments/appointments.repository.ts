@@ -27,12 +27,19 @@ export class AppointmentsRepository {
   }) {
     return prisma.appointment.create({ data: input, include: appointmentInclude });
   }
-  listForParent(parentId: string) {
-    return prisma.appointment.findMany({
-      where: { parentId },
-      include: appointmentInclude,
-      orderBy: { scheduledAt: 'desc' },
-    });
+  /** One page of a parent's appointments, counted in the same transaction. */
+  async listForParent(parentId: string, pagination: { skip: number; take: number }) {
+    const where = { parentId };
+    const [items, total] = await prisma.$transaction([
+      prisma.appointment.findMany({
+        where,
+        include: appointmentInclude,
+        orderBy: { scheduledAt: 'desc' },
+        ...pagination,
+      }),
+      prisma.appointment.count({ where }),
+    ]);
+    return { items, total };
   }
   findForParent(id: string, parentId: string) {
     return prisma.appointment.findFirst({ where: { id, parentId }, include: appointmentInclude });

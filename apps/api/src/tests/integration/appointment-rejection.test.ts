@@ -126,8 +126,11 @@ describe('appointment rejection reason', () => {
   it('shows the reason to the parent whose appointment was rejected', async () => {
     const res = await parentAgent.get('/api/v1/appointments');
     expect(res.status).toBe(200);
-    const rejected = res.body.data.find((a: { id: string }) => a.id === appointmentId) as
-      { rejectionReason: string | null; reason: string | null } | undefined;
+    // The list is paginated now, so `data` carries { appointments, pagination }
+    // rather than a bare array.
+    const rejected = res.body.data.appointments.find(
+      (a: { id: string }) => a.id === appointmentId,
+    ) as { rejectionReason: string | null; reason: string | null } | undefined;
     expect(rejected?.rejectionReason).toBe('No paediatric slots that week.');
     expect(rejected?.reason).toBe('Parent-supplied request text');
   });

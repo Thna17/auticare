@@ -37,12 +37,6 @@ export type ApiError = {
     readonly requestId: string;
   };
 };
-export type PaginationMeta = {
-  readonly page: number;
-  readonly pageSize: number;
-  readonly total: number;
-  readonly totalPages: number;
-};
 export const parentResponseSchema = z.object({
   id: z.string(),
   email: z.string().email(),
@@ -291,6 +285,44 @@ export type SchoolResponse = z.infer<typeof schoolResponseSchema>;
  * filters on it. `specializations` is a comma-separated tag list; a school
  * matches when it carries ANY of the tags.
  */
+// ── Pagination ────────────────────────────────────────────────────────
+/**
+ * Shared page/limit query for list endpoints.
+ *
+ * Nearly every list in the app was unbounded — 36 of 37 findMany calls had no
+ * take — so a growing database would have been returned whole on every request.
+ *
+ * `limit` has a hard maximum as well as a default: without the cap a client can
+ * ask for the entire table and defeat the point, and the cap has to live in the
+ * schema rather than the service so it is enforced before a query is built.
+ *
+ * The pre-existing listEnrolledStudentsQuerySchema keeps its own default of 10.
+ * Changing it would alter the size of a response clients already receive, which
+ * is a behaviour change rather than the mechanical one this is.
+ */
+export const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
+
+/**
+ * Counts returned alongside every paginated list, matching the shape
+ * getEnrolledStudents established.
+ *
+ * Replaces an earlier hand-written PaginationMeta type that used `pageSize`
+ * instead of `limit`. It was dead — nothing imported it — and having two
+ * competing shapes in the same file is how a client ends up reading the wrong
+ * key off a response.
+ */
+export const paginationMetaSchema = z.object({
+  total: z.number().int(),
+  page: z.number().int(),
+  limit: z.number().int(),
+  totalPages: z.number().int(),
+});
+export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
+
 export const parentSchoolSearchQuerySchema = z.object({
   search: z.string().trim().max(120).optional(),
   province: z.string().trim().max(120).optional(),
