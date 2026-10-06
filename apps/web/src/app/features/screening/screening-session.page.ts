@@ -73,10 +73,18 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
           <button type="button" class="btn-back" [disabled]="currentIndex() === 0" (click)="back()">
             Back
           </button>
+          <!--
+            Disabled while an answer is still saving, not only while submitting.
+            selectAnswer updates local state immediately and sends the answer in
+            the background, and next() checks only that local state — so pressing
+            Finish before the last answer landed submitted an incomplete session,
+            and the server refused it. The person had answered everything and was
+            told the screening could not be submitted.
+          -->
           <button
             type="button"
             class="btn-next"
-            [disabled]="currentValue() === null || submitting()"
+            [disabled]="currentValue() === null || saving() || submitting()"
             (click)="next()"
           >
             {{ isLast() ? (submitting() ? 'Submitting…' : 'Finish') : 'Next' }}
