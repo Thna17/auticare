@@ -131,4 +131,49 @@ describe('school activity reports', () => {
     ).toBe(true);
     expect(parentReports.body.data.pagination.page).toBe(1);
   });
+
+  // POST /schools/activity-reports is a near-copy of POST /schools/reports, and
+  // it was missing the line that carries `status` through. Both endpoints accept
+  // the field, so the request looked fine and the response said DRAFT; the school
+  // was navigated away as though it had submitted, and the parent's progress page
+  // — which lists SUBMITTED only — never showed the report. Asserted on both
+  // endpoints, because the duplication is what made the gap possible.
+  it.each([
+    ['/api/v1/schools/activity-reports', 'activity-reports'],
+    ['/api/v1/schools/reports', 'reports'],
+  ])('stores the submitted status asked for via %s', async (path) => {
+    const schoolAgent = request.agent(app);
+    await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
+
+    const created = await schoolAgent.post(path).send({
+      childId,
+      activityCategory: 'Social/Emotional',
+      activityName: `Status check ${path}`,
+      summary: 'Checks that status survives the request.',
+      teacherObservation: 'Engaged throughout.',
+      status: 'SUBMITTED',
+    });
+
+    expect(created.status).toBe(201);
+    expect(created.body.data.status).toBe('SUBMITTED');
+
+    // The field the parent's own endpoint filters on, read back from storage.
+    const readBack = await schoolAgent.get(`/api/v1/schools/reports/${created.body.data.id}`);
+    expect(readBack.body.data.status).toBe('SUBMITTED');
+  });
+
+  it('still defaults to DRAFT when no status is asked for', async () => {
+    const schoolAgent = request.agent(app);
+    await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
+
+    const created = await schoolAgent.post('/api/v1/schools/activity-reports').send({
+      childId,
+      activityCategory: 'Social/Emotional',
+      activityName: 'Draft by omission',
+      teacherObservation: 'Saved part way through.',
+    });
+
+    expect(created.status).toBe(201);
+    expect(created.body.data.status).toBe('DRAFT');
+  });
 });

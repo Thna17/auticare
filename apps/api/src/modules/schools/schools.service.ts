@@ -274,6 +274,13 @@ export class SchoolsService {
       }),
       ...(input.recommendations !== undefined && { recommendations: input.recommendations }),
       ...(input.photoUrls !== undefined && { photoUrls: input.photoUrls }),
+      // This line was missing, and it is the whole bug. POST /schools/reports has
+      // it; this endpoint is a near-copy of that one and the UI posts here. So a
+      // school filled in a report, pressed "Submit Report", was navigated away as
+      // if it had worked — and the row was written with Prisma's DRAFT default.
+      // The parent's progress page lists SUBMITTED reports only, so the report the
+      // school wrote never reached the family and nothing said so.
+      status: input.status ?? 'DRAFT',
     });
     return toActivityReportResponse(report);
   }
