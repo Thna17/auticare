@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { created, ok } from '../../common/http/response.js';
 import { validatedQuery } from '../../common/middleware/validate-query.js';
-import type { ParentSchoolSearchQuery } from '@auticare/contracts';
+import type { PaginationQuery, ParentSchoolSearchQuery } from '@auticare/contracts';
 import { SchoolsService } from './schools.service.js';
 
 const service = new SchoolsService();
@@ -19,6 +19,9 @@ const requiredParam = (value: string | readonly string[] | undefined): string =>
 const searchFilters = (req: Request): ParentSchoolSearchQuery => {
   const parsed = validatedQuery<ParentSchoolSearchQuery>(req);
   return {
+    // page and limit always have values — the schema defaults them.
+    page: parsed.page,
+    limit: parsed.limit,
     ...(parsed.search !== undefined && { search: parsed.search }),
     ...(parsed.province !== undefined && { province: parsed.province }),
     ...(parsed.availability !== undefined && { availability: parsed.availability }),
@@ -76,7 +79,7 @@ export const createActivityReport = async (req: Request, res: Response) =>
   created(res, await service.createActivityReport(req.auth!, req.body));
 
 export const listActivityReports = async (req: Request, res: Response) =>
-  ok(res, await service.listActivityReports(req.auth!));
+  ok(res, await service.listActivityReports(req.auth!, validatedQuery<PaginationQuery>(req)));
 
 export const deleteActivityReport = async (req: Request, res: Response) =>
   ok(res, await service.deleteActivityReport(req.auth!, requiredParam(req.params.id)));

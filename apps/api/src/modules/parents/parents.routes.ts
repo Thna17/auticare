@@ -1,7 +1,12 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../auth/index.js';
 import { validateBody } from '../../common/middleware/validate.js';
-import { createAdmissionRequestSchema } from '@auticare/contracts';
+import { validateQuery } from '../../common/middleware/validate-query.js';
+import {
+  createAdmissionRequestSchema,
+  listParentNotificationsQuerySchema,
+  paginationQuerySchema,
+} from '@auticare/contracts';
 import {
   createEnrollmentRequest,
   listActivityReports,
@@ -14,7 +19,12 @@ parentsRoutes.use(requireAuth);
 
 // GET /api/v1/parents/activity-reports/:childId
 // Full path is /api/v1/parents/... — app.ts mounts at /api/v1/parents.
-parentsRoutes.get('/activity-reports/:childId', requireRole('PARENT'), listActivityReports);
+parentsRoutes.get(
+  '/activity-reports/:childId',
+  requireRole('PARENT'),
+  validateQuery(paginationQuerySchema),
+  listActivityReports,
+);
 
 // POST /api/v1/parents/enrollment-requests — request enrollment of one of the
 // parent's children at a school. Creates the AdmissionRequest plus the
@@ -31,4 +41,9 @@ parentsRoutes.get('/enrollment-requests', requireRole('PARENT'), listEnrollmentR
 
 // GET /api/v1/parents/notifications — the parent's own notifications, newest
 // first (includes enrollment decision outcomes).
-parentsRoutes.get('/notifications', requireRole('PARENT'), listParentNotifications);
+parentsRoutes.get(
+  '/notifications',
+  requireRole('PARENT'),
+  validateQuery(listParentNotificationsQuerySchema),
+  listParentNotifications,
+);

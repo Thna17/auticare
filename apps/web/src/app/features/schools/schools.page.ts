@@ -1,7 +1,7 @@
 // schools.page.ts (Parent Side)
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
-import type { SchoolResponse } from '@auticare/contracts';
+import type { PaginationMeta, SchoolResponse } from '@auticare/contracts';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ChildrenApi } from '../children/data-access/children.api';
@@ -12,6 +12,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 
 interface SchoolViewModel extends SchoolResponse {
   rating: number | null;
@@ -34,6 +35,7 @@ const SPECIALIZATION_OPTIONS = [
     RouterLink,
     UiMessageComponent,
     UiDialogComponent,
+    UiPaginationComponent,
     UiSpinnerComponent,
     UiEmptyStateComponent,
   ],
@@ -174,7 +176,7 @@ const SPECIALIZATION_OPTIONS = [
             } @else {
               <div class="list-header">
                 <span class="results-count"
-                  >Showing {{ schools().length }} results in your area</span
+                  >{{ pagination()?.total ?? schools().length }} results in your area</span
                 >
                 <div class="sort-dropdown">
                   <label>Sort by:</label>
@@ -276,6 +278,18 @@ const SPECIALIZATION_OPTIONS = [
                     </button>
                   </div>
                 </div>
+              }
+
+              @if (pagination(); as meta) {
+                <ac-ui-pagination
+                  [page]="meta.page"
+                  [totalPages]="meta.totalPages"
+                  [total]="meta.total"
+                  [perPage]="meta.limit"
+                  itemNoun="schools"
+                  label="School directory pages"
+                  (pageChange)="goToPage($event)"
+                />
               }
             }
           </div>
@@ -1181,46 +1195,6 @@ const SPECIALIZATION_OPTIONS = [
         background: var(--ac-color-ink-a);
       }
 
-      /* Pagination */
-      .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        margin-top: 32px;
-        padding: 20px;
-      }
-
-      .page-btn {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid var(--ac-color-border-slate);
-        background: white;
-        border-radius: 8px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .page-btn:hover {
-        border-color: var(--ac-color-blue-500);
-        background: var(--ac-color-slate-100);
-      }
-
-      .page-btn.active {
-        background: var(--ac-color-action-alt);
-        color: white;
-        border-color: var(--ac-color-action-alt);
-      }
-
-      .ellipsis {
-        color: var(--ac-color-text-slate);
-        padding: 0 8px;
-      }
-
       /* Loading & Empty States */
       .loading-state,
       .empty-state {
@@ -1355,6 +1329,20 @@ export class SchoolsPage implements OnInit {
     });
   }
 
+  readonly pagination = signal<PaginationMeta | null>(null);
+  readonly page = signal(1);
+
+  goToPage(page: number) {
+    this.page.set(page);
+    void this.loadSchools();
+  }
+
+  /** Any filter change narrows the directory, so the old page number may not exist. */
+  private reloadFromFirstPage() {
+    this.page.set(1);
+    void this.loadSchools();
+  }
+
   loadSchools() {
     this.loading.set(true);
     this.error.set(null);
@@ -1367,13 +1355,15 @@ export class SchoolsPage implements OnInit {
           this.selectedSpecializations().length > 0
             ? this.selectedSpecializations().join(',')
             : undefined,
+        page: this.page(),
       })
       .subscribe({
-        next: (schools) => {
+        next: ({ schools, pagination }) => {
           // Real backend data — no mock overrides. rating/reviewCount/isVerified/
           // specializations come straight from the API (rating is computed from
           // real reviews server-side).
           this.schools.set(schools);
+          this.pagination.set(pagination);
           this.loading.set(false);
         },
         error: () => {
@@ -1384,7 +1374,7 @@ export class SchoolsPage implements OnInit {
   }
 
   applyFilters() {
-    void this.loadSchools();
+    this.reloadFromFirstPage();
   }
 
   toggleSpecialization(tag: string) {
@@ -1392,7 +1382,7 @@ export class SchoolsPage implements OnInit {
     this.selectedSpecializations.set(
       current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag],
     );
-    void this.loadSchools();
+    this.reloadFromFirstPage();
   }
 
   clearFilters() {
@@ -1400,7 +1390,7 @@ export class SchoolsPage implements OnInit {
     this.province.set('');
     this.availability.set('');
     this.selectedSpecializations.set([]);
-    void this.loadSchools();
+    this.reloadFromFirstPage();
   }
 
   availabilityLabel(status: SchoolResponse['availabilityStatus']): string {

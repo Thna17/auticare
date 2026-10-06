@@ -14,8 +14,18 @@ import { prisma } from '../../database/prisma.js';
 import { ENROLLMENT_CHILD_NOT_ARCHIVED } from '../../database/active-child.js';
 import type { SchoolAccountRecord, SchoolRating } from './schools.mapper.js';
 
+/**
+ * Offset/limit as the pagination helper produces it. Every list method below
+ * takes it the same way so a caller cannot accidentally pass page numbers where
+ * a row offset is expected.
+ */
+type Page = { skip: number; take: number };
+
+/** A page of rows plus the unfiltered-by-page total, for the response meta. */
+type Paged<TRow> = { items: TRow[]; total: number };
+
 export class SchoolsRepository {
-  listSchools(
+  async listSchools(
     // `| undefined` is explicit because exactOptionalPropertyTypes is on and
     // the caller always passes all four keys, some of them undefined.
     filters: {
@@ -24,7 +34,8 @@ export class SchoolsRepository {
       availability?: SchoolAvailabilityStatus | undefined;
       specializations?: string[] | undefined;
     } = {},
-  ): Promise<School[]> {
+    page: Page,
+  ): Promise<Paged<School>> {
     const where: Prisma.SchoolWhereInput = { status: 'ACTIVE' };
 
     if (filters.province !== undefined && filters.province !== '') {
@@ -49,10 +60,18 @@ export class SchoolsRepository {
       where.specializations = { array_contains: filters.specializations };
     }
 
-    return prisma.school.findMany({
-      where,
-      orderBy: [{ city: 'asc' }, { name: 'asc' }],
-    });
+    // One transaction so the page and the total describe the same snapshot —
+    // two separate round trips can report "showing 1-20 of 19" if a school is
+    // activated in between.
+    const [items, total] = await prisma.$transaction([
+      prisma.school.findMany({
+        where,
+        orderBy: [{ city: 'asc' }, { name: 'asc' }],
+        ...page,
+      }),
+      prisma.school.count({ where }),
+    ]);
+    return { items, total };
   }
 
   /** Distinct provinces (stored in `city`) of active schools, for the filter dropdown. */
@@ -310,11 +329,24 @@ export class SchoolsRepository {
     });
   }
 
-  listReportsForParent(parentId: string): Promise<ActivityReport[]> {
-    return prisma.activityReport.findMany({
-      where: { child: { parentId } },
-      orderBy: { activityDate: 'desc' },
-    });
+  // childId/status used to be filtered in memory after fetching every report
+  // (see the removed applyQueryFilters). That cannot be paginated: skip/take
+  // would be applied before the filter and pages would contain the wrong rows.
+  async listReportsForParent(
+    parentId: string,
+    filters: { childId?: string | undefined; status?: string | undefined },
+    page: Page,
+  ): Promise<Paged<ActivityReport>> {
+    const where: Prisma.ActivityReportWhereInput = {
+      child: { parentId },
+      ...(filters.childId !== undefined && { childId: filters.childId }),
+      ...(filters.status !== undefined && { status: filters.status }),
+    };
+    const [items, total] = await prisma.$transaction([
+      prisma.activityReport.findMany({ where, orderBy: { activityDate: 'desc' }, ...page }),
+      prisma.activityReport.count({ where }),
+    ]);
+    return { items, total };
   }
 
   findActivityReportById(id: string): Promise<ActivityReport | null> {
@@ -349,40 +381,61 @@ export class SchoolsRepository {
     });
   }
 
-  listReportsForSchoolWithRelations(
+  async listReportsForSchoolWithRelations(
     schoolId: string,
-    filters?: { childId?: string; status?: string },
+    filters: { childId?: string | undefined; status?: string | undefined },
+    page: Page,
   ) {
-    return prisma.activityReport.findMany({
-      where: {
-        schoolId,
-        ...(filters?.childId !== undefined && { childId: filters.childId }),
-        ...(filters?.status !== undefined && { status: filters.status }),
-      },
-      include: {
-        child: { select: { firstName: true, lastName: true, photoUrl: true } },
-        reporter: { select: { firstName: true, lastName: true } },
-      },
-      orderBy: { activityDate: 'desc' },
-    });
+    const where: Prisma.ActivityReportWhereInput = {
+      schoolId,
+      ...(filters.childId !== undefined && { childId: filters.childId }),
+      ...(filters.status !== undefined && { status: filters.status }),
+    };
+    const [items, total] = await prisma.$transaction([
+      prisma.activityReport.findMany({
+        where,
+        include: {
+          child: { select: { firstName: true, lastName: true, photoUrl: true } },
+          reporter: { select: { firstName: true, lastName: true } },
+        },
+        orderBy: { activityDate: 'desc' },
+        ...page,
+      }),
+      prisma.activityReport.count({ where }),
+    ]);
+    return { items, total };
   }
 
-  listReportsForSchool(
+  async listReportsForSchool(
     schoolId: string,
-    filters?: { childId?: string; status?: string },
-  ): Promise<ActivityReport[]> {
-    return prisma.activityReport.findMany({
-      where: {
-        schoolId,
-        ...(filters?.childId !== undefined && { childId: filters.childId }),
-        ...(filters?.status !== undefined && { status: filters.status }),
-      },
-      orderBy: { activityDate: 'desc' },
-    });
+    filters: { childId?: string | undefined; status?: string | undefined },
+    page: Page,
+  ): Promise<Paged<ActivityReport>> {
+    const where: Prisma.ActivityReportWhereInput = {
+      schoolId,
+      ...(filters.childId !== undefined && { childId: filters.childId }),
+      ...(filters.status !== undefined && { status: filters.status }),
+    };
+    const [items, total] = await prisma.$transaction([
+      prisma.activityReport.findMany({ where, orderBy: { activityDate: 'desc' }, ...page }),
+      prisma.activityReport.count({ where }),
+    ]);
+    return { items, total };
   }
 
-  listAllReports(): Promise<ActivityReport[]> {
-    return prisma.activityReport.findMany({ orderBy: { activityDate: 'desc' } });
+  async listAllReports(
+    filters: { childId?: string | undefined; status?: string | undefined },
+    page: Page,
+  ): Promise<Paged<ActivityReport>> {
+    const where: Prisma.ActivityReportWhereInput = {
+      ...(filters.childId !== undefined && { childId: filters.childId }),
+      ...(filters.status !== undefined && { status: filters.status }),
+    };
+    const [items, total] = await prisma.$transaction([
+      prisma.activityReport.findMany({ where, orderBy: { activityDate: 'desc' }, ...page }),
+      prisma.activityReport.count({ where }),
+    ]);
+    return { items, total };
   }
 
   updateActivityReport(
@@ -431,20 +484,50 @@ export class SchoolsRepository {
     });
   }
 
-  /** Notification rows joined with the sender's (parent's) name. */
-  listNotificationsWithSender(schoolId: string, filters?: { isRead?: boolean }) {
-    return prisma.notification.findMany({
-      where: {
-        schoolId,
-        ...(filters?.isRead !== undefined && {
-          status: filters.isRead ? 'READ' : 'UNREAD',
-        }),
-      },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        parent: { select: { firstName: true, lastName: true } },
-      },
-    });
+  /**
+   * Notification rows joined with the sender's (parent's) name.
+   *
+   * The service enriches each row with a further query or two, so bounding this
+   * also bounds that loop: before pagination a school with a year of history
+   * fanned out into hundreds of follow-up queries on one request.
+   */
+  async listNotificationsWithSender(
+    schoolId: string,
+    filters: { isRead?: boolean | undefined; view?: 'PENDING' | 'DECIDED' | undefined },
+    page: Page,
+  ) {
+    const where: Prisma.NotificationWhereInput = {
+      schoolId,
+      ...(filters.isRead !== undefined && {
+        status: filters.isRead ? 'READ' : 'UNREAD',
+      }),
+    };
+
+    // Notification.enrollmentId is a bare column, not a relation, so Prisma
+    // cannot join AdmissionRequest to filter on its status. The ids are resolved
+    // first instead. Both queries are scoped to this school, so the id set is
+    // bounded by the school's own request history.
+    if (filters.view !== undefined) {
+      const statuses = filters.view === 'PENDING' ? ['REQUESTED'] : ['APPROVED', 'REJECTED'];
+      const requests = await prisma.admissionRequest.findMany({
+        where: { schoolId, status: { in: statuses } },
+        select: { id: true },
+      });
+      where.type = 'ENROLLMENT_REQUEST';
+      where.enrollmentId = { in: requests.map((request) => request.id) };
+    }
+    const [items, total] = await prisma.$transaction([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          parent: { select: { firstName: true, lastName: true } },
+        },
+        ...page,
+      }),
+      prisma.notification.count({ where }),
+    ]);
+    return { items, total };
   }
 
   /** Admission request linked to a notification (via enrollmentId pointer).

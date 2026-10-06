@@ -1,4 +1,11 @@
-import type { AdmissionRequestResponse, ParentActivityReportResponse } from '@auticare/contracts';
+import type {
+  AdmissionRequestResponse,
+  ListParentNotificationsQuery,
+  PaginationQuery,
+  ParentActivityReportListResponse,
+  ParentNotificationListResponse,
+} from '@auticare/contracts';
+import { toPaginationMeta, toSkipTake } from '../../common/http/pagination.js';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { ParentsRepository } from './parents.repository.js';
 
@@ -14,15 +21,19 @@ export class ParentsService {
   async listActivityReports(
     actor: Actor,
     childId: string,
-  ): Promise<ParentActivityReportResponse[]> {
+    query: PaginationQuery,
+  ): Promise<ParentActivityReportListResponse> {
     if (actor.role !== 'PARENT') throw forbidden();
 
     const child = await this.repository.findOwnedChild(childId, actor.parentId);
     if (!child) throw notFound('Child profile was not found.');
 
-    const reports = await this.repository.listSubmittedReportsForChild(childId);
+    const { items, total } = await this.repository.listSubmittedReportsForChild(
+      childId,
+      toSkipTake(query),
+    );
 
-    return reports.map((report) => ({
+    const reports = items.map((report) => ({
       id: report.id,
       childId: report.childId,
       activityCategory: report.activityCategory,
@@ -42,6 +53,8 @@ export class ParentsService {
         lastName: report.reporter.lastName,
       },
     }));
+
+    return { reports, pagination: toPaginationMeta(query, total) };
   }
 
   /**
@@ -135,12 +148,19 @@ export class ParentsService {
   }
 
   /** GET /parents/notifications — the parent's own notifications, newest first. */
-  async listNotifications(actor: Actor) {
+  async listNotifications(
+    actor: Actor,
+    query: ListParentNotificationsQuery,
+  ): Promise<ParentNotificationListResponse> {
     if (actor.role !== 'PARENT') throw forbidden();
-    const notifications = await this.repository.listNotificationsForParent(actor.parentId);
+    const { items, total } = await this.repository.listNotificationsForParent(
+      actor.parentId,
+      { isRead: query.isRead },
+      toSkipTake(query),
+    );
     // Shaped as NotificationResponse so the web side can reuse the existing
     // contract instead of a parent-only variant.
-    return notifications.map((notification) => ({
+    const notifications = items.map((notification) => ({
       id: notification.id,
       type: notification.type,
       status: notification.status,
@@ -150,5 +170,7 @@ export class ParentsService {
       reportId: notification.reportId,
       createdAt: notification.createdAt.toISOString(),
     }));
+
+    return { notifications, pagination: toPaginationMeta(query, total) };
   }
 }

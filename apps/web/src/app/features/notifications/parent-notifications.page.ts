@@ -1,9 +1,10 @@
 import { DatePipe } from '@angular/common';
 import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { NotificationResponse, NotificationType } from '@auticare/contracts';
+import type { NotificationResponse, NotificationType, PaginationMeta } from '@auticare/contracts';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { ParentNotificationsApi } from './data-access/parent-notifications.api';
@@ -25,7 +26,14 @@ type ReadFilter = 'ALL' | 'UNREAD';
 @Component({
   standalone: true,
   selector: 'ac-parent-notifications',
-  imports: [DatePipe, RouterLink, UiEmptyStateComponent, UiMessageComponent, UiSpinnerComponent],
+  imports: [
+    DatePipe,
+    RouterLink,
+    UiEmptyStateComponent,
+    UiMessageComponent,
+    UiPaginationComponent,
+    UiSpinnerComponent,
+  ],
   template: `
     <section class="notifications">
       <header class="head">
@@ -33,8 +41,8 @@ type ReadFilter = 'ALL' | 'UNREAD';
           <h2>Your notifications</h2>
           <p class="sub">Updates from your child’s school, appointments and screenings.</p>
         </div>
-        @if (unreadCount() > 0) {
-          <span class="unread-pill">{{ unreadCount() }} unread</span>
+        @if (unreadTotal() !== null && unreadTotal()! > 0) {
+          <span class="unread-pill">{{ unreadTotal() }} unread</span>
         }
       </header>
 
@@ -45,7 +53,7 @@ type ReadFilter = 'ALL' | 'UNREAD';
             class="filter"
             [class.active]="filter() === option.value"
             [attr.aria-pressed]="filter() === option.value"
-            (click)="filter.set(option.value)"
+            (click)="setFilter(option.value)"
           >
             {{ option.label }}
           </button>
@@ -59,7 +67,7 @@ type ReadFilter = 'ALL' | 'UNREAD';
           {{ problem }}
           <button type="button" class="retry" (click)="load()">Try again</button>
         </ac-ui-message>
-      } @else if (visible().length === 0) {
+      } @else if (notifications().length === 0) {
         <ac-ui-empty-state
           [title]="filter() === 'UNREAD' ? 'Nothing unread' : 'No notifications yet'"
           [message]="
@@ -70,7 +78,7 @@ type ReadFilter = 'ALL' | 'UNREAD';
         />
       } @else {
         <ul class="list">
-          @for (item of visible(); track item.id) {
+          @for (item of notifications(); track item.id) {
             <li class="row" [class.unread]="item.status === 'UNREAD'">
               <div class="row-main">
                 <div class="row-head">
@@ -92,6 +100,18 @@ type ReadFilter = 'ALL' | 'UNREAD';
             </li>
           }
         </ul>
+
+        @if (pagination(); as meta) {
+          <ac-ui-pagination
+            [page]="meta.page"
+            [totalPages]="meta.totalPages"
+            [total]="meta.total"
+            [perPage]="meta.limit"
+            itemNoun="notifications"
+            label="Notification pages"
+            (pageChange)="goToPage($event)"
+          />
+        }
       }
     </section>
   `,
@@ -278,32 +298,61 @@ export class ParentNotificationsPage implements OnInit {
     { value: 'UNREAD', label: 'Unread' },
   ];
 
-  protected readonly unreadCount = computed(
-    () => this.notifications().filter((item) => item.status === 'UNREAD').length,
-  );
+  protected readonly pagination = signal<PaginationMeta | null>(null);
+  protected readonly page = signal(1);
 
-  protected readonly visible = computed(() =>
-    this.filter() === 'UNREAD'
-      ? this.notifications().filter((item) => item.status === 'UNREAD')
-      : this.notifications(),
-  );
+  /**
+   * Total unread across every page, read from the unread filter's own total
+   * rather than counted from the rows on screen — counting the page would have
+   * reported "3 unread" when there were thirty.
+   */
+  protected readonly unreadTotal = signal<number | null>(null);
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  protected setFilter(value: ReadFilter): void {
+    if (this.filter() === value) return;
+    this.filter.set(value);
+    // A filter narrows the result set, so page 4 of the old one may not exist.
+    this.page.set(1);
+    this.load();
+  }
+
+  protected goToPage(page: number): void {
+    this.page.set(page);
     this.load();
   }
 
   protected load(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.api.list().subscribe({
-      next: (items) => {
-        this.notifications.set(items);
+    const unreadOnly = this.filter() === 'UNREAD';
+    this.api.list(this.page(), unreadOnly ? false : undefined).subscribe({
+      next: ({ notifications, pagination }) => {
+        this.notifications.set(notifications);
+        this.pagination.set(pagination);
+        if (unreadOnly) this.unreadTotal.set(pagination.total);
         this.loading.set(false);
       },
       error: () => {
         this.error.set('Your notifications could not be loaded.');
         this.loading.set(false);
       },
+    });
+    if (!unreadOnly) this.loadUnreadTotal();
+  }
+
+  /**
+   * One extra request for the badge when the list is unfiltered. The alternative
+   * is an unread count in the list response, which would mean a second count
+   * query on the server for every page either way.
+   */
+  private loadUnreadTotal(): void {
+    this.api.list(1, false).subscribe({
+      next: ({ pagination }) => this.unreadTotal.set(pagination.total),
+      error: () => this.unreadTotal.set(null),
     });
   }
 

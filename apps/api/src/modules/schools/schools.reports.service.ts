@@ -4,9 +4,9 @@ import type {
   ListActivityReportsQuery,
   UpdateActivityReportRequest,
 } from '@auticare/contracts';
-import type { ActivityReport } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
+import { toPaginationMeta, toSkipTake } from '../../common/http/pagination.js';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import {
   MIME_BY_EXTENSION,
@@ -92,35 +92,56 @@ export class SchoolsReportsService {
       throw forbidden();
     }
 
+    // childId/status are now part of the database query for every role. The
+    // PARENT and ADMIN branches used to fetch every report and filter the array
+    // afterwards, which cannot be paginated: skip/take would be applied before
+    // the filter, so a page would be cut from the unfiltered set and then
+    // thinned — page 1 of a status filter could come back empty while later
+    // pages had rows.
+    const filters: { childId?: string | undefined; status?: string | undefined } = {
+      childId: query.childId,
+      status: query.status,
+    };
+    const page = toSkipTake(query);
+
     if (actor.role === 'PARENT') {
-      const reports = await this.repository.listReportsForParent(actor.parentId);
-      const filtered = this.applyQueryFilters(reports, query);
-      return filtered.map(toActivityReportResponse);
+      const { items, total } = await this.repository.listReportsForParent(
+        actor.parentId,
+        filters,
+        page,
+      );
+      return {
+        reports: items.map(toActivityReportResponse),
+        pagination: toPaginationMeta(query, total),
+      };
     }
 
     if (actor.role === 'ADMIN') {
-      const reports = await this.repository.listAllReports();
-      const filtered = this.applyQueryFilters(reports, query);
-      return filtered.map(toActivityReportResponse);
+      const { items, total } = await this.repository.listAllReports(filters, page);
+      return {
+        reports: items.map(toActivityReportResponse),
+        pagination: toPaginationMeta(query, total),
+      };
     }
 
     // SCHOOL role — scoped to the staff member's school, with child/reporter info.
     const staff = await this.requireSchoolStaff(actor);
-    const filters: { childId?: string; status?: string } = {};
-    if (query.childId !== undefined) filters.childId = query.childId;
-    if (query.status !== undefined) filters.status = query.status;
-    const reports = await this.repository.listReportsForSchoolWithRelations(
+    const { items, total } = await this.repository.listReportsForSchoolWithRelations(
       staff.schoolId,
       filters,
+      page,
     );
-    return reports.map((r) => ({
-      ...toActivityReportResponse(r),
-      childFirstName: r.child.firstName,
-      childLastName: r.child.lastName,
-      childPhotoUrl: r.child.photoUrl,
-      reporterFirstName: r.reporter.firstName,
-      reporterLastName: r.reporter.lastName,
-    }));
+    return {
+      reports: items.map((r) => ({
+        ...toActivityReportResponse(r),
+        childFirstName: r.child.firstName,
+        childLastName: r.child.lastName,
+        childPhotoUrl: r.child.photoUrl,
+        reporterFirstName: r.reporter.firstName,
+        reporterLastName: r.reporter.lastName,
+      })),
+      pagination: toPaginationMeta(query, total),
+    };
   }
 
   /**
@@ -245,14 +266,6 @@ export class SchoolsReportsService {
 
     const updated = await this.repository.updateActivityReport(reportId, update);
     return toActivityReportResponse(updated);
-  }
-
-  /** Client-side filter for PARENT / ADMIN list queries (DB-side filter used for SCHOOL). */
-  private applyQueryFilters(reports: ActivityReport[], query: ListActivityReportsQuery) {
-    let filtered = reports;
-    if (query.childId !== undefined) filtered = filtered.filter((r) => r.childId === query.childId);
-    if (query.status !== undefined) filtered = filtered.filter((r) => r.status === query.status);
-    return filtered;
   }
 
   private async requireSchoolStaff(actor: Actor) {

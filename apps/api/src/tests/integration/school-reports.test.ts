@@ -125,7 +125,10 @@ describe('school activity reports', () => {
     const parentReports = await parentAgent.get('/api/v1/schools/activity-reports');
     expect(parentReports.status).toBe(200);
     expect(
-      parentReports.body.data.some((item: { id: string }) => item.id === report.body.data.id),
+      parentReports.body.data.reports.some(
+        (item: { id: string }) => item.id === report.body.data.id,
+      ),
     ).toBe(true);
+    expect(parentReports.body.data.pagination.page).toBe(1);
   });
 });

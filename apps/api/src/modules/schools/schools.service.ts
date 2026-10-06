@@ -2,6 +2,7 @@ import type {
   CreateSchoolAccountRequest,
   CreateActivityReportRequest,
   CreateSchoolChildEnrollmentRequest,
+  PaginationQuery,
   ParentSchoolSearchQuery,
   SchoolAvailabilityStatus,
   UpdateSchoolProfileRequest,
@@ -9,6 +10,7 @@ import type {
   UserRole,
 } from '@auticare/contracts';
 import type { Prisma } from '@prisma/client';
+import { toPaginationMeta, toSkipTake } from '../../common/http/pagination.js';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { PasswordService } from '../auth/password.service.js';
 import { SchoolsRepository } from './schools.repository.js';
@@ -37,22 +39,29 @@ export class SchoolsService {
     private readonly passwordService = new PasswordService(),
   ) {}
 
-  async listSchools(actor: Actor, filters: ParentSchoolSearchQuery = {}) {
+  async listSchools(actor: Actor, query: ParentSchoolSearchQuery) {
     if (actor.role === 'SCHOOL') throw forbidden();
-    const specializations = (filters.specializations ?? '')
+    const specializations = (query.specializations ?? '')
       .split(',')
       .map((tag) => tag.trim())
       .filter((tag) => tag !== '');
-    const schools = await this.repository.listSchools({
-      search: filters.search,
-      province: filters.province,
-      availability: filters.availability,
-      specializations: specializations.length > 0 ? specializations : undefined,
-    });
-    const ratings = await this.repository.getRatingsForSchools(schools.map((school) => school.id));
-    return schools.map((school) =>
-      toSchoolResponse(school, ratings.get(school.id) ?? { average: null, count: 0 }),
+    const { items, total } = await this.repository.listSchools(
+      {
+        search: query.search,
+        province: query.province,
+        availability: query.availability,
+        specializations: specializations.length > 0 ? specializations : undefined,
+      },
+      toSkipTake(query),
     );
+    // Ratings are fetched for the page, not for the whole directory.
+    const ratings = await this.repository.getRatingsForSchools(items.map((school) => school.id));
+    return {
+      schools: items.map((school) =>
+        toSchoolResponse(school, ratings.get(school.id) ?? { average: null, count: 0 }),
+      ),
+      pagination: toPaginationMeta(query, total),
+    };
   }
 
   /** Distinct provinces of active schools, for the search filter dropdown. */
@@ -269,22 +278,34 @@ export class SchoolsService {
     return toActivityReportResponse(report);
   }
 
-  async listActivityReports(actor: Actor) {
-    if (actor.role === 'PARENT') {
-      const reports = await this.repository.listReportsForParent(actor.parentId);
-      return reports.map(toActivityReportResponse);
-    }
-    if (actor.role === 'SCHOOL') {
-      const staff = await this.repository.findStaffForParent(actor.parentId);
-      if (!staff) throw forbidden();
-      const reports = await this.repository.listReportsForSchool(staff.schoolId);
-      return reports.map(toActivityReportResponse);
-    }
-    if (actor.role === 'ADMIN') {
-      const reports = await this.repository.listAllReports();
-      return reports.map(toActivityReportResponse);
-    }
-    throw forbidden();
+  /**
+   * GET /schools/activity-reports.
+   *
+   * NOTE: this duplicates GET /schools/reports (SchoolReportsService.listReports),
+   * which returns the same rows with child and reporter names and supports
+   * childId/status filters. Nothing in the web app calls this one. It is bounded
+   * here rather than removed, because removing a reachable endpoint is a decision
+   * for whoever owns the API surface.
+   */
+  async listActivityReports(actor: Actor, query: PaginationQuery) {
+    const page = toSkipTake(query);
+    const paged = async () => {
+      if (actor.role === 'PARENT') {
+        return this.repository.listReportsForParent(actor.parentId, {}, page);
+      }
+      if (actor.role === 'SCHOOL') {
+        const staff = await this.repository.findStaffForParent(actor.parentId);
+        if (!staff) throw forbidden();
+        return this.repository.listReportsForSchool(staff.schoolId, {}, page);
+      }
+      if (actor.role === 'ADMIN') return this.repository.listAllReports({}, page);
+      throw forbidden();
+    };
+    const { items, total } = await paged();
+    return {
+      reports: items.map(toActivityReportResponse),
+      pagination: toPaginationMeta(query, total),
+    };
   }
 
   async deleteActivityReport(actor: Actor, reportId: string) {

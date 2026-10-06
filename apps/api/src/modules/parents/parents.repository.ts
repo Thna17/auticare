@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
 
 /**
@@ -5,6 +6,9 @@ import { prisma } from '../../database/prisma.js';
  * `child.parentId` in the database itself, so cross-family data leakage is
  * impossible even if the service layer were bypassed.
  */
+/** Offset/limit as the pagination helper produces it. */
+type Page = { skip: number; take: number };
+
 export class ParentsRepository {
   /** Confirms the child belongs to the given parent. */
   findOwnedChild(childId: string, parentId: string) {
@@ -14,29 +18,35 @@ export class ParentsRepository {
     });
   }
 
-  /** All SUBMITTED reports for one owned child, newest first. */
-  listSubmittedReportsForChild(childId: string) {
-    return prisma.activityReport.findMany({
-      where: { childId, status: 'SUBMITTED' },
-      orderBy: { activityDate: 'desc' },
-      select: {
-        id: true,
-        childId: true,
-        activityCategory: true,
-        title: true,
-        summary: true,
-        activityDate: true,
-        status: true,
-        duration: true,
-        performanceMetrics: true,
-        teacherObservation: true,
-        recommendations: true,
-        photoUrls: true,
-        createdAt: true,
-        school: { select: { name: true } },
-        reporter: { select: { firstName: true, lastName: true } },
-      },
-    });
+  /** One page of SUBMITTED reports for an owned child, newest first. */
+  async listSubmittedReportsForChild(childId: string, page: Page) {
+    const where = { childId, status: 'SUBMITTED' };
+    const [items, total] = await prisma.$transaction([
+      prisma.activityReport.findMany({
+        where,
+        orderBy: { activityDate: 'desc' },
+        select: {
+          id: true,
+          childId: true,
+          activityCategory: true,
+          title: true,
+          summary: true,
+          activityDate: true,
+          status: true,
+          duration: true,
+          performanceMetrics: true,
+          teacherObservation: true,
+          recommendations: true,
+          photoUrls: true,
+          createdAt: true,
+          school: { select: { name: true } },
+          reporter: { select: { firstName: true, lastName: true } },
+        },
+        ...page,
+      }),
+      prisma.activityReport.count({ where }),
+    ]);
+    return { items, total };
   }
 
   /** School display name for the enrollment-request confirmation. */
@@ -118,11 +128,22 @@ export class ParentsRepository {
     });
   }
 
-  /** The parent's own notifications, newest first. */
-  listNotificationsForParent(parentId: string) {
-    return prisma.notification.findMany({
-      where: { parentId },
-      orderBy: { createdAt: 'desc' },
-    });
+  /** One page of the parent's own notifications, newest first. */
+  async listNotificationsForParent(
+    parentId: string,
+    filters: { isRead?: boolean | undefined },
+    page: Page,
+  ) {
+    const where: Prisma.NotificationWhereInput = {
+      parentId,
+      ...(filters.isRead !== undefined && {
+        status: filters.isRead ? ('READ' as const) : ('UNREAD' as const),
+      }),
+    };
+    const [items, total] = await prisma.$transaction([
+      prisma.notification.findMany({ where, orderBy: { createdAt: 'desc' }, ...page }),
+      prisma.notification.count({ where }),
+    ]);
+    return { items, total };
   }
 }

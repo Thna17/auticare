@@ -37,6 +37,44 @@ export type ApiError = {
     readonly requestId: string;
   };
 };
+
+// ── Pagination ────────────────────────────────────────────────────────
+/**
+ * Shared page/limit query for list endpoints.
+ *
+ * Nearly every list in the app was unbounded — 36 of 37 findMany calls had no
+ * take — so a growing database would have been returned whole on every request.
+ *
+ * `limit` has a hard maximum as well as a default: without the cap a client can
+ * ask for the entire table and defeat the point, and the cap has to live in the
+ * schema rather than the service so it is enforced before a query is built.
+ *
+ * The pre-existing listEnrolledStudentsQuerySchema keeps its own default of 10.
+ * Changing it would alter the size of a response clients already receive, which
+ * is a behaviour change rather than the mechanical one this is.
+ */
+export const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
+
+/**
+ * Counts returned alongside every paginated list, matching the shape
+ * getEnrolledStudents established.
+ *
+ * Replaces an earlier hand-written PaginationMeta type that used `pageSize`
+ * instead of `limit`. It was dead — nothing imported it — and having two
+ * competing shapes in the same file is how a client ends up reading the wrong
+ * key off a response.
+ */
+export const paginationMetaSchema = z.object({
+  total: z.number().int(),
+  page: z.number().int(),
+  limit: z.number().int(),
+  totalPages: z.number().int(),
+});
+export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
 export const parentResponseSchema = z.object({
   id: z.string(),
   email: z.string().email(),
@@ -177,6 +215,12 @@ export const appointmentResponseSchema = z.object({
   rejectionReason: z.string().nullable(),
 });
 export type AppointmentResponse = z.infer<typeof appointmentResponseSchema>;
+
+export const appointmentListResponseSchema = z.object({
+  appointments: z.array(appointmentResponseSchema),
+  pagination: paginationMetaSchema,
+});
+export type AppointmentListResponse = z.infer<typeof appointmentListResponseSchema>;
 export const createAppointmentRequestSchema = z.object({
   childId: z.string().min(1),
   hospitalId: z.string().min(1),
@@ -285,51 +329,21 @@ export type SchoolResponse = z.infer<typeof schoolResponseSchema>;
  * filters on it. `specializations` is a comma-separated tag list; a school
  * matches when it carries ANY of the tags.
  */
-// ── Pagination ────────────────────────────────────────────────────────
-/**
- * Shared page/limit query for list endpoints.
- *
- * Nearly every list in the app was unbounded — 36 of 37 findMany calls had no
- * take — so a growing database would have been returned whole on every request.
- *
- * `limit` has a hard maximum as well as a default: without the cap a client can
- * ask for the entire table and defeat the point, and the cap has to live in the
- * schema rather than the service so it is enforced before a query is built.
- *
- * The pre-existing listEnrolledStudentsQuerySchema keeps its own default of 10.
- * Changing it would alter the size of a response clients already receive, which
- * is a behaviour change rather than the mechanical one this is.
- */
-export const paginationQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-});
-export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
-
-/**
- * Counts returned alongside every paginated list, matching the shape
- * getEnrolledStudents established.
- *
- * Replaces an earlier hand-written PaginationMeta type that used `pageSize`
- * instead of `limit`. It was dead — nothing imported it — and having two
- * competing shapes in the same file is how a client ends up reading the wrong
- * key off a response.
- */
-export const paginationMetaSchema = z.object({
-  total: z.number().int(),
-  page: z.number().int(),
-  limit: z.number().int(),
-  totalPages: z.number().int(),
-});
-export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
-
-export const parentSchoolSearchQuerySchema = z.object({
-  search: z.string().trim().max(120).optional(),
-  province: z.string().trim().max(120).optional(),
-  availability: z.enum(schoolAvailabilityStatuses).optional(),
-  specializations: z.string().trim().max(400).optional(),
-});
+export const parentSchoolSearchQuerySchema = z
+  .object({
+    search: z.string().trim().max(120).optional(),
+    province: z.string().trim().max(120).optional(),
+    availability: z.enum(schoolAvailabilityStatuses).optional(),
+    specializations: z.string().trim().max(400).optional(),
+  })
+  .merge(paginationQuerySchema);
 export type ParentSchoolSearchQuery = z.infer<typeof parentSchoolSearchQuerySchema>;
+
+export const schoolListResponseSchema = z.object({
+  schools: z.array(schoolResponseSchema),
+  pagination: paginationMetaSchema,
+});
+export type SchoolListResponse = z.infer<typeof schoolListResponseSchema>;
 
 // Full public profile (GET /schools/:id and GET /schools/me) — card fields plus
 // the extended detail fields. Read-only for parents; no account-internal fields
@@ -498,10 +512,12 @@ export const updateActivityReportRequestSchema = z
   .refine((value) => Object.keys(value).length > 0, 'At least one report field must be provided.');
 export type UpdateActivityReportRequest = z.infer<typeof updateActivityReportRequestSchema>;
 
-export const listActivityReportsQuerySchema = z.object({
-  childId: z.string().optional(),
-  status: z.enum(reportStatuses).optional(),
-});
+export const listActivityReportsQuerySchema = z
+  .object({
+    childId: z.string().optional(),
+    status: z.enum(reportStatuses).optional(),
+  })
+  .merge(paginationQuerySchema);
 export type ListActivityReportsQuery = z.infer<typeof listActivityReportsQuerySchema>;
 
 // ── Activities ────────────────────────────────────────────────────────
@@ -599,6 +615,12 @@ export const notificationResponseSchema = z.object({
 });
 export type NotificationResponse = z.infer<typeof notificationResponseSchema>;
 
+export const parentNotificationListResponseSchema = z.object({
+  notifications: z.array(notificationResponseSchema),
+  pagination: paginationMetaSchema,
+});
+export type ParentNotificationListResponse = z.infer<typeof parentNotificationListResponseSchema>;
+
 // ── Admission / enrollment requests ─────────────────────────────────────
 
 export const createAdmissionRequestSchema = z.object({
@@ -645,6 +667,12 @@ export const schoolNotificationItemSchema = z.object({
 });
 export type SchoolNotificationItem = z.infer<typeof schoolNotificationItemSchema>;
 
+export const schoolNotificationListResponseSchema = z.object({
+  notifications: z.array(schoolNotificationItemSchema),
+  pagination: paginationMetaSchema,
+});
+export type SchoolNotificationListResponse = z.infer<typeof schoolNotificationListResponseSchema>;
+
 export const decideNotificationRequestSchema = z.object({
   decision: enrollmentDecisionSchema,
 });
@@ -657,13 +685,46 @@ export const notificationDecisionResponseSchema = z.object({
 });
 export type NotificationDecisionResponse = z.infer<typeof notificationDecisionResponseSchema>;
 
-export const listNotificationsQuerySchema = z.object({
-  isRead: z
-    .string()
-    .transform((val) => val === 'true')
-    .optional(),
-});
+/**
+ * The school notification page's filter tabs, as a server-side filter.
+ *
+ * PENDING and DECIDED select on the linked admission request's status, which is
+ * not a column on Notification — the service derives it. They are named as a
+ * `view` rather than exposed as a raw admissionStatus param because the page only
+ * ever asks for these two groupings, and because resolving them takes a second
+ * query (see listNotificationsWithSender).
+ */
+export const schoolNotificationViews = ['PENDING', 'DECIDED'] as const;
+export type SchoolNotificationView = (typeof schoolNotificationViews)[number];
+
+export const listNotificationsQuerySchema = z
+  .object({
+    isRead: z
+      .string()
+      .transform((val) => val === 'true')
+      .optional(),
+    view: z.enum(schoolNotificationViews).optional(),
+  })
+  .merge(paginationQuerySchema);
 export type ListNotificationsQuery = z.infer<typeof listNotificationsQuerySchema>;
+
+/**
+ * Parent notification list query.
+ *
+ * It carries isRead for the same reason the school query does: the parent page
+ * offers an "Unread" filter, and filtering a single page in the browser gives the
+ * wrong answer once the list is paginated — "Nothing unread" would show whenever
+ * page 1 happened to be all read, however many unread items sat on page 3.
+ */
+export const listParentNotificationsQuerySchema = z
+  .object({
+    isRead: z
+      .string()
+      .transform((val) => val === 'true')
+      .optional(),
+  })
+  .merge(paginationQuerySchema);
+export type ListParentNotificationsQuery = z.infer<typeof listParentNotificationsQuerySchema>;
 
 export const screeningSessionResponseSchema = z.object({
   id: z.string(),
@@ -984,6 +1045,12 @@ export const activityReportListItemSchema = z.object({
 });
 export type ActivityReportListItem = z.infer<typeof activityReportListItemSchema>;
 
+export const activityReportListResponseSchema = z.object({
+  reports: z.array(activityReportListItemSchema),
+  pagination: paginationMetaSchema,
+});
+export type ActivityReportListResponse = z.infer<typeof activityReportListResponseSchema>;
+
 // ── Upload Response ──────────────────────────────────────────────────────
 
 export const uploadPhotosResponseSchema = z.object({
@@ -1037,3 +1104,11 @@ export const parentActivityReportResponseSchema = z.object({
   }),
 });
 export type ParentActivityReportResponse = z.infer<typeof parentActivityReportResponseSchema>;
+
+export const parentActivityReportListResponseSchema = z.object({
+  reports: z.array(parentActivityReportResponseSchema),
+  pagination: paginationMetaSchema,
+});
+export type ParentActivityReportListResponse = z.infer<
+  typeof parentActivityReportListResponseSchema
+>;
