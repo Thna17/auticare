@@ -19,7 +19,7 @@ const primaryNav: readonly NavItem[] = [
   { label: 'Progress', path: '/progress', icon: 'trend' },
   { label: 'Appointments', path: '/appointments', icon: 'calendar' },
   { label: 'Notifications', path: '/notifications', icon: 'bell' },
-  { label: 'Messages', path: '/support', icon: 'mail' },
+  { label: 'Help Center', path: '/support', icon: 'help' },
 ];
 
 const adminNav: readonly NavItem[] = [

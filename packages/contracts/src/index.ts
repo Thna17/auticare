@@ -472,6 +472,73 @@ export const listActivityReportsQuerySchema = z.object({
 });
 export type ListActivityReportsQuery = z.infer<typeof listActivityReportsQuerySchema>;
 
+// ── Activities ────────────────────────────────────────────────────────
+/**
+ * The activity catalogue is global, not per school: Activity carries no
+ * schoolId or authorId, so entries are platform-provided rather than written by
+ * a school. Age suitability is a month range, which is finer-grained than the
+ * screening question bands.
+ */
+export const activityResponseSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  category: z.string(),
+  minAgeMonths: z.number().int(),
+  maxAgeMonths: z.number().int(),
+  summary: z.string(),
+});
+export type ActivityResponse = z.infer<typeof activityResponseSchema>;
+
+/**
+ * One child's engagement with one activity. `completedAt` null means started but
+ * not finished; the parent's own note is optional and theirs alone.
+ */
+export const activityProgressResponseSchema = z.object({
+  id: z.string(),
+  childId: z.string(),
+  activityId: z.string(),
+  activityTitle: z.string(),
+  startedAt: z.string(),
+  completedAt: z.string().nullable(),
+  parentObservation: z.string().nullable(),
+});
+export type ActivityProgressResponse = z.infer<typeof activityProgressResponseSchema>;
+
+/**
+ * Catalogue filters. `childId` narrows the list to what suits that child's age
+ * in months, which is why the child must belong to the caller.
+ */
+export const listActivitiesQuerySchema = z.object({
+  childId: z.string().min(1).optional(),
+  category: z.string().trim().min(1).max(60).optional(),
+});
+export type ListActivitiesQuery = z.infer<typeof listActivitiesQuerySchema>;
+
+export const listActivityProgressQuerySchema = z.object({
+  childId: z.string().min(1),
+});
+export type ListActivityProgressQuery = z.infer<typeof listActivityProgressQuerySchema>;
+
+export const startActivityRequestSchema = z.object({
+  childId: z.string().min(1),
+});
+export type StartActivityRequest = z.infer<typeof startActivityRequestSchema>;
+
+/**
+ * Update progress. `completed` true stamps completedAt, false clears it so a
+ * parent can undo a mistaken tap; omitting it leaves completion alone.
+ */
+export const updateActivityProgressRequestSchema = z
+  .object({
+    completed: z.boolean().optional(),
+    parentObservation: z.string().trim().max(2000).nullable().optional(),
+  })
+  .refine(
+    (value) => value.completed !== undefined || value.parentObservation !== undefined,
+    'Provide at least one field to update.',
+  );
+export type UpdateActivityProgressRequest = z.infer<typeof updateActivityProgressRequestSchema>;
+
 // ── School Notifications ──────────────────────────────────────────────
 export const schoolNotificationStatuses = ['UNREAD', 'READ'] as const;
 export type SchoolNotificationStatus = (typeof schoolNotificationStatuses)[number];
