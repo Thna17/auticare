@@ -482,10 +482,13 @@ describe('ActivitiesPage', () => {
     const categoryTexts = Array.from(categoryPills).map((el) => el.textContent || '');
 
     // Verify presence of Khmer translations in category pills and zero English parentheticals
-    expect(categoryTexts.some((txt) => txt.includes('ញាណដឹង'))).toBe(true);
+    expect(categoryTexts.some((txt) => txt.includes('ការលេងបែបវិញ្ញាណ'))).toBe(true);
     expect(categoryTexts.some((txt) => txt.includes('ចលករតូច'))).toBe(true);
     expect(categoryTexts.some((txt) => txt.includes('ការប្រាស្រ័យទាក់ទង'))).toBe(true);
     expect(categoryTexts.some((txt) => txt.includes('ទំនាក់ទំនងសង្គម'))).toBe(true);
+    expect(categoryTexts.some((txt) => txt.includes('ការលួងលោមអារម្មណ៍'))).toBe(true);
+    expect(categoryTexts.some((txt) => txt.includes('ទម្លាប់ប្រចាំថ្ងៃ'))).toBe(true);
+    expect(categoryTexts.some((txt) => txt.includes('ទាំងអស់'))).toBe(true);
     expect(categoryTexts.some((txt) => txt.includes('Sensory'))).toBe(false);
 
     i18n.setLanguage('en');
@@ -638,6 +641,100 @@ describe('ActivitiesPage', () => {
     expect(compiled.textContent).not.toContain('Activities & Play Library');
 
     // Reset back to English
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+  });
+
+  it('decouples difficulty badges, age tags, materials, steps, completion actions, and reflection notes cleanly in both languages', () => {
+    const i18n = TestBed.inject(I18nService);
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // Test difficulty badges helper
+    const dummyAct: ActivityResponse = {
+      id: 'act_calm',
+      title: 'Calming Breathing Exercise (ដកដង្ហើមស្ងប់ចិត្ត)',
+      category: 'Calming',
+      minAgeMonths: 24,
+      maxAgeMonths: 60,
+      summary: 'Soothing sensory routine.',
+    };
+
+    i18n.setLanguage('en');
+    expect(component.getDifficultyLabel(dummyAct)).toBe('Gentle');
+    i18n.setLanguage('km');
+    expect(component.getDifficultyLabel(dummyAct)).toBe('កម្រិតស្រាល');
+
+    // Test age formatting helper
+    expect(component['monthsToLabel'](18, 'en')).toBe('18 months');
+    expect(component['monthsToLabel'](36, 'en')).toBe('3 years');
+    expect(component['monthsToLabel'](42, 'en')).toBe('3y 6m');
+    expect(component['monthsToLabel'](18, 'km')).toBe('18 ខែ');
+    expect(component['monthsToLabel'](36, 'km')).toBe('3 ឆ្នាំ');
+    expect(component['monthsToLabel'](42, 'km')).toBe('3 ឆ្នាំ 6 ខែ');
+
+    // Test age tag prefix on card
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+    const firstAgeTagEn = compiled.querySelector('.activity header .ages');
+    expect(firstAgeTagEn).not.toBeNull();
+    expect(firstAgeTagEn?.textContent).toContain('Ages:');
+    expect(firstAgeTagEn?.textContent).not.toContain('អាយុ៖');
+
+    i18n.setLanguage('km');
+    fixture.detectChanges();
+    const firstAgeTagKm = compiled.querySelector('.activity header .ages');
+    expect(firstAgeTagKm).not.toBeNull();
+    expect(firstAgeTagKm?.textContent).toContain('អាយុ៖');
+    expect(firstAgeTagKm?.textContent).not.toContain('Ages:');
+
+    // Test materials checklist across languages
+    const materialsKm = component.getMaterialsList(dummyAct, 'km');
+    const materialsEn = component.getMaterialsList(dummyAct, 'en');
+    expect(materialsKm.some((m) => m.includes('កន្លែងស្ងប់ស្ងាត់'))).toBe(true);
+    expect(materialsKm.some((m) => /[A-Za-z]/.test(m))).toBe(false);
+    expect(materialsEn.some((m) => m.includes('Quiet, softly-lit'))).toBe(true);
+    expect(materialsEn.some((m) => /[\u1780-\u17FF]/.test(m))).toBe(false);
+
+    // Verify material toggle preserves state with index tracking
+    component.toggleMaterial('act_calm', materialsEn[0], 0);
+    expect(component.isMaterialChecked('act_calm', materialsEn[0], 0)).toBe(true);
+    // In Khmer mode with index 0
+    expect(component.isMaterialChecked('act_calm', materialsKm[0], 0)).toBe(true);
+
+    // Test step-by-step instructions
+    const stepsKm = component.getStepsList(dummyAct, 'km');
+    const stepsEn = component.getStepsList(dummyAct, 'en');
+    expect(stepsKm[0].title).toContain('១. បង្កើតកន្លែងសម្រួលអារម្មណ៍');
+    expect(stepsKm[0].title).not.toContain('Step 1');
+    expect(stepsEn[0].title).toContain('Step 1: Set Up Soothing Space');
+    expect(stepsEn[0].title).not.toContain('១.');
+
+    // Test step toggle
+    expect(component.isStepChecked('act_calm', 0)).toBe(false);
+    component.toggleStep('act_calm', 0);
+    expect(component.isStepChecked('act_calm', 0)).toBe(true);
+
+    // Test completion action buttons & parent reflection notes on card
+    // Reset back to English
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+
+    const notStartedRow = component['rows']().find((r) => r.progress === null);
+    expect(notStartedRow).toBeDefined();
+    const cards = compiled.querySelectorAll('.activity');
+    expect(cards.length).toBeGreaterThan(0);
+
+    const firstCard = cards[0];
+    expect(firstCard.querySelector('.guide-btn')?.textContent).toContain('Activity Guide & Steps');
+    expect(firstCard.querySelector('.guide-btn')?.textContent).not.toContain('ការណែនាំ');
+
+    // Switch to Khmer and check card actions
+    i18n.setLanguage('km');
+    fixture.detectChanges();
+    expect(firstCard.querySelector('.guide-btn')?.textContent).toContain('ការណែនាំ និងជំហាន');
+    expect(firstCard.querySelector('.guide-btn')?.textContent).not.toContain('Activity Guide');
+
+    // Clean up language
     i18n.setLanguage('en');
     fixture.detectChanges();
   });

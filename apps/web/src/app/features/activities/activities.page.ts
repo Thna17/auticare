@@ -48,13 +48,24 @@ const DEFAULT_CATEGORIES: readonly {
   labelKm: string;
   icon: string;
 }[] = [
-  { value: '', labelEn: 'All Categories', labelKm: 'ទាំងអស់', icon: '🌟' },
-  { value: 'Sensory', labelEn: 'Sensory', labelKm: 'ញាណដឹង', icon: '✨' },
+  { value: '', labelEn: 'All Activities', labelKm: 'ទាំងអស់', icon: '🌟' },
+  { value: 'Sensory', labelEn: 'Sensory Play', labelKm: 'ការលេងបែបវិញ្ញាណ', icon: '✨' },
+  {
+    value: 'Communication',
+    labelEn: 'Communication & Speech',
+    labelKm: 'ការប្រាស្រ័យទាក់ទង',
+    icon: '💬',
+  },
+  { value: 'Calming', labelEn: 'Calming & Regulation', labelKm: 'ការលួងលោមអារម្មណ៍', icon: '🧘' },
+  {
+    value: 'Daily Living',
+    labelEn: 'Daily Living Routines',
+    labelKm: 'ទម្លាប់ប្រចាំថ្ងៃ',
+    icon: '🧩',
+  },
   { value: 'Fine Motor', labelEn: 'Fine Motor', labelKm: 'ចលករតូច', icon: '✍️' },
-  { value: 'Communication', labelEn: 'Communication', labelKm: 'ការប្រាស្រ័យទាក់ទង', icon: '💬' },
   { value: 'Social', labelEn: 'Social Skills', labelKm: 'ទំនាក់ទំនងសង្គម', icon: '🤝' },
   { value: 'Motor', labelEn: 'Gross Motor', labelKm: 'ចលករធំ', icon: '🏃' },
-  { value: 'Daily Living', labelEn: 'Daily Living', labelKm: 'ទម្លាប់ប្រចាំថ្ងៃ', icon: '🧩' },
 ];
 
 const normalizeDomain = (cat: string): string => cat.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -361,7 +372,8 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                       <span class="duration-badge">⏱ {{ getDurationLabel(row.activity) }}</span>
                     </div>
                     <span class="ages">
-                      {{ monthsToLabel(row.activity.minAgeMonths) }} –
+                      {{ currentLang() === 'km' ? 'អាយុ៖ ' : 'Ages: '
+                      }}{{ monthsToLabel(row.activity.minAgeMonths) }} –
                       {{ monthsToLabel(row.activity.maxAgeMonths) }}
                     </span>
                   </header>
@@ -510,15 +522,11 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
               }
               <span class="difficulty-badge" [attr.data-level]="getDifficulty(selected.activity)">
                 <span class="difficulty-dot"></span>
-                {{
-                  currentLang() === 'km'
-                    ? getDifficultyLabel(selected.activity)
-                    : getDifficultyLabel(selected.activity) + ' Difficulty'
-                }}
+                {{ getDifficultyLabel(selected.activity) }}
               </span>
               <span class="duration-badge">⏱ {{ getDurationLabel(selected.activity) }}</span>
               <span class="ages">
-                {{ currentLang() === 'km' ? 'អាយុ:' : 'Ages:' }}
+                {{ currentLang() === 'km' ? 'អាយុ៖ ' : 'Ages: ' }}
                 {{ monthsToLabel(selected.activity.minAgeMonths) }} –
                 {{ monthsToLabel(selected.activity.maxAgeMonths) }}
               </span>
@@ -568,15 +576,19 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                 }}
               </p>
               <div class="materials-list">
-                @for (item of getMaterialsList(selected.activity); track item) {
+                @for (
+                  item of getMaterialsList(selected.activity);
+                  track $index;
+                  let mIdx = $index
+                ) {
                   <label
                     class="material-item"
-                    [class.checked]="isMaterialChecked(selected.activity.id, item)"
+                    [class.checked]="isMaterialChecked(selected.activity.id, item, mIdx)"
                   >
                     <input
                       type="checkbox"
-                      [checked]="isMaterialChecked(selected.activity.id, item)"
-                      (change)="toggleMaterial(selected.activity.id, item)"
+                      [checked]="isMaterialChecked(selected.activity.id, item, mIdx)"
+                      (change)="toggleMaterial(selected.activity.id, item, mIdx)"
                     />
                     <span class="material-text">{{ item }}</span>
                   </label>
@@ -591,7 +603,7 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                 {{ currentLang() === 'km' ? 'ការណែនាំជាជំហានៗ' : 'Step-by-Step Instructions' }}
               </h3>
               <div class="steps-list">
-                @for (step of getStepsList(selected.activity); track step.title; let idx = $index) {
+                @for (step of getStepsList(selected.activity); track $index; let idx = $index) {
                   <label
                     class="step-card"
                     [class.checked]="isStepChecked(selected.activity.id, idx)"
@@ -1811,12 +1823,16 @@ export class ActivitiesPage implements OnInit {
   getCategoryLabel(category: string): string {
     const isKm = this.currentLang() === 'km';
     const c = (category || '').toLowerCase();
-    if (c.includes('sensor')) return isKm ? 'ញាណដឹង' : 'Sensory';
+    if (c.includes('sensor')) return isKm ? 'ការលេងបែបវិញ្ញាណ' : 'Sensory Play';
+    if (c.includes('communicat') || c.includes('speech'))
+      return isKm ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication & Speech';
+    if (c.includes('calm') || c.includes('regulat'))
+      return isKm ? 'ការលួងលោមអារម្មណ៍' : 'Calming & Regulation';
+    if (c.includes('daily') || c.includes('routine'))
+      return isKm ? 'ទម្លាប់ប្រចាំថ្ងៃ' : 'Daily Living Routines';
     if (c.includes('fine motor')) return isKm ? 'ចលករតូច' : 'Fine Motor';
     if (c.includes('gross motor') || c === 'motor') return isKm ? 'ចលករធំ' : 'Gross Motor';
-    if (c.includes('communicat')) return isKm ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication';
     if (c.includes('social')) return isKm ? 'ទំនាក់ទំនងសង្គម' : 'Social Skills';
-    if (c.includes('daily')) return isKm ? 'ទម្លាប់ប្រចាំថ្ងៃ' : 'Daily Living';
     return category;
   }
 
@@ -1882,6 +1898,10 @@ export class ActivitiesPage implements OnInit {
     }
     const match = activity.title.match(/^(.*?)\s*\((.*?)\)$/);
     if (match) {
+      const hasKhmerInFirst = /[\u1780-\u17FF]/.test(match[1]);
+      if (hasKhmerInFirst) {
+        return isKm ? match[1].trim() : match[2].trim();
+      }
       return isKm ? match[2].trim() : match[1].trim();
     }
     return activity.title;
@@ -1895,7 +1915,11 @@ export class ActivitiesPage implements OnInit {
     }
     const match = activity.summary.match(/^(.*?)\s*\((.*?)\)$/);
     if (match) {
-      return isKm ? match[1].trim() : match[2].trim();
+      const hasKhmerInFirst = /[\u1780-\u17FF]/.test(match[1]);
+      if (hasKhmerInFirst) {
+        return isKm ? match[1].trim() : match[2].trim();
+      }
+      return isKm ? match[2].trim() : match[1].trim();
     }
     return activity.summary;
   }
@@ -1906,7 +1930,11 @@ export class ActivitiesPage implements OnInit {
       return cambodian.materialsBilingual.map((mat) => {
         const match = mat.match(/^(.*?)\s*\((.*?)\)$/);
         if (match) {
-          return lang === 'km' ? match[1].trim() : match[2].trim();
+          const hasKhmerInFirst = /[\u1780-\u17FF]/.test(match[1]);
+          if (hasKhmerInFirst) {
+            return lang === 'km' ? match[1].trim() : match[2].trim();
+          }
+          return lang === 'km' ? match[2].trim() : match[1].trim();
         }
         return mat;
       });
@@ -1922,7 +1950,28 @@ export class ActivitiesPage implements OnInit {
           'កម្រាលអង្គុយលេងប្រកបដោយផាសុកភាព',
         ];
       }
-      if (title.includes('picture') || title.includes('card') || cat.includes('communication')) {
+      if (title.includes('calm') || cat.includes('calm') || cat.includes('regulat')) {
+        return [
+          'ខ្នើយទន់ៗ ឬភួយទម្ងន់ស្រាលសម្រាប់សម្រួលអារម្មណ៍',
+          'ដបទឹកពន្លឺផ្លេកៗសម្រាប់មើលសម្រាលអារម្មណ៍',
+          'កន្លែងស្ងប់ស្ងាត់មានពន្លឺស្រទន់',
+          'តន្ត្រីស្រាលៗបន្ធូរអារម្មណ៍',
+        ];
+      }
+      if (title.includes('daily') || cat.includes('daily') || cat.includes('routine')) {
+        return [
+          'កាលវិភាគរូបភាពនៃទម្លាប់ប្រចាំថ្ងៃ',
+          'ប្រដាប់ប្រដាផ្ទាល់ខ្លួនសាមញ្ញៗ',
+          'នាឡិការាប់ថយក្រោយ ឬសញ្ញាបង្ហាញពេលវេលា',
+          'តារាងផ្កាយលើកទឹកចិត្តសមិទ្ធផល',
+        ];
+      }
+      if (
+        title.includes('picture') ||
+        title.includes('card') ||
+        cat.includes('communication') ||
+        cat.includes('speech')
+      ) {
         return [
           'ប័ណ្ណរូបភាពជ្រើសរើស ឬប័ណ្ណប្តូររូបភាព',
           'តុរាបស្មើកម្ពស់ភ្នែកកុមារ',
@@ -1947,7 +1996,7 @@ export class ActivitiesPage implements OnInit {
         ];
       }
       return [
-        'សម្ភារប្រើប្រាស់ប្រចាំថ្ងៃក្នុងផ្ទះ (កែវ ស្លាបព្រា ឬដុំឈើ)',
+        'សម្ភារប្រើប្រាស់ប្រចាំថ្ងៃក្នុងផ្ទះ',
         'កន្លែងលេងមានផាសុកភាព និងគ្មានសំឡេងរំខាន',
         'ពាក្យសរសើរ និងការលើកទឹកចិត្ត',
         'របស់លេងបន្ធូរអារម្មណ៍សម្រាប់ពេលសម្រាក',
@@ -1963,7 +2012,28 @@ export class ActivitiesPage implements OnInit {
         'Comfortable observation mat',
       ];
     }
-    if (title.includes('picture') || title.includes('card') || cat.includes('communication')) {
+    if (title.includes('calm') || cat.includes('calm') || cat.includes('regulat')) {
+      return [
+        'Soft cushions or light weighted blanket for deep pressure soothing',
+        'Calming sensory glitter bottle',
+        'Quiet, softly-lit soothing retreat corner',
+        'Gentle ambient background melodies',
+      ];
+    }
+    if (title.includes('daily') || cat.includes('daily') || cat.includes('routine')) {
+      return [
+        'Visual daily routine picture schedule',
+        'Everyday personal routine items',
+        'Visual sand timer or transition indicator',
+        'Success star reward tracker chart',
+      ];
+    }
+    if (
+      title.includes('picture') ||
+      title.includes('card') ||
+      cat.includes('communication') ||
+      cat.includes('speech')
+    ) {
       return [
         'Visual choice or picture exchange cards',
         'Clean table surface at child eye level',
@@ -2006,7 +2076,49 @@ export class ActivitiesPage implements OnInit {
         desc: lang === 'km' ? s.descKm : s.descEn,
       }));
     }
+    const title = activity.title.toLowerCase();
+    const cat = activity.category.toLowerCase();
     if (lang === 'km') {
+      if (title.includes('calm') || cat.includes('calm') || cat.includes('regulat')) {
+        return [
+          {
+            title: '១. បង្កើតកន្លែងសម្រួលអារម្មណ៍',
+            desc: 'រៀបចំកន្លែងមានពន្លឺស្រទន់ ខ្នើយទន់ៗ និងគ្មានសំឡេងរំខាន ដើម្បីឱ្យកុមារមានអារម្មណ៍សុវត្ថិភាព។',
+          },
+          {
+            title: '២. ដកដង្ហើមវែងៗ និងសម្រាលសាច់ដុំ',
+            desc: 'បង្ហាញការដកដង្ហើមចូលតាមច្រមុះ និងបញ្ចេញតាមមាត់យឺតៗជាមួយស្នាមញញឹមរាក់ទាក់។',
+          },
+          {
+            title: '៣. ផ្តល់ការភ្ញោចសម្ពាធថ្នមៗ',
+            desc: 'ប្រើភួយទម្ងន់ស្រាល ឬច្របាច់ដៃជើងថ្នមៗដើម្បីជួយឱ្យប្រព័ន្ធប្រសាទកុមារស្ងប់ចិត្ត។',
+          },
+          {
+            title: '៤. ត្រឡប់ទៅសកម្មភាពប្រចាំថ្ងៃ',
+            desc: 'សរសើរកុមារចំពោះភាពស្ងប់ស្ងាត់ និងបន្តទៅសកម្មភាពបន្ទាប់ដោយក្តីស្រឡាញ់។',
+          },
+        ];
+      }
+      if (title.includes('daily') || cat.includes('daily') || cat.includes('routine')) {
+        return [
+          {
+            title: '១. បង្បង្ហាញកាលវិភាគរូបភាព',
+            desc: 'ចង្អុលបង្ហាញរូបភាពនៃជំហានបន្ទាប់នៃទម្លាប់ប្រចាំថ្ងៃ ដើម្បីឱ្យកុមារដឹងមុននូវអ្វីដែលត្រូវធ្វើ។',
+          },
+          {
+            title: '២. អនុវត្តរួមគ្នាជាជំហានៗ',
+            desc: 'បំបែកកិច្ចការជាជំហានតូចៗ និងអនុវត្តជាមួយគ្នាយឺតៗដោយភាពអត់ធ្មត់។',
+          },
+          {
+            title: '៣. លើកទឹកចិត្តឱ្យធ្វើដោយខ្លួនឯង',
+            desc: 'ផ្តល់ឱកាសឱ្យកុមារសាកល្បងដោយឯករាជ្យ និងជួយគាំទ្រតែពេលចាំបាច់បំផុត។',
+          },
+          {
+            title: '៤. អបអរសាទរសមិទ្ធផល',
+            desc: 'អបអរសាទរការបញ្ចប់ទម្លាប់ប្រចាំថ្ងៃដោយក្តីរីករាយ និងស្នាមញញឹមលើកទឹកចិត្ត។',
+          },
+        ];
+      }
       return [
         {
           title: '១. រៀបចំបរិយាកាសស្ងប់ស្ងាត់',
@@ -2026,21 +2138,61 @@ export class ActivitiesPage implements OnInit {
         },
       ];
     }
+    if (title.includes('calm') || cat.includes('calm') || cat.includes('regulat')) {
+      return [
+        {
+          title: 'Step 1: Set Up Soothing Space',
+          desc: 'Prepare a softly lit area with comforting cushions free of sudden noise so your child feels secure.',
+        },
+        {
+          title: 'Step 2: Deep Breathing & Slow Exhale',
+          desc: 'Demonstrate slow, gentle breathing in through the nose and out through the mouth with a friendly smile.',
+        },
+        {
+          title: 'Step 3: Gentle Proprioceptive Pressure',
+          desc: 'Offer gentle palm massage or a light blanket to help ground and calm your child’s nervous system.',
+        },
+        {
+          title: 'Step 4: Peaceful Transition',
+          desc: 'Praise their calm focus and transition smoothly to subsequent daily activities with warmth.',
+        },
+      ];
+    }
+    if (title.includes('daily') || cat.includes('daily') || cat.includes('routine')) {
+      return [
+        {
+          title: 'Step 1: Review Visual Routine',
+          desc: 'Point to the visual sequence card showing the current routine step so your child anticipates what is next.',
+        },
+        {
+          title: 'Step 2: Break into Micro-Steps',
+          desc: 'Guide the motion step by step together, allowing sufficient time for sensory and motor processing.',
+        },
+        {
+          title: 'Step 3: Encourage Self-Direction',
+          desc: 'Support independent attempts at their natural pace without hand-over-hand forcing.',
+        },
+        {
+          title: 'Step 4: Celebrate Routine Completion',
+          desc: 'Acknowledge completion of daily routine habits with enthusiastic praise and positive affirmation.',
+        },
+      ];
+    }
     return [
       {
-        title: '1. Prepare Sensory Environment',
+        title: 'Step 1: Prepare Sensory Environment',
         desc: 'Set up a calm, well-lit space free from sudden auditory distractions so your child feels secure.',
       },
       {
-        title: '2. Model & Gentle Invitation',
+        title: 'Step 2: Model & Gentle Invitation',
         desc: 'Demonstrate the play motion yourself with a friendly smile, pairing the action with a clear simple phrase.',
       },
       {
-        title: '3. Child-Led Exploration',
+        title: 'Step 3: Child-Led Exploration',
         desc: 'Let your child inspect, touch, and participate at their own natural pace without hand-over-hand forcing.',
       },
       {
-        title: '4. Celebrate Small Wins',
+        title: 'Step 4: Celebrate Small Wins',
         desc: 'Affirm every micro-attempt with gentle clapping, verbal praise, or their favourite soothing rhythm.',
       },
     ];
@@ -2054,14 +2206,27 @@ export class ActivitiesPage implements OnInit {
     this.selectedActivityRow.set(null);
   }
 
-  isMaterialChecked(activityId: string, item: string): boolean {
-    return this.checkedMaterials()[activityId]?.[item] ?? false;
+  isMaterialChecked(activityId: string, item: string, index?: number): boolean {
+    const actMap = this.checkedMaterials()[activityId];
+    if (!actMap) return false;
+    if (index !== undefined && actMap[`idx_${index}`] !== undefined) {
+      return actMap[`idx_${index}`];
+    }
+    return actMap[item] ?? false;
   }
 
-  toggleMaterial(activityId: string, item: string): void {
+  toggleMaterial(activityId: string, item: string, index?: number): void {
     this.checkedMaterials.update((map) => {
       const actMap = { ...(map[activityId] || {}) };
-      actMap[item] = !actMap[item];
+      const current =
+        index !== undefined && actMap[`idx_${index}`] !== undefined
+          ? actMap[`idx_${index}`]
+          : (actMap[item] ?? false);
+      const next = !current;
+      if (index !== undefined) {
+        actMap[`idx_${index}`] = next;
+      }
+      actMap[item] = next;
       return { ...map, [activityId]: actMap };
     });
   }
