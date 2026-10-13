@@ -242,7 +242,12 @@ async function main() {
       // If unauthenticated, expect HTTP 401 with structured JSON error (verifies reverse proxy to API)
       if (response.status === 401) {
         const body = await response.json();
-        if (body?.error?.code === 'UNAUTHORIZED' || body?.message?.includes('Authentication')) {
+        if (
+          body?.error?.code === 'UNAUTHORIZED' ||
+          body?.error?.code === 'AUTHENTICATION_REQUIRED' ||
+          body?.error?.message?.includes('Authentication') ||
+          body?.message?.includes('Authentication')
+        ) {
           return { details: `HTTP 401 UNAUTHORIZED (Express reverse proxy routing verified)` };
         }
       }
