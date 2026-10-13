@@ -37,7 +37,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
         <div class="state-center fatal">
           <ac-ui-message tone="error">{{ fatalError() }}</ac-ui-message>
           <button type="button" class="back-home-btn" (click)="goToScreeningHome()">
-            {{ isKm() ? 'ត្រឡប់ទៅទំព័រវាយតម្លៃ (Back to Screening)' : 'Back to Screening' }}
+            {{ isKm() ? 'ត្រឡប់ទៅទំព័រវាយតម្លៃ' : 'Back to Screening' }}
           </button>
         </div>
       } @else if (currentQuestion(); as question) {
@@ -49,20 +49,21 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 <span class="category-icon" aria-hidden="true">{{
                   categoryIcon(question.category)
                 }}</span>
-                <span class="category-name">{{ formatCategoryBilingual(question.category) }}</span>
+                <span class="category-name">{{ formatCategory(question.category) }}</span>
               </div>
               <div class="progress-details">
                 <span class="step-count">
-                  Question {{ currentIndex() + 1 }} of {{ total() }}
-                  <small class="text-sub-bilingual">
-                    ({{
-                      isKm()
-                        ? 'សំណួរទី ' + (currentIndex() + 1) + ' ក្នុងចំណោម ' + total()
-                        : 'Question ' + (currentIndex() + 1) + ' of ' + total()
-                    }})
-                  </small>
+                  {{
+                    isKm()
+                      ? 'សំណួរទី ' + (currentIndex() + 1) + ' ក្នុងចំណោម ' + total()
+                      : 'Question ' + (currentIndex() + 1) + ' of ' + total()
+                  }}
                 </span>
-                <span class="pct-badge">{{ Math.round(progressPct()) }}% Completed</span>
+                <span class="pct-badge">{{
+                  isKm()
+                    ? 'បញ្ចប់បាន ' + Math.round(progressPct()) + '%'
+                    : Math.round(progressPct()) + '% Completed'
+                }}</span>
               </div>
               <div class="header-actions">
                 <button
@@ -75,7 +76,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
                   <span class="lang-text">{{ isKm() ? 'English' : 'ភាសាខ្មែរ' }}</span>
                 </button>
                 <button type="button" class="save-exit-btn" (click)="openExit()">
-                  Save & Finish Later
+                  {{ isKm() ? 'រក្សាទុក និងបន្តពេលក្រោយ' : 'Save & Finish Later' }}
                 </button>
               </div>
             </div>
@@ -96,13 +97,13 @@ import { I18nService } from '../../core/i18n/i18n.service';
         <main class="question-container">
           <article class="question-card" [class.transitioning]="isTransitioning()">
             <div class="card-eyebrow">
-              <span class="domain-tag"
-                >{{ formatCategoryBilingual(question.category) }} Assessment</span
-              >
+              <span class="domain-tag">{{
+                isKm()
+                  ? 'ការវាយតម្លៃផ្នែក ' + formatCategory(question.category)
+                  : formatCategory(question.category) + ' Assessment'
+              }}</span>
               @if (isLast()) {
-                <span class="final-tag">{{
-                  isKm() ? 'សំណួរចុងក្រោយ (Final Question)' : 'Final Question'
-                }}</span>
+                <span class="final-tag">{{ isKm() ? 'សំណួរចុងក្រោយ' : 'Final Question' }}</span>
               }
             </div>
 
@@ -111,25 +112,20 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 <span class="question-primary-text">{{
                   getKhmerQuestion(question.questionText)
                 }}</span>
-                <span class="question-sub-text">({{ question.questionText }})</span>
               } @else {
                 <span class="question-primary-text">{{ question.questionText }}</span>
-                <span class="question-sub-text"
-                  >({{ getKhmerQuestion(question.questionText) }})</span
-                >
               }
               <span class="required-asterisk" aria-hidden="true">*</span>
-              <span class="visually-hidden">(required)</span>
+              <span class="visually-hidden">({{ isKm() ? 'តម្រូវឱ្យឆ្លើយ' : 'required' }})</span>
             </h1>
 
             <div class="guidance-callout">
               <span class="guidance-icon" aria-hidden="true">💡</span>
               <p>
-                <strong>Observational guidance:</strong>
-                <span class="text-sub-bilingual">(ការណែនាំសង្កេត)</span>
+                <strong>{{ isKm() ? 'ការណែនាំសង្កេត៖' : 'Observational guidance:' }}</strong>
                 {{
                   isKm()
-                    ? 'សូមពិចារណាលើអាកប្បកិរិយាធម្មជាតិក្នុងប៉ុន្មានសប្តាហ៍ថ្មីៗនេះនៅក្នុងបរិយាកាសផ្ទះដ៏ស្រណុកសុខស្រួល។ គ្មានចម្លើយណាត្រូវឬខុសឡើយ។ (Consider spontaneous behaviors across recent weeks in relaxed home environments. There are no right or wrong answers.)'
+                    ? 'សូមពិចារណាលើអាកប្បកិរិយាធម្មជាតិក្នុងប៉ុន្មានសប្តាហ៍ថ្មីៗនេះនៅក្នុងបរិយាកាសផ្ទះដ៏ស្រណុកសុខស្រួល។ គ្មានចម្លើយណាត្រូវឬខុសឡើយ។'
                     : 'Consider spontaneous behaviors across recent weeks in relaxed home environments. There are no right or wrong answers.'
                 }}
               </p>
@@ -147,10 +143,16 @@ import { I18nService } from '../../core/i18n/i18n.service';
             <div class="shortcuts-legend">
               <span class="legend-icon" aria-hidden="true">⌨️</span>
               <span class="legend-text">
-                Quick answer: Press <kbd>1</kbd> for <strong>Never (មិនដែល)</strong>,
-                <kbd>2</kbd> for <strong>Rarely (កម្រ)</strong>, <kbd>3</kbd> for
-                <strong>Sometimes (ជួនកាល)</strong>, <kbd>4</kbd> for
-                <strong>Often (ញឹកញាប់)</strong>, <kbd>5</kbd> for <strong>Always (ជានិច្ច)</strong>
+                @if (isKm()) {
+                  ឆ្លើយរហ័ស៖ ចុច <kbd>1</kbd> សម្រាប់ <strong>មិនដែល</strong>, <kbd>2</kbd> សម្រាប់
+                  <strong>កម្រ</strong>, <kbd>3</kbd> សម្រាប់ <strong>ជួនកាល</strong>,
+                  <kbd>4</kbd> សម្រាប់ <strong>ញឹកញាប់</strong>, <kbd>5</kbd> សម្រាប់
+                  <strong>ជានិច្ច</strong>
+                } @else {
+                  Quick answer: Press <kbd>1</kbd> for <strong>Never</strong>, <kbd>2</kbd> for
+                  <strong>Rarely</strong>, <kbd>3</kbd> for <strong>Sometimes</strong>,
+                  <kbd>4</kbd> for <strong>Often</strong>, <kbd>5</kbd> for <strong>Always</strong>
+                }
               </span>
             </div>
 
@@ -167,7 +169,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
               [disabled]="currentIndex() === 0"
               (click)="back()"
             >
-              &larr; {{ isKm() ? 'សំណួរមុន (Previous Question)' : 'Previous Question' }}
+              &larr; {{ isKm() ? 'សំណួរមុន' : 'Previous Question' }}
             </button>
 
             <button
@@ -180,14 +182,14 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 {{
                   submitting()
                     ? isKm()
-                      ? 'កំពុងបញ្ចប់ការវិភាគ... (Finalizing Analysis…)'
+                      ? 'កំពុងបញ្ចប់ការវិភាគ...'
                       : 'Finalizing Analysis…'
                     : isKm()
-                      ? 'បញ្ចប់ការវាយតម្លៃ (Complete Screening)'
+                      ? 'បញ្ចប់ការវាយតម្លៃ'
                       : 'Complete Screening'
                 }}
               } @else {
-                {{ isKm() ? 'សំណួរបន្ទាប់ (Next Question)' : 'Next Question' }} &rarr;
+                {{ isKm() ? 'សំណួរបន្ទាប់' : 'Next Question' }} &rarr;
               }
             </button>
           </footer>
@@ -197,13 +199,11 @@ import { I18nService } from '../../core/i18n/i18n.service';
       @if (showExitModal()) {
         <ac-ui-dialog
           [heading]="
-            isKm()
-              ? 'រក្សាទុក និងបញ្ចប់ការវាយតម្លៃពេលក្រោយ? (Save and finish screening later?)'
-              : 'Save and finish screening later?'
+            isKm() ? 'រក្សាទុក និងបញ្ចប់ការវាយតម្លៃពេលក្រោយ?' : 'Save and finish screening later?'
           "
           [description]="
             isKm()
-              ? 'ចម្លើយរបស់អ្នកត្រូវបានរក្សាទុកដោយស្វ័យប្រវត្តិ។ អ្នកអាចបន្តការវាយតម្លៃនេះបានគ្រប់ពេលពីផ្ទាំងគ្រប់គ្រងការវាយតម្លៃរបស់អ្នក។ (Your answers are automatically saved. You can resume this assessment anytime from your Screening dashboard.)'
+              ? 'ចម្លើយរបស់អ្នកត្រូវបានរក្សាទុកដោយស្វ័យប្រវត្តិ។ អ្នកអាចបន្តការវាយតម្លៃនេះបានគ្រប់ពេលពីផ្ទាំងគ្រប់គ្រងការវាយតម្លៃរបស់អ្នក។'
               : 'Your answers are automatically saved. You can resume this assessment anytime from your Screening dashboard.'
           "
           dialogRole="alertdialog"
@@ -212,10 +212,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
         >
           <div dialogFooter class="modal-actions">
             <button type="button" class="dialog-cancel-btn" (click)="cancelExit()">
-              {{ isKm() ? 'បន្តការវាយតម្លៃ (Keep Going)' : 'Keep Going' }}
+              {{ isKm() ? 'បន្តការវាយតម្លៃ' : 'Keep Going' }}
             </button>
             <button type="button" class="dialog-confirm-btn" (click)="confirmExit()">
-              Save & Finish Later
+              {{ isKm() ? 'រក្សាទុក និងចាកចេញ' : 'Save & Finish Later' }}
             </button>
           </div>
         </ac-ui-dialog>
@@ -821,20 +821,20 @@ export class ScreeningSessionPage implements OnInit, OnDestroy {
     return text;
   }
 
-  formatCategoryBilingual(category?: string | null): string {
-    if (!category) return 'ការលូតលាស់ទូទៅ (General Development)';
+  formatCategory(category?: string | null): string {
+    if (!category) return this.isKm() ? 'ការលូតលាស់ទូទៅ' : 'General Development';
     const lower = category.toLowerCase();
     if (lower.includes('social') && lower.includes('communicat')) {
-      return 'ទំនាក់ទំនងសង្គម និងការប្រាស្រ័យទាក់ទង (Social Communication)';
+      return this.isKm() ? 'ទំនាក់ទំនងសង្គម និងការប្រាស្រ័យទាក់ទង' : 'Social Communication';
     }
     if (lower.includes('social') || lower.includes('interact')) {
-      return 'ទំនាក់ទំនងសង្គម (Social Interaction)';
+      return this.isKm() ? 'ទំនាក់ទំនងសង្គម' : 'Social Interaction';
     }
     if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
-      return 'ការឆ្លើយតបញាណដឹង (Sensory Response)';
+      return this.isKm() ? 'ការឆ្លើយតបញាណដឹង' : 'Sensory Response';
     }
     if (lower.includes('communicat') || lower.includes('speech')) {
-      return 'ការប្រាស្រ័យទាក់ទង (Communication)';
+      return this.isKm() ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication';
     }
     if (
       lower.includes('routine') ||
@@ -842,10 +842,10 @@ export class ScreeningSessionPage implements OnInit, OnDestroy {
       lower.includes('repetit') ||
       lower.includes('behavior')
     ) {
-      return 'ទម្លាប់ប្រចាំថ្ងៃ (Flexibility & Routine)';
+      return this.isKm() ? 'ទម្លាប់ប្រចាំថ្ងៃ' : 'Flexibility & Routine';
     }
     if (lower.includes('motor') || lower.includes('physic')) {
-      return 'ចលនាសាច់ដុំ (Motor Skills)';
+      return this.isKm() ? 'ចលនាសាច់ដុំ' : 'Motor Skills';
     }
     return `${category}`;
   }

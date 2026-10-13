@@ -6,7 +6,7 @@ import type { AgeBand, RiskLevel } from '@auticare/contracts';
  * (LOW categories are skipped). This is a fixed lookup — NOT AI/LLM-generated —
  * and the text is used verbatim.
  */
-const SCREENING_OBSERVATIONS: Record<
+const EN_SCREENING_OBSERVATIONS: Record<
   AgeBand,
   Record<string, Partial<Record<RiskLevel, string>>>
 > = {
@@ -66,6 +66,65 @@ const SCREENING_OBSERVATIONS: Record<
   },
 };
 
+const KM_SCREENING_OBSERVATIONS: Record<
+  AgeBand,
+  Record<string, Partial<Record<RiskLevel, string>>>
+> = {
+  TODDLER: {
+    'Social Interaction': {
+      MODERATE:
+        'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានទំនាក់ទំនងជាមួយអ្នកដទៃតិចជាងការរំពឹងទុកសម្រាប់អាយុរបស់ពួកគេ។',
+      HIGH: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានទំនាក់ទំនងមានកម្រិតជាមួយអ្នកដទៃ ដូចជាការសម្លឹងមើលភ្នែក ឬការចែករំលែកភាពរីករាយ។',
+    },
+    Communication: {
+      MODERATE:
+        'ចម្លើយបង្ហាញថាការប្រើកាយវិការ ឬពាក្យសម្តីដើម្បីប្រាស្រ័យទាក់ទង អាចមានការវិវត្តយឺតជាងការរំពឹងទុក។',
+      HIGH: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចពឹងផ្អែកតិចជាងលើកាយវិការ ពាក្យសម្តី ឬការធ្វើត្រាប់តាមដើម្បីប្រាស្រ័យទាក់ទង។',
+    },
+    'Play & Imagination': {
+      MODERATE:
+        'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចបង្ហាញការលេងបែបស្រមើស្រមៃតិចជាងការរំពឹងទុកសម្រាប់អាយុរបស់ពួកគេ។',
+      HIGH: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានការលេងបែបស្រមើស្រមៃមានកម្រិត ឬប្រើប្រាស់ប្រដាប់ក្មេងលេងមិនធម្មតា ដូចជាតម្រៀបជាជួរដដែលៗ ឬបង្វិល។',
+    },
+    'Sensory Response': {
+      MODERATE:
+        'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានប្រតិកម្មខ្លាំងជាងធម្មតាចំពោះសំឡេង ផ្ទៃប៉ះ ឬញាណដឹងមួយចំនួន។',
+      HIGH: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានប្រតិកម្មខ្លាំងញឹកញាប់ចំពោះញាណដឹង ដូចជាសំឡេងខ្លាំង ឬផ្ទៃប៉ះជាក់លាក់។',
+    },
+    'Motor & Repetitive Behaviors': {
+      MODERATE:
+        'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចបង្ហាញចលនា ឬទម្លាប់ដដែលៗមួយចំនួនញឹកញាប់ជាងការរំពឹងទុក។',
+      HIGH: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចបង្ហាញចលនាដដែលៗញឹកញាប់ ដូចជាការបក់ដៃ ឬទាមទារទម្លាប់យ៉ាងតឹងរ៉ឹង។',
+    },
+  },
+  PRESCHOOL: {
+    'Social Interaction': {
+      MODERATE:
+        'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចពិបាកក្នុងការផ្សារភ្ជាប់ទំនាក់ទំនងជាមួយកុមារដទៃជាងការរំពឹងទុក។',
+      HIGH: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានការលំបាកខ្លាំងក្នុងការស្វែងរកមិត្តភក្តិ ឬកត់សម្គាល់អារម្មណ៍អ្នកដទៃ។',
+    },
+    Communication: {
+      MODERATE: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចពិបាកក្នុងការសន្ទនាឆ្លើយឆ្លង ឬការយល់ដឹងពីសញ្ញាសង្គម។',
+      HIGH: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានការលំបាកខ្លាំងក្នុងការសន្ទនា ឬការយល់ដឹងពីសញ្ញាសង្គម និងអារម្មណ៍។',
+    },
+    'Play & Imagination': {
+      MODERATE:
+        'ចម្លើយបង្ហាញថាការលេងរបស់កូនអ្នកអាចមានលក្ខណៈដដែលៗ ឬផ្តោតលើចំណាប់អារម្មណ៍ចង្អៀតជាងការរំពឹងទុក។',
+      HIGH: 'ចម្លើយបង្ហាញថាការលេងរបស់កូនអ្នកអាចមានលក្ខណៈដដែលៗខ្លាំង ឬផ្តោតលើចំណាប់អារម្មណ៍ចង្អៀត។',
+    },
+    'Sensory Response': {
+      MODERATE:
+        'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានភាពរសើបជាងធម្មតាចំពោះសំឡេង ផ្ទៃប៉ះ ឬបរិស្ថានដែលមានសកម្មភាពច្រើន។',
+      HIGH: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានអារម្មណ៍តានតឹងញឹកញាប់ដោយសារញាណដឹង ឬកន្លែងដែលមានមនុស្សច្រើន។',
+    },
+    'Flexibility & Routine': {
+      MODERATE:
+        'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចពិបាកក្នុងការសម្របខ្លួនទៅនឹងការផ្លាស់ប្តូរទម្លាប់ជាងការរំពឹងទុក។',
+      HIGH: 'ចម្លើយបង្ហាញថាកូនរបស់អ្នកអាចមានអារម្មណ៍តានតឹងខ្លាំងចំពោះការផ្លាស់ប្តូរទម្លាប់ ឬការផ្លាស់ប្តូរសកម្មភាព។',
+    },
+  },
+};
+
 /**
  * Returns the observation sentence for a category at a given band + risk level,
  * or null when there is no entry (e.g. LOW risk, or an unknown category/band).
@@ -74,7 +133,9 @@ export const observationFor = (
   ageBand: AgeBand | null,
   category: string,
   riskLevel: RiskLevel,
+  lang: 'km' | 'en' = 'en',
 ): string | null => {
   if (!ageBand) return null;
-  return SCREENING_OBSERVATIONS[ageBand]?.[category]?.[riskLevel] ?? null;
+  const dict = lang === 'km' ? KM_SCREENING_OBSERVATIONS : EN_SCREENING_OBSERVATIONS;
+  return dict[ageBand]?.[category]?.[riskLevel] ?? null;
 };

@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import type { ChildResponse } from '@auticare/contracts';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
-const formatChildAge = (dateOfBirth: string): string => {
+const formatChildAge = (dateOfBirth: string, isKm = false): string => {
   const birth = new Date(`${dateOfBirth}T00:00:00Z`);
   if (Number.isNaN(birth.getTime())) return '';
   const now = new Date();
@@ -11,8 +12,8 @@ const formatChildAge = (dateOfBirth: string): string => {
   if (now.getUTCDate() < birth.getUTCDate()) months -= 1;
   months = Math.max(months, 0);
   const years = Math.floor(months / 12);
-  if (years < 1) return `${months} mo`;
-  return `${years} yr${years === 1 ? '' : 's'}`;
+  if (years < 1) return isKm ? `${months} ខែ` : `${months} mo`;
+  return isKm ? `${years} ឆ្នាំ` : `${years} yr${years === 1 ? '' : 's'}`;
 };
 
 /**
@@ -130,10 +131,13 @@ const formatChildAge = (dateOfBirth: string): string => {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChildSelectCardComponent {
+  private readonly i18n = inject(I18nService);
+
   readonly child = input.required<ChildResponse>();
   readonly selected = input(false);
   readonly select = output<string>();
 
+  readonly isKm = computed(() => this.i18n.currentLang() === 'km');
   readonly initial = computed(() => this.child().firstName.charAt(0).toUpperCase());
-  readonly age = computed(() => formatChildAge(this.child().dateOfBirth));
+  readonly age = computed(() => formatChildAge(this.child().dateOfBirth, this.isKm()));
 }

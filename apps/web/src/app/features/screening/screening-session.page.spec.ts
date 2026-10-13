@@ -8,6 +8,7 @@ import type {
   ScreeningSessionDetailResponse,
 } from '@auticare/contracts';
 import { API_BASE_URL } from '../../core/config/api.config';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ScreeningSessionPage } from './screening-session.page';
 
 describe('ScreeningSessionPage', () => {
@@ -65,6 +66,7 @@ describe('ScreeningSessionPage', () => {
     });
 
     httpTesting = TestBed.inject(HttpTestingController);
+    TestBed.inject(I18nService).setLanguage('km');
   });
 
   afterEach(() => {
@@ -84,12 +86,43 @@ describe('ScreeningSessionPage', () => {
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('សំណួរទី 1 ក្នុងចំណោម 2');
+    expect(element.textContent).toContain('បញ្ចប់បាន 50%');
+    expect(element.textContent).toContain('ទំនាក់ទំនងសង្គម');
+    expect(element.textContent).toContain('តើកូនរបស់អ្នករក្សាការសម្លឹងមើលភ្នែកជាប់លាប់');
+    expect(element.textContent).toContain('ការណែនាំសង្កេត៖');
+
+    const answerButtons = element.querySelectorAll<HTMLButtonElement>('.answer-btn');
+    expect(answerButtons.length).toBe(5);
+    const labels = Array.from(answerButtons).map((btn) => btn.textContent?.trim());
+    expect(labels.some((l) => l?.includes('មិនដែល'))).toBe(true);
+    expect(labels.some((l) => l?.includes('កម្រ'))).toBe(true);
+    expect(labels.some((l) => l?.includes('ជួនកាល'))).toBe(true);
+    expect(labels.some((l) => l?.includes('ញឹកញាប់'))).toBe(true);
+    expect(labels.some((l) => l?.includes('ជានិច្ច'))).toBe(true);
+    expect(element.textContent).toContain('រក្សាទុក និងបន្តពេលក្រោយ');
+  });
+
+  it('renders sticky progress bar and question in English when language is en', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+
+    const fixture = TestBed.createComponent(ScreeningSessionPage);
+    fixture.detectChanges();
+
+    const sessionReq = httpTesting.expectOne('/api/v1/screening/sessions/session_1');
+    sessionReq.flush({ data: mockSession });
+
+    const questionsReq = httpTesting.expectOne('/api/v1/screening/questions?ageBand=PRESCHOOL');
+    questionsReq.flush({ data: mockQuestions });
+
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
     expect(element.textContent).toContain('Question 1 of 2');
     expect(element.textContent).toContain('50% Completed');
     expect(element.textContent).toContain('Social Interaction');
-    expect(element.textContent).toContain('ទំនាក់ទំនងសង្គម');
     expect(element.textContent).toContain('Does your child make consistent eye contact');
-    expect(element.textContent).toContain('តើកូនរបស់អ្នករក្សាការសម្លឹងមើលភ្នែកជាប់លាប់');
     expect(element.textContent).toContain('Observational guidance:');
 
     const answerButtons = element.querySelectorAll<HTMLButtonElement>('.answer-btn');
@@ -100,11 +133,6 @@ describe('ScreeningSessionPage', () => {
     expect(labels.some((l) => l?.includes('Sometimes'))).toBe(true);
     expect(labels.some((l) => l?.includes('Often'))).toBe(true);
     expect(labels.some((l) => l?.includes('Always'))).toBe(true);
-    expect(labels.some((l) => l?.includes('មិនដែល'))).toBe(true);
-    expect(labels.some((l) => l?.includes('កម្រ'))).toBe(true);
-    expect(labels.some((l) => l?.includes('ជួនកាល'))).toBe(true);
-    expect(labels.some((l) => l?.includes('ញឹកញាប់'))).toBe(true);
-    expect(labels.some((l) => l?.includes('ជានិច្ច'))).toBe(true);
     expect(element.textContent).toContain('Save & Finish Later');
   });
 
@@ -139,8 +167,8 @@ describe('ScreeningSessionPage', () => {
       fixture.detectChanges();
 
       expect(component.currentIndex()).toBe(1);
-      expect(fixture.nativeElement.textContent).toContain('Question 2 of 2');
-      expect(fixture.nativeElement.textContent).toContain('Communication');
+      expect(fixture.nativeElement.textContent).toContain('សំណួរទី 2 ក្នុងចំណោម 2');
+      expect(fixture.nativeElement.textContent).toContain('ការប្រាស្រ័យទាក់ទង');
     } finally {
       vi.useRealTimers();
     }

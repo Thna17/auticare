@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 export type AnswerScaleOption = {
   readonly label: string;
@@ -84,21 +85,15 @@ export const defaultAnswerScale: readonly AnswerScaleOption[] = [
         >
           <div class="answer-header">
             <span class="answer-label">
-              <span class="label-km">{{ option.labelKm || option.label }}</span>
-              @if (option.labelEn && option.labelKm) {
-                <span class="label-en-sub"> ({{ option.labelEn }} - {{ option.shortcut }})</span>
-              }
+              <span class="label-text">{{ currentLabel(option) }}</span>
             </span>
             @if (option.shortcut) {
               <kbd class="shortcut-pill" aria-hidden="true">{{ option.shortcut }}</kbd>
             }
           </div>
-          @if (option.description || option.descriptionKm) {
+          @if (currentDescription(option)) {
             <p class="answer-desc">
-              {{ option.descriptionKm || option.description }}
-              @if (option.descriptionKm && option.description) {
-                <span class="desc-en-sub"> ({{ option.description }})</span>
-              }
+              {{ currentDescription(option) }}
             </p>
           }
           <div class="selection-indicator" aria-hidden="true">
@@ -283,11 +278,25 @@ export const defaultAnswerScale: readonly AnswerScaleOption[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScreeningAnswerScaleComponent {
+  private readonly i18n = inject(I18nService);
+
   readonly options = input<readonly AnswerScaleOption[]>(defaultAnswerScale);
   readonly value = input<number | null>(null);
   readonly disabled = input(false);
   readonly ariaLabel = input('Screening Answer Scale');
   readonly valueChange = output<number>();
+
+  readonly isKm = computed(() => this.i18n.currentLang() === 'km');
+
+  currentLabel(option: AnswerScaleOption): string {
+    return this.isKm() ? option.labelKm || option.label : option.labelEn || option.label;
+  }
+
+  currentDescription(option: AnswerScaleOption): string {
+    return this.isKm()
+      ? option.descriptionKm || option.description || ''
+      : option.description || option.descriptionKm || '';
+  }
 
   isSelected(optVal: number): boolean {
     const current = this.value();

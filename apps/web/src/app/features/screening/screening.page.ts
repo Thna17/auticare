@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import type { OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { ChildResponse, ScreeningSessionDetailResponse } from '@auticare/contracts';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ScreeningApi } from './data-access/screening.api';
 import { ChildSelectCardComponent } from './components/child-select-card.component';
@@ -21,19 +22,26 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
   template: `
     <section class="intro">
       <header class="head">
-        <h1>Autism Screening</h1>
+        <h1>{{ isKm() ? 'ការវាយតម្លៃអូទីសឹម' : 'Autism Screening' }}</h1>
         <p class="subtitle">
-          Informational support to help you understand your child's development.
+          {{
+            isKm()
+              ? 'ការគាំទ្រព័ត៌មានដើម្បីជួយអ្នកយល់ដឹងពីការលូតលាស់របស់កូនអ្នក។'
+              : "Informational support to help you understand your child's development."
+          }}
         </p>
       </header>
 
       <ac-screening-info-banner>
-        This screening tool is for informational purposes and does not constitute a medical
-        diagnosis. Please consult with a healthcare professional for a formal evaluation.
+        {{
+          isKm()
+            ? 'ឧបករណ៍វាយតម្លៃនេះគឺសម្រាប់គោលបំណងផ្តល់ព័ត៌មានប៉ុណ្ណោះ និងមិនបង្កើតជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រឡើយ។ សូមពិគ្រោះជាមួយអ្នកជំនាញថែទាំសុខភាពសម្រាប់ការវាយតម្លៃជាផ្លូវការ។'
+            : 'This screening tool is for informational purposes and does not constitute a medical diagnosis. Please consult with a healthcare professional for a formal evaluation.'
+        }}
       </ac-screening-info-banner>
 
       @if (loading()) {
-        <ac-ui-spinner label="Loading screening…" />
+        <ac-ui-spinner [label]="isKm() ? 'កំពុងផ្ទុកការវាយតម្លៃ…' : 'Loading screening…'" />
       } @else if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       } @else if (children().length === 0) {
@@ -55,15 +63,29 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
               <line x1="22" y1="11" x2="16" y2="11" />
             </svg>
           </div>
-          <h2>Welcome to Developmental Screening</h2>
+          <h2>
+            {{
+              isKm()
+                ? 'សូមស្វាគមន៍មកកាន់ការវាយតម្លៃការលូតលាស់'
+                : 'Welcome to Developmental Screening'
+            }}
+          </h2>
           <p class="onboarding-copy">
-            Add your child's profile to begin a personalized developmental screening.
+            {{
+              isKm()
+                ? 'បន្ថែមព័ត៌មានកុមាររបស់អ្នក ដើម្បីចាប់ផ្តើមការវាយតម្លៃការលូតលាស់ផ្ទាល់ខ្លួន។'
+                : "Add your child's profile to begin a personalized developmental screening."
+            }}
           </p>
-          <a class="btn-primary" routerLink="/children/new"> Add Child Profile </a>
+          <a class="btn-primary" routerLink="/children/new">
+            {{ isKm() ? 'បន្ថែមព័ត៌មានកុមារ' : 'Add Child Profile' }}
+          </a>
         </section>
       } @else {
         <section class="select-child" role="group" aria-labelledby="select-child-label">
-          <p id="select-child-label" class="section-label">SELECT CHILD</p>
+          <p id="select-child-label" class="section-label">
+            {{ isKm() ? 'ជ្រើសរើសកុមារ' : 'SELECT CHILD' }}
+          </p>
           <div class="child-row">
             @for (child of children(); track child.id) {
               <ac-child-select-card
@@ -95,7 +117,7 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
                   />
                 </svg>
               </span>
-              <span class="add-label">Add Child</span>
+              <span class="add-label">{{ isKm() ? 'បន្ថែម' : 'Add Child' }}</span>
             </a>
           </div>
         </section>
@@ -104,14 +126,22 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
           @if (draftSession(); as draft) {
             <div class="last-activity">
               <div class="last-copy">
-                <p class="section-label">LAST ACTIVITY</p>
-                <p class="last-meta">Screening started {{ formatDate(draft.startedAt) }}</p>
+                <p class="section-label">{{ isKm() ? 'សកម្មភាពចុងក្រោយ' : 'LAST ACTIVITY' }}</p>
+                <p class="last-meta">
+                  {{
+                    isKm()
+                      ? 'ការវាយតម្លៃបានចាប់ផ្តើម ' + formatDate(draft.startedAt)
+                      : 'Screening started ' + formatDate(draft.startedAt)
+                  }}
+                </p>
               </div>
               <button type="button" class="btn-continue" (click)="continueSession(draft)">
-                Continue
+                {{ isKm() ? 'បន្ត' : 'Continue' }}
               </button>
             </div>
-            <div class="divider"><span>OR</span></div>
+            <div class="divider">
+              <span>{{ isKm() ? 'ឬ' : 'OR' }}</span>
+            </div>
           }
 
           <button
@@ -120,11 +150,11 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
             [disabled]="!selectedChildId()"
             (click)="startNew()"
           >
-            Start new screening
+            {{ isKm() ? 'ចាប់ផ្តើមការវាយតម្លៃថ្មី' : 'Start new screening' }}
           </button>
 
           <button type="button" class="link-history" (click)="viewHistory()">
-            View screening history
+            {{ isKm() ? 'មើលប្រវត្តិនៃការវាយតម្លៃ' : 'View screening history' }}
           </button>
         </section>
 
@@ -141,7 +171,7 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
                 stroke-linejoin="round"
               />
             </svg>
-            Takes approx. 10-15 mins
+            {{ isKm() ? 'ចំណាយពេលប្រហែល ១០-១៥ នាទី' : 'Takes approx. 10-15 mins' }}
           </span>
           <span class="foot-item">
             <svg class="foot-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -162,7 +192,7 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
                 stroke-width="2"
               />
             </svg>
-            Private and secure
+            {{ isKm() ? 'ឯកជនភាព និងសុវត្ថិភាព' : 'Private and secure' }}
           </span>
         </footer>
       }
@@ -432,6 +462,9 @@ export class ScreeningPage implements OnInit {
   private readonly screeningApi = inject(ScreeningApi);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly i18n = inject(I18nService);
+
+  readonly isKm = computed(() => this.i18n.currentLang() === 'km');
 
   readonly children = signal<readonly ChildResponse[]>([]);
   readonly selectedChildId = signal<string | null>(null);

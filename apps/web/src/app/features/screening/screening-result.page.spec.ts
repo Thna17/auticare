@@ -5,6 +5,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScreeningSessionResultResponse } from '@auticare/contracts';
 import { API_BASE_URL } from '../../core/config/api.config';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ScreeningResultPage } from './screening-result.page';
 
 describe('ScreeningResultPage', () => {
@@ -62,6 +63,7 @@ describe('ScreeningResultPage', () => {
     });
 
     httpTesting = TestBed.inject(HttpTestingController);
+    TestBed.inject(I18nService).setLanguage('km');
   });
 
   afterEach(() => {
@@ -89,28 +91,28 @@ describe('ScreeningResultPage', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Dara');
-    expect(compiled.textContent).toContain('Moderate Risk');
-    expect(compiled.textContent).toContain('Social Communication');
+    expect(compiled.textContent).toContain('ហានិភ័យមធ្យម');
+    expect(compiled.textContent).toContain('ទំនាក់ទំនងសង្គម និងការប្រាស្រ័យទាក់ទង');
 
     // Visual risk meter
     const gauge = compiled.querySelector('.visual-meter-container');
     expect(gauge).toBeTruthy();
     expect(gauge?.textContent).toContain('45%');
-    expect(gauge?.textContent).toContain('Moderate Risk');
+    expect(gauge?.textContent).toContain('ហានិភ័យមធ្យម');
 
     // Prominent action toolbar
     const toolbar = compiled.querySelector('.prominent-action-toolbar');
     expect(toolbar).toBeTruthy();
-    expect(toolbar?.textContent).toContain('Book a Specialist');
-    expect(toolbar?.textContent).toContain('Recommended Activities');
-    expect(toolbar?.textContent).toContain('Download Summary Report');
+    expect(toolbar?.textContent).toContain('កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា');
+    expect(toolbar?.textContent).toContain('ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់');
+    expect(toolbar?.textContent).toContain('ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ');
 
     // Domain explanation
-    expect(compiled.textContent).toContain('Observes shared engagement');
+    expect(compiled.textContent).toContain('សង្កេតមើលការចូលរួមរួមគ្នា');
 
     const printBtn = compiled.querySelector('.btn-print');
     expect(printBtn).toBeTruthy();
-    expect(printBtn?.textContent).toContain('Print / Save PDF');
+    expect(printBtn?.textContent).toContain('បោះពុម្ព / រក្សាទុកជា PDF');
   });
 
   it('invokes window.print when printResult is called', () => {
@@ -196,13 +198,15 @@ describe('ScreeningResultPage', () => {
     // Concern pill
     const concernPill = compiled.querySelector('.concern-pill');
     expect(concernPill).toBeTruthy();
-    expect(concernPill?.textContent).toContain('Moderate Concern');
+    expect(concernPill?.textContent).toContain('ការព្រួយបារម្ភមធ្យម');
 
     // Empathetic summary card
     const summaryCard = compiled.querySelector('.empathetic-summary-card');
     expect(summaryCard).toBeTruthy();
-    expect(summaryCard?.textContent).toContain('Mild Developmental Nuances Observed');
-    expect(summaryCard?.textContent).toContain('gentle observation and support');
+    expect(summaryCard?.textContent).toContain(
+      'សង្កេតឃើញចំណុចលូតលាស់ដែលគួរយកចិត្តទុកដាក់កម្រិតស្រាល',
+    );
+    expect(summaryCard?.textContent).toContain('ចម្លើយមួយចំនួនបង្ហាញពីភាពខុសប្លែកបន្តិចបន្តួច');
     expect(summaryCard?.textContent).toContain(
       'លទ្ធផលនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រទេ ប៉ុន្តែជាការណែនាំដើម្បីជួយគាំទ្រដល់ការលូតលាស់របស់កុមារ',
     );
@@ -210,7 +214,7 @@ describe('ScreeningResultPage', () => {
     // Developmental domain breakdown
     const breakdown = compiled.querySelector('.breakdown');
     expect(breakdown).toBeTruthy();
-    expect(breakdown?.textContent).toContain('Developmental Domain Breakdown');
+    expect(breakdown?.textContent).toContain('ការវិភាគតាមផ្នែកលូតលាស់');
     expect(breakdown?.textContent).toContain('ទំនាក់ទំនងសង្គម និងការប្រាស្រ័យទាក់ទង');
     const progressBar = breakdown?.querySelector('[role="progressbar"]');
     expect(progressBar?.getAttribute('aria-valuenow')).toBe('50');
@@ -218,19 +222,62 @@ describe('ScreeningResultPage', () => {
     // Transparent medical disclaimer
     const disclaimer = compiled.querySelector('.prominent-disclaimer-callout');
     expect(disclaimer).toBeTruthy();
-    expect(disclaimer?.textContent).toContain('Clinical Non-Diagnostic Reassurance');
-    expect(disclaimer?.textContent).toContain('This screening tool is not a medical diagnosis.');
+    expect(disclaimer?.textContent).toContain('ការបញ្ជាក់មិនមែនរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រ');
+    expect(disclaimer?.textContent).toContain(
+      'ឧបករណ៍វាយតម្លៃនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រឡើយ។',
+    );
     expect(disclaimer?.textContent).toContain(
       'លទ្ធផលនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រទេ ប៉ុន្តែជាការណែនាំដើម្បីជួយគាំទ្រដល់ការលូតលាស់របស់កុមារ',
     );
 
     // Action plan buttons
     const toolbar = compiled.querySelector('.prominent-action-toolbar');
-    expect(toolbar?.textContent).toContain('Book a Specialist Consultation');
     expect(toolbar?.textContent).toContain('កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា');
-    expect(toolbar?.textContent).toContain('Explore Recommended Activities');
     expect(toolbar?.textContent).toContain('ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់');
-    expect(toolbar?.textContent).toContain('Export Clinical PDF Summary');
     expect(toolbar?.textContent).toContain('ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ');
+  });
+
+  it('renders screening result cleanly in English when language is en', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+
+    const fixture = TestBed.createComponent(ScreeningResultPage);
+    fixture.detectChanges();
+
+    httpTesting.expectOne('/api/v1/screening/sessions/session_123').flush({ data: mockSession });
+    httpTesting.expectOne('/api/v1/children/child_456').flush({
+      data: {
+        id: 'child_456',
+        firstName: 'Dara',
+        lastName: 'Sok',
+        dateOfBirth: '2024-01-01',
+      },
+    });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Dara');
+    expect(compiled.textContent).toContain('Moderate Risk');
+    expect(compiled.textContent).toContain('Social Communication');
+
+    const concernPill = compiled.querySelector('.concern-pill');
+    expect(concernPill?.textContent).toContain('Moderate Concern');
+
+    const summaryCard = compiled.querySelector('.empathetic-summary-card');
+    expect(summaryCard?.textContent).toContain('Mild Developmental Nuances Observed');
+
+    const breakdown = compiled.querySelector('.breakdown');
+    expect(breakdown?.textContent).toContain('Developmental Domain Breakdown');
+
+    const disclaimer = compiled.querySelector('.prominent-disclaimer-callout');
+    expect(disclaimer?.textContent).toContain('Clinical Non-Diagnostic Reassurance');
+
+    const toolbar = compiled.querySelector('.prominent-action-toolbar');
+    expect(toolbar?.textContent).toContain('Book a Specialist Consultation');
+    expect(toolbar?.textContent).toContain('Explore Recommended Activities');
+    expect(toolbar?.textContent).toContain('Download Summary Report');
+
+    const printBtn = compiled.querySelector('.btn-print');
+    expect(printBtn?.textContent).toContain('Print / Save PDF');
   });
 });

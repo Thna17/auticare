@@ -5,6 +5,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ChildResponse } from '@auticare/contracts';
 import { API_BASE_URL } from '../../core/config/api.config';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ScreeningHistoryPage } from './screening-history.page';
 
 describe('ScreeningHistoryPage', () => {
@@ -39,6 +40,7 @@ describe('ScreeningHistoryPage', () => {
     });
 
     httpTesting = TestBed.inject(HttpTestingController);
+    TestBed.inject(I18nService).setLanguage('km');
   });
 
   afterEach(() => {
@@ -163,11 +165,81 @@ describe('ScreeningHistoryPage', () => {
     const element = fixture.nativeElement as HTMLElement;
     const timeline = element.querySelector('.timeline-section');
     expect(timeline).toBeTruthy();
-    expect(timeline?.textContent).toContain('Developmental Risk Progression Timeline');
-    expect(timeline?.textContent).toContain('2 assessments recorded');
-    expect(timeline?.textContent).toContain('35% reduction in risk indicator');
+    expect(timeline?.textContent).toContain('បន្ទាត់ពេលវេលានៃការវិវត្តកម្រិតហានិភ័យ');
+    expect(timeline?.textContent).toContain('2 ការវាយតម្លៃត្រូវបានកត់ត្រា');
+    expect(timeline?.textContent).toContain('ការថយចុះ 35% នៃសូចនាករហានិភ័យ');
 
     const nodes = element.querySelectorAll('.timeline-node');
     expect(nodes.length).toBe(2);
+  });
+
+  it('renders developmental risk progression timeline in English when language is en', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+
+    const fixture = TestBed.createComponent(ScreeningHistoryPage);
+    fixture.detectChanges();
+
+    const reqChildren = httpTesting.expectOne('/api/v1/children');
+    reqChildren.flush({ data: mockChildren });
+
+    const mockCompletedSessions = [
+      {
+        id: 'session_old',
+        childId: 'child_1',
+        status: 'ANALYZED' as const,
+        ageBand: 'TODDLER',
+        startedAt: '2025-09-01T00:00:00.000Z',
+        submittedAt: '2025-09-01T00:15:00.000Z',
+        createdAt: '2025-09-01T00:00:00.000Z',
+        updatedAt: '2025-09-01T00:15:00.000Z',
+        answers: [],
+        result: {
+          id: 'result_old',
+          score: 18,
+          riskPercentage: 60,
+          riskLevel: 'MODERATE' as const,
+          recommendation: 'Initial evaluation.',
+          disclaimer: 'Not a diagnosis.',
+          analysisVersion: 'v3',
+          analyzedAt: '2025-09-01T00:15:00.000Z',
+          categoryBreakdown: [],
+        },
+      },
+      {
+        id: 'session_new',
+        childId: 'child_1',
+        status: 'ANALYZED' as const,
+        ageBand: 'PRESCHOOL',
+        startedAt: '2026-03-01T00:00:00.000Z',
+        submittedAt: '2026-03-01T00:15:00.000Z',
+        createdAt: '2026-03-01T00:00:00.000Z',
+        updatedAt: '2026-03-01T00:15:00.000Z',
+        answers: [],
+        result: {
+          id: 'result_new',
+          score: 8,
+          riskPercentage: 25,
+          riskLevel: 'LOW' as const,
+          recommendation: 'Continue monitoring.',
+          disclaimer: 'Not a diagnosis.',
+          analysisVersion: 'v3',
+          analyzedAt: '2026-03-01T00:15:00.000Z',
+          categoryBreakdown: [],
+        },
+      },
+    ];
+
+    const reqSessions = httpTesting.expectOne('/api/v1/screening/children/child_1/sessions');
+    reqSessions.flush({ data: mockCompletedSessions });
+
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const timeline = element.querySelector('.timeline-section');
+    expect(timeline).toBeTruthy();
+    expect(timeline?.textContent).toContain('Developmental Risk Progression Timeline');
+    expect(timeline?.textContent).toContain('2 assessments recorded');
+    expect(timeline?.textContent).toContain('35% reduction in risk indicator');
   });
 });

@@ -13,6 +13,7 @@ import type { RiskFilter } from './components/screening-history-filter.component
 import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 const MAX_ANSWER_VALUE = 4;
 const PAGE_SIZE = 5;
@@ -27,6 +28,12 @@ const riskLabels: Record<RiskLevel, string> = {
   LOW: 'Low Risk',
   MODERATE: 'Moderate Risk',
   HIGH: 'High Risk',
+};
+
+const riskLabelsKm: Record<RiskLevel, string> = {
+  LOW: 'ហានិភ័យទាប',
+  MODERATE: 'ហានិភ័យមធ្យម',
+  HIGH: 'ហានិភ័យខ្ពស់',
 };
 
 type TimelineItem = {
@@ -59,22 +66,30 @@ type TimelineItem = {
   template: `
     <section class="history">
       <header class="head">
-        <h1>Screening History</h1>
+        <h1>{{ isKm() ? 'ប្រវត្តិការវាយតម្លៃ' : 'Screening History' }}</h1>
         <p class="subtitle">
-          Review your child's past screenings, compare trajectories, and revisit clinical results.
+          {{
+            isKm()
+              ? 'ពិនិត្យមើលការវាយតម្លៃកន្លងមករបស់កូនអ្នក ប្រៀបធៀបការវិវត្ត និងពិនិត្យលទ្ធផលគ្លីនិកឡើងវិញ។'
+              : "Review your child's past screenings, compare trajectories, and revisit clinical results."
+          }}
         </p>
       </header>
 
       @if (loading()) {
         <div class="state-center">
-          <ac-ui-spinner label="Loading screening history…" />
+          <ac-ui-spinner
+            [label]="isKm() ? 'កំពុងផ្ទុកប្រវត្តិការវាយតម្លៃ…' : 'Loading screening history…'"
+          />
         </div>
       } @else if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       } @else {
         @if (children().length > 1) {
           <section class="select-child" role="group" aria-labelledby="history-child-label">
-            <p id="history-child-label" class="section-label">Child Profile</p>
+            <p id="history-child-label" class="section-label">
+              {{ isKm() ? 'កុមារ' : 'Child Profile' }}
+            </p>
             <div class="child-row">
               @for (child of children(); track child.id) {
                 <ac-child-select-card
@@ -89,18 +104,43 @@ type TimelineItem = {
 
         <!-- Developmental Risk Progression Timeline -->
         @if (timelineItems().length >= 1) {
-          <section class="timeline-section" aria-label="Developmental risk progression timeline">
+          <section
+            class="timeline-section"
+            [attr.aria-label]="
+              isKm()
+                ? 'បន្ទាត់ពេលវេលានៃការវិវត្តកម្រិតហានិភ័យ'
+                : 'Developmental risk progression timeline'
+            "
+          >
             <div class="timeline-header">
               <div class="timeline-title-group">
                 <span class="timeline-icon" aria-hidden="true">📈</span>
                 <div>
-                  <h2>Developmental Risk Progression Timeline</h2>
-                  <p>Longitudinal comparison of screening indicators across assessment dates</p>
+                  <h2>
+                    {{
+                      isKm()
+                        ? 'បន្ទាត់ពេលវេលានៃការវិវត្តកម្រិតហានិភ័យ'
+                        : 'Developmental Risk Progression Timeline'
+                    }}
+                  </h2>
+                  <p>
+                    {{
+                      isKm()
+                        ? 'ការប្រៀបធៀបសូចនាករនៃការវាយតម្លៃឆ្លងកាត់កាលបរិច្ឆេទនីមួយៗ'
+                        : 'Longitudinal comparison of screening indicators across assessment dates'
+                    }}
+                  </p>
                 </div>
               </div>
               <span class="timeline-count-badge">
                 {{ timelineItems().length }}
-                {{ timelineItems().length === 1 ? 'assessment recorded' : 'assessments recorded' }}
+                {{
+                  isKm()
+                    ? 'ការវាយតម្លៃត្រូវបានកត់ត្រា'
+                    : timelineItems().length === 1
+                      ? 'assessment recorded'
+                      : 'assessments recorded'
+                }}
               </span>
             </div>
 
@@ -135,7 +175,9 @@ type TimelineItem = {
 
                       <div class="node-metrics-row">
                         <div class="node-score-box">
-                          <span class="metric-label">Score Indicator:</span>
+                          <span class="metric-label">{{
+                            isKm() ? 'សូចនាករពិន្ទុ៖' : 'Score Indicator:'
+                          }}</span>
                           <strong class="metric-val">{{ item.scoreLabel }}</strong>
                         </div>
                         @if (item.comparison; as comp) {
@@ -154,7 +196,11 @@ type TimelineItem = {
 
                       <div class="node-action-line">
                         <a class="view-session-link" [routerLink]="['/screening/result', item.id]">
-                          View Full Diagnostic Breakdown &rarr;
+                          {{
+                            isKm()
+                              ? 'មើលការវិភាគលម្អិត &rarr;'
+                              : 'View Full Diagnostic Breakdown &rarr;'
+                          }}
                         </a>
                       </div>
                     </div>
@@ -173,17 +219,22 @@ type TimelineItem = {
         </div>
 
         @if (!filteredSessions().length) {
-          <ac-ui-empty-state title="No screenings to show" [message]="emptyMessage()">
+          <ac-ui-empty-state
+            [title]="isKm() ? 'មិនទាន់មានការវាយតម្លៃបង្ហាញទេ' : 'No screenings to show'"
+            [message]="emptyMessage()"
+          >
             @if (selectedChildId()) {
               <a
                 class="primary-link"
                 routerLink="/screening/new"
                 [queryParams]="{ childId: selectedChildId() }"
               >
-                Start a screening
+                {{ isKm() ? 'ចាប់ផ្តើមការវាយតម្លៃ' : 'Start a screening' }}
               </a>
             } @else {
-              <a class="primary-link" routerLink="/screening">Start a screening</a>
+              <a class="primary-link" routerLink="/screening">
+                {{ isKm() ? 'ចាប់ផ្តើមការវាយតម្លៃ' : 'Start a screening' }}
+              </a>
             }
           </ac-ui-empty-state>
         } @else {
@@ -206,17 +257,19 @@ type TimelineItem = {
                         {{ label(res.riskLevel) }}
                       </ac-screening-badge>
                     } @else {
-                      <ac-screening-badge tone="neutral">In progress</ac-screening-badge>
+                      <ac-screening-badge tone="neutral">{{
+                        isKm() ? 'កំពុងដំណើរការ' : 'In progress'
+                      }}</ac-screening-badge>
                     }
                   </div>
                   <div class="hc-action">
                     @if (session.result) {
                       <a class="hc-link" [routerLink]="['/screening/result', session.id]">
-                        View details
+                        {{ isKm() ? 'មើលព័ត៌មានលម្អិត' : 'View details' }}
                       </a>
                     } @else {
                       <a class="hc-link" [routerLink]="['/screening/session', session.id]">
-                        Continue
+                        {{ isKm() ? 'បន្ត' : 'Continue' }}
                       </a>
                     }
                   </div>
@@ -230,8 +283,8 @@ type TimelineItem = {
             [totalPages]="totalPages()"
             [total]="filteredSessions().length"
             [perPage]="pageSize"
-            itemNoun="screenings"
-            label="Screening history pages"
+            [itemNoun]="isKm() ? 'ការវាយតម្លៃ' : 'screenings'"
+            [label]="isKm() ? 'ទំព័រប្រវត្តិការវាយតម្លៃ' : 'Screening history pages'"
             (pageChange)="onPageChange($event)"
           />
         }
@@ -639,6 +692,9 @@ export class ScreeningHistoryPage implements OnInit {
   private readonly childrenApi = inject(ChildrenApi);
   private readonly screeningApi = inject(ScreeningApi);
   private readonly route = inject(ActivatedRoute);
+  private readonly i18n = inject(I18nService);
+
+  readonly isKm = computed(() => this.i18n.currentLang() === 'km');
 
   readonly children = signal<readonly ChildResponse[]>([]);
   readonly selectedChildId = signal<string | null>(null);
@@ -674,6 +730,7 @@ export class ScreeningHistoryPage implements OnInit {
     const completed = this.sessions()
       .filter((s) => s.result !== null)
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const isKm = this.isKm();
 
     return completed.map((s, index) => {
       const res = s.result!;
@@ -696,19 +753,23 @@ export class ScreeningHistoryPage implements OnInit {
             item.comparison = {
               direction: 'improved',
               arrow: '▼',
-              text: `${Math.abs(delta)}% reduction in risk indicator`,
+              text: isKm
+                ? `ការថយចុះ ${Math.abs(delta)}% នៃសូចនាករហានិភ័យ`
+                : `${Math.abs(delta)}% reduction in risk indicator`,
             };
           } else if (delta > 0) {
             item.comparison = {
               direction: 'elevated',
               arrow: '▲',
-              text: `+${delta}% shift in risk indicator`,
+              text: isKm
+                ? `+${delta}% ការកើនឡើងនៃសូចនាករហានិភ័យ`
+                : `+${delta}% shift in risk indicator`,
             };
           } else {
             item.comparison = {
               direction: 'stable',
               arrow: '■',
-              text: 'Risk indicator stable',
+              text: isKm ? 'សូចនាករហានិភ័យមានស្ថិរភាព' : 'Risk indicator stable',
             };
           }
         }
@@ -718,11 +779,16 @@ export class ScreeningHistoryPage implements OnInit {
     });
   });
 
-  readonly emptyMessage = computed(() =>
-    this.riskFilter() === 'ALL'
+  readonly emptyMessage = computed(() => {
+    if (this.isKm()) {
+      return this.riskFilter() === 'ALL'
+        ? 'នៅពេលអ្នកបញ្ចប់ការវាយតម្លៃ វានឹងបង្ហាញនៅទីនេះ។'
+        : 'គ្មានការវាយតម្លៃត្រូវនឹងកម្រិតហានិភ័យនេះទេ។';
+    }
+    return this.riskFilter() === 'ALL'
       ? 'When you complete a screening it will appear here.'
-      : 'No screenings match this risk level.',
-  );
+      : 'No screenings match this risk level.';
+  });
 
   ngOnInit() {
     this.loading.set(true);
@@ -780,7 +846,7 @@ export class ScreeningHistoryPage implements OnInit {
   }
 
   label(riskLevel: RiskLevel): string {
-    return riskLabels[riskLevel];
+    return this.isKm() ? riskLabelsKm[riskLevel] : riskLabels[riskLevel];
   }
 
   maxScore(session: ScreeningSessionDetailResponse): number {

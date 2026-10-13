@@ -5,6 +5,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ChildResponse } from '@auticare/contracts';
 import { API_BASE_URL } from '../../core/config/api.config';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ScreeningPage } from './screening.page';
 
 describe('ScreeningPage', () => {
@@ -39,6 +40,7 @@ describe('ScreeningPage', () => {
     });
 
     httpTesting = TestBed.inject(HttpTestingController);
+    TestBed.inject(I18nService).setLanguage('km');
   });
 
   afterEach(() => {
@@ -101,7 +103,30 @@ describe('ScreeningPage', () => {
     expect(fixture.componentInstance.selectedChildId()).toBe('child_2');
   });
 
-  it('renders onboarding empty state with CTA to add child when parent has no children', () => {
+  it('renders onboarding empty state with CTA to add child when parent has no children in Khmer mode', () => {
+    const fixture = TestBed.createComponent(ScreeningPage);
+    fixture.detectChanges();
+
+    const reqChildren = httpTesting.expectOne('/api/v1/children');
+    reqChildren.flush({ data: [] });
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('សូមស្វាគមន៍មកកាន់ការវាយតម្លៃការលូតលាស់');
+    expect(compiled.textContent).toContain(
+      'បន្ថែមព័ត៌មានកុមាររបស់អ្នក ដើម្បីចាប់ផ្តើមការវាយតម្លៃការលូតលាស់ផ្ទាល់ខ្លួន។',
+    );
+
+    const ctaBtn = compiled.querySelector('.screening-onboarding-card .btn-primary');
+    expect(ctaBtn).toBeTruthy();
+    expect(ctaBtn?.textContent).toContain('បន្ថែមព័ត៌មានកុមារ');
+  });
+
+  it('renders onboarding empty state in English when language is en', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+
     const fixture = TestBed.createComponent(ScreeningPage);
     fixture.detectChanges();
 

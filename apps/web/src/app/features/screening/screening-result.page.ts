@@ -24,12 +24,23 @@ const riskLabels: Record<RiskLevel, string> = {
   MODERATE: 'Moderate Risk',
   HIGH: 'High Risk',
 };
+const riskLabelsKm: Record<RiskLevel, string> = {
+  LOW: 'ហានិភ័យទាប',
+  MODERATE: 'ហានិភ័យមធ្យម',
+  HIGH: 'ហានិភ័យខ្ពស់',
+};
 const concernLabels: Record<RiskLevel, string> = {
   LOW: 'Low Concern',
   MODERATE: 'Moderate Concern',
   HIGH: 'Elevated Concern',
 };
+const concernLabelsKm: Record<RiskLevel, string> = {
+  LOW: 'ការព្រួយបារម្ភទាប',
+  MODERATE: 'ការព្រួយបារម្ភមធ្យម',
+  HIGH: 'ការព្រួយបារម្ភកម្រិតខ្ពស់',
+};
 const riskShort: Record<RiskLevel, string> = { LOW: 'Low', MODERATE: 'Moderate', HIGH: 'High' };
+const riskShortKm: Record<RiskLevel, string> = { LOW: 'ទាប', MODERATE: 'មធ្យម', HIGH: 'ខ្ពស់' };
 
 type ActionCard = {
   readonly title: string;
@@ -40,7 +51,7 @@ type ActionCard = {
 };
 
 // Next-step copy varies by overall risk. HIGH lists "Book an appointment" first.
-const nextStepsByRisk: Record<RiskLevel, { lead: string; cards: readonly ActionCard[] }> = {
+const EN_NEXT_STEPS_BY_RISK: Record<RiskLevel, { lead: string; cards: readonly ActionCard[] }> = {
   LOW: {
     lead: "Your child's responses look broadly on track for their age. There's no urgency — keep supporting their development.",
     cards: [
@@ -106,7 +117,73 @@ const nextStepsByRisk: Record<RiskLevel, { lead: string; cards: readonly ActionC
   },
 };
 
-const formatAge = (dateOfBirth: string): string => {
+const KM_NEXT_STEPS_BY_RISK: Record<RiskLevel, { lead: string; cards: readonly ActionCard[] }> = {
+  LOW: {
+    lead: 'ចម្លើយរបស់កូនអ្នកស្ថិតនៅលើគន្លងល្អសម្រាប់អាយុរបស់ពួកគេ។ មិនមានការប្រញាប់ប្រញាល់ទេ — សូមបន្តគាំទ្រការលូតលាស់របស់ពួកគេ។',
+    cards: [
+      {
+        title: 'មើលសកម្មភាពលេង',
+        subtitle: 'គំនិតលេងដែលជួយគាំទ្រដល់ការលូតលាស់',
+        path: '/activities',
+        icon: 'activities',
+      },
+      {
+        title: 'ស្វែងរកមន្ទីរពេទ្យ',
+        subtitle: 'ស្វែងយល់ពីជម្រើសសម្រាប់ពេលអនាគត',
+        path: '/hospitals',
+        icon: 'hospital',
+      },
+    ],
+  },
+  MODERATE: {
+    lead: 'ផ្នែកមួយចំនួនបង្ហាញពីតម្រូវការគាំទ្រ។ មិនចាំបាច់មានការព្រួយបារម្ភទេ ប៉ុន្តែគួរតែលើកយកលទ្ធផលទាំងនេះទៅពិគ្រោះជាមួយវេជ្ជបណ្ឌិតកុមារនៅពេលពិនិត្យបន្ទាប់។',
+    cards: [
+      {
+        title: 'ពិភាក្សានៅពេលពិនិត្យបន្ទាប់',
+        subtitle: 'ចែករំលែកលទ្ធផលនេះជាមួយវេជ្ជបណ្ឌិតកុមារ',
+        path: '/appointments',
+        icon: 'calendar',
+      },
+      {
+        title: 'ស្វែងរកមន្ទីរពេទ្យ',
+        subtitle: 'ស្វែងរកគ្លីនិកឯកទេសនៅជិតអ្នក',
+        path: '/hospitals',
+        icon: 'hospital',
+      },
+      {
+        title: 'មើលសកម្មភាពលេង',
+        subtitle: 'សកម្មភាពគាំទ្រជាក់ស្តែងសម្រាប់កូនរបស់អ្នក',
+        path: '/activities',
+        icon: 'activities',
+      },
+    ],
+  },
+  HIGH: {
+    lead: 'ផ្នែកជាច្រើនបង្ហាញថាគួរស្វែងរកការវាយតម្លៃពីអ្នកជំនាញក្នុងពេលឆាប់ៗ។ វេជ្ជបណ្ឌិតឯកទេសអាចផ្តល់ការវាយតម្លៃលម្អិត និងច្បាស់លាស់។',
+    cards: [
+      {
+        title: 'កក់ការណាត់ជួប',
+        subtitle: 'យើងណែនាំឱ្យមានការវាយតម្លៃវិជ្ជាជីវៈក្នុងពេលឆាប់ៗ',
+        path: '/appointments',
+        icon: 'calendar',
+      },
+      {
+        title: 'ស្វែងរកមន្ទីរពេទ្យ',
+        subtitle: 'ស្វែងរកគ្លីនិកឯកទេសនៅជិតអ្នក',
+        path: '/hospitals',
+        icon: 'hospital',
+      },
+      {
+        title: 'មើលសកម្មភាពលេង',
+        subtitle: 'សកម្មភាពគាំទ្រជាក់ស្តែងក្នុងពេលរង់ចាំ',
+        path: '/activities',
+        icon: 'activities',
+      },
+    ],
+  },
+};
+
+const formatAge = (dateOfBirth: string, isKm = false): string => {
   const birth = new Date(`${dateOfBirth}T00:00:00Z`);
   if (Number.isNaN(birth.getTime())) return '';
   const now = new Date();
@@ -116,8 +193,8 @@ const formatAge = (dateOfBirth: string): string => {
   if (now.getUTCDate() < birth.getUTCDate()) months -= 1;
   months = Math.max(months, 0);
   const years = Math.floor(months / 12);
-  if (years < 1) return `${months} month${months === 1 ? '' : 's'} old`;
-  return `${years} year${years === 1 ? '' : 's'} old`;
+  if (years < 1) return isKm ? `${months} ខែ` : `${months} month${months === 1 ? '' : 's'} old`;
+  return isKm ? `${years} ឆ្នាំ` : `${years} year${years === 1 ? '' : 's'} old`;
 };
 
 @Component({
@@ -133,13 +210,15 @@ const formatAge = (dateOfBirth: string): string => {
     <section class="result">
       @if (loading()) {
         <div class="state-center">
-          <ac-ui-spinner label="Loading screening result…" />
+          <ac-ui-spinner
+            [label]="isKm() ? 'កំពុងផ្ទុកលទ្ធផលនៃការវាយតម្លៃ…' : 'Loading screening result…'"
+          />
         </div>
       } @else if (fatalError()) {
         <div class="state-center fatal">
           <ac-ui-message tone="error">{{ fatalError() }}</ac-ui-message>
           <button type="button" class="link" (click)="goToScreeningHome()">
-            Back to Screening
+            {{ isKm() ? 'ត្រឡប់ទៅទំព័រវាយតម្លៃ' : 'Back to Screening' }}
           </button>
         </div>
       } @else if (result(); as res) {
@@ -157,7 +236,9 @@ const formatAge = (dateOfBirth: string): string => {
             type="button"
             class="btn-print"
             (click)="printResult()"
-            aria-label="Print or save screening report as PDF"
+            [attr.aria-label]="
+              isKm() ? 'បោះពុម្ព ឬរក្សាទុករបាយការណ៍ជា PDF' : 'Print or save screening report as PDF'
+            "
           >
             <svg
               class="print-icon"
@@ -175,14 +256,24 @@ const formatAge = (dateOfBirth: string): string => {
               />
               <rect x="6" y="14" width="12" height="8" />
             </svg>
-            Print / Save PDF
+            {{ isKm() ? 'បោះពុម្ព / រក្សាទុកជា PDF' : 'Print / Save PDF' }}
           </button>
         </div>
 
         <div class="print-only-header">
-          <h1 class="print-title">AutiCare Clinical Developmental Screening Summary</h1>
+          <h1 class="print-title">
+            {{
+              isKm()
+                ? 'សេចក្តីសង្ខេបនៃការវាយតម្លៃការលូតលាស់ AutiCare'
+                : 'AutiCare Clinical Developmental Screening Summary'
+            }}
+          </h1>
           <p class="print-meta">
-            Confidential Clinical Summary · Generated for Pediatrician & Specialist Consultation
+            {{
+              isKm()
+                ? 'សេចក្តីសង្ខេបសម្ងាត់ · បង្កើតឡើងសម្រាប់ពិគ្រោះជាមួយវេជ្ជបណ្ឌិតកុមារ និងអ្នកឯកទេស'
+                : 'Confidential Clinical Summary · Generated for Pediatrician & Specialist Consultation'
+            }}
           </p>
         </div>
 
@@ -190,12 +281,12 @@ const formatAge = (dateOfBirth: string): string => {
         <article class="header-card">
           <div class="header-top">
             <div class="who">
-              <p class="child-name">{{ childName() ?? 'Your child' }}</p>
+              <p class="child-name">{{ childName() ?? (isKm() ? 'កូនរបស់អ្នក' : 'Your child') }}</p>
               <p class="child-meta">
                 @if (childAge()) {
                   <span>{{ childAge() }}</span> ·
                 }
-                Completed {{ completedDate() }}
+                {{ isKm() ? 'បញ្ចប់នៅ ' + completedDate() : 'Completed ' + completedDate() }}
               </p>
             </div>
             <div class="risk-badge-group">
@@ -219,12 +310,15 @@ const formatAge = (dateOfBirth: string): string => {
             </span>
             <div class="summary-card-content">
               <div class="empathetic-khmer-guidance" role="note">
-                <span class="khmer-guidance-badge"
-                  >🇰🇭 សារណែនាំលើកទឹកចិត្ត (Empathetic Guidance)</span
-                >
+                <span class="khmer-guidance-badge">
+                  {{ isKm() ? '🇰🇭 សារណែនាំលើកទឹកចិត្ត' : '💙 Empathetic Guidance' }}
+                </span>
                 <p class="khmer-guidance-quote">
-                  “លទ្ធផលនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រទេ
-                  ប៉ុន្តែជាការណែនាំដើម្បីជួយគាំទ្រដល់ការលូតលាស់របស់កុមារ”
+                  {{
+                    isKm()
+                      ? '“លទ្ធផលនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រទេ ប៉ុន្តែជាការណែនាំដើម្បីជួយគាំទ្រដល់ការលូតលាស់របស់កុមារ”'
+                      : '“This result is not a medical diagnosis, but a compassionate guide to support your child’s development.”'
+                  }}
                 </p>
               </div>
               <strong>{{ summaryTitle() }}</strong>
@@ -270,13 +364,16 @@ const formatAge = (dateOfBirth: string): string => {
 
             <div class="spectrum-tiers" aria-label="Risk level guide">
               <span class="tier-pill" [class.active-tier]="res.riskLevel === 'LOW'">
-                <span class="tier-dot low-dot"></span> Low Risk (0–33%)
+                <span class="tier-dot low-dot"></span>
+                {{ isKm() ? 'ហានិភ័យទាប (០–៣៣%)' : 'Low Risk (0–33%)' }}
               </span>
               <span class="tier-pill" [class.active-tier]="res.riskLevel === 'MODERATE'">
-                <span class="tier-dot moderate-dot"></span> Moderate Risk (34–66%)
+                <span class="tier-dot moderate-dot"></span>
+                {{ isKm() ? 'ហានិភ័យមធ្យម (៣៤–៦៦%)' : 'Moderate Risk (34–66%)' }}
               </span>
               <span class="tier-pill" [class.active-tier]="res.riskLevel === 'HIGH'">
-                <span class="tier-dot high-dot"></span> Elevated Risk (67–100%)
+                <span class="tier-dot high-dot"></span>
+                {{ isKm() ? 'ហានិភ័យខ្ពស់ (៦៧–១០០%)' : 'Elevated Risk (67–100%)' }}
               </span>
             </div>
           </div>
@@ -289,8 +386,11 @@ const formatAge = (dateOfBirth: string): string => {
               </p>
             } @else {
               <p class="trend-note">
-                Your child moved to a new age group since their last screening, so results aren't
-                directly comparable.
+                {{
+                  isKm()
+                    ? 'កូនរបស់អ្នកបានផ្លាស់ប្តូរទៅកាន់ក្រុមអាយុថ្មីចាប់តាំងពីការវាយតម្លៃចុងក្រោយ ដូច្នេះលទ្ធផលមិនអាចប្រៀបធៀបដោយផ្ទាល់បានទេ។'
+                    : "Your child moved to a new age group since their last screening, so results aren't directly comparable."
+                }}
               </p>
             }
           }
@@ -302,16 +402,23 @@ const formatAge = (dateOfBirth: string): string => {
             class="toolbar-card primary-card"
             [routerLink]="'/appointments'"
             [queryParams]="child() ? { childId: child()!.id } : null"
-            title="កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា (Book Specialist Consultation)"
+            [title]="
+              isKm()
+                ? 'កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា'
+                : 'Book a Specialist Consultation'
+            "
           >
             <span class="toolbar-icon" aria-hidden="true">🩺</span>
             <div class="toolbar-details">
               <strong class="action-title-primary">
-                <span class="title-km">កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា</span>
-                <span class="title-en-sub">Book a Specialist Consultation</span>
+                {{
+                  isKm()
+                    ? 'កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា'
+                    : 'Book a Specialist Consultation'
+                }}
               </strong>
               <span class="action-desc">
-                ពិគ្រោះជាមួយវេជ្ជបណ្ឌិតឯកទេសកុមារ (Schedule pediatric evaluation)
+                {{ isKm() ? 'ពិគ្រោះជាមួយវេជ្ជបណ្ឌិតឯកទេសកុមារ' : 'Schedule pediatric evaluation' }}
               </span>
             </div>
           </a>
@@ -320,16 +427,19 @@ const formatAge = (dateOfBirth: string): string => {
             class="toolbar-card"
             [routerLink]="'/activities'"
             [queryParams]="child() ? { childId: child()!.id } : null"
-            title="ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់ (Explore Recommended Activities)"
+            [title]="
+              isKm() ? 'ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់' : 'Explore Recommended Activities'
+            "
           >
             <span class="toolbar-icon" aria-hidden="true">🎯</span>
             <div class="toolbar-details">
               <strong class="action-title-primary">
-                <span class="title-km">ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់</span>
-                <span class="title-en-sub">Explore Recommended Activities</span>
+                {{
+                  isKm() ? 'ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់' : 'Explore Recommended Activities'
+                }}
               </strong>
               <span class="action-desc">
-                គំនិតលេងសម្របតាមការលូតលាស់ (Play ideas tailored to results)
+                {{ isKm() ? 'គំនិតលេងសម្របតាមការលូតលាស់' : 'Play ideas tailored to results' }}
               </span>
             </div>
           </a>
@@ -338,17 +448,18 @@ const formatAge = (dateOfBirth: string): string => {
             type="button"
             class="toolbar-card btn-summary-report"
             (click)="printResult()"
-            title="ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ (Download Summary Report)"
-            aria-label="ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ"
+            [title]="isKm() ? 'ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ' : 'Download Summary Report'"
+            [attr.aria-label]="
+              isKm() ? 'ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ' : 'Download Summary Report'
+            "
           >
             <span class="toolbar-icon" aria-hidden="true">📄</span>
             <div class="toolbar-details">
               <strong class="action-title-primary">
-                <span class="title-km">ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ</span>
-                <span class="title-en-sub">Download Summary Report</span>
+                {{ isKm() ? 'ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ' : 'Download Summary Report' }}
               </strong>
               <span class="action-desc">
-                នាំចេញឯកសារ PDF សម្រាប់ពិគ្រោះយោបល់ (Export Clinical PDF Summary)
+                {{ isKm() ? 'នាំចេញឯកសារ PDF សម្រាប់ពិគ្រោះយោបល់' : 'Export Clinical PDF Summary' }}
               </span>
             </div>
           </button>
@@ -365,17 +476,32 @@ const formatAge = (dateOfBirth: string): string => {
           </div>
           <div class="disclaimer-body">
             <h3 class="disclaimer-heading">
-              Clinical Non-Diagnostic Reassurance (ការបញ្ជាក់មិនមែនរោគវិនិច្ឆ័យ)
+              {{
+                isKm()
+                  ? 'ការបញ្ជាក់មិនមែនរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រ'
+                  : 'Clinical Non-Diagnostic Reassurance'
+              }}
             </h3>
             <p class="khmer-guidance-quote disclaimer-khmer-highlight">
-              “លទ្ធផលនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រទេ
-              ប៉ុន្តែជាការណែនាំដើម្បីជួយគាំទ្រដល់ការលូតលាស់របស់កុមារ”
+              {{
+                isKm()
+                  ? '“លទ្ធផលនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រទេ ប៉ុន្តែជាការណែនាំដើម្បីជួយគាំទ្រដល់ការលូតលាស់របស់កុមារ”'
+                  : '“This screening result is designed as a compassionate guide, not a medical diagnosis.”'
+              }}
             </p>
-            <p class="disclaimer-text">{{ res.disclaimer }}</p>
+            <p class="disclaimer-text">
+              {{
+                isKm()
+                  ? 'ឧបករណ៍វាយតម្លៃនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រឡើយ។'
+                  : res.disclaimer
+              }}
+            </p>
             <p class="heuristic-note">
-              These assessment indicators and risk bands are designed solely as a compassionate,
-              supportive guide to empower collaborative discussions with your pediatrician or
-              clinical team. They do not constitute a medical diagnosis.
+              {{
+                isKm()
+                  ? 'សូចនាករនៃការវាយតម្លៃ និងកម្រិតហានិភ័យទាំងនេះ ត្រូវបានរៀបចំឡើងជាការណែនាំដ៏កក់ក្តៅ ដើម្បីផ្តល់អំណាចដល់ការពិភាក្សាជាមួយវេជ្ជបណ្ឌិតកុមារ ឬក្រុមគ្លីនិករបស់អ្នក។'
+                  : 'These assessment indicators and risk bands are designed solely as a compassionate, supportive guide to empower collaborative discussions with your pediatrician or clinical team. They do not constitute a medical diagnosis.'
+              }}
             </p>
           </div>
         </aside>
@@ -383,7 +509,9 @@ const formatAge = (dateOfBirth: string): string => {
         <!-- 4. BREAKDOWN BY CATEGORY WITH CLINICAL EXPLANATIONS -->
         @if (res.categoryBreakdown.length) {
           <section class="breakdown" aria-label="Breakdown by category">
-            <h2 class="section-label">Developmental Domain Breakdown (ការវិភាគតាមផ្នែកលូតលាស់)</h2>
+            <h2 class="section-label">
+              {{ isKm() ? 'ការវិភាគតាមផ្នែកលូតលាស់' : 'Developmental Domain Breakdown' }}
+            </h2>
             <div class="cat-list">
               @for (cat of res.categoryBreakdown; track cat.category) {
                 <article class="cat-card">
@@ -393,8 +521,7 @@ const formatAge = (dateOfBirth: string): string => {
                         categoryIcon(cat.category)
                       }}</span>
                       <span class="cat-name">
-                        <span class="cat-name-km">{{ formatDomainKm(cat.category) }}</span>
-                        <span class="cat-name-en"> ({{ cat.category }})</span>
+                        {{ isKm() ? formatDomainKm(cat.category) : cat.category }}
                       </span>
                     </div>
                     <span class="cat-level" [class]="cat.riskLevel.toLowerCase()">
@@ -429,7 +556,9 @@ const formatAge = (dateOfBirth: string): string => {
         <!-- 5. WHAT WE NOTICED -->
         @if (observations().length) {
           <section class="noticed" aria-label="What we noticed">
-            <h2 class="section-label">Clinical Observations & Patterns</h2>
+            <h2 class="section-label">
+              {{ isKm() ? 'ការសង្កេត និងលំនាំគ្លីនិក' : 'Clinical Observations & Patterns' }}
+            </h2>
             <ul class="obs-list">
               @for (obs of observations(); track obs.category) {
                 <li>{{ obs.sentence }}</li>
@@ -440,7 +569,9 @@ const formatAge = (dateOfBirth: string): string => {
 
         <!-- 6. RECOMMENDED NEXT STEPS CARDS -->
         <section class="next-steps" aria-label="Recommended next steps">
-          <h2 class="section-label">Recommended next steps</h2>
+          <h2 class="section-label">
+            {{ isKm() ? 'ជំហានបន្ទាប់ដែលបានណែនាំ' : 'Recommended next steps' }}
+          </h2>
           <p class="next-lead">{{ nextSteps().lead }}</p>
           <div class="cards">
             @for (card of nextSteps().cards; track card.path) {
@@ -543,13 +674,16 @@ const formatAge = (dateOfBirth: string): string => {
 
         <div class="print-only-footer">
           <p>
-            This clinical screening summary was generated by AutiCare. It is intended to facilitate
-            collaborative discussion with pediatricians and developmental specialists.
+            {{
+              isKm()
+                ? 'សេចក្តីសង្ខេបនៃការវាយតម្លៃគ្លីនិកនេះត្រូវបានបង្កើតឡើងដោយ AutiCare។ វាមានបំណងជួយសម្រួលដល់ការពិភាក្សាសហការជាមួយវេជ្ជបណ្ឌិតកុមារ និងអ្នកឯកទេសខាងការលូតលាស់។'
+                : 'This clinical screening summary was generated by AutiCare. It is intended to facilitate collaborative discussion with pediatricians and developmental specialists.'
+            }}
           </p>
         </div>
 
         <button type="button" class="link center" (click)="goToScreeningHome()">
-          Back to Screening
+          {{ isKm() ? 'ត្រឡប់ទៅទំព័រវាយតម្លៃ' : 'Back to Screening' }}
         </button>
       }
     </section>
@@ -1391,7 +1525,7 @@ export class ScreeningResultPage implements OnInit {
   readonly childName = computed(() => this.child()?.firstName ?? null);
   readonly childAge = computed(() => {
     const child = this.child();
-    return child ? formatAge(child.dateOfBirth) : '';
+    return child ? formatAge(child.dateOfBirth, this.isKm()) : '';
   });
   readonly maxScore = computed(() => (this.session()?.answers.length ?? 0) * MAX_ANSWER_VALUE);
   readonly overallTone = computed<BadgeTone>(() => {
@@ -1400,7 +1534,8 @@ export class ScreeningResultPage implements OnInit {
   });
   readonly overallLabel = computed(() => {
     const res = this.result();
-    return res ? riskLabels[res.riskLevel] : '';
+    if (!res) return '';
+    return this.isKm() ? riskLabelsKm[res.riskLevel] : riskLabels[res.riskLevel];
   });
   readonly completedDate = computed(() => {
     const session = this.session();
@@ -1410,7 +1545,8 @@ export class ScreeningResultPage implements OnInit {
   });
   readonly nextSteps = computed(() => {
     const res = this.result();
-    const config = nextStepsByRisk[res ? res.riskLevel : 'LOW'];
+    const pool = this.isKm() ? KM_NEXT_STEPS_BY_RISK : EN_NEXT_STEPS_BY_RISK;
+    const config = pool[res ? res.riskLevel : 'LOW'];
     const currentChild = this.child();
     return {
       lead: config.lead,
@@ -1427,11 +1563,12 @@ export class ScreeningResultPage implements OnInit {
     const session = this.session();
     const res = this.result();
     if (!session || !res) return [];
+    const lang = this.currentLang();
     return res.categoryBreakdown
       .filter((cat) => cat.riskLevel === 'MODERATE' || cat.riskLevel === 'HIGH')
       .map((cat) => ({
         category: cat.category,
-        sentence: observationFor(session.ageBand, cat.category, cat.riskLevel),
+        sentence: observationFor(session.ageBand, cat.category, cat.riskLevel, lang),
       }))
       .filter((entry): entry is { category: string; sentence: string } => entry.sentence !== null);
   });
@@ -1444,10 +1581,17 @@ export class ScreeningResultPage implements OnInit {
       ? new Date(comparison.previousCompletedAt).toLocaleDateString()
       : '';
     const magnitude = Math.abs(delta);
-    const text =
-      delta === 0
-        ? `No change from your last screening (${previousDate})`
+    const isKm = this.isKm();
+    let text = '';
+    if (delta === 0) {
+      text = isKm
+        ? `គ្មានការផ្លាស់ប្តូរធៀបនឹងការវាយតម្លៃមុន (${previousDate})`
+        : `No change from your last screening (${previousDate})`;
+    } else {
+      text = isKm
+        ? `${magnitude}% ${delta > 0 ? 'ខ្ពស់ជាង' : 'ទាបជាង'} ការវាយតម្លៃមុន (${previousDate})`
         : `${magnitude}% ${delta > 0 ? 'higher' : 'lower'} than your last screening (${previousDate})`;
+    }
     return {
       comparable: true as const,
       direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
@@ -1458,11 +1602,18 @@ export class ScreeningResultPage implements OnInit {
 
   readonly concernLabel = computed(() => {
     const res = this.result();
-    return res ? concernLabels[res.riskLevel] : '';
+    if (!res) return '';
+    return this.isKm() ? concernLabelsKm[res.riskLevel] : concernLabels[res.riskLevel];
   });
   readonly summaryTitle = computed(() => {
     const res = this.result();
     if (!res) return '';
+    if (this.isKm()) {
+      if (res.riskLevel === 'LOW') return 'ដំណើរការលូតលាស់ស្ថិតក្នុងកម្រិតល្អប្រសើរ';
+      if (res.riskLevel === 'MODERATE')
+        return 'សង្កេតឃើញចំណុចលូតលាស់ដែលគួរយកចិត្តទុកដាក់កម្រិតស្រាល';
+      return 'ណែនាំឱ្យមានការពិគ្រោះយោបល់ និងវាយតម្លៃឯកទេសបន្ថែម';
+    }
     if (res.riskLevel === 'LOW') return 'Reassuring Milestone Trajectory';
     if (res.riskLevel === 'MODERATE') return 'Mild Developmental Nuances Observed';
     return 'Specialized Developmental Attention Recommended';
@@ -1470,6 +1621,15 @@ export class ScreeningResultPage implements OnInit {
   readonly reassuringExplanation = computed(() => {
     const res = this.result();
     if (!res) return '';
+    if (this.isKm()) {
+      if (res.riskLevel === 'LOW') {
+        return 'ចម្លើយរបស់កូនអ្នកបង្ហាញពីការរីកចម្រើនជាប្រចាំឆ្លងកាត់គ្រប់ផ្នែកដែលបានវាយតម្លៃ។ សូមបន្តការរុករកញាណដឹង ការប្រាស្រ័យទាក់ទងឆ្លើយតប និងទម្លាប់លេងប្រកបដោយភាពរីករាយ។';
+      }
+      if (res.riskLevel === 'MODERATE') {
+        return 'ចម្លើយមួយចំនួនបង្ហាញពីភាពខុសប្លែកបន្តិចបន្តួចដែលអាចត្រូវការការសង្កេត និងការគាំទ្រយ៉ាងទន់ភ្លន់។ ការលើកយកលំនាំទាំងនេះទៅពិគ្រោះនៅពេលពិនិត្យបន្ទាប់ អាចផ្តល់នូវភាពកក់ក្តៅ និងគំនិតលេងសមស្រប។';
+      }
+      return 'ចម្លើយមួយចំនួនបង្ហាញពីលំនាំលូតលាស់ដែលសមស្របនឹងការវាយតម្លៃលម្អិតជាមួយវេជ្ជបណ្ឌិតឯកទេសកុមារ។ ការណែនាំសហការគ្នាតាំងពីដំបូង ផ្តល់នូវការគាំទ្រដ៏ល្អបំផុតសម្រាប់កូនរបស់អ្នក។';
+    }
     if (res.riskLevel === 'LOW') {
       return "Your child's responses indicate consistent milestone progression across the assessed domains. Continued sensory exploration, responsive interaction, and positive play routines are recommended.";
     }
@@ -1480,7 +1640,7 @@ export class ScreeningResultPage implements OnInit {
   });
 
   shortLabel(riskLevel: RiskLevel): string {
-    return riskShort[riskLevel];
+    return this.isKm() ? riskShortKm[riskLevel] : riskShort[riskLevel];
   }
 
   meterColor(riskLevel: RiskLevel): string {
@@ -1509,6 +1669,32 @@ export class ScreeningResultPage implements OnInit {
 
   domainExplanation(category: string): string {
     const lower = category.toLowerCase();
+    if (this.isKm()) {
+      if (lower.includes('social communication')) {
+        return 'សង្កេតមើលការចូលរួមរួមគ្នា ការឆ្លើយតបដោយពាក្យសម្តី និងកាយវិការ ការសម្លឹងភ្នែក និងការប្រាស្រ័យទាក់ទងគ្នា។';
+      }
+      if (lower.includes('communicat') || lower.includes('speech')) {
+        return 'សង្កេតមើលការបញ្ចេញសំឡេង ការប្រើប្រាស់ពាក្យ ការប្រាស្រ័យទាក់ទងដោយកាយវិការ និងការយល់ដឹងភាសា។';
+      }
+      if (lower.includes('social') || lower.includes('interact')) {
+        return 'សង្កេតមើលការសម្លឹងភ្នែក ការយកចិត្តទុកដាក់រួម ការញញឹមដោយឯកឯង និងការឆ្លើយតបជាមួយអ្នកមើលថែ។';
+      }
+      if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
+        return 'តាមដានប្រតិកម្មប៉ះពាល់ ការប្រកាន់ចំពោះសំឡេង និងការសម្របសម្រួលញាណដឹងជាមួយបរិស្ថាន។';
+      }
+      if (
+        lower.includes('routine') ||
+        lower.includes('repetit') ||
+        lower.includes('behavior') ||
+        lower.includes('play')
+      ) {
+        return 'វាយតម្លៃភាពងាយស្រួលជាមួយកាលវិភាគប្រចាំថ្ងៃ ការផ្លាស់ប្តូរសកម្មភាព និងទម្លាប់លេងដដែលៗ។';
+      }
+      if (lower.includes('motor') || lower.includes('physic')) {
+        return 'វាយតម្លៃការសម្របសម្រួលចលនាសាច់ដុំតូចនិងធំ ការធ្វើត្រាប់តាមកាយវិការ និងលំនាំចលនា។';
+      }
+      return 'តាមដានការវិវត្តជាមូលដ្ឋាន និងលំនាំអាកប្បកិរិយាសមស្របតាមអាយុ។';
+    }
     if (lower.includes('social communication')) {
       return 'Observes shared engagement, verbal and non-verbal reciprocity, eye contact, and interactive communication.';
     }

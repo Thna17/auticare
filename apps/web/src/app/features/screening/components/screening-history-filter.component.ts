@@ -1,27 +1,37 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { I18nService } from '../../../core/i18n/i18n.service';
 
 export type RiskFilter = 'ALL' | 'LOW' | 'MODERATE' | 'HIGH';
 
 type FilterOption = { readonly label: string; readonly value: RiskFilter };
 
-const filterOptions: readonly FilterOption[] = [
+const EN_OPTIONS: readonly FilterOption[] = [
   { label: 'All', value: 'ALL' },
   { label: 'Low', value: 'LOW' },
   { label: 'Moderate', value: 'MODERATE' },
   { label: 'High', value: 'HIGH' },
 ];
 
+const KM_OPTIONS: readonly FilterOption[] = [
+  { label: 'ទាំងអស់', value: 'ALL' },
+  { label: 'ហានិភ័យទាប', value: 'LOW' },
+  { label: 'ហានិភ័យមធ្យម', value: 'MODERATE' },
+  { label: 'ហានិភ័យខ្ពស់', value: 'HIGH' },
+];
+
 /**
- * Minimal risk-level filter panel (segmented pills). No reusable filter panel
- * existed in the app, so this is a new minimal, screening-specific version. It is
- * intentionally narrow (risk level only) rather than a generic filter framework.
+ * Minimal risk-level filter panel (segmented pills).
  */
 @Component({
   selector: 'ac-screening-history-filter',
   standalone: true,
   template: `
-    <div class="filter" role="group" aria-label="Filter by risk level">
-      @for (option of options; track option.value) {
+    <div
+      class="filter"
+      role="group"
+      [attr.aria-label]="isKm() ? 'ត្រងតាមកម្រិតហានិភ័យ' : 'Filter by risk level'"
+    >
+      @for (option of options(); track option.value) {
         <button
           type="button"
           class="chip"
@@ -69,7 +79,10 @@ const filterOptions: readonly FilterOption[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScreeningHistoryFilterComponent {
-  readonly options = filterOptions;
+  private readonly i18n = inject(I18nService);
+
+  readonly isKm = computed(() => this.i18n.currentLang() === 'km');
+  readonly options = computed(() => (this.isKm() ? KM_OPTIONS : EN_OPTIONS));
   readonly value = input<RiskFilter>('ALL');
   readonly valueChange = output<RiskFilter>();
 }
