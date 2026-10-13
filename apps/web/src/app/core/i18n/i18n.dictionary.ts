@@ -67,6 +67,12 @@ export interface TranslationDictionary {
     readonly dateOfBirth: string;
     readonly yearsOld: string;
     readonly monthsOld: string;
+    readonly firstName?: string;
+    readonly lastName?: string;
+    readonly gender?: string;
+    readonly medicalNotes?: string;
+    readonly cancel?: string;
+    readonly saveChild?: string;
   };
   readonly risk: {
     readonly lowConcern: string;
@@ -411,6 +417,12 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       dateOfBirth: 'ថ្ងៃខែឆ្នាំកំណើត',
       yearsOld: 'ឆ្នាំ',
       monthsOld: 'ខែ',
+      firstName: 'នាមខ្លួន',
+      lastName: 'គោត្តនាម',
+      gender: 'ភេទ',
+      medicalNotes: 'កំណត់ត្រាវេជ្ជសាស្ត្រ',
+      cancel: 'បោះបង់',
+      saveChild: 'រក្សាទុកទិន្នន័យកុមារ',
     },
     risk: {
       lowConcern: 'ការបារម្ភកម្រិតទាប',
@@ -759,6 +771,12 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       dateOfBirth: 'Date of Birth',
       yearsOld: 'years old',
       monthsOld: 'months',
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      gender: 'Gender',
+      medicalNotes: 'Medical Notes',
+      cancel: 'Cancel',
+      saveChild: 'Save Child',
     },
     risk: {
       lowConcern: 'Low Concern',

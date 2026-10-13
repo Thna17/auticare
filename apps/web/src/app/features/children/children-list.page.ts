@@ -17,6 +17,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { ScreeningApi } from '../screening/data-access/screening.api';
 import { ScreeningBadgeComponent } from '../screening/components/screening-badge.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
   standalone: true,
@@ -653,6 +654,8 @@ export class ChildrenListPage implements OnInit {
   readonly facade = inject(ChildrenFacade);
   private readonly auth = inject(AuthService);
   private readonly screeningApi = inject(ScreeningApi);
+  private readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
 
   readonly canCreateChildren = computed(() => this.auth.parent()?.role === 'PARENT');
   readonly showArchived = signal(false);
@@ -759,9 +762,20 @@ export class ChildrenListPage implements OnInit {
       years -= 1;
       months += 12;
     }
-    if (years <= 0 && months <= 0) return 'Newborn';
-    if (years <= 0) return `${months} ${months === 1 ? 'month' : 'months'} old`;
-    if (months === 0) return years === 1 ? '1 year old' : `${years} years old`;
-    return `${years} ${years === 1 ? 'yr' : 'yrs'} ${months} ${months === 1 ? 'mo' : 'mos'} old`;
+    const safeYears = Math.max(years, 0);
+    const safeMonths = Math.max(months, 0);
+    const isKm = this.currentLang() === 'km';
+    if (isKm) {
+      if (safeYears > 0 && safeMonths > 0) return `${safeYears} ឆ្នាំ ${safeMonths} ខែ`;
+      if (safeYears > 0) return `${safeYears} ឆ្នាំ`;
+      return `${safeMonths} ខែ`;
+    }
+    if (safeYears > 0 && safeMonths > 0) {
+      return `${safeYears} ${safeYears === 1 ? 'year' : 'years'} ${safeMonths} ${safeMonths === 1 ? 'month' : 'months'}`;
+    }
+    if (safeYears > 0) {
+      return safeYears === 1 ? '1 year old' : `${safeYears} years old`;
+    }
+    return safeMonths === 1 ? '1 month old' : `${safeMonths} months old`;
   }
 }

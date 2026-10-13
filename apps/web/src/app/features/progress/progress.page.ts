@@ -613,6 +613,11 @@ const METRIC_DEFS: MetricDef[] = [
                           <span class="completed-date-pill">
                             {{ formatDate(item.completedAt) }}
                           </span>
+                          <span class="achievement-badge">
+                            {{
+                              currentLang() === 'km' ? 'សមិទ្ធផលបានសម្រេច' : 'Milestone Achieved'
+                            }}
+                          </span>
                         </div>
                         <h3 class="milestone-title">{{ item.activityTitle }}</h3>
                       </div>
@@ -2279,6 +2284,24 @@ const METRIC_DEFS: MetricDef[] = [
         color: var(--ac-color-status-cyan);
       }
 
+      .domain-badge[data-domain='Social'],
+      .domain-badge[data-domain='Fine Motor'],
+      .domain-badge[data-domain='Gross Motor'],
+      .domain-badge[data-domain='Cognitive'] {
+        background: var(--ac-color-tint-purple);
+        color: var(--ac-color-status-purple);
+      }
+
+      .achievement-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: var(--ac-radius-pill, 999px);
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--ac-color-green-100);
+        color: var(--ac-color-green-700);
+      }
+
       .completed-date-pill {
         font-size: 11px;
         color: var(--ac-color-slate-500);
@@ -3396,16 +3419,35 @@ export class ProgressPage implements OnInit {
     const list = this.completedActivities();
     let sensory = 0;
     let motor = 0;
+    let fineMotor = 0;
+    let grossMotor = 0;
+    let cognitive = 0;
     let social = 0;
     let communication = 0;
     for (const item of list) {
       const d = this.getDomainForActivity(item).toLowerCase();
       if (d.includes('sensor')) sensory++;
+      else if (d.includes('fine')) {
+        fineMotor++;
+        motor++;
+      } else if (d.includes('gross')) {
+        grossMotor++;
+        motor++;
+      } else if (d.includes('cognit')) cognitive++;
       else if (d.includes('motor')) motor++;
       else if (d.includes('social')) social++;
       else if (d.includes('communicat')) communication++;
     }
-    return { sensory, motor, social, communication, total: list.length };
+    return {
+      sensory,
+      motor,
+      fineMotor,
+      grossMotor,
+      cognitive,
+      social,
+      communication,
+      total: list.length,
+    };
   });
 
   readonly latestActivityDateLabel = computed(() => {
@@ -3623,7 +3665,13 @@ export class ProgressPage implements OnInit {
     if (d.includes('sensor')) return isKm ? 'ញាណដឹង' : 'Sensory';
     if (d.includes('communicat') || d.includes('speech'))
       return isKm ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication';
-    if (d.includes('social')) return isKm ? 'ទំនាក់ទំនងសង្គម' : 'Social Skills';
+    if (d.includes('fine motor') || d.includes('fine_motor') || d.includes('finemotor'))
+      return isKm ? 'ចលនាសាច់ដុំតូច' : 'Fine Motor';
+    if (d.includes('gross motor') || d.includes('gross_motor') || d.includes('grossmotor'))
+      return isKm ? 'ចលនាសាច់ដុំធំ' : 'Gross Motor';
+    if (d.includes('cognit')) return isKm ? 'ការយល់ដឹង និងការគិត' : 'Cognitive';
+    if (d.includes('social'))
+      return isKm ? 'ទំនាក់ទំនងសង្គម' : domain === 'Social' ? 'Social' : 'Social Skills';
     if (d.includes('motor')) return isKm ? 'ចលករ' : 'Motor Skills';
     if (d.includes('daily')) return isKm ? 'ទម្លាប់ប្រចាំថ្ងៃ' : 'Daily Living';
     return domain;

@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ChildResponse, ParentResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 import { API_BASE_URL } from '../../core/config/api.config';
+import { I18nService, LANG_STORAGE_KEY } from '../../core/i18n/i18n.service';
 import { CreateChildPage } from './create-child.page';
 
 describe('CreateChildPage', () => {
@@ -23,6 +24,7 @@ describe('CreateChildPage', () => {
   });
 
   beforeEach(() => {
+    localStorage.setItem(LANG_STORAGE_KEY, 'en');
     mockParentUser.set({
       id: 'parent-123',
       email: 'parent@auticare.test',
@@ -50,6 +52,7 @@ describe('CreateChildPage', () => {
     });
 
     httpTesting = TestBed.inject(HttpTestingController);
+    TestBed.inject(I18nService).setLanguage('en');
   });
 
   afterEach(() => {
@@ -116,5 +119,22 @@ describe('CreateChildPage', () => {
     fixture.detectChanges();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/children', 'child-maya']);
+  });
+
+  it('renders clean decoupled Khmer copy in km mode without mixed parentheticals', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('km');
+
+    const fixture = TestBed.createComponent(CreateChildPage);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('ជំហាន ១ នៃ ៣');
+    expect(element.textContent).toContain('ព័ត៌មានផ្ទាល់ខ្លួន');
+    expect(element.textContent).toContain('ព័ត៌មានទីលំនៅ');
+    expect(element.textContent).toContain('កំណត់ត្រាវេជ្ជសាស្ត្រ និងការគាំទ្រ');
+    expect(element.textContent).toContain('រក្សាទុកទិន្នន័យកុមារ');
+    expect(element.textContent).toContain('បោះបង់');
+    expect(element.textContent).not.toContain('(Step 1 of 3)');
   });
 });

@@ -7,6 +7,7 @@ import { ChildrenApi } from './data-access/children.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
   standalone: true,
@@ -18,14 +19,23 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
     AccessibleFormDirective,
   ],
   template: `
-    <a class="back-link" routerLink="/children">&larr; Back to children</a>
+    <a class="back-link" routerLink="/children">
+      {{ currentLang() === 'km' ? '← ត្រឡប់ទៅបញ្ជីកុមារ' : '← Back to children' }}
+    </a>
 
     <header class="page-header">
-      <p class="eyebrow">Child Registration</p>
-      <h1>Add a Child Profile</h1>
+      <p class="eyebrow">
+        {{ currentLang() === 'km' ? 'ការចុះឈ្មោះកុមារ' : 'Child Registration' }}
+      </p>
+      <h1>
+        {{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add a Child Profile' }}
+      </h1>
       <p class="subtitle">
-        Set up your child's clinical profile for developmental milestone tracking, autism
-        screenings, and specialized pediatric care.
+        {{
+          currentLang() === 'km'
+            ? 'បង្កើតប្រវត្តិរូបគ្លីនិករបស់កូនអ្នក សម្រាប់ការតាមដានការលូតលាស់ ការវាយតម្លៃ និងការថែទាំឯកទេស។'
+            : "Set up your child's clinical profile for developmental milestone tracking, autism screenings, and specialized pediatric care."
+        }}
       </p>
     </header>
 
@@ -33,20 +43,30 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
       <!-- Step 1: Personal Identity -->
       <section class="step-card" aria-labelledby="step-1-title">
         <div class="step-header">
-          <span class="step-badge">Step 1 of 3</span>
-          <h2 id="step-1-title">Personal Identity</h2>
+          <span class="step-badge">
+            {{ currentLang() === 'km' ? 'ជំហាន ១ នៃ ៣' : 'Step 1 of 3' }}
+          </span>
+          <h2 id="step-1-title">
+            {{ currentLang() === 'km' ? 'ព័ត៌មានផ្ទាល់ខ្លួន' : 'Personal Identity' }}
+          </h2>
           <p>
-            Legal or everyday name and birth date for age-normed clinical screening questionnaires.
+            {{
+              currentLang() === 'km'
+                ? 'ឈ្មោះ និងថ្ងៃខែឆ្នាំកំណើត សម្រាប់ការវាយតម្លៃតាមកម្រិតអាយុជាក់ស្តែង។'
+                : 'Legal or everyday name and birth date for age-normed clinical screening questionnaires.'
+            }}
           </p>
         </div>
 
         <div class="fields-stack">
           <ac-ui-field
-            label="First name"
+            [label]="currentLang() === 'km' ? 'នាមខ្លួន' : 'First Name'"
             [required]="true"
             [error]="
               form.controls.firstName.touched && form.controls.firstName.invalid
-                ? 'Enter a first name.'
+                ? currentLang() === 'km'
+                  ? 'សូមបញ្ចូលនាមខ្លួន។'
+                  : 'Enter a first name.'
                 : null
             "
           >
@@ -55,26 +75,35 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
               formControlName="firstName"
               autocomplete="off"
               maxlength="80"
-              placeholder="e.g. Maya"
+              [placeholder]="currentLang() === 'km' ? 'ឧ. បុប្ផា' : 'e.g. Maya'"
             />
           </ac-ui-field>
 
-          <ac-ui-field label="Last name" [optional]="true">
+          <ac-ui-field
+            [label]="currentLang() === 'km' ? 'គោត្តនាម' : 'Last Name'"
+            [optional]="true"
+          >
             <input
               type="text"
               formControlName="lastName"
               autocomplete="off"
               maxlength="80"
-              placeholder="Optional family or surname"
+              [placeholder]="
+                currentLang() === 'km'
+                  ? 'គោត្តនាម ឬនាមត្រកូល (ជាជម្រើស)'
+                  : 'Optional family or surname'
+              "
             />
           </ac-ui-field>
 
           <ac-ui-field
-            label="Date of birth"
+            [label]="currentLang() === 'km' ? 'ថ្ងៃខែឆ្នាំកំណើត' : 'Date of Birth'"
             [required]="true"
             [error]="
               form.controls.dateOfBirth.touched && form.controls.dateOfBirth.invalid
-                ? 'Enter a date of birth.'
+                ? currentLang() === 'km'
+                  ? 'សូមបញ្ចូលថ្ងៃខែឆ្នាំកំណើត។'
+                  : 'Enter a date of birth.'
                 : null
             "
           >
@@ -85,8 +114,14 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
         <div class="guidance-tip">
           <span class="tip-icon" aria-hidden="true">ℹ️</span>
           <p>
-            <strong>Age-normed screening:</strong> Behavioral and sensory screening questionnaires
-            automatically adapt to your child's chronological age in months.
+            <strong>{{
+              currentLang() === 'km' ? 'ការវាយតម្លៃតាមកម្រិតអាយុ៖' : 'Age-normed screening:'
+            }}</strong>
+            {{
+              currentLang() === 'km'
+                ? ' កម្រងសំណួរវាយតម្លៃអាកប្បកិរិយា និងវិញ្ញាណ នឹងសម្របតាមអាយុគិតជាខែរបស់កុមារដោយស្វ័យប្រវត្តិ។'
+                : " Behavioral and sensory screening questionnaires automatically adapt to your child's chronological age in months."
+            }}
           </p>
         </div>
       </section>
@@ -94,22 +129,34 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
       <!-- Step 2: Residential Context -->
       <section class="step-card" aria-labelledby="step-2-title">
         <div class="step-header">
-          <span class="step-badge">Step 2 of 3</span>
-          <h2 id="step-2-title">Residential Information</h2>
+          <span class="step-badge">
+            {{ currentLang() === 'km' ? 'ជំហាន ២ នៃ ៣' : 'Step 2 of 3' }}
+          </span>
+          <h2 id="step-2-title">
+            {{ currentLang() === 'km' ? 'ព័ត៌មានទីលំនៅ' : 'Residential Information' }}
+          </h2>
           <p>
-            Home location helps us discover and recommend nearby pediatric hospitals and
-            developmental specialists.
+            {{
+              currentLang() === 'km'
+                ? 'ទីតាំងរស់នៅជួយណែនាំមន្ទីរពេទ្យកុមារ និងអ្នកឯកទេសនៅជិតអ្នក។'
+                : 'Home location helps us discover and recommend nearby pediatric hospitals and developmental specialists.'
+            }}
           </p>
         </div>
 
         <div class="fields-stack">
-          <ac-ui-field label="Residential address" [optional]="true">
+          <ac-ui-field
+            [label]="currentLang() === 'km' ? 'អាសយដ្ឋានបច្ចុប្បន្ន' : 'Residential address'"
+            [optional]="true"
+          >
             <input
               type="text"
               formControlName="address"
               autocomplete="off"
               maxlength="500"
-              placeholder="e.g. Phnom Penh, Cambodia"
+              [placeholder]="
+                currentLang() === 'km' ? 'ឧ. រាជធានីភ្នំពេញ កម្ពុជា' : 'e.g. Phnom Penh, Cambodia'
+              "
             />
           </ac-ui-field>
         </div>
@@ -117,8 +164,11 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
         <div class="guidance-tip">
           <span class="tip-icon" aria-hidden="true">📍</span>
           <p>
-            Location data is kept private and used only for matching specialist appointments and
-            local center recommendations.
+            {{
+              currentLang() === 'km'
+                ? 'ទិន្នន័យទីតាំងត្រូវបានរក្សាការសម្ងាត់ និងប្រើសម្រាប់តែការណាត់ជួបអ្នកឯកទេសប៉ុណ្ណោះ។'
+                : 'Location data is kept private and used only for matching specialist appointments and local center recommendations.'
+            }}
           </p>
         </div>
       </section>
@@ -126,21 +176,39 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
       <!-- Step 3: Support & Sensory Notes -->
       <section class="step-card" aria-labelledby="step-3-title">
         <div class="step-header">
-          <span class="step-badge">Step 3 of 3</span>
-          <h2 id="step-3-title">Support & Sensory Care Notes</h2>
+          <span class="step-badge">
+            {{ currentLang() === 'km' ? 'ជំហាន ៣ នៃ ៣' : 'Step 3 of 3' }}
+          </span>
+          <h2 id="step-3-title">
+            {{
+              currentLang() === 'km'
+                ? 'កំណត់ត្រាវេជ្ជសាស្ត្រ និងការគាំទ្រ'
+                : 'Support & Sensory Care Notes'
+            }}
+          </h2>
           <p>
-            Record initial observations, sensory sensitivities, communication methods, or calming
-            routines.
+            {{
+              currentLang() === 'km'
+                ? 'កត់ត្រាការសង្កេតបឋម ភាពងាយរងរំញោចញាណដឹង វិធីសាស្ត្រទំនាក់ទំនង ឬទម្លាប់សម្រួលអារម្មណ៍។'
+                : 'Record initial observations, sensory sensitivities, communication methods, or calming routines.'
+            }}
           </p>
         </div>
 
         <div class="fields-stack">
-          <ac-ui-field label="Support notes & preferences" [optional]="true">
+          <ac-ui-field
+            [label]="currentLang() === 'km' ? 'កំណត់ត្រាវេជ្ជសាស្ត្រ' : 'Medical Notes'"
+            [optional]="true"
+          >
             <textarea
               rows="5"
               formControlName="notes"
               maxlength="2000"
-              placeholder="Sensory preferences (e.g. sound sensitivity), communication styles, favorite comfort items, or clinical background notes."
+              [placeholder]="
+                currentLang() === 'km'
+                  ? 'ចំណូលចិត្តញាណដឹង វិធីសាស្ត្រទំនាក់ទំនង របស់លេងកម្សាន្តចិត្ត ឬកំណត់ត្រាវេជ្ជសាស្ត្រគ្លីនិក។'
+                  : 'Sensory preferences (e.g. sound sensitivity), communication styles, favorite comfort items, or clinical background notes.'
+              "
             ></textarea>
           </ac-ui-field>
         </div>
@@ -148,9 +216,14 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
         <div class="guidance-tip">
           <span class="tip-icon" aria-hidden="true">💡</span>
           <p>
-            <strong>Clinical privacy:</strong> Care notes are private by default. You can reference
-            them anytime during specialist consultations or export them in clinical progress
-            summaries.
+            <strong>{{
+              currentLang() === 'km' ? 'ការសម្ងាត់គ្លីនិក៖' : 'Clinical privacy:'
+            }}</strong>
+            {{
+              currentLang() === 'km'
+                ? ' កំណត់ត្រាថែទាំត្រូវបានរក្សាការសម្ងាត់ជាលំនាំដើម។ អ្នកអាចមើលឡើងវិញបានគ្រប់ពេល។'
+                : ' Care notes are private by default. You can reference them anytime during specialist consultations or export them in clinical progress summaries.'
+            }}
           </p>
         </div>
       </section>
@@ -160,9 +233,19 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
       }
 
       <footer class="form-actions">
-        <a class="cancel-link" routerLink="/children">Cancel</a>
+        <a class="cancel-link" routerLink="/children">{{
+          currentLang() === 'km' ? 'បោះបង់' : 'Cancel'
+        }}</a>
         <button type="submit" class="submit-button" [disabled]="saving()">
-          {{ saving() ? 'Creating profile...' : 'Create Child Profile' }}
+          {{
+            saving()
+              ? currentLang() === 'km'
+                ? 'កំពុងរក្សាទុក...'
+                : 'Saving...'
+              : currentLang() === 'km'
+                ? 'រក្សាទុកទិន្នន័យកុមារ'
+                : 'Save Child'
+          }}
         </button>
       </footer>
     </form>
@@ -376,6 +459,8 @@ export class CreateChildPage {
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
   readonly today = new Date().toISOString().slice(0, 10);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);

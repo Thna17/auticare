@@ -48,7 +48,7 @@ export type PriorityAlert = {
 const quickActions: readonly QuickAction[] = [
   {
     titleKm: 'ចាប់ផ្តើមការវាយតម្លៃ',
-    titleEn: 'Start Clinical Screening',
+    titleEn: 'Start Screening',
     descriptionKm: 'វាយតម្លៃដំណាក់កាលលូតលាស់ និងការឆ្លើយតបញាណដឹង',
     descriptionEn: 'Assess developmental milestones & sensory response',
     path: '/screening',
@@ -58,8 +58,8 @@ const quickActions: readonly QuickAction[] = [
     timeEstimateEn: '5m',
   },
   {
-    titleKm: 'សកម្មភាពលេងកម្សាន្ត',
-    titleEn: 'Log Daily Milestone',
+    titleKm: 'សកម្មភាពញាណដឹង',
+    titleEn: 'Sensory Activities',
     descriptionKm: 'សកម្មភាពលូតលាស់ និងការលេងសម្របសម្រួលញាណនៅផ្ទះ',
     descriptionEn: 'Home-based developmental activities & sensory play',
     path: '/activities',
@@ -70,7 +70,7 @@ const quickActions: readonly QuickAction[] = [
   },
   {
     titleKm: 'កក់ការពិគ្រោះយោបល់',
-    titleEn: 'Book Specialist Visit',
+    titleEn: 'Book Specialist',
     descriptionKm: 'ពិគ្រោះជាមួយវេជ្ជបណ្ឌិតឯកទេសកុមារ អ្នកព្យាបាលការនិយាយ និងចលករ',
     descriptionEn: 'Consult pediatricians, SLTs & occupational therapists',
     path: '/hospitals',
@@ -80,15 +80,15 @@ const quickActions: readonly QuickAction[] = [
     timeEstimateEn: 'Pediatrics',
   },
   {
-    titleKm: 'ការតាមដានការលូតលាស់',
-    titleEn: 'Growth Trajectory',
-    descriptionKm: 'តាមដាននិន្នាការលូតលាស់ និងប្រវត្តិគ្លីនិករបស់កុមារ',
-    descriptionEn: 'Track developmental trends & clinical history',
-    path: '/progress',
-    icon: 'progress',
+    titleKm: 'ជំនួយបន្ទាន់',
+    titleEn: 'Crisis Help',
+    descriptionKm: 'ធនធានគាំទ្របន្ទាន់ ជំនួយផ្លូវចិត្ត និងខ្សែទូរស័ព្ទជំនួយ',
+    descriptionEn: 'Emergency support resources, hotlines & emotional guidance',
+    path: '/crisis-resources',
+    icon: 'hospital',
     gradientClass: 'gradient-trajectory',
-    timeEstimateKm: 'និន្នាការ',
-    timeEstimateEn: 'Trends',
+    timeEstimateKm: 'ជំនួយបន្ទាន់',
+    timeEstimateEn: '24/7 Help',
   },
 ];
 
@@ -941,7 +941,7 @@ const quickActions: readonly QuickAction[] = [
                       <span
                         >{{ data.weeklyProgress.totalCompletedThisWeek }}
                         {{
-                          currentLang() === 'km' ? 'សកម្មភាពបានបញ្ចប់' : 'Activities Completed'
+                          currentLang() === 'km' ? 'សកម្មភាពបន្តបន្ទាប់' : 'Day Activity Streak'
                         }}</span
                       >
                     </span>
@@ -3694,16 +3694,29 @@ export class DashboardPage implements OnInit {
     const birthDate = new Date(`${dateOfBirth}T00:00:00`);
     const today = new Date();
     let years = today.getFullYear() - birthDate.getFullYear();
-    const monthDelta = today.getMonth() - birthDate.getMonth();
-    if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) {
+    let months = today.getMonth() - birthDate.getMonth();
+    if (today.getDate() < birthDate.getDate()) {
+      months -= 1;
+    }
+    if (months < 0) {
       years -= 1;
+      months += 12;
     }
     const safeYears = Math.max(years, 0);
+    const safeMonths = Math.max(months, 0);
     const isKm = this.currentLang() === 'km';
     if (isKm) {
-      return `អាយុ ${safeYears} ឆ្នាំ`;
+      if (safeYears > 0 && safeMonths > 0) return `${safeYears} ឆ្នាំ ${safeMonths} ខែ`;
+      if (safeYears > 0) return `${safeYears} ឆ្នាំ`;
+      return `${safeMonths} ខែ`;
     }
-    return safeYears === 1 ? 'age 1' : `age ${safeYears}`;
+    if (safeYears > 0 && safeMonths > 0) {
+      return `${safeYears} ${safeYears === 1 ? 'year' : 'years'} ${safeMonths} ${safeMonths === 1 ? 'month' : 'months'}`;
+    }
+    if (safeYears > 0) {
+      return `${safeYears} ${safeYears === 1 ? 'year' : 'years'}`;
+    }
+    return `${safeMonths} ${safeMonths === 1 ? 'month' : 'months'}`;
   }
 
   protected getAvatarColor(initials: string): string {

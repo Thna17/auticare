@@ -11,6 +11,7 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 export type MilestoneFeedItem = {
   readonly id: string;
@@ -231,55 +232,84 @@ export type MilestoneFeedItem = {
             </header>
 
             <ac-ui-field
-              label="First name"
+              [label]="currentLang() === 'km' ? 'នាមខ្លួន' : 'First Name'"
               [required]="true"
               [error]="
                 form.controls.firstName.touched && form.controls.firstName.invalid
-                  ? 'Enter a first name.'
+                  ? currentLang() === 'km'
+                    ? 'សូមបញ្ចូលនាមខ្លួន។'
+                    : 'Enter a first name.'
                   : null
               "
             >
               <input type="text" formControlName="firstName" autocomplete="off" maxlength="80" />
             </ac-ui-field>
 
-            <ac-ui-field label="Last name" [optional]="true">
+            <ac-ui-field
+              [label]="currentLang() === 'km' ? 'គោត្តនាម' : 'Last Name'"
+              [optional]="true"
+            >
               <input
                 type="text"
                 formControlName="lastName"
                 autocomplete="off"
                 maxlength="80"
-                placeholder="Optional family or surname"
+                [placeholder]="
+                  currentLang() === 'km'
+                    ? 'គោត្តនាម ឬនាមត្រកូល (ជាជម្រើស)'
+                    : 'Optional family or surname'
+                "
               />
             </ac-ui-field>
 
             <ac-ui-field
-              label="Date of birth"
+              [label]="currentLang() === 'km' ? 'ថ្ងៃខែឆ្នាំកំណើត' : 'Date of Birth'"
               [required]="true"
               [error]="
                 form.controls.dateOfBirth.touched && form.controls.dateOfBirth.invalid
-                  ? 'Use a valid date of birth.'
+                  ? currentLang() === 'km'
+                    ? 'សូមជ្រើសរើសថ្ងៃខែឆ្នាំកំណើតត្រឹមត្រូវ។'
+                    : 'Use a valid date of birth.'
                   : null
               "
             >
               <input type="date" formControlName="dateOfBirth" [max]="today" />
             </ac-ui-field>
 
-            <ac-ui-field label="Residential address" [optional]="true">
+            <ac-ui-field
+              [label]="currentLang() === 'km' ? 'អាសយដ្ឋានបច្ចុប្បន្ន' : 'Residential address'"
+              [optional]="true"
+            >
               <input
                 type="text"
                 formControlName="address"
                 autocomplete="off"
                 maxlength="500"
-                placeholder="Optional home address for service discovery"
+                [placeholder]="
+                  currentLang() === 'km'
+                    ? 'អាសយដ្ឋានសម្រាប់ស្វែងរកសេវាគាំទ្រ'
+                    : 'Optional home address for service discovery'
+                "
               />
             </ac-ui-field>
 
-            <ac-ui-field label="Support notes & sensory preferences" [optional]="true">
+            <ac-ui-field
+              [label]="
+                currentLang() === 'km'
+                  ? 'កំណត់ត្រាវេជ្ជសាស្ត្រ និងការគាំទ្រ'
+                  : 'Medical Notes & Support'
+              "
+              [optional]="true"
+            >
               <textarea
                 rows="7"
                 formControlName="notes"
                 maxlength="2000"
-                placeholder="Sensory sensitivities, preferred communication methods, calming routines, or clinical background notes."
+                [placeholder]="
+                  currentLang() === 'km'
+                    ? 'ភាពងាយរងរំញោចញាណដឹង វិធីសាស្ត្រទំនាក់ទំនង ទម្លាប់សម្រួលអារម្មណ៍ ឬកំណត់ត្រាវេជ្ជសាស្ត្រ។'
+                    : 'Sensory sensitivities, preferred communication methods, calming routines, or clinical background notes.'
+                "
               ></textarea>
             </ac-ui-field>
 
@@ -292,7 +322,15 @@ export type MilestoneFeedItem = {
 
             <div class="form-submit-row">
               <button class="primary-button" type="submit" [disabled]="saving()">
-                {{ saving() ? 'Saving...' : 'Save Profile Changes' }}
+                {{
+                  saving()
+                    ? currentLang() === 'km'
+                      ? 'កំពុងរក្សាទុក...'
+                      : 'Saving...'
+                    : currentLang() === 'km'
+                      ? 'រក្សាទុកទិន្នន័យកុមារ'
+                      : 'Save Child'
+                }}
               </button>
             </div>
           </form>
@@ -1328,6 +1366,8 @@ export class ChildProfilePage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
 
   readonly child = signal<ChildResponse | null>(null);
   readonly latestRiskLevel = signal<RiskLevel | null>(null);
@@ -1576,10 +1616,24 @@ export class ChildProfilePage implements OnInit {
       years -= 1;
       months += 12;
     }
-    if (years <= 0 && months <= 0) return 'Newborn';
-    if (years <= 0) return `${months} ${months === 1 ? 'month' : 'months'} old`;
-    if (months === 0) return years === 1 ? '1 year old' : `${years} years old`;
-    return `${years} ${years === 1 ? 'yr' : 'yrs'} ${months} ${months === 1 ? 'mo' : 'mos'} old`;
+    const safeYears = Math.max(years, 0);
+    const safeMonths = Math.max(months, 0);
+    const isKm = this.currentLang() === 'km';
+    if (safeYears <= 0 && safeMonths <= 0) {
+      return isKm ? 'ទារកទើបកើត' : 'Newborn';
+    }
+    if (isKm) {
+      if (safeYears > 0 && safeMonths > 0) return `${safeYears} ឆ្នាំ ${safeMonths} ខែ`;
+      if (safeYears > 0) return `${safeYears} ឆ្នាំ`;
+      return `${safeMonths} ខែ`;
+    }
+    if (safeYears > 0 && safeMonths > 0) {
+      return `${safeYears} ${safeYears === 1 ? 'year' : 'years'} ${safeMonths} ${safeMonths === 1 ? 'month' : 'months'}`;
+    }
+    if (safeYears > 0) {
+      return safeYears === 1 ? '1 year old' : `${safeYears} years old`;
+    }
+    return safeMonths === 1 ? '1 month old' : `${safeMonths} months old`;
   }
 
   riskTone(risk: RiskLevel | null): 'positive' | 'caution' | 'alert' | 'neutral' {

@@ -523,17 +523,17 @@ describe('DashboardPage', () => {
       );
       expect(quickCards.length).toBe(4);
 
-      expect(quickCards[0].textContent).toContain('Start Clinical Screening');
+      expect(quickCards[0].textContent).toContain('Start Screening');
       expect(quickCards[0].getAttribute('href')).toBe('/screening');
 
-      expect(quickCards[1].textContent).toContain('Log Daily Milestone');
+      expect(quickCards[1].textContent).toContain('Sensory Activities');
       expect(quickCards[1].getAttribute('href')).toBe('/activities');
 
-      expect(quickCards[2].textContent).toContain('Book Specialist Visit');
+      expect(quickCards[2].textContent).toContain('Book Specialist');
       expect(quickCards[2].getAttribute('href')).toBe('/hospitals');
 
-      expect(quickCards[3].textContent).toContain('Growth Trajectory');
-      expect(quickCards[3].getAttribute('href')).toBe('/progress');
+      expect(quickCards[3].textContent).toContain('Crisis Help');
+      expect(quickCards[3].getAttribute('href')).toBe('/crisis-resources');
     });
 
     it('renders active child context pill and toggles child switcher dropdown with Escape key support', () => {
@@ -892,22 +892,22 @@ describe('DashboardPage', () => {
 
       // Card 1: Screening
       expect(quickCards[0].textContent).toContain('ចាប់ផ្តើមការវាយតម្លៃ');
-      expect(quickCards[0].textContent).not.toContain('Start Clinical Screening');
+      expect(quickCards[0].textContent).not.toContain('Start Screening');
       expect(quickCards[0].textContent).toContain('5 នាទី');
       expect(quickCards[0].getAttribute('href')).toBe('/screening');
 
       // Card 2: Sensory Play
-      expect(quickCards[1].textContent).toContain('សកម្មភាពលេងកម្សាន្ត');
-      expect(quickCards[1].textContent).not.toContain('Log Daily Milestone');
+      expect(quickCards[1].textContent).toContain('សកម្មភាពញាណដឹង');
+      expect(quickCards[1].textContent).not.toContain('Sensory Activities');
       expect(quickCards[1].getAttribute('href')).toBe('/activities');
 
       // Card 3: Book Specialist
       expect(quickCards[2].textContent).toContain('កក់ការពិគ្រោះយោបល់');
       expect(quickCards[2].getAttribute('href')).toBe('/hospitals');
 
-      // Card 4: Growth Trajectory
-      expect(quickCards[3].textContent).toContain('ការតាមដានការលូតលាស់');
-      expect(quickCards[3].getAttribute('href')).toBe('/progress');
+      // Card 4: Crisis Help
+      expect(quickCards[3].textContent).toContain('ជំនួយបន្ទាន់');
+      expect(quickCards[3].getAttribute('href')).toBe('/crisis-resources');
     });
 
     it('renders bilingual screening risk badges and Khmer activity streak indicator', () => {
@@ -948,7 +948,7 @@ describe('DashboardPage', () => {
       fixture.detectChanges();
       const streakBadge = element.querySelector('.streak-badge');
       expect(streakBadge).toBeTruthy();
-      expect(streakBadge?.textContent).toContain('សកម្មភាពបានបញ្ចប់');
+      expect(streakBadge?.textContent).toContain('សកម្មភាពបន្តបន្ទាប់');
       expect(streakBadge?.textContent).not.toContain('Streak: Completed');
       expect(streakBadge?.textContent).toContain('4');
     });
@@ -981,7 +981,7 @@ describe('DashboardPage', () => {
       expect(element.textContent).toContain('Welcome to AutiCare');
       expect(element.textContent).toContain('Viewing care for:');
       expect(element.textContent).toContain('Moderate Concern');
-      expect(element.textContent).toContain('Activities Completed');
+      expect(element.textContent).toContain('Day Activity Streak');
       expect(element.textContent).not.toContain('សូមស្វាគមន៍');
       expect(element.textContent).not.toContain('ការបារម្ភកម្រិតមធ្យម');
     });

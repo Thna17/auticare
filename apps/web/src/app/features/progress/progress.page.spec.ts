@@ -880,4 +880,74 @@ describe('ProgressPage', () => {
       'Daily Living',
     ]);
   });
+
+  it('translates developmental domain chart labels (Communication, Fine Motor, Gross Motor, Cognitive, Social), milestone achievement badges, and teacher observations', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ProgressPage],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '/api/v1' },
+        provideRouter([]),
+        { provide: ChildrenApi, useValue: mockChildrenApi },
+        { provide: ParentActivityApi, useValue: mockActivityApi },
+        { provide: ScreeningApi, useValue: mockScreeningApi },
+        { provide: ActivitiesApi, useValue: mockActivitiesApi },
+        { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProgressPage);
+    const i18n = TestBed.inject(I18nService);
+    component = fixture.componentInstance;
+
+    // --- 1. ENGLISH MODE ('en') ---
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+
+    // Domain labels in English
+    expect(component.getDomainLabel('Communication')).toBe('Communication');
+    expect(component.getDomainLabel('Fine Motor')).toBe('Fine Motor');
+    expect(component.getDomainLabel('Gross Motor')).toBe('Gross Motor');
+    expect(component.getDomainLabel('Cognitive')).toBe('Cognitive');
+    expect(component.getDomainLabel('Social')).toBe('Social');
+
+    // Milestones Tab: Milestone achievement badge in English
+    component.setTab('milestones');
+    fixture.detectChanges();
+    const achievementBadge = fixture.nativeElement.querySelector('.achievement-badge');
+    expect(achievementBadge?.textContent).toContain('Milestone Achieved');
+
+    // Reports Tab: Teacher observations in English
+    component.setTab('reports');
+    fixture.detectChanges();
+    const reportCard = fixture.nativeElement.querySelector('.report-card');
+    expect(reportCard?.textContent).toContain('Teacher Observations');
+    expect(reportCard?.textContent).toContain('Progressing nicely.');
+
+    // --- 2. KHMER MODE ('km') ---
+    i18n.setLanguage('km');
+    fixture.detectChanges();
+
+    // Domain labels in Khmer
+    expect(component.getDomainLabel('Communication')).toBe('ការប្រាស្រ័យទាក់ទង');
+    expect(component.getDomainLabel('Fine Motor')).toBe('ចលនាសាច់ដុំតូច');
+    expect(component.getDomainLabel('Gross Motor')).toBe('ចលនាសាច់ដុំធំ');
+    expect(component.getDomainLabel('Cognitive')).toBe('ការយល់ដឹង និងការគិត');
+    expect(component.getDomainLabel('Social')).toBe('ទំនាក់ទំនងសង្គម');
+
+    // Milestones Tab: Milestone achievement badge in Khmer
+    component.setTab('milestones');
+    fixture.detectChanges();
+    const kmAchievementBadge = fixture.nativeElement.querySelector('.achievement-badge');
+    expect(kmAchievementBadge?.textContent).toContain('សមិទ្ធផលបានសម្រេច');
+    expect(kmAchievementBadge?.textContent).not.toContain('(Milestone Achieved)');
+
+    // Reports Tab: Teacher observations in Khmer
+    component.setTab('reports');
+    fixture.detectChanges();
+    const kmReportCard = fixture.nativeElement.querySelector('.report-card');
+    expect(kmReportCard?.textContent).toContain('ការសង្កេតរបស់គ្រូ');
+    expect(kmReportCard?.textContent).not.toContain('(Teacher Observations)');
+  });
 });

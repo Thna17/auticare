@@ -5,6 +5,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ChildResponse, ScreeningSessionDetailResponse } from '@auticare/contracts';
 import { API_BASE_URL } from '../../core/config/api.config';
+import { I18nService, LANG_STORAGE_KEY } from '../../core/i18n/i18n.service';
 import { ChildProfilePage } from './child-profile.page';
 
 describe('ChildProfilePage', () => {
@@ -46,6 +47,7 @@ describe('ChildProfilePage', () => {
   ];
 
   beforeEach(() => {
+    localStorage.setItem(LANG_STORAGE_KEY, 'en');
     TestBed.configureTestingModule({
       imports: [ChildProfilePage],
       providers: [
@@ -179,6 +181,8 @@ describe('ChildProfilePage', () => {
   it('formats chronological age accurately in years and months', () => {
     const fixture = TestBed.createComponent(ChildProfilePage);
     const component = fixture.componentInstance;
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
 
     const now = new Date();
 
@@ -204,6 +208,11 @@ describe('ChildProfilePage', () => {
       now.getDate(),
     );
     const threeYFourMStr = `${threeYearsFourMonthsAgo.getFullYear()}-${pad(threeYearsFourMonthsAgo.getMonth() + 1)}-${pad(threeYearsFourMonthsAgo.getDate())}`;
-    expect(component.ageLabel(threeYFourMStr)).toBe('3 yrs 4 mos old');
+    expect(component.ageLabel(threeYFourMStr)).toBe('3 years 4 months');
+
+    // Khmer mode
+    i18n.setLanguage('km');
+    expect(component.ageLabel(todayStr)).toBe('ទារកទើបកើត');
+    expect(component.ageLabel(threeYFourMStr)).toBe('3 ឆ្នាំ 4 ខែ');
   });
 });
