@@ -11,6 +11,7 @@ import type {
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ActivitiesApi } from './data-access/activities.api';
 import { ScreeningApi } from '../screening/data-access/screening.api';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ActivitiesPage } from './activities.page';
 import { CAMBODIAN_HOME_ACTIVITIES, findCambodianActivity } from './cambodia-activities.data';
 
@@ -180,6 +181,7 @@ describe('ActivitiesPage', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(ActivitiesPage);
+    TestBed.inject(I18nService).setLanguage('en');
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -470,16 +472,24 @@ describe('ActivitiesPage', () => {
   });
 
   it('renders localized Khmer activity category options and triggers Khmer filter', () => {
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('km');
+    fixture.detectChanges();
+
     const categoryPills = (fixture.nativeElement as HTMLElement).querySelectorAll(
       '.category-pill-btn',
     );
     const categoryTexts = Array.from(categoryPills).map((el) => el.textContent || '');
 
-    // Verify presence of Khmer translations in category pills
+    // Verify presence of Khmer translations in category pills and zero English parentheticals
     expect(categoryTexts.some((txt) => txt.includes('ញាណដឹង'))).toBe(true);
     expect(categoryTexts.some((txt) => txt.includes('ចលករតូច'))).toBe(true);
     expect(categoryTexts.some((txt) => txt.includes('ការប្រាស្រ័យទាក់ទង'))).toBe(true);
     expect(categoryTexts.some((txt) => txt.includes('ទំនាក់ទំនងសង្គម'))).toBe(true);
+    expect(categoryTexts.some((txt) => txt.includes('Sensory'))).toBe(false);
+
+    i18n.setLanguage('en');
+    fixture.detectChanges();
   });
 
   it('matches all 5 culturally adapted Cambodian home sensory play routines', () => {
@@ -524,17 +534,27 @@ describe('ActivitiesPage', () => {
   it('provides authentic Khmer step-by-step instructions and materials checklist for Cambodian activities', () => {
     const riceAct = CAMBODIAN_HOME_ACTIVITIES[0];
 
-    const materials = component.getMaterialsList(riceAct);
-    expect(materials.length).toBe(4);
-    expect(materials.some((m) => m.includes('អង្ករផ្កាម្លិះ'))).toBe(true);
-    expect(materials.some((m) => m.includes('Large shallow sensory bin'))).toBe(true);
+    // Khmer language extraction
+    const materialsKm = component.getMaterialsList(riceAct, 'km');
+    expect(materialsKm.length).toBe(4);
+    expect(materialsKm.some((m) => m.includes('អង្ករផ្កាម្លិះ'))).toBe(true);
+    expect(materialsKm.some((m) => m.includes('Large shallow'))).toBe(false);
 
-    const steps = component.getStepsList(riceAct);
-    expect(steps.length).toBe(4);
-    expect(steps[0].title).toContain('១. រៀបចំធុងអង្ករ');
-    expect(steps[0].title).toContain('Prepare Sensory Bin');
-    expect(steps[1].title).toContain('២. ការរុករកដោយដៃទទេ');
-    expect(steps[1].desc).toContain('sensory input');
+    const stepsKm = component.getStepsList(riceAct, 'km');
+    expect(stepsKm.length).toBe(4);
+    expect(stepsKm[0].title).toContain('១. រៀបចំធុងអង្ករ');
+    expect(stepsKm[0].title).not.toContain('Prepare Sensory Bin');
+
+    // English language extraction
+    const materialsEn = component.getMaterialsList(riceAct, 'en');
+    expect(materialsEn.length).toBe(4);
+    expect(materialsEn.some((m) => m.includes('Large shallow sensory bin'))).toBe(true);
+    expect(materialsEn.some((m) => m.includes('អង្ករផ្កាម្លិះ'))).toBe(false);
+
+    const stepsEn = component.getStepsList(riceAct, 'en');
+    expect(stepsEn.length).toBe(4);
+    expect(stepsEn[0].title).toContain('Prepare Sensory Bin');
+    expect(stepsEn[0].title).not.toContain('១. រៀបចំធុងអង្ករ');
   });
 
   it('renders micro-celebration animation and supports submitting parent reflection notes in Khmer', () => {
@@ -555,7 +575,7 @@ describe('ActivitiesPage', () => {
       parentObservation: khmerNote,
     });
 
-    // Check celebration banner styling for completed activity
+    // Check celebration banner styling for completed activity in English mode
     const completedRow = component['rows']().find((r) => r.activity.id === 'act_2')!;
     component.openActivityDrawer(completedRow);
     fixture.detectChanges();
@@ -565,7 +585,16 @@ describe('ActivitiesPage', () => {
     );
     expect(celebrationBanner).toBeTruthy();
     expect(celebrationBanner?.textContent).toContain('Well Done! Completed');
+    expect(celebrationBanner?.textContent).not.toContain('អបអរសាទរ! បានបញ្ចប់');
+
+    // Toggle to Khmer mode and verify clean Khmer celebration banner
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('km');
+    fixture.detectChanges();
     expect(celebrationBanner?.textContent).toContain('អបអរសាទរ! បានបញ្ចប់');
+    expect(celebrationBanner?.textContent).not.toContain('Well Done! Completed');
+    i18n.setLanguage('en');
+    fixture.detectChanges();
   });
 
   it('falls back to CAMBODIAN_HOME_ACTIVITIES when API catalogue is empty or offline', () => {
@@ -578,5 +607,38 @@ describe('ActivitiesPage', () => {
     expect(titles.some((t) => t.includes('Sensory Rice & Grain Bin'))).toBe(true);
     expect(titles.some((t) => t.includes('Banana Leaf & Paper Folding'))).toBe(true);
     expect(titles.some((t) => t.includes('Coconut Water & Bubble Play'))).toBe(true);
+  });
+
+  it('renders clean decoupled bilingual copy without mixed parentheticals', () => {
+    const i18n = TestBed.inject(I18nService);
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    // In English mode:
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+    expect(compiled.querySelector('.eyebrow')?.textContent).toContain('Home & Sensory Support');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Activities & Play Library');
+    expect(compiled.querySelector('.summary-bar')?.textContent).toContain('Total Available');
+    expect(compiled.querySelector('.summary-bar')?.textContent).toContain('In Progress');
+    expect(compiled.querySelector('.summary-bar')?.textContent).toContain('Completed');
+    expect(compiled.textContent).not.toContain('ការគាំទ្រញាណដឹង');
+    expect(compiled.textContent).not.toContain('បណ្ណាល័យសកម្មភាព');
+
+    // In Khmer mode:
+    i18n.setLanguage('km');
+    fixture.detectChanges();
+    expect(compiled.querySelector('.eyebrow')?.textContent).toContain(
+      'ការគាំទ្រញាណដឹង និងល្បែងនៅផ្ទះ',
+    );
+    expect(compiled.querySelector('h1')?.textContent).toContain('បណ្ណាល័យសកម្មភាព និងការលេង');
+    expect(compiled.querySelector('.summary-bar')?.textContent).toContain('សរុបទាំងអស់');
+    expect(compiled.querySelector('.summary-bar')?.textContent).toContain('កំពុងអនុវត្ត');
+    expect(compiled.querySelector('.summary-bar')?.textContent).toContain('បានបញ្ចប់');
+    expect(compiled.textContent).not.toContain('Home & Sensory Support');
+    expect(compiled.textContent).not.toContain('Activities & Play Library');
+
+    // Reset back to English
+    i18n.setLanguage('en');
+    fixture.detectChanges();
   });
 });

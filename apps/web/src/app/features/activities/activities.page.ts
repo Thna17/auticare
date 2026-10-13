@@ -7,6 +7,7 @@ import type {
   ActivityResponse,
   ScreeningSessionDetailResponse,
 } from '@auticare/contracts';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { ChildrenApi } from '../children/data-access/children.api';
@@ -41,29 +42,20 @@ interface CategoryOption {
   readonly icon: string;
 }
 
-const statusOptions: readonly StatusOption[] = [
-  { value: 'ALL', label: 'All (ទាំងអស់)' },
-  { value: 'IN_PROGRESS', label: 'In Progress (កំពុងអនុវត្ត)' },
-  { value: 'COMPLETED', label: 'Completed (បានបញ្ចប់)' },
-  { value: 'NOT_STARTED', label: 'Not Started (មិនទាន់ចាប់ផ្តើម)' },
+const DEFAULT_CATEGORIES: readonly {
+  value: string;
+  labelEn: string;
+  labelKm: string;
+  icon: string;
+}[] = [
+  { value: '', labelEn: 'All Categories', labelKm: 'ទាំងអស់', icon: '🌟' },
+  { value: 'Sensory', labelEn: 'Sensory', labelKm: 'ញាណដឹង', icon: '✨' },
+  { value: 'Fine Motor', labelEn: 'Fine Motor', labelKm: 'ចលករតូច', icon: '✍️' },
+  { value: 'Communication', labelEn: 'Communication', labelKm: 'ការប្រាស្រ័យទាក់ទង', icon: '💬' },
+  { value: 'Social', labelEn: 'Social Skills', labelKm: 'ទំនាក់ទំនងសង្គម', icon: '🤝' },
+  { value: 'Motor', labelEn: 'Gross Motor', labelKm: 'ចលករធំ', icon: '🏃' },
+  { value: 'Daily Living', labelEn: 'Daily Living', labelKm: 'ទម្លាប់ប្រចាំថ្ងៃ', icon: '🧩' },
 ];
-
-const DEFAULT_CATEGORIES: readonly CategoryOption[] = [
-  { value: '', label: 'All Categories (ទាំងអស់)', icon: '🌟' },
-  { value: 'Sensory', label: 'Sensory (ញាណដឹង)', icon: '✨' },
-  { value: 'Fine Motor', label: 'Fine Motor (ចលករតូច)', icon: '✍️' },
-  { value: 'Communication', label: 'Communication (ការប្រាស្រ័យទាក់ទង)', icon: '💬' },
-  { value: 'Social', label: 'Social Skills (ទំនាក់ទំនងសង្គម)', icon: '🤝' },
-  { value: 'Motor', label: 'Gross Motor (ចលករធំ)', icon: '🏃' },
-  { value: 'Daily Living', label: 'Daily Living (ទម្លាប់ប្រចាំថ្ងៃ)', icon: '🧩' },
-];
-
-const monthsToLabel = (months: number): string => {
-  if (months < 24) return `${months} months`;
-  const years = Math.floor(months / 12);
-  const rest = months % 12;
-  return rest === 0 ? `${years} years` : `${years}y ${rest}m`;
-};
 
 const normalizeDomain = (cat: string): string => cat.toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -100,12 +92,28 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
   template: `
     <section class="page-header">
       <div class="header-content">
-        <p class="eyebrow">Home &amp; Sensory Support • ការគាំទ្រញាណដឹង និងល្បែងនៅផ្ទះ</p>
-        <h1>Activities &amp; Play Library • បណ្ណាល័យសកម្មភាព និងការលេង</h1>
+        <p class="eyebrow">
+          @if (currentLang() === 'km') {
+            ការគាំទ្រញាណដឹង និងល្បែងនៅផ្ទះ
+          } @else {
+            Home &amp; Sensory Support
+          }
+        </p>
+        <h1>
+          @if (currentLang() === 'km') {
+            បណ្ណាល័យសកម្មភាព និងការលេង
+          } @else {
+            Activities &amp; Play Library
+          }
+        </h1>
         <p class="intro">
-          Developmental home routines and playful exercises matched to your child’s age band and
-          screening recommendations (សកម្មភាពលេងអភិវឌ្ឍន៍នៅផ្ទះ
-          និងទម្លាប់សម្រួលអារម្មណ៍ដែលសមស្របតាមក្រុមអាយុកុមារ)។
+          @if (currentLang() === 'km') {
+            សកម្មភាពលេងអភិវឌ្ឍន៍នៅផ្ទះ និងទម្លាប់សម្រួលអារម្មណ៍ដែលសមស្របតាមក្រុមអាយុកុមារ
+            និងអនុសាសន៍នៃការវាយតម្លៃ។
+          } @else {
+            Developmental home routines and playful exercises matched to your child’s age band and
+            screening recommendations.
+          }
         </p>
       </div>
     </section>
@@ -116,17 +124,23 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
       </ac-ui-card>
     } @else if (children().length === 0 && !loadingChildren()) {
       <ac-ui-empty-state
-        title="Add a child first (សូមបន្ថែមទិន្នន័យកុមារជាមុនសិន)"
-        message="Activities are matched to a child’s age, so add a child to your family profile to see suitable ideas (សកម្មភាពត្រូវគ្នានឹងអាយុកុមារ សូមបន្ថែមទិន្នន័យកុមារក្នុងប្រវត្តិរូបគ្រួសារ)។"
+        [title]="currentLang() === 'km' ? 'សូមបន្ថែមទិន្នន័យកុមារជាមុនសិន' : 'Add a child first'"
+        [message]="
+          currentLang() === 'km'
+            ? 'សកម្មភាពត្រូវគ្នានឹងអាយុកុមារ សូមបន្ថែមទិន្នន័យកុមារក្នុងប្រវត្តិរូបគ្រួសារ ដើម្បីមើលឃើញគំនិតសមស្រប។'
+            : 'Activities are matched to a child’s age, so add a child to your family profile to see suitable ideas.'
+        "
       >
-        <a class="cta" routerLink="/children">Add a child (បន្ថែមទិន្នន័យកុមារ)</a>
+        <a class="cta" routerLink="/children">{{
+          currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add a child'
+        }}</a>
       </ac-ui-empty-state>
     } @else {
       <!-- Filter Toolbar -->
       <ac-ui-card>
         <div class="controls">
           <label class="control">
-            <span>Child (កុមារ)</span>
+            <span>{{ currentLang() === 'km' ? 'កុមារ' : 'Child' }}</span>
             <select
               [ngModel]="selectedChildId()"
               (ngModelChange)="selectChild($event)"
@@ -139,11 +153,15 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
           </label>
 
           <label class="control search-control">
-            <span>Search Activities (ស្វែងរកសកម្មភាព)</span>
+            <span>{{ currentLang() === 'km' ? 'ស្វែងរកសកម្មភាព' : 'Search Activities' }}</span>
             <div class="search-field-wrapper">
               <input
                 type="search"
-                placeholder="Search activities by keyword (e.g. bubbles, clay, calming, អង្ករ, ស្លឹកចេក)..."
+                [placeholder]="
+                  currentLang() === 'km'
+                    ? 'ស្វែងរកសកម្មភាពតាមពាក្យគន្លឹះ (ឧ. ពពុះ, ដីឥដ្ឋ, បន្ធូរអារម្មណ៍, អង្ករ, ស្លឹកចេក)...'
+                    : 'Search activities by keyword (e.g. bubbles, clay, calming, rice, banana leaf)...'
+                "
                 [ngModel]="searchQuery()"
                 (ngModelChange)="searchQuery.set($event)"
                 name="search"
@@ -153,8 +171,14 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         </div>
 
         <!-- Playful Category Pills Toolbar -->
-        <div class="category-pills-row" role="group" aria-label="Filter by developmental category">
-          <span class="toolbar-label">Category (ប្រភេទ):</span>
+        <div
+          class="category-pills-row"
+          role="group"
+          [attr.aria-label]="
+            currentLang() === 'km' ? 'ត្រងតាមប្រភេទអភិវឌ្ឍន៍' : 'Filter by developmental category'
+          "
+        >
+          <span class="toolbar-label">{{ currentLang() === 'km' ? 'ប្រភេទ:' : 'Category:' }}</span>
           <div class="category-pills">
             @for (cat of categoryOptions(); track cat.value) {
               <button
@@ -172,9 +196,17 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
 
         <!-- Status & Screening Priority Filter Pills -->
         <div class="filter-pills-row">
-          <span class="filter-pills-label">Status (ស្ថានភាព):</span>
-          <div class="status-pills" role="group" aria-label="Filter by activity status">
-            @for (opt of statusOptions; track opt.value) {
+          <span class="filter-pills-label">{{
+            currentLang() === 'km' ? 'ស្ថានភាព:' : 'Status:'
+          }}</span>
+          <div
+            class="status-pills"
+            role="group"
+            [attr.aria-label]="
+              currentLang() === 'km' ? 'ត្រងតាមស្ថានភាពសកម្មភាព' : 'Filter by activity status'
+            "
+          >
+            @for (opt of statusOptions(); track opt.value) {
               <button
                 type="button"
                 class="pill-btn"
@@ -191,23 +223,38 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
             class="pill-btn pill-btn--recommended"
             [class.active]="onlyRecommended()"
             (click)="onlyRecommended.set(!onlyRecommended())"
-            aria-label="Filter activities recommended for child"
+            [attr.aria-label]="
+              currentLang() === 'km'
+                ? 'ត្រងសកម្មភាពដែលបានណែនាំសម្រាប់កុមារ'
+                : 'Filter activities recommended for child'
+            "
           >
             <span class="recommend-star" aria-hidden="true">★</span>
-            <span>Recommended for {{ selectedChild()?.firstName || 'Child' }}</span>
+            <span>
+              @if (currentLang() === 'km') {
+                ណែនាំសម្រាប់ {{ selectedChild()?.firstName || 'កុមារ' }}
+              } @else {
+                Recommended for {{ selectedChild()?.firstName || 'Child' }}
+              }
+            </span>
           </button>
         </div>
       </ac-ui-card>
 
       <!-- Summary Statistics Bar -->
-      <section class="summary-bar" aria-label="Activity statistics">
+      <section
+        class="summary-bar"
+        [attr.aria-label]="currentLang() === 'km' ? 'ស្ថិតិសកម្មភាព' : 'Activity statistics'"
+      >
         <button
           type="button"
           class="summary-card"
           [class.active]="statusFilter() === 'ALL'"
           (click)="statusFilter.set('ALL')"
         >
-          <span class="metric-label">Total Available</span>
+          <span class="metric-label">{{
+            currentLang() === 'km' ? 'សរុបទាំងអស់' : 'Total Available'
+          }}</span>
           <span class="metric-val">{{ summaryCounts().total }}</span>
         </button>
         <button
@@ -216,7 +263,9 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
           [class.active]="statusFilter() === 'IN_PROGRESS'"
           (click)="statusFilter.set('IN_PROGRESS')"
         >
-          <span class="metric-label">In Progress</span>
+          <span class="metric-label">{{
+            currentLang() === 'km' ? 'កំពុងអនុវត្ត' : 'In Progress'
+          }}</span>
           <span class="metric-val going">{{ summaryCounts().inProgress }}</span>
         </button>
         <button
@@ -225,32 +274,55 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
           [class.active]="statusFilter() === 'COMPLETED'"
           (click)="statusFilter.set('COMPLETED')"
         >
-          <span class="metric-label">Completed</span>
+          <span class="metric-label">{{ currentLang() === 'km' ? 'បានបញ្ចប់' : 'Completed' }}</span>
           <span class="metric-val done">{{ summaryCounts().completed }}</span>
         </button>
       </section>
 
       @if (loading()) {
-        <ac-ui-card><ac-ui-spinner label="Loading activities…" /></ac-ui-card>
+        <ac-ui-card
+          ><ac-ui-spinner
+            [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកសកម្មភាព…' : 'Loading activities…'"
+        /></ac-ui-card>
       } @else if (error(); as problem) {
         <ac-ui-card>
           <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
-          <button type="button" class="retry" (click)="load()">Try again</button>
+          <button type="button" class="retry" (click)="load()">
+            {{ currentLang() === 'km' ? 'ព្យាយាមម្តងទៀត' : 'Try again' }}
+          </button>
         </ac-ui-card>
       } @else if (activities().length === 0) {
         <ac-ui-empty-state
-          title="No activities yet for this age (មិនទាន់មានសកម្មភាពសម្រាប់អាយុនេះ)"
-          message="The activity library is still being built. In the meantime, your child’s progress reports and school updates are the best picture of how they are doing."
+          [title]="
+            currentLang() === 'km'
+              ? 'មិនទាន់មានសកម្មភាពសម្រាប់អាយុនេះ'
+              : 'No activities yet for this age'
+          "
+          [message]="
+            currentLang() === 'km'
+              ? 'បណ្ណាល័យសកម្មភាពកំពុងត្រូវបានបង្កើតបន្ថែម។ ក្នុងពេលជាមួយគ្នានេះ របាយការណ៍ការវិវត្តរបស់កុមារ និងបច្ចុប្បន្នភាពពីសាលា គឺជាការឆ្លុះបញ្ចាំងដ៏ល្អបំផុតពីស្ថានភាពរបស់ពួកគេ។'
+              : 'The activity library is still being built. In the meantime, your child’s progress reports and school updates are the best picture of how they are doing.'
+          "
         >
-          <a class="cta" routerLink="/progress">View progress</a>
+          <a class="cta" routerLink="/progress">{{
+            currentLang() === 'km' ? 'មើលការវិវត្ត' : 'View progress'
+          }}</a>
         </ac-ui-empty-state>
       } @else if (rows().length === 0) {
         <ac-ui-empty-state
-          title="No matching activities (មិនមានសកម្មភាពត្រូវគ្នានឹងការស្វែងរក)"
-          message="No activities match your current search, category, or status filter."
+          [title]="
+            currentLang() === 'km'
+              ? 'មិនមានសកម្មភាពត្រូវគ្នានឹងការស្វែងរក'
+              : 'No matching activities'
+          "
+          [message]="
+            currentLang() === 'km'
+              ? 'មិនមានសកម្មភាពត្រូវគ្នានឹងការស្វែងរក ប្រភេទ ឬស្ថានភាពដែលបានជ្រើសរើសឡើយ។'
+              : 'No activities match your current search, category, or status filter.'
+          "
         >
           <button type="button" class="plain" (click)="resetFilters()">
-            Clear filters (សម្អាតការស្វែងរក)
+            {{ currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear filters' }}
           </button>
         </ac-ui-empty-state>
       } @else {
@@ -259,7 +331,12 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         }
 
         <!-- Activities Grid -->
-        <ul class="grid" aria-label="Suggested activities">
+        <ul
+          class="grid"
+          [attr.aria-label]="
+            currentLang() === 'km' ? 'សកម្មភាពដែលបានណែនាំ' : 'Suggested activities'
+          "
+        >
           @for (row of rows(); track row.activity.id) {
             <li>
               <ac-ui-card [interactive]="true">
@@ -267,19 +344,21 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                   <header>
                     <div class="category-badges">
                       <span class="category" [attr.data-domain]="row.activity.category">
-                        {{ row.activity.category }}
+                        {{ getCategoryLabel(row.activity.category) }}
                       </span>
                       @if (isRecommendedActivity(row.activity)) {
-                        <span class="priority-badge">Screening Priority</span>
+                        <span class="priority-badge">{{
+                          currentLang() === 'km' ? 'អាទិភាពវាយតម្លៃ' : 'Screening Priority'
+                        }}</span>
                       }
                       <span
                         class="difficulty-badge"
                         [attr.data-level]="getDifficulty(row.activity)"
                       >
                         <span class="difficulty-dot"></span>
-                        {{ getDifficulty(row.activity) }}
+                        {{ getDifficultyLabel(row.activity) }}
                       </span>
-                      <span class="duration-badge">⏱ {{ getDuration(row.activity) }}</span>
+                      <span class="duration-badge">⏱ {{ getDurationLabel(row.activity) }}</span>
                     </div>
                     <span class="ages">
                       {{ monthsToLabel(row.activity.minAgeMonths) }} –
@@ -288,18 +367,24 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                   </header>
 
                   <h2 (click)="openActivityDrawer(row)" class="activity-title-link">
-                    {{ row.activity.title }}
+                    {{ getActivityTitle(row.activity) }}
                   </h2>
-                  <p class="summary">{{ row.activity.summary }}</p>
+                  <p class="summary">{{ getActivitySummary(row.activity) }}</p>
 
                   <div class="card-footer-actions">
                     <button
                       type="button"
                       class="guide-btn"
                       (click)="openActivityDrawer(row)"
-                      aria-label="Open step-by-step activity guide"
+                      [attr.aria-label]="
+                        currentLang() === 'km'
+                          ? 'បើកការណែនាំសកម្មភាពជាជំហានៗ'
+                          : 'Open step-by-step activity guide'
+                      "
                     >
-                      <span>Activity Guide &amp; Steps ↗</span>
+                      <span>{{
+                        currentLang() === 'km' ? 'ការណែនាំ និងជំហាន ↗' : 'Activity Guide & Steps ↗'
+                      }}</span>
                     </button>
 
                     @if (row.progress === null) {
@@ -309,31 +394,45 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                         [disabled]="busyActivityId() === row.activity.id"
                         (click)="start(row.activity)"
                       >
-                        {{ busyActivityId() === row.activity.id ? 'Starting…' : 'Start activity' }}
+                        @if (busyActivityId() === row.activity.id) {
+                          {{ currentLang() === 'km' ? 'កំពុងចាប់ផ្តើម…' : 'Starting…' }}
+                        } @else {
+                          {{ currentLang() === 'km' ? 'ចាប់ផ្តើមសកម្មភាព' : 'Start activity' }}
+                        }
                       </button>
                     } @else {
                       <div class="progress-row">
                         @if (row.progress.completedAt) {
-                          <span class="status done">✓ Completed</span>
+                          <span class="status done">{{
+                            currentLang() === 'km' ? '✓ បានបញ្ចប់' : '✓ Completed'
+                          }}</span>
                           <button
                             type="button"
                             class="plain"
                             [disabled]="busyProgressId() === row.progress.id"
                             (click)="setCompleted(row.progress, false)"
                           >
-                            Mark as not done
+                            {{
+                              currentLang() === 'km' ? 'សម្គាល់ថាមិនទាន់រួច' : 'Mark as not done'
+                            }}
                           </button>
                         } @else {
-                          <span class="status going">In progress</span>
+                          <span class="status going">{{
+                            currentLang() === 'km' ? 'កំពុងអនុវត្ត' : 'In progress'
+                          }}</span>
                           <button
                             type="button"
                             class="primary"
                             [disabled]="busyProgressId() === row.progress.id"
                             (click)="setCompleted(row.progress, true)"
                           >
-                            {{
-                              busyProgressId() === row.progress.id ? 'Saving…' : 'Mark as completed'
-                            }}
+                            @if (busyProgressId() === row.progress.id) {
+                              {{ currentLang() === 'km' ? 'កំពុងរក្សាទុក…' : 'Saving…' }}
+                            } @else {
+                              {{
+                                currentLang() === 'km' ? 'សម្គាល់ថាបានបញ្ចប់' : 'Mark as completed'
+                              }}
+                            }
                           </button>
                         }
                       </div>
@@ -343,14 +442,29 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                   <!-- Quick reflection note preview (collapsible) -->
                   @if (row.progress) {
                     <label class="note">
-                      <span>Parent reflection note <em>(only visible to you)</em></span>
+                      <span>
+                        {{
+                          currentLang() === 'km'
+                            ? 'កំណត់ត្រាសង្កេតរបស់មាតាបិតា'
+                            : 'Parent reflection note'
+                        }}
+                        <em>{{
+                          currentLang() === 'km'
+                            ? '(អាចមើលឃើញតែអ្នកប៉ុណ្ណោះ)'
+                            : '(only visible to you)'
+                        }}</em>
+                      </span>
                       <textarea
                         rows="2"
                         [ngModel]="noteDraft(row.progress)"
                         (ngModelChange)="setNoteDraft(row.progress.id, $event)"
                         [name]="'note-' + row.progress.id"
                         maxlength="2000"
-                        placeholder="កត់ត្រាការសង្កេត៖ ការឆ្លើយតបរបស់កុមារ ការសម្លឹងភ្នែក កាយវិការ ឬចំណុចដែលកុមារចូលចិត្ត… (Log observations: eye contact, gestures, favourite moments…)"
+                        [placeholder]="
+                          currentLang() === 'km'
+                            ? 'កត់ត្រាការសង្កេត៖ ការឆ្លើយតបរបស់កុមារ ការសម្លឹងភ្នែក កាយវិការ ឬចំណុចដែលកុមារចូលចិត្ត…'
+                            : 'Log observations: eye contact, gestures, favourite moments…'
+                        "
                       ></textarea>
                       <button
                         type="button"
@@ -360,7 +474,7 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                         "
                         (click)="saveNote(row.progress)"
                       >
-                        Save note
+                        {{ currentLang() === 'km' ? 'រក្សាទុកកំណត់ចំណាំ' : 'Save note' }}
                       </button>
                     </label>
                   }
@@ -374,8 +488,12 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
       <!-- Interactive Activity Guide Modal / Drawer -->
       @if (selectedActivityRow(); as selected) {
         <ac-ui-dialog
-          [heading]="selected.activity.title"
-          description="Developmental Home Guide &amp; Checklist (ការណែនាំ និងបញ្ជីអនុវត្តនៅផ្ទះ)"
+          [heading]="getActivityTitle(selected.activity)"
+          [description]="
+            currentLang() === 'km'
+              ? 'ការណែនាំ និងបញ្ជីអនុវត្តនៅផ្ទះ'
+              : 'Developmental Home Guide & Checklist'
+          "
           size="lg"
           (close)="closeActivityDrawer()"
         >
@@ -383,18 +501,25 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
             <!-- Modal Meta Tags -->
             <div class="modal-meta-strip">
               <span class="category" [attr.data-domain]="selected.activity.category">
-                {{ selected.activity.category }}
+                {{ getCategoryLabel(selected.activity.category) }}
               </span>
               @if (isRecommendedActivity(selected.activity)) {
-                <span class="priority-badge">Screening Priority</span>
+                <span class="priority-badge">{{
+                  currentLang() === 'km' ? 'អាទិភាពវាយតម្លៃ' : 'Screening Priority'
+                }}</span>
               }
               <span class="difficulty-badge" [attr.data-level]="getDifficulty(selected.activity)">
                 <span class="difficulty-dot"></span>
-                {{ getDifficulty(selected.activity) }} Difficulty
+                {{
+                  currentLang() === 'km'
+                    ? getDifficultyLabel(selected.activity)
+                    : getDifficultyLabel(selected.activity) + ' Difficulty'
+                }}
               </span>
-              <span class="duration-badge">⏱ {{ getDuration(selected.activity) }}</span>
+              <span class="duration-badge">⏱ {{ getDurationLabel(selected.activity) }}</span>
               <span class="ages">
-                Ages: {{ monthsToLabel(selected.activity.minAgeMonths) }} –
+                {{ currentLang() === 'km' ? 'អាយុ:' : 'Ages:' }}
+                {{ monthsToLabel(selected.activity.minAgeMonths) }} –
                 {{ monthsToLabel(selected.activity.maxAgeMonths) }}
               </span>
             </div>
@@ -403,33 +528,44 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
               <div class="recommended-banner">
                 <span class="banner-star" aria-hidden="true">★</span>
                 <div>
-                  <strong
-                    >Recommended for
-                    {{ selectedChild()?.firstName }} (ណែនាំពិសេសសម្រាប់កុមារ)</strong
-                  >
+                  <strong>
+                    @if (currentLang() === 'km') {
+                      ណែនាំពិសេសសម្រាប់ {{ selectedChild()?.firstName || 'កុមារ' }}
+                    } @else {
+                      Recommended for {{ selectedChild()?.firstName || 'Child' }}
+                    }
+                  </strong>
                   <p>
-                    ត្រូវគ្នានឹងដែនអភិវឌ្ឍន៍ដែលការវាយតម្លៃបានបង្ហាញថាត្រូវការការគាំទ្របន្ថែម។
-                    (Corresponds to developmental domains where elevated screening risk was
-                    observed.)
+                    @if (currentLang() === 'km') {
+                      ត្រូវគ្នានឹងដែនអភិវឌ្ឍន៍ដែលការវាយតម្លៃបានបង្ហាញថាត្រូវការការគាំទ្របន្ថែម។
+                    } @else {
+                      Corresponds to developmental domains where elevated screening risk was
+                      observed.
+                    }
                   </p>
                 </div>
               </div>
             }
 
             <div class="modal-section">
-              <h3 class="section-title">Overview &amp; Purpose (ទិដ្ឋភាពទូទៅ និងគោលបំណង)</h3>
-              <p class="section-summary">{{ selected.activity.summary }}</p>
+              <h3 class="section-title">
+                {{ currentLang() === 'km' ? 'ទិដ្ឋភាពទូទៅ និងគោលបំណង' : 'Overview & Purpose' }}
+              </h3>
+              <p class="section-summary">{{ getActivitySummary(selected.activity) }}</p>
             </div>
 
             <!-- Materials Checklist -->
             <div class="modal-section materials-section">
               <h3 class="section-title">
                 <span aria-hidden="true">📦</span>
-                Materials Checklist (បញ្ជីសម្ភារចាំបាច់)
+                {{ currentLang() === 'km' ? 'បញ្ជីសម្ភារចាំបាច់' : 'Materials Checklist' }}
               </h3>
               <p class="section-hint">
-                Gather these simple home items before beginning
-                (រៀបចំសម្ភារសាមញ្ញៗទាំងនេះមុនពេលចាប់ផ្តើម)៖
+                {{
+                  currentLang() === 'km'
+                    ? 'រៀបចំសម្ភារសាមញ្ញៗទាំងនេះមុនពេលចាប់ផ្តើម៖'
+                    : 'Gather these simple home items before beginning:'
+                }}
               </p>
               <div class="materials-list">
                 @for (item of getMaterialsList(selected.activity); track item) {
@@ -452,7 +588,7 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
             <div class="modal-section steps-section">
               <h3 class="section-title">
                 <span aria-hidden="true">👣</span>
-                Step-by-Step Instructions (ការណែនាំជាជំហានៗ)
+                {{ currentLang() === 'km' ? 'ការណែនាំជាជំហានៗ' : 'Step-by-Step Instructions' }}
               </h3>
               <div class="steps-list">
                 @for (step of getStepsList(selected.activity); track step.title; let idx = $index) {
@@ -465,7 +601,11 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                       class="step-checkbox"
                       [checked]="isStepChecked(selected.activity.id, idx)"
                       (change)="toggleStep(selected.activity.id, idx)"
-                      [attr.aria-label]="'Mark ' + step.title + ' as complete'"
+                      [attr.aria-label]="
+                        currentLang() === 'km'
+                          ? 'សម្គាល់ថា ' + step.title + ' បានបញ្ចប់'
+                          : 'Mark ' + step.title + ' as complete'
+                      "
                     />
                     <div class="step-card-content">
                       <h4 class="step-card-title">{{ step.title }}</h4>
@@ -478,12 +618,16 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
               <div class="neuro-tip-box">
                 <span class="tip-icon" aria-hidden="true">💡</span>
                 <p>
-                  <strong>Sensory Tip:</strong> គោរពកម្រិតទទួលអារម្មណ៍របស់កុមារ។
-                  ប្រសិនបើកុមារបង្ហាញការស្ទាក់ស្ទើរ ឬអស់កម្លាំងពីការភ្ញោច សូមផ្អាកមួយរយៈ
-                  ហើយចាប់ផ្តើមឡើងវិញនៅពេលក្រោយ។ ការលេងគួរតែមានភាពសប្បាយរីករាយ ស្ងប់ស្ងាត់
-                  និងគ្មានការបង្ខិតបង្ខំ។ (Honor your child's sensory threshold. If they show
-                  hesitation or sensory fatigue, pause and resume at another time. Play should
-                  always feel fun, calming, and pressure-free.)
+                  @if (currentLang() === 'km') {
+                    <strong>គន្លឹះញាណដឹង៖</strong> គោរពកម្រិតទទួលអារម្មណ៍របស់កុមារ។
+                    ប្រសិនបើកុមារបង្ហាញការស្ទាក់ស្ទើរ ឬអស់កម្លាំងពីការភ្ញោច សូមផ្អាកមួយរយៈ
+                    ហើយចាប់ផ្តើមឡើងវិញនៅពេលក្រោយ។ ការលេងគួរតែមានភាពសប្បាយរីករាយ ស្ងប់ស្ងាត់
+                    និងគ្មានការបង្ខិតបង្ខំ។
+                  } @else {
+                    <strong>Sensory Tip:</strong> Honor your child's sensory threshold. If they show
+                    hesitation or sensory fatigue, pause and resume at another time. Play should
+                    always feel fun, calming, and pressure-free.
+                  }
                 </p>
               </div>
             </div>
@@ -491,12 +635,20 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
             <!-- Completion & Progress Action -->
             <div class="modal-section completion-section">
               <h3 class="section-title">
-                Progress &amp; Verification (វឌ្ឍនភាព និងការផ្ទៀងផ្ទាត់)
+                {{
+                  currentLang() === 'km' ? 'វឌ្ឍនភាព និងការផ្ទៀងផ្ទាត់' : 'Progress & Verification'
+                }}
               </h3>
               <div class="completion-action-box">
                 @if (selected.progress === null) {
                   <p class="progress-status-text">
-                    Not yet started for {{ selectedChild()?.firstName }} (មិនទាន់បានចាប់ផ្តើមនៅឡើយ)។
+                    {{
+                      currentLang() === 'km'
+                        ? 'មិនទាន់បានចាប់ផ្តើមសម្រាប់ ' +
+                          (selectedChild()?.firstName || 'កុមារ') +
+                          ' នៅឡើយទេ។'
+                        : 'Not yet started for ' + (selectedChild()?.firstName || 'Child') + '.'
+                    }}
                   </p>
                   <button
                     type="button"
@@ -506,22 +658,32 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                   >
                     {{
                       busyActivityId() === selected.activity.id
-                        ? 'Starting…'
-                        : 'Start This Activity (ចាប់ផ្តើមសកម្មភាពនេះ)'
+                        ? currentLang() === 'km'
+                          ? 'កំពុងចាប់ផ្តើម…'
+                          : 'Starting…'
+                        : currentLang() === 'km'
+                          ? 'ចាប់ផ្តើមសកម្មភាពនេះ'
+                          : 'Start This Activity'
                     }}
                   </button>
                 } @else if (selected.progress.completedAt) {
                   <div class="celebration-banner">
                     <span class="celebration-icon" aria-hidden="true">🎉</span>
                     <div>
-                      <strong
-                        >Well Done! Completed on
-                        {{ formatDate(selected.progress.completedAt) }} (អបអរសាទរ!
-                        បានបញ្ចប់)</strong
-                      >
+                      <strong>
+                        {{
+                          currentLang() === 'km'
+                            ? 'អបអរសាទរ! បានបញ្ចប់នៅថ្ងៃ ' +
+                              formatDate(selected.progress.completedAt)
+                            : 'Well Done! Completed on ' + formatDate(selected.progress.completedAt)
+                        }}
+                      </strong>
                       <p>
-                        Great job practicing this developmental routine at home! (ពូកែណាស់!
-                        បានអនុវត្តទម្លាប់លេងអភិវឌ្ឍន៍នេះនៅផ្ទះដោយជោគជ័យ។)
+                        {{
+                          currentLang() === 'km'
+                            ? 'ពូកែណាស់! បានអនុវត្តទម្លាប់លេងអភិវឌ្ឍន៍នេះនៅផ្ទះដោយជោគជ័យ។'
+                            : 'Great job practicing this developmental routine at home!'
+                        }}
                       </p>
                     </div>
                   </div>
@@ -531,15 +693,23 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                     [disabled]="busyProgressId() === selected.progress.id"
                     (click)="setCompleted(selected.progress, false)"
                   >
-                    Mark as Not Done (សម្គាល់ថាមិនទាន់រួច)
+                    {{ currentLang() === 'km' ? 'សម្គាល់ថាមិនទាន់រួច' : 'Mark as Not Done' }}
                   </button>
                 } @else {
                   <div class="in-progress-banner">
                     <span class="going-dot" aria-hidden="true"></span>
                     <div>
-                      <strong>In Progress (កំពុងអនុវត្ត)</strong>
+                      <strong>{{ currentLang() === 'km' ? 'កំពុងអនុវត្ត' : 'In Progress' }}</strong>
                       <p>
-                        Started on {{ formatDate(selected.progress.startedAt) }}. Ready to finish?
+                        {{
+                          currentLang() === 'km'
+                            ? 'បានចាប់ផ្តើមនៅថ្ងៃ ' +
+                              formatDate(selected.progress.startedAt) +
+                              '។ តើអ្នករួចរាល់ដើម្បីបញ្ចប់ហើយឬនៅ?'
+                            : 'Started on ' +
+                              formatDate(selected.progress.startedAt) +
+                              '. Ready to finish?'
+                        }}
                       </p>
                     </div>
                   </div>
@@ -550,7 +720,13 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                     (click)="setCompleted(selected.progress, true)"
                   >
                     {{
-                      busyProgressId() === selected.progress.id ? 'Saving…' : '✓ Mark as Completed'
+                      busyProgressId() === selected.progress.id
+                        ? currentLang() === 'km'
+                          ? 'កំពុងរក្សាទុក…'
+                          : 'Saving…'
+                        : currentLang() === 'km'
+                          ? '✓ សម្គាល់ថាបានបញ្ចប់'
+                          : '✓ Mark as Completed'
                     }}
                   </button>
                 }
@@ -561,18 +737,29 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
             @if (selected.progress) {
               <div class="modal-section note-section">
                 <h3 class="section-title">
-                  Parent Reflection &amp; Observations (កំណត់ត្រាសង្កេតរបស់មាតាបិតា)
+                  {{
+                    currentLang() === 'km'
+                      ? 'កំណត់ត្រាសង្កេតរបស់មាតាបិតា'
+                      : 'Parent Reflection & Observations'
+                  }}
                 </h3>
                 <p class="section-hint">
-                  កត់ត្រាការឆ្លើយតបរបស់កុមារ ការសម្លឹងភ្នែក កាយវិការ ឬចំណុចដែលកុមារចូលចិត្ត (Log
-                  your child's reaction, eye contact, gestures, or favorite moments)៖
+                  @if (currentLang() === 'km') {
+                    កត់ត្រាការឆ្លើយតបរបស់កុមារ ការសម្លឹងភ្នែក កាយវិការ ឬចំណុចដែលកុមារចូលចិត្ត៖
+                  } @else {
+                    Log your child’s reaction, eye contact, gestures, or favorite moments:
+                  }
                 </p>
                 <textarea
                   rows="3"
                   class="modal-textarea"
                   [ngModel]="noteDraft(selected.progress)"
                   (ngModelChange)="setNoteDraft(selected.progress.id, $event)"
-                  placeholder="កត់ត្រាការសង្កេត៖ ឧ. ចូលចិត្តលេងអង្ករខ្លាំង មានការសម្លឹងភ្នែក និងញញឹមពេលធ្វើកាយវិការតាម… (e.g. Loved feeling the foam, made eye contact and smiled during repetition…)"
+                  [placeholder]="
+                    currentLang() === 'km'
+                      ? 'កត់ត្រាការសង្កេត៖ ឧ. ចូលចិត្តលេងអង្ករខ្លាំង មានការសម្លឹងភ្នែក និងញញឹមពេលធ្វើកាយវិការតាម…'
+                      : 'Log observations: e.g. Loved feeling the foam, made eye contact and smiled during repetition…'
+                  "
                   maxlength="2000"
                 ></textarea>
                 <div class="note-submit-row">
@@ -584,12 +771,16 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                     "
                     (click)="saveNote(selected.progress)"
                   >
-                    Save Reflection Note (រក្សាទុកកំណត់ចំណាំ)
+                    {{ currentLang() === 'km' ? 'រក្សាទុកកំណត់ចំណាំ' : 'Save Reflection Note' }}
                   </button>
                   @if (!noteChanged(selected.progress) && selected.progress.parentObservation) {
-                    <span class="note-saved-pill"
-                      >✓ បានរក្សាទុកក្នុងទម្រង់កុមារ (Saved to child portfolio)</span
-                    >
+                    <span class="note-saved-pill">
+                      {{
+                        currentLang() === 'km'
+                          ? '✓ បានរក្សាទុកក្នុងទម្រង់កុមារ'
+                          : '✓ Saved to child portfolio'
+                      }}
+                    </span>
                   }
                 </div>
               </div>
@@ -1436,10 +1627,13 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActivitiesPage implements OnInit {
+  private readonly i18n = inject(I18nService);
   private readonly api = inject(ActivitiesApi);
   private readonly childrenApi = inject(ChildrenApi);
   private readonly screeningApi = inject(ScreeningApi);
   private readonly route = inject(ActivatedRoute);
+
+  protected readonly currentLang = this.i18n.currentLang;
 
   protected readonly children = signal<readonly ChildOption[]>([]);
   protected readonly loadingChildren = signal(true);
@@ -1449,7 +1643,16 @@ export class ActivitiesPage implements OnInit {
   protected readonly category = signal('');
   protected readonly searchQuery = signal('');
   protected readonly statusFilter = signal<ActivityStatusFilter>('ALL');
-  protected readonly statusOptions = statusOptions;
+
+  protected readonly statusOptions = computed<readonly StatusOption[]>(() => {
+    const isKm = this.currentLang() === 'km';
+    return [
+      { value: 'ALL', label: isKm ? 'ទាំងអស់' : 'All' },
+      { value: 'IN_PROGRESS', label: isKm ? 'កំពុងអនុវត្ត' : 'In Progress' },
+      { value: 'COMPLETED', label: isKm ? 'បានបញ្ចប់' : 'Completed' },
+      { value: 'NOT_STARTED', label: isKm ? 'មិនទាន់ចាប់ផ្តើម' : 'Not Started' },
+    ];
+  });
 
   protected readonly latestScreeningSession = signal<ScreeningSessionDetailResponse | null>(null);
   protected readonly onlyRecommended = signal(false);
@@ -1475,7 +1678,18 @@ export class ActivitiesPage implements OnInit {
   /** Note text being edited, keyed by progress id, so drafts survive a re-render. */
   private readonly noteDrafts = signal<Readonly<Record<string, string>>>({});
 
-  protected readonly monthsToLabel = monthsToLabel;
+  protected monthsToLabel(months: number, lang = this.currentLang()): string {
+    if (lang === 'km') {
+      if (months < 24) return `${months} ខែ`;
+      const years = Math.floor(months / 12);
+      const rest = months % 12;
+      return rest === 0 ? `${years} ឆ្នាំ` : `${years} ឆ្នាំ ${rest} ខែ`;
+    }
+    if (months < 24) return `${months} months`;
+    const years = Math.floor(months / 12);
+    const rest = months % 12;
+    return rest === 0 ? `${years} years` : `${years}y ${rest}m`;
+  }
 
   protected readonly selectedChild = computed(() => {
     const id = this.selectedChildId();
@@ -1517,12 +1731,17 @@ export class ActivitiesPage implements OnInit {
   });
 
   protected readonly categoryOptions = computed<CategoryOption[]>(() => {
-    const known = DEFAULT_CATEGORIES;
+    const isKm = this.currentLang() === 'km';
+    const known = DEFAULT_CATEGORIES.map((cat) => ({
+      value: cat.value,
+      label: isKm ? cat.labelKm : cat.labelEn,
+      icon: cat.icon,
+    }));
     const dynamic = this.categories();
     const result: CategoryOption[] = [...known];
     for (const name of dynamic) {
       if (!result.some((c) => c.value.toLowerCase() === name.toLowerCase())) {
-        result.push({ value: name, label: name, icon: '🎯' });
+        result.push({ value: name, label: this.getCategoryLabel(name), icon: '🎯' });
       }
     }
     return result;
@@ -1589,6 +1808,18 @@ export class ActivitiesPage implements OnInit {
       });
   });
 
+  getCategoryLabel(category: string): string {
+    const isKm = this.currentLang() === 'km';
+    const c = (category || '').toLowerCase();
+    if (c.includes('sensor')) return isKm ? 'ញាណដឹង' : 'Sensory';
+    if (c.includes('fine motor')) return isKm ? 'ចលករតូច' : 'Fine Motor';
+    if (c.includes('gross motor') || c === 'motor') return isKm ? 'ចលករធំ' : 'Gross Motor';
+    if (c.includes('communicat')) return isKm ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication';
+    if (c.includes('social')) return isKm ? 'ទំនាក់ទំនងសង្គម' : 'Social Skills';
+    if (c.includes('daily')) return isKm ? 'ទម្លាប់ប្រចាំថ្ងៃ' : 'Daily Living';
+    return category;
+  }
+
   getDifficulty(activity: ActivityResponse): 'Gentle' | 'Moderate' | 'Active' {
     const title = activity.title.toLowerCase();
     const cat = activity.category.toLowerCase();
@@ -1612,6 +1843,14 @@ export class ActivitiesPage implements OnInit {
     return 'Gentle';
   }
 
+  getDifficultyLabel(activity: ActivityResponse): string {
+    const diff = this.getDifficulty(activity);
+    const isKm = this.currentLang() === 'km';
+    if (diff === 'Active') return isKm ? 'កម្រិតសកម្ម' : 'Active';
+    if (diff === 'Moderate') return isKm ? 'កម្រិតមធ្យម' : 'Moderate';
+    return isKm ? 'កម្រិតស្រាល' : 'Gentle';
+  }
+
   getDuration(activity: ActivityResponse): string {
     const title = activity.title.toLowerCase();
     if (title.includes('quick') || title.includes('card') || title.includes('mirror')) {
@@ -1626,10 +1865,93 @@ export class ActivitiesPage implements OnInit {
     return '25m';
   }
 
-  getMaterialsList(activity: ActivityResponse): string[] {
+  getDurationLabel(activity: ActivityResponse): string {
+    const d = this.getDuration(activity);
+    if (this.currentLang() === 'km') {
+      const minutes = d.replace(/[^0-9]/g, '');
+      return `${minutes} នាទី`;
+    }
+    return d;
+  }
+
+  getActivityTitle(activity: ActivityResponse): string {
+    const isKm = this.currentLang() === 'km';
     const cambodian = findCambodianActivity(activity);
     if (cambodian) {
-      return [...cambodian.materialsBilingual];
+      return isKm ? cambodian.titleKm : cambodian.titleEn;
+    }
+    const match = activity.title.match(/^(.*?)\s*\((.*?)\)$/);
+    if (match) {
+      return isKm ? match[2].trim() : match[1].trim();
+    }
+    return activity.title;
+  }
+
+  getActivitySummary(activity: ActivityResponse): string {
+    const isKm = this.currentLang() === 'km';
+    const cambodian = findCambodianActivity(activity);
+    if (cambodian) {
+      return isKm ? cambodian.summaryKm : cambodian.summaryEn;
+    }
+    const match = activity.summary.match(/^(.*?)\s*\((.*?)\)$/);
+    if (match) {
+      return isKm ? match[1].trim() : match[2].trim();
+    }
+    return activity.summary;
+  }
+
+  getMaterialsList(activity: ActivityResponse, lang = this.currentLang()): string[] {
+    const cambodian = findCambodianActivity(activity);
+    if (cambodian) {
+      return cambodian.materialsBilingual.map((mat) => {
+        const match = mat.match(/^(.*?)\s*\((.*?)\)$/);
+        if (match) {
+          return lang === 'km' ? match[1].trim() : match[2].trim();
+        }
+        return mat;
+      });
+    }
+    if (lang === 'km') {
+      const title = activity.title.toLowerCase();
+      const cat = activity.category.toLowerCase();
+      if (title.includes('bubble') || cat.includes('sensory')) {
+        return [
+          'ពពុះសាប៊ូសុវត្ថិភាព ឬពពុះទន់ៗ',
+          'ចានជ័ររាក់ ឬធុងទឹកតូច',
+          'កន្សែងទន់សម្រាប់ជូតដៃ',
+          'កម្រាលអង្គុយលេងប្រកបដោយផាសុកភាព',
+        ];
+      }
+      if (title.includes('picture') || title.includes('card') || cat.includes('communication')) {
+        return [
+          'ប័ណ្ណរូបភាពជ្រើសរើស ឬប័ណ្ណប្តូររូបភាព',
+          'តុរាបស្មើកម្ពស់ភ្នែកកុមារ',
+          'របស់លេងដែលកុមារចូលចិត្តជាការលើកទឹកចិត្ត',
+          'ប័ណ្ណបង្ហាញវេនលេង',
+        ];
+      }
+      if (title.includes('rhythm') || title.includes('clapping') || cat.includes('social')) {
+        return [
+          'ប្រដាប់អង្រួនសំឡេង ឬទះដៃផ្ទាល់',
+          'ពូកអង្គុយសម្រាប់ប្តូរវេនគ្នា',
+          'បទភ្លេងស្រាលៗ ឬចង្វាក់ស្មើ',
+          'និមិត្តសញ្ញា "វេនខ្ញុំ / វេនអ្នក"',
+        ];
+      }
+      if (cat.includes('motor')) {
+        return [
+          'ពូកទន់ ឬដុំទ្រនាប់ជំហាន',
+          'បាល់ស្រាល ឬថង់សណ្តែកបោះលេង',
+          'កន្លែងទូលាយគ្មានឧបសគ្គរារាំង',
+          'ស្ទីគ័រលើកទឹកចិត្ត',
+        ];
+      }
+      return [
+        'សម្ភារប្រើប្រាស់ប្រចាំថ្ងៃក្នុងផ្ទះ (កែវ ស្លាបព្រា ឬដុំឈើ)',
+        'កន្លែងលេងមានផាសុកភាព និងគ្មានសំឡេងរំខាន',
+        'ពាក្យសរសើរ និងការលើកទឹកចិត្ត',
+        'របស់លេងបន្ធូរអារម្មណ៍សម្រាប់ពេលសម្រាក',
+      ];
     }
     const title = activity.title.toLowerCase();
     const cat = activity.category.toLowerCase();
@@ -1673,13 +1995,36 @@ export class ActivitiesPage implements OnInit {
     ];
   }
 
-  getStepsList(activity: ActivityResponse): Array<{ title: string; desc: string }> {
+  getStepsList(
+    activity: ActivityResponse,
+    lang = this.currentLang(),
+  ): Array<{ title: string; desc: string }> {
     const cambodian = findCambodianActivity(activity);
     if (cambodian) {
       return cambodian.steps.map((s) => ({
-        title: s.bilingualTitle,
-        desc: s.bilingualDesc,
+        title: lang === 'km' ? s.titleKm : s.titleEn,
+        desc: lang === 'km' ? s.descKm : s.descEn,
       }));
+    }
+    if (lang === 'km') {
+      return [
+        {
+          title: '១. រៀបចំបរិយាកាសស្ងប់ស្ងាត់',
+          desc: 'រៀបចំកន្លែងដែលមានពន្លឺគ្រប់គ្រាន់ និងគ្មានសំឡេងរំខាន ដើម្បីឱ្យកុមារមានអារម្មណ៍សុវត្ថិភាព។',
+        },
+        {
+          title: '២. បង្ហាញគំរូ និងការអញ្ជើញថ្នមៗ',
+          desc: 'បង្ហាញចលនាលេងដោយផ្ទាល់ជាមួយស្នាមញញឹមរាក់ទាក់ អមដោយពាក្យសាមញ្ញៗច្បាស់ៗ។',
+        },
+        {
+          title: '៣. ឱ្យកុមាររុករកដោយខ្លួនឯង',
+          desc: 'អនុញ្ញាតឱ្យកុមារប៉ះ និងចូលរួមតាមល្បឿនធម្មជាតិរបស់ពួកគេ ដោយមិនមានការបង្ខិតបង្ខំ។',
+        },
+        {
+          title: '៤. អបអរសាទរជោគជ័យតូចៗ',
+          desc: 'លើកទឹកចិត្តរាល់ការប៉ុនប៉ងរបស់កុមារដោយការទះដៃ ការសរសើរ ឬការផ្តល់ក្តីស្រឡាញ់។',
+        },
+      ];
     }
     return [
       {

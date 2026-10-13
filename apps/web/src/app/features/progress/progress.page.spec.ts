@@ -10,6 +10,7 @@ import { ChildrenApi } from '../children/data-access/children.api';
 import { ParentActivityApi } from './data-access/parent-activity.api';
 import { ScreeningApi } from '../screening/data-access/screening.api';
 import { ActivitiesApi } from '../activities/data-access/activities.api';
+import { I18nService, LANG_STORAGE_KEY } from '../../core/i18n/i18n.service';
 import { ProgressPage } from './progress.page';
 
 describe('ProgressPage', () => {
@@ -119,6 +120,8 @@ describe('ProgressPage', () => {
   };
 
   beforeEach(() => {
+    localStorage.setItem(LANG_STORAGE_KEY, 'en');
+
     mockChildrenApi = {
       listChildren: vi.fn().mockReturnValue(
         of([
@@ -739,5 +742,142 @@ describe('ProgressPage', () => {
     fixture.detectChanges();
 
     expect(component.activeTab()).toBe('reports');
+  });
+
+  it('renders clean decoupled bilingual copy across all tabs without mixed parentheticals', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ProgressPage],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '/api/v1' },
+        provideRouter([]),
+        { provide: ChildrenApi, useValue: mockChildrenApi },
+        { provide: ParentActivityApi, useValue: mockActivityApi },
+        { provide: ScreeningApi, useValue: mockScreeningApi },
+        { provide: ActivitiesApi, useValue: mockActivitiesApi },
+        { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProgressPage);
+    const i18n = TestBed.inject(I18nService);
+    component = fixture.componentInstance;
+
+    // --- 1. TEST KHMER MODE ('km') ---
+    i18n.setLanguage('km');
+    fixture.detectChanges();
+
+    // Topbar
+    const topbar = fixture.nativeElement.querySelector('.topbar') as HTMLElement;
+    expect(topbar.textContent).toContain('កុមារ៖');
+    expect(topbar.textContent).toContain('← ត្រឡប់ទៅផ្ទាំងគ្រប់គ្រង');
+
+    // Navigation Tabs in Khmer
+    const tabTexts = Array.from(
+      fixture.nativeElement.querySelectorAll('.tab-btn') as NodeListOf<HTMLElement>,
+    ).map((b) => b.textContent?.trim());
+    expect(tabTexts.some((t) => t?.includes('គន្លងនៃការលូតលាស់'))).toBe(true);
+    expect(tabTexts.some((t) => t?.includes('របាយការណ៍សង្កេតពីសាលា'))).toBe(true);
+    expect(tabTexts.some((t) => t?.includes('សមិទ្ធផលនៅផ្ទះ'))).toBe(true);
+
+    // School Reports Tab in Khmer
+    expect(component.activeTab()).toBe('reports');
+    const reportHeader = fixture.nativeElement.querySelector('.report-header') as HTMLElement;
+    expect(reportHeader.textContent).toContain('របាយការណ៍សកម្មភាព៖');
+    expect(reportHeader.textContent).toContain('ទាញយកសេចក្តីសង្ខេបគ្លីនិក');
+    expect(reportHeader.textContent).toContain('បោះពុម្ពរបាយការណ៍');
+
+    const mainContent = fixture.nativeElement.querySelector('.main-content') as HTMLElement;
+    expect(mainContent.textContent).toContain('ការសង្កេតរបស់គ្រូ');
+    expect(mainContent.textContent).toContain('ការសម្រួល និងការសម្របសម្រួលក្នុងថ្នាក់រៀន');
+    expect(mainContent.textContent).toContain('រង្វាស់ការអនុវត្ត');
+    expect(mainContent.textContent).toContain('សេចក្តីសង្ខេបសកម្មភាព');
+    expect(mainContent.textContent).toContain('អនុសាសន៍សម្រាប់អនុវត្តនៅផ្ទះ');
+
+    // Khmer accommodation tag without English
+    const accTag = fixture.nativeElement.querySelector('.accommodation-tag') as HTMLElement;
+    expect(accTag.textContent).toContain('ផ្តល់ពេលសម្រាកសម្រួលវិញ្ញាណ');
+
+    // Performance metrics labels in pure Khmer
+    const metricLabels = component.engagementMetrics().map((m) => m.label);
+    expect(metricLabels).toEqual([
+      'ការចូលរួម',
+      'ការប្រាស្រ័យទាក់ទង',
+      'ទំនាក់ទំនងសង្គម',
+      'ការយកចិត្តទុកដាក់',
+      'ការគ្រប់គ្រងអារម្មណ៍',
+      'ការបំពេញកិច្ចការ',
+    ]);
+
+    // --- 2. TEST TRAJECTORY TAB IN KHMER ---
+    component.setTab('trajectory');
+    fixture.detectChanges();
+
+    const trajectoryContainer = fixture.nativeElement.querySelector(
+      '.trajectory-container',
+    ) as HTMLElement;
+    expect(trajectoryContainer.textContent).toContain('គន្លងនៃការលូតលាស់ និងប្រវត្តិគ្លីនិក');
+    expect(trajectoryContainer.textContent).toContain('+ ការវាយតម្លៃគ្លីនិកថ្មី');
+    expect(trajectoryContainer.textContent).toContain('ទាញយករបាយការណ៍គ្លីនិក');
+    expect(trajectoryContainer.textContent).toContain('បោះពុម្ពរបាយការណ៍គន្លងលូតលាស់');
+    expect(trajectoryContainer.textContent).toContain('កម្រិតហានិភ័យគ្លីនិក');
+    expect(trajectoryContainer.textContent).toContain('ប្រវត្តិនៃការវាយតម្លៃ');
+    expect(trajectoryContainer.textContent).toContain('និន្នាការគន្លងលូតលាស់');
+    expect(trajectoryContainer.textContent).toContain('សមិទ្ធផលសកម្មភាពនៅផ្ទះតាមដែន');
+    expect(trajectoryContainer.textContent).toContain('ញាណដឹង');
+    expect(trajectoryContainer.textContent).toContain('ចលករ');
+    expect(trajectoryContainer.textContent).toContain('ទំនាក់ទំនងសង្គម');
+    expect(trajectoryContainer.textContent).toContain('ការប្រាស្រ័យទាក់ទង');
+    expect(component.riskLabel('LOW')).toBe('ហានិភ័យទាប');
+    expect(component.overallTrajectoryTrend()).toBe('បានកំណត់កម្រិតគោលដំបូង');
+
+    // --- 3. TEST MILESTONES TAB IN KHMER ---
+    component.setTab('milestones');
+    fixture.detectChanges();
+
+    const milestonesContainer = fixture.nativeElement.querySelector(
+      '.milestones-container',
+    ) as HTMLElement;
+    expect(milestonesContainer.textContent).toContain('សមិទ្ធផលលូតលាស់ និងការអនុវត្តប្រចាំថ្ងៃ');
+    expect(milestonesContainer.textContent).toContain('ស្វែងរកកាតាឡុកសកម្មភាព →');
+    expect(milestonesContainer.textContent).toContain('បោះពុម្ពសេចក្តីសង្ខេប');
+    expect(milestonesContainer.textContent).toContain('សរុបបានបញ្ចប់');
+    expect(milestonesContainer.textContent).toContain('ដែនសកម្មភាពសកម្ម');
+    expect(milestonesContainer.textContent).toContain('សកម្មភាពចុងក្រោយ');
+    expect(milestonesContainer.textContent).toContain('អនុវត្តម្តងទៀត ↻');
+
+    // Khmer domain filter pills
+    const domainLabels = component.milestoneDomains().map((d) => d.label);
+    expect(domainLabels).toEqual([
+      'គ្រប់ដែនទាំងអស់',
+      'ញាណដឹង',
+      'ការប្រាស្រ័យទាក់ទង',
+      'ទំនាក់ទំនងសង្គម',
+      'ចលករ',
+      'ទម្លាប់ប្រចាំថ្ងៃ',
+    ]);
+
+    // --- 4. SWITCH BACK TO ENGLISH ('en') ---
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+
+    expect(topbar.textContent).toContain('Child:');
+    expect(topbar.textContent).toContain('← Back to Dashboard');
+    expect(milestonesContainer.textContent).toContain('Developmental Milestones & Daily Practice');
+    expect(milestonesContainer.textContent).toContain('Explore Activities Catalogue →');
+    expect(milestonesContainer.textContent).toContain('Practice Again ↻');
+    expect(component.riskLabel('LOW')).toBe('Low Risk');
+    expect(component.overallTrajectoryTrend()).toBe('Baseline Assessment Established');
+
+    const enDomainLabels = component.milestoneDomains().map((d) => d.label);
+    expect(enDomainLabels).toEqual([
+      'All Domains',
+      'Sensory',
+      'Communication',
+      'Social Skills',
+      'Motor Skills',
+      'Daily Living',
+    ]);
   });
 });

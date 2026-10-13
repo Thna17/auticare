@@ -14,6 +14,7 @@ import { ChildrenApi } from '../children/data-access/children.api';
 import { ParentActivityApi } from './data-access/parent-activity.api';
 import { ScreeningApi } from '../screening/data-access/screening.api';
 import { ActivitiesApi } from '../activities/data-access/activities.api';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { attachmentUrl } from '../../core/config/attachment-url';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
@@ -52,17 +53,50 @@ interface TrajectoryPoint {
   isImprovement?: boolean;
 }
 
-const METRIC_DEFS: { key: string; label: string; color: string }[] = [
-  { key: 'participation', label: 'Participation', color: 'var(--ac-color-green-500)' },
-  { key: 'communication', label: 'Communication', color: 'var(--ac-color-blue-500)' },
-  { key: 'socialInteraction', label: 'Social Skills', color: 'var(--ac-color-status-purple)' },
-  { key: 'attention', label: 'Attention', color: 'var(--ac-color-amber-500)' },
+interface MetricDef {
+  key: string;
+  labelEn: string;
+  labelKm: string;
+  color: string;
+}
+
+const METRIC_DEFS: MetricDef[] = [
+  {
+    key: 'participation',
+    labelEn: 'Participation',
+    labelKm: 'ការចូលរួម',
+    color: 'var(--ac-color-green-500)',
+  },
+  {
+    key: 'communication',
+    labelEn: 'Communication',
+    labelKm: 'ការប្រាស្រ័យទាក់ទង',
+    color: 'var(--ac-color-blue-500)',
+  },
+  {
+    key: 'socialInteraction',
+    labelEn: 'Social Skills',
+    labelKm: 'ទំនាក់ទំនងសង្គម',
+    color: 'var(--ac-color-status-purple)',
+  },
+  {
+    key: 'attention',
+    labelEn: 'Attention',
+    labelKm: 'ការយកចិត្តទុកដាក់',
+    color: 'var(--ac-color-amber-500)',
+  },
   {
     key: 'emotionalRegulation',
-    label: 'Emotional Regulation',
+    labelEn: 'Emotional Regulation',
+    labelKm: 'ការគ្រប់គ្រងអារម្មណ៍',
     color: 'var(--ac-color-status-pink)',
   },
-  { key: 'taskCompletion', label: 'Task Completion', color: 'var(--ac-color-status-cyan)' },
+  {
+    key: 'taskCompletion',
+    labelEn: 'Task Completion',
+    labelKm: 'ការបំពេញកិច្ចការ',
+    color: 'var(--ac-color-status-cyan)',
+  },
 ];
 
 @Component({
@@ -82,7 +116,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         <!-- Topbar Child Switcher & Page Header -->
         <header class="topbar">
           <div class="child-switcher">
-            <label class="child-switcher-label" for="child-select">Child:</label>
+            <label class="child-switcher-label" for="child-select">
+              @if (currentLang() === 'km') {
+                កុមារ៖
+              } @else {
+                Child:
+              }
+            </label>
             <select id="child-select" class="child-select" (change)="onChildChange($event)">
               @for (child of children(); track child.id) {
                 <option [value]="child.id" [selected]="child.id === selectedChildId()">
@@ -97,14 +137,20 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                 class="child-select report-select"
                 [value]="selectedReportId() ?? ''"
                 (change)="onReportChange($event)"
-                aria-label="Choose report"
+                [attr.aria-label]="currentLang() === 'km' ? 'ជ្រើសរើសរបាយការណ៍' : 'Choose report'"
               >
                 @for (item of reports(); track item.id) {
                   <option [value]="item.id">{{ item.activityDate }} — {{ item.title }}</option>
                 }
               </select>
             }
-            <a class="back-link" routerLink="/dashboard">← Back to Dashboard</a>
+            <a class="back-link" routerLink="/dashboard">
+              @if (currentLang() === 'km') {
+                ← ត្រឡប់ទៅផ្ទាំងគ្រប់គ្រង
+              } @else {
+                ← Back to Dashboard
+              }
+            </a>
           </div>
           @if (activeTab() === 'reports' && pagination(); as meta) {
             @if (meta.totalPages > 1) {
@@ -113,8 +159,8 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                 [totalPages]="meta.totalPages"
                 [total]="meta.total"
                 [perPage]="meta.limit"
-                itemNoun="reports"
-                label="Report pages"
+                [itemNoun]="currentLang() === 'km' ? 'របាយការណ៍' : 'reports'"
+                [label]="currentLang() === 'km' ? 'ទំព័ររបាយការណ៍' : 'Report pages'"
                 (pageChange)="goToReportPage($event)"
               />
             }
@@ -126,54 +172,111 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
           <div class="print-header-top">
             <div class="print-logo">
               <span class="print-brand">AutiCare</span>
-              <span class="print-tagline"
-                >Clinical Developmental Health &amp; Progress Summary</span
-              >
+              <span class="print-tagline">
+                @if (currentLang() === 'km') {
+                  សេចក្តីសង្ខេបសុខភាព និងការវិវត្តគ្លីនិករបស់កុមារ
+                } @else {
+                  Clinical Developmental Health &amp; Progress Summary
+                }
+              </span>
             </div>
             <div class="print-generated">
-              <span>Generated: </span>
+              <span>
+                @if (currentLang() === 'km') {
+                  កាលបរិច្ឆេទបង្កើត៖
+                } @else {
+                  Generated:
+                }
+              </span>
               <strong>{{ currentDateFormatted() }}</strong>
             </div>
           </div>
           <div class="print-patient-meta">
             <div class="meta-item">
-              <span class="meta-label">Child:</span>
+              <span class="meta-label">
+                @if (currentLang() === 'km') {
+                  កុមារ៖
+                } @else {
+                  Child:
+                }
+              </span>
               <span class="meta-value">{{ selectedChildName() }}</span>
             </div>
             @if (selectedChild()?.dateOfBirth) {
               <div class="meta-item">
-                <span class="meta-label">DOB:</span>
+                <span class="meta-label">
+                  @if (currentLang() === 'km') {
+                    ថ្ងៃខែឆ្នាំកំណើត៖
+                  } @else {
+                    DOB:
+                  }
+                </span>
                 <span class="meta-value">{{ formatDate(selectedChild()?.dateOfBirth) }}</span>
               </div>
             }
             <div class="meta-item">
-              <span class="meta-label">Clinical Risk Level:</span>
+              <span class="meta-label">
+                @if (currentLang() === 'km') {
+                  កម្រិតហានិភ័យគ្លីនិក៖
+                } @else {
+                  Clinical Risk Level:
+                }
+              </span>
               <span class="meta-value">{{
-                latestRiskLevel() ? riskLabel(latestRiskLevel()) : 'Not Screened'
+                latestRiskLevel()
+                  ? riskLabel(latestRiskLevel())
+                  : currentLang() === 'km'
+                    ? 'មិនទាន់វាយតម្លៃ'
+                    : 'Not Screened'
               }}</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">Completed Sessions:</span>
+              <span class="meta-label">
+                @if (currentLang() === 'km') {
+                  វគ្គវាយតម្លៃបានបញ្ចប់៖
+                } @else {
+                  Completed Sessions:
+                }
+              </span>
               <span class="meta-value">{{ completedScreenings().length }}</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">Home Milestones:</span>
+              <span class="meta-label">
+                @if (currentLang() === 'km') {
+                  សមិទ្ធផលនៅផ្ទះ៖
+                } @else {
+                  Home Milestones:
+                }
+              </span>
               <span class="meta-value">{{ completedActivities().length }}</span>
             </div>
           </div>
           <div class="print-disclaimer">
             <p>
-              <strong>Clinical Notice:</strong> This developmental trajectory and milestone summary
-              compiles screening results, clinical observations, and completed developmental
-              activities recorded in AutiCare. It is intended to support discussions with
-              pediatricians, therapists, and educators and does not replace formal medical
-              evaluation.
+              @if (currentLang() === 'km') {
+                <strong>សេចក្តីជូនដំណឹងគ្លីនិក៖</strong> សេចក្តីសង្ខេបគន្លងនៃការលូតលាស់
+                និងសមិទ្ធផលនេះ ចងក្រងលទ្ធផលវាយតម្លៃ ការសង្កេតគ្លីនិក
+                និងសកម្មភាពលូតលាស់ដែលបានបញ្ចប់ក្នុង AutiCare។
+                ឯកសារនេះមានគោលបំណងគាំទ្រការពិភាក្សាជាមួយគ្រូពេទ្យកុមារ អ្នកព្យាបាល និងអ្នកអប់រំ
+                ហើយមិនអាចជំនួសការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រផ្លូវការបានទេ។
+              } @else {
+                <strong>Clinical Notice:</strong> This developmental trajectory and milestone
+                summary compiles screening results, clinical observations, and completed
+                developmental activities recorded in AutiCare. It is intended to support discussions
+                with pediatricians, therapists, and educators and does not replace formal medical
+                evaluation.
+              }
             </p>
           </div>
         </header>
 
         <!-- View Navigation Tabs -->
-        <nav class="progress-tabs" aria-label="Progress navigation tabs">
+        <nav
+          class="progress-tabs"
+          [attr.aria-label]="
+            currentLang() === 'km' ? 'ផ្ទាំងរុករកការវិវត្ត' : 'Progress navigation tabs'
+          "
+        >
           <button
             type="button"
             class="tab-btn"
@@ -181,7 +284,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
             (click)="setTab('trajectory')"
           >
             <span class="tab-icon" aria-hidden="true">📈</span>
-            <span>Developmental Trajectory</span>
+            <span>
+              @if (currentLang() === 'km') {
+                គន្លងនៃការលូតលាស់
+              } @else {
+                Developmental Trajectory
+              }
+            </span>
             @if (completedScreenings().length > 0) {
               <span class="tab-count">{{ completedScreenings().length }}</span>
             }
@@ -193,7 +302,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
             (click)="setTab('reports')"
           >
             <span class="tab-icon" aria-hidden="true">📋</span>
-            <span>School Observation Reports</span>
+            <span>
+              @if (currentLang() === 'km') {
+                របាយការណ៍សង្កេតពីសាលា
+              } @else {
+                School Observation Reports
+              }
+            </span>
             @if (reports().length > 0) {
               <span class="tab-count">{{ reports().length }}</span>
             }
@@ -205,7 +320,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
             (click)="setTab('milestones')"
           >
             <span class="tab-icon" aria-hidden="true">⭐</span>
-            <span>Home Milestones</span>
+            <span>
+              @if (currentLang() === 'km') {
+                សមិទ្ធផលនៅផ្ទះ
+              } @else {
+                Home Milestones
+              }
+            </span>
             @if (completedActivities().length > 0) {
               <span class="tab-count">{{ completedActivities().length }}</span>
             }
@@ -217,10 +338,21 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
           <div class="milestones-container">
             <div class="tab-header-row">
               <div class="tab-title-group">
-                <h2>Developmental Milestones &amp; Daily Practice</h2>
+                <h2>
+                  @if (currentLang() === 'km') {
+                    សមិទ្ធផលលូតលាស់ និងការអនុវត្តប្រចាំថ្ងៃ
+                  } @else {
+                    Developmental Milestones &amp; Daily Practice
+                  }
+                </h2>
                 <p>
-                  Chronological record of skill practices, sensory exercises, and parent
-                  reflections.
+                  @if (currentLang() === 'km') {
+                    កំណត់ត្រាតាមលំដាប់ពេលវេលានៃការអនុវត្តជំនាញ លំហាត់វិញ្ញាណ
+                    និងចំណាប់អារម្មណ៍របស់មាតាបិតា។
+                  } @else {
+                    Chronological record of skill practices, sensory exercises, and parent
+                    reflections.
+                  }
                 </p>
               </div>
               <div class="tab-actions-group">
@@ -229,13 +361,23 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                   [routerLink]="['/activities']"
                   [queryParams]="{ childId: selectedChildId() }"
                 >
-                  <span>Explore Activities Catalogue →</span>
+                  <span>
+                    @if (currentLang() === 'km') {
+                      ស្វែងរកកាតាឡុកសកម្មភាព →
+                    } @else {
+                      Explore Activities Catalogue →
+                    }
+                  </span>
                 </a>
                 <button
                   type="button"
                   class="print-btn"
                   (click)="printReport()"
-                  aria-label="Print Milestones Summary"
+                  [attr.aria-label]="
+                    currentLang() === 'km'
+                      ? 'បោះពុម្ពសេចក្តីសង្ខេបសមិទ្ធផល'
+                      : 'Print Milestones Summary'
+                  "
                 >
                   <svg
                     aria-hidden="true"
@@ -254,7 +396,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                     ></path>
                     <rect x="6" y="14" width="12" height="8"></rect>
                   </svg>
-                  <span>Print Summary</span>
+                  <span>
+                    @if (currentLang() === 'km') {
+                      បោះពុម្ពសេចក្តីសង្ខេប
+                    } @else {
+                      Print Summary
+                    }
+                  </span>
                 </button>
               </div>
             </div>
@@ -264,28 +412,64 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
               <div class="metric-card">
                 <div class="metric-card-header">
                   <span class="metric-card-icon" aria-hidden="true">✓</span>
-                  <span class="metric-card-label">Total Completed</span>
+                  <span class="metric-card-label">
+                    @if (currentLang() === 'km') {
+                      សរុបបានបញ្ចប់
+                    } @else {
+                      Total Completed
+                    }
+                  </span>
                 </div>
                 <div class="metric-card-stat">{{ completedActivities().length }}</div>
-                <span class="metric-card-subtext">Verified home exercises</span>
+                <span class="metric-card-subtext">
+                  @if (currentLang() === 'km') {
+                    លំហាត់នៅផ្ទះដែលបានផ្ទៀងផ្ទាត់
+                  } @else {
+                    Verified home exercises
+                  }
+                </span>
               </div>
               <div class="metric-card">
                 <div class="metric-card-header">
                   <span class="metric-card-icon" aria-hidden="true">🧩</span>
-                  <span class="metric-card-label">Active Domains</span>
+                  <span class="metric-card-label">
+                    @if (currentLang() === 'km') {
+                      ដែនសកម្មភាពសកម្ម
+                    } @else {
+                      Active Domains
+                    }
+                  </span>
                 </div>
                 <div class="metric-card-stat">{{ activeDomainsCount() }}</div>
-                <span class="metric-card-subtext">Skill domains practiced</span>
+                <span class="metric-card-subtext">
+                  @if (currentLang() === 'km') {
+                    ដែនជំនាញដែលបានអនុវត្ត
+                  } @else {
+                    Skill domains practiced
+                  }
+                </span>
               </div>
               <div class="metric-card">
                 <div class="metric-card-header">
                   <span class="metric-card-icon" aria-hidden="true">📅</span>
-                  <span class="metric-card-label">Latest Activity</span>
+                  <span class="metric-card-label">
+                    @if (currentLang() === 'km') {
+                      សកម្មភាពចុងក្រោយ
+                    } @else {
+                      Latest Activity
+                    }
+                  </span>
                 </div>
                 <div class="metric-card-stat metric-card-stat-date">
                   {{ latestActivityDateLabel() }}
                 </div>
-                <span class="metric-card-subtext">Most recent exercise date</span>
+                <span class="metric-card-subtext">
+                  @if (currentLang() === 'km') {
+                    កាលបរិច្ឆេទអនុវត្តថ្មីបំផុត
+                  } @else {
+                    Most recent exercise date
+                  }
+                </span>
               </div>
             </div>
 
@@ -296,17 +480,23 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                 <input
                   type="text"
                   class="search-input"
-                  placeholder="Search milestones by title or observation notes…"
+                  [placeholder]="
+                    currentLang() === 'km'
+                      ? 'ស្វែងរកសមិទ្ធផលតាមចំណងជើង ឬកំណត់ត្រាសង្កេត…'
+                      : 'Search milestones by title or observation notes…'
+                  "
                   [value]="milestoneSearchQuery()"
                   (input)="onMilestoneSearch($event)"
-                  aria-label="Search milestones"
+                  [attr.aria-label]="
+                    currentLang() === 'km' ? 'ស្វែងរកសមិទ្ធផល' : 'Search milestones'
+                  "
                 />
                 @if (milestoneSearchQuery()) {
                   <button
                     type="button"
                     class="clear-search-btn"
                     (click)="clearMilestoneSearch()"
-                    aria-label="Clear search"
+                    [attr.aria-label]="currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear search'"
                   >
                     ✕
                   </button>
@@ -317,9 +507,11 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
               <div
                 class="domain-pills"
                 role="radiogroup"
-                aria-label="Filter by developmental domain"
+                [attr.aria-label]="
+                  currentLang() === 'km' ? 'ត្រងតាមដែនលូតលាស់' : 'Filter by developmental domain'
+                "
               >
-                @for (d of milestoneDomains; track d.value) {
+                @for (d of milestoneDomains(); track d.value) {
                   <button
                     type="button"
                     class="domain-pill-btn"
@@ -332,7 +524,11 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
               </div>
 
               <div class="milestone-count-badge">
-                Showing {{ displayedMilestones().length }} of {{ completedActivities().length }}
+                @if (currentLang() === 'km') {
+                  បង្ហាញ {{ displayedMilestones().length }} នៃ {{ completedActivities().length }}
+                } @else {
+                  Showing {{ displayedMilestones().length }} of {{ completedActivities().length }}
+                }
               </div>
             </div>
 
@@ -340,8 +536,16 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
             @if (displayedMilestones().length === 0) {
               @if (completedActivities().length === 0) {
                 <ac-ui-empty-state
-                  title="No milestones completed yet"
-                  message="Completed home exercises and sensory play activities will appear here in a developmental timeline."
+                  [title]="
+                    currentLang() === 'km'
+                      ? 'មិនទាន់មានសមិទ្ធផលបានបញ្ចប់នៅឡើយទេ'
+                      : 'No milestones completed yet'
+                  "
+                  [message]="
+                    currentLang() === 'km'
+                      ? 'លំហាត់នៅផ្ទះ និងសកម្មភាពលេងបែបវិញ្ញាណដែលបានបញ្ចប់ នឹងបង្ហាញនៅទីនេះតាមលំដាប់ពេលវេលា។'
+                      : 'Completed home exercises and sensory play activities will appear here in a developmental timeline.'
+                  "
                 >
                   <div class="empty-state-actions">
                     <a
@@ -349,19 +553,33 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                       [routerLink]="['/activities']"
                       [queryParams]="{ childId: selectedChildId() }"
                     >
-                      Browse Recommended Activities
+                      @if (currentLang() === 'km') {
+                        មើលសកម្មភាពដែលបានណែនាំ
+                      } @else {
+                        Browse Recommended Activities
+                      }
                     </a>
                   </div>
                 </ac-ui-empty-state>
               } @else {
                 <div class="empty-box">
-                  <p>No completed milestones match the selected domain or search filter.</p>
+                  <p>
+                    @if (currentLang() === 'km') {
+                      មិនមានសមិទ្ធផលដែលត្រូវនឹងដែន ឬការស្វែងរកដែលបានជ្រើសរើសឡើយ។
+                    } @else {
+                      No completed milestones match the selected domain or search filter.
+                    }
+                  </p>
                   <button
                     type="button"
                     class="btn-secondary-compact"
                     (click)="resetMilestoneFilters()"
                   >
-                    Clear Filters
+                    @if (currentLang() === 'km') {
+                      សម្អាតការត្រង
+                    } @else {
+                      Clear Filters
+                    }
                   </button>
                 </div>
               }
@@ -390,7 +608,7 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                             class="domain-badge"
                             [attr.data-domain]="getDomainForActivity(item)"
                           >
-                            {{ getDomainForActivity(item) }}
+                            {{ getDomainLabel(getDomainForActivity(item)) }}
                           </span>
                           <span class="completed-date-pill">
                             {{ formatDate(item.completedAt) }}
@@ -413,7 +631,11 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                         [routerLink]="['/activities']"
                         [queryParams]="{ childId: selectedChildId() }"
                       >
-                        Practice Again ↻
+                        @if (currentLang() === 'km') {
+                          អនុវត្តម្តងទៀត ↻
+                        } @else {
+                          Practice Again ↻
+                        }
                       </a>
                     </div>
                   </article>
@@ -426,16 +648,32 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         <!-- ================= TAB 2: DEVELOPMENTAL TRAJECTORY ================= -->
         @else if (activeTab() === 'trajectory') {
           @if (loadingTrajectory()) {
-            <ac-ui-spinner label="Loading developmental trajectory…" />
+            <ac-ui-spinner
+              [label]="
+                currentLang() === 'km'
+                  ? 'កំពុងផ្ទុកគន្លងនៃការលូតលាស់…'
+                  : 'Loading developmental trajectory…'
+              "
+            />
           } @else {
             <div class="trajectory-container">
               <!-- Interactive Toolbar for Screen -->
               <div class="trajectory-toolbar">
                 <div class="trajectory-heading">
-                  <h2>Developmental Trajectory &amp; Clinical History</h2>
+                  <h2>
+                    @if (currentLang() === 'km') {
+                      គន្លងនៃការលូតលាស់ និងប្រវត្តិគ្លីនិក
+                    } @else {
+                      Developmental Trajectory &amp; Clinical History
+                    }
+                  </h2>
                   <p>
-                    Longitudinal screening progression, clinical risk evolution, and developmental
-                    trajectory.
+                    @if (currentLang() === 'km') {
+                      ការវិវត្តនៃការវាយតម្លៃតាមពេលវេលា ការវិវត្តហានិភ័យគ្លីនិក និងគន្លងលូតលាស់។
+                    } @else {
+                      Longitudinal screening progression, clinical risk evolution, and developmental
+                      trajectory.
+                    }
                   </p>
                 </div>
                 <div class="tab-actions-group">
@@ -444,13 +682,19 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                     [routerLink]="['/screening']"
                     [queryParams]="{ childId: selectedChildId() }"
                   >
-                    + New Clinical Screening
+                    @if (currentLang() === 'km') {
+                      + ការវាយតម្លៃគ្លីនិកថ្មី
+                    } @else {
+                      + New Clinical Screening
+                    }
                   </a>
                   <button
                     type="button"
                     class="btn-download-clinical"
                     (click)="downloadClinicalReport()"
-                    aria-label="Download Clinical Report"
+                    [attr.aria-label]="
+                      currentLang() === 'km' ? 'ទាញយករបាយការណ៍គ្លីនិក' : 'Download Clinical Report'
+                    "
                   >
                     <svg
                       aria-hidden="true"
@@ -467,13 +711,23 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                       <polyline points="7 10 12 15 17 10"></polyline>
                       <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    <span>Download Clinical Report</span>
+                    <span>
+                      @if (currentLang() === 'km') {
+                        ទាញយករបាយការណ៍គ្លីនិក
+                      } @else {
+                        Download Clinical Report
+                      }
+                    </span>
                   </button>
                   <button
                     type="button"
                     class="print-btn"
                     (click)="printReport()"
-                    aria-label="Print Trajectory Report"
+                    [attr.aria-label]="
+                      currentLang() === 'km'
+                        ? 'បោះពុម្ពរបាយការណ៍គន្លងលូតលាស់'
+                        : 'Print Trajectory Report'
+                    "
                   >
                     <svg
                       aria-hidden="true"
@@ -492,7 +746,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                       ></path>
                       <rect x="6" y="14" width="12" height="8"></rect>
                     </svg>
-                    <span>Print Trajectory Report</span>
+                    <span>
+                      @if (currentLang() === 'km') {
+                        បោះពុម្ពរបាយការណ៍គន្លងលូតលាស់
+                      } @else {
+                        Print Trajectory Report
+                      }
+                    </span>
                   </button>
                 </div>
               </div>
@@ -501,39 +761,83 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
               <div class="trajectory-overview-grid">
                 <div class="overview-card">
                   <div class="overview-card-header">
-                    <span class="overview-label">Clinical Risk Level</span>
+                    <span class="overview-label">
+                      @if (currentLang() === 'km') {
+                        កម្រិតហានិភ័យគ្លីនិក
+                      } @else {
+                        Clinical Risk Level
+                      }
+                    </span>
                     <ac-screening-badge [tone]="riskTone(latestRiskLevel())">
                       {{ riskLabel(latestRiskLevel()) }}
                     </ac-screening-badge>
                   </div>
                   <div class="overview-stat">
-                    {{ latestRiskLevel() ? riskLabel(latestRiskLevel()) : 'Not Screened' }}
+                    {{
+                      latestRiskLevel()
+                        ? riskLabel(latestRiskLevel())
+                        : currentLang() === 'km'
+                          ? 'មិនទាន់វាយតម្លៃ'
+                          : 'Not Screened'
+                    }}
                   </div>
                   <span class="overview-subtext">
                     @if (latestScreening(); as s) {
-                      Latest assessment on {{ formatDate(s.submittedAt || s.startedAt) }}
+                      @if (currentLang() === 'km') {
+                        ការវាយតម្លៃចុងក្រោយនៅ {{ formatDate(s.submittedAt || s.startedAt) }}
+                      } @else {
+                        Latest assessment on {{ formatDate(s.submittedAt || s.startedAt) }}
+                      }
                     } @else {
-                      No clinical screening completed yet
+                      @if (currentLang() === 'km') {
+                        មិនទាន់មានការវាយតម្លៃគ្លីនិកនៅឡើយទេ
+                      } @else {
+                        No clinical screening completed yet
+                      }
                     }
                   </span>
                 </div>
 
                 <div class="overview-card">
                   <div class="overview-card-header">
-                    <span class="overview-label">Screening History</span>
+                    <span class="overview-label">
+                      @if (currentLang() === 'km') {
+                        ប្រវត្តិនៃការវាយតម្លៃ
+                      } @else {
+                        Screening History
+                      }
+                    </span>
                   </div>
                   <div class="overview-stat">{{ completedScreenings().length }}</div>
-                  <span class="overview-subtext">Completed clinical sessions</span>
+                  <span class="overview-subtext">
+                    @if (currentLang() === 'km') {
+                      វគ្គគ្លីនិកដែលបានបញ្ចប់
+                    } @else {
+                      Completed clinical sessions
+                    }
+                  </span>
                 </div>
 
                 <div class="overview-card">
                   <div class="overview-card-header">
-                    <span class="overview-label">Trajectory Trend</span>
+                    <span class="overview-label">
+                      @if (currentLang() === 'km') {
+                        និន្នាការគន្លងលូតលាស់
+                      } @else {
+                        Trajectory Trend
+                      }
+                    </span>
                   </div>
                   <div class="overview-stat overview-trend-stat">
                     {{ overallTrajectoryTrend() }}
                   </div>
-                  <span class="overview-subtext">Longitudinal risk shift over time</span>
+                  <span class="overview-subtext">
+                    @if (currentLang() === 'km') {
+                      ការផ្លាស់ប្តូរហានិភ័យតាមពេលវេលា
+                    } @else {
+                      Longitudinal risk shift over time
+                    }
+                  </span>
                 </div>
               </div>
 
@@ -542,7 +846,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                 <div class="section-header-row">
                   <div class="section-title-group">
                     <span class="card-icon" aria-hidden="true">⭐</span>
-                    <h2>Home Activity Milestones by Domain</h2>
+                    <h2>
+                      @if (currentLang() === 'km') {
+                        សមិទ្ធផលសកម្មភាពនៅផ្ទះតាមដែន
+                      } @else {
+                        Home Activity Milestones by Domain
+                      }
+                    </h2>
                   </div>
                   <a
                     class="view-milestones-link"
@@ -550,41 +860,93 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                     role="button"
                     tabindex="0"
                   >
-                    View Milestones Feed →
+                    @if (currentLang() === 'km') {
+                      មើលបញ្ជីសមិទ្ធផល →
+                    } @else {
+                      View Milestones Feed →
+                    }
                   </a>
                 </div>
                 <div class="domain-milestones-grid">
                   <div class="domain-counter-card" data-domain="Sensory">
                     <div class="domain-counter-top">
                       <span class="domain-icon" aria-hidden="true">✨</span>
-                      <span class="domain-label">Sensory</span>
+                      <span class="domain-label">
+                        @if (currentLang() === 'km') {
+                          ញាណដឹង
+                        } @else {
+                          Sensory
+                        }
+                      </span>
                     </div>
                     <div class="domain-count-stat">{{ domainMilestoneCounts().sensory }}</div>
-                    <span class="domain-subtext">Completed routines</span>
+                    <span class="domain-subtext">
+                      @if (currentLang() === 'km') {
+                        លំហាត់បានបញ្ចប់
+                      } @else {
+                        Completed routines
+                      }
+                    </span>
                   </div>
                   <div class="domain-counter-card" data-domain="Motor">
                     <div class="domain-counter-top">
                       <span class="domain-icon" aria-hidden="true">🏃</span>
-                      <span class="domain-label">Motor</span>
+                      <span class="domain-label">
+                        @if (currentLang() === 'km') {
+                          ចលករ
+                        } @else {
+                          Motor
+                        }
+                      </span>
                     </div>
                     <div class="domain-count-stat">{{ domainMilestoneCounts().motor }}</div>
-                    <span class="domain-subtext">Gross &amp; fine motor</span>
+                    <span class="domain-subtext">
+                      @if (currentLang() === 'km') {
+                        ចលករធំ និងតូច
+                      } @else {
+                        Gross &amp; fine motor
+                      }
+                    </span>
                   </div>
                   <div class="domain-counter-card" data-domain="Social">
                     <div class="domain-counter-top">
                       <span class="domain-icon" aria-hidden="true">🤝</span>
-                      <span class="domain-label">Social</span>
+                      <span class="domain-label">
+                        @if (currentLang() === 'km') {
+                          ទំនាក់ទំនងសង្គម
+                        } @else {
+                          Social
+                        }
+                      </span>
                     </div>
                     <div class="domain-count-stat">{{ domainMilestoneCounts().social }}</div>
-                    <span class="domain-subtext">Social interaction</span>
+                    <span class="domain-subtext">
+                      @if (currentLang() === 'km') {
+                        អន្តរកម្មសង្គម
+                      } @else {
+                        Social interaction
+                      }
+                    </span>
                   </div>
                   <div class="domain-counter-card" data-domain="Communication">
                     <div class="domain-counter-top">
                       <span class="domain-icon" aria-hidden="true">💬</span>
-                      <span class="domain-label">Communication</span>
+                      <span class="domain-label">
+                        @if (currentLang() === 'km') {
+                          ការប្រាស្រ័យទាក់ទង
+                        } @else {
+                          Communication
+                        }
+                      </span>
                     </div>
                     <div class="domain-count-stat">{{ domainMilestoneCounts().communication }}</div>
-                    <span class="domain-subtext">Speech &amp; picture matching</span>
+                    <span class="domain-subtext">
+                      @if (currentLang() === 'km') {
+                        ការនិយាយ និងរូបភាព
+                      } @else {
+                        Speech &amp; picture matching
+                      }
+                    </span>
                   </div>
                 </div>
               </section>
@@ -595,18 +957,39 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                   <div class="section-header-row">
                     <div class="section-title-group">
                       <span class="card-icon" aria-hidden="true">📈</span>
-                      <h2>Longitudinal Risk Trajectory Visualizer</h2>
+                      <h2>
+                        @if (currentLang() === 'km') {
+                          គំនូសតាងបង្ហាញគន្លងហានិភ័យតាមពេលវេលា
+                        } @else {
+                          Longitudinal Risk Trajectory Visualizer
+                        }
+                      </h2>
                     </div>
                     <div class="chart-legend">
-                      <span class="legend-item"
-                        ><span class="legend-dot dot-low"></span> Low Risk (&lt;30%)</span
-                      >
-                      <span class="legend-item"
-                        ><span class="legend-dot dot-mod"></span> Moderate (30–65%)</span
-                      >
-                      <span class="legend-item"
-                        ><span class="legend-dot dot-high"></span> Elevated (&gt;65%)</span
-                      >
+                      <span class="legend-item">
+                        <span class="legend-dot dot-low"></span>
+                        @if (currentLang() === 'km') {
+                          ហានិភ័យទាប (&lt;30%)
+                        } @else {
+                          Low Risk (&lt;30%)
+                        }
+                      </span>
+                      <span class="legend-item">
+                        <span class="legend-dot dot-mod"></span>
+                        @if (currentLang() === 'km') {
+                          មធ្យម (30–65%)
+                        } @else {
+                          Moderate (30–65%)
+                        }
+                      </span>
+                      <span class="legend-item">
+                        <span class="legend-dot dot-high"></span>
+                        @if (currentLang() === 'km') {
+                          ខ្ពស់ (&gt;65%)
+                        } @else {
+                          Elevated (&gt;65%)
+                        }
+                      </span>
                     </div>
                   </div>
 
@@ -616,7 +999,11 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                       viewBox="0 0 560 180"
                       preserveAspectRatio="xMidYMid meet"
                       role="img"
-                      aria-label="Developmental risk trajectory progression over time"
+                      [attr.aria-label]="
+                        currentLang() === 'km'
+                          ? 'ការវិវត្តនៃគន្លងហានិភ័យតាមពេលវេលា'
+                          : 'Developmental risk trajectory progression over time'
+                      "
                     >
                       <defs>
                         <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -750,29 +1137,48 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                 <div class="section-header-row">
                   <div class="section-title-group">
                     <span class="card-icon" aria-hidden="true">🩺</span>
-                    <h2>Screening History &amp; Diagnostic Assessments</h2>
+                    <h2>
+                      @if (currentLang() === 'km') {
+                        ប្រវត្តិវាយតម្លៃ និងការវិនិច្ឆ័យ
+                      } @else {
+                        Screening History &amp; Diagnostic Assessments
+                      }
+                    </h2>
                   </div>
                   <a
                     class="btn-primary-compact"
                     [routerLink]="['/screening']"
                     [queryParams]="{ childId: selectedChildId() }"
                   >
-                    + New Screening
+                    @if (currentLang() === 'km') {
+                      + ការវាយតម្លៃថ្មី
+                    } @else {
+                      + New Screening
+                    }
                   </a>
                 </div>
 
                 @if (screeningSessions().length === 0) {
                   <div class="empty-box">
                     <p>
-                      No screening assessments recorded for this child yet. Periodic screenings
-                      provide early developmental guidance.
+                      @if (currentLang() === 'km') {
+                        មិនទាន់មានការវាយតម្លៃសម្រាប់កុមារនេះនៅឡើយទេ។
+                        ការវាយតម្លៃទៀងទាត់ជួយផ្តល់ការណែនាំលូតលាស់ទាន់ពេលវេលា។
+                      } @else {
+                        No screening assessments recorded for this child yet. Periodic screenings
+                        provide early developmental guidance.
+                      }
                     </p>
                     <a
                       class="btn-primary-compact"
                       [routerLink]="['/screening']"
                       [queryParams]="{ childId: selectedChildId() }"
                     >
-                      Start First Screening Assessment
+                      @if (currentLang() === 'km') {
+                        ចាប់ផ្តើមការវាយតម្លៃដំបូង
+                      } @else {
+                        Start First Screening Assessment
+                      }
                     </a>
                   </div>
                 } @else {
@@ -785,7 +1191,9 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                               formatDate(session.submittedAt || session.startedAt)
                             }}</span>
                             @if (session.ageBand) {
-                              <span class="timeline-band">{{ session.ageBand }}</span>
+                              <span class="timeline-band">{{
+                                getAgeBandLabel(session.ageBand)
+                              }}</span>
                             }
                           </div>
                           @if (session.result) {
@@ -793,23 +1201,41 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                               {{ riskLabel(session.result.riskLevel) }}
                             </ac-screening-badge>
                           } @else {
-                            <span class="timeline-band">In Progress</span>
+                            <span class="timeline-band">
+                              @if (currentLang() === 'km') {
+                                កំពុងដំណើរការ
+                              } @else {
+                                In Progress
+                              }
+                            </span>
                           }
                         </div>
                         @if (session.result; as res) {
                           <p class="timeline-body">{{ res.recommendation }}</p>
                           <div class="timeline-footer">
                             <a class="view-link" [routerLink]="['/screening/result', session.id]">
-                              View Full Assessment Result →
+                              @if (currentLang() === 'km') {
+                                មើលលទ្ធផលវាយតម្លៃពេញលេញ →
+                              } @else {
+                                View Full Assessment Result →
+                              }
                             </a>
                           </div>
                         } @else {
                           <p class="timeline-body">
-                            This screening session was started but has not yet been completed.
+                            @if (currentLang() === 'km') {
+                              វគ្គវាយតម្លៃនេះត្រូវបានចាប់ផ្តើម ប៉ុន្តែមិនទាន់បានបញ្ចប់នៅឡើយទេ។
+                            } @else {
+                              This screening session was started but has not yet been completed.
+                            }
                           </p>
                           <div class="timeline-footer">
                             <a class="view-link" [routerLink]="['/screening/session', session.id]">
-                              Resume Session →
+                              @if (currentLang() === 'km') {
+                                បន្តវគ្គវាយតម្លៃ →
+                              } @else {
+                                Resume Session →
+                              }
                             </a>
                           </div>
                         }
@@ -825,40 +1251,75 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
         <!-- ================= TAB 3: SCHOOL REPORTS ================= -->
         @else if (activeTab() === 'reports') {
           @if (loading()) {
-            <ac-ui-spinner label="Loading report…" />
+            <ac-ui-spinner
+              [label]="currentLang() === 'km' ? 'កំពុងផ្ទុករបាយការណ៍…' : 'Loading report…'"
+            />
           } @else if (error()) {
             <ac-ui-message tone="error">
               {{ error() }}
-              <button type="button" class="btn-secondary" (click)="loadReports()">Try again</button>
+              <button type="button" class="btn-secondary" (click)="loadReports()">
+                @if (currentLang() === 'km') {
+                  ព្យាយាមម្តងទៀត
+                } @else {
+                  Try again
+                }
+              </button>
             </ac-ui-message>
           } @else if (!report()) {
-            <ac-ui-empty-state
-              title="No activity reports yet"
-              message="Reports will appear here once your child's school shares them. In the meantime, you can explore developmental milestones, clinical screening history, and home activities."
-            >
-              <div class="empty-state-actions">
-                <button type="button" class="btn-primary" (click)="setTab('milestones')">
-                  Explore Milestones
-                </button>
-                <button type="button" class="btn-secondary" (click)="setTab('trajectory')">
-                  View Developmental Trajectory
-                </button>
-                <a
-                  class="btn-secondary"
-                  [routerLink]="['/screening']"
-                  [queryParams]="{ childId: selectedChildId() }"
-                >
-                  Start Screening Assessment
-                </a>
-              </div>
-            </ac-ui-empty-state>
+            @if (currentLang() === 'km') {
+              <ac-ui-empty-state
+                title="មិនទាន់មានរបាយការណ៍សកម្មភាពនៅឡើយទេ"
+                message="របាយការណ៍នឹងបង្ហាញនៅទីនេះនៅពេលសាលារបស់កូនអ្នកចែករំលែកវា។ ទន្ទឹមនឹងនេះ អ្នកអាចស្វែងយល់ពីសមិទ្ធផលលូតលាស់ ប្រវត្តិវាយតម្លៃគ្លីនិក និងសកម្មភាពនៅផ្ទះ។"
+              >
+                <div class="empty-state-actions">
+                  <button type="button" class="btn-primary" (click)="setTab('milestones')">
+                    ស្វែងយល់ពីសមិទ្ធផល
+                  </button>
+                  <button type="button" class="btn-secondary" (click)="setTab('trajectory')">
+                    មើលគន្លងនៃការលូតលាស់
+                  </button>
+                  <a
+                    class="btn-secondary"
+                    [routerLink]="['/screening']"
+                    [queryParams]="{ childId: selectedChildId() }"
+                  >
+                    ចាប់ផ្តើមការវាយតម្លៃ
+                  </a>
+                </div>
+              </ac-ui-empty-state>
+            } @else {
+              <ac-ui-empty-state
+                title="No activity reports yet"
+                message="Reports will appear here once your child's school shares them. In the meantime, you can explore developmental milestones, clinical screening history, and home activities."
+              >
+                <div class="empty-state-actions">
+                  <button type="button" class="btn-primary" (click)="setTab('milestones')">
+                    Explore Milestones
+                  </button>
+                  <button type="button" class="btn-secondary" (click)="setTab('trajectory')">
+                    View Developmental Trajectory
+                  </button>
+                  <a
+                    class="btn-secondary"
+                    [routerLink]="['/screening']"
+                    [queryParams]="{ childId: selectedChildId() }"
+                  >
+                    Start Screening Assessment
+                  </a>
+                </div>
+              </ac-ui-empty-state>
+            }
           } @else if (report(); as r) {
             <div class="report-container">
               @if (reports().length > 1) {
                 <div class="chronological-reports-bar">
-                  <span class="bar-label"
-                    >Chronological Observation Reports ({{ reports().length }}):</span
-                  >
+                  <span class="bar-label">
+                    @if (currentLang() === 'km') {
+                      របាយការណ៍សង្កេតតាមលំដាប់ពេលវេលា ({{ reports().length }})៖
+                    } @else {
+                      Chronological Observation Reports ({{ reports().length }}):
+                    }
+                  </span>
                   <div class="report-chips-list">
                     @for (item of reports(); track item.id) {
                       <button
@@ -874,7 +1335,9 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                           <span class="chip-date">{{ formatDate(item.activityDate) }}</span>
                           <span class="chip-title">{{ item.title }}</span>
                         </div>
-                        <span class="domain-pill-sm">{{ item.activityCategory }}</span>
+                        <span class="domain-pill-sm">{{
+                          getDomainLabel(item.activityCategory)
+                        }}</span>
                       </button>
                     }
                   </div>
@@ -886,18 +1349,28 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                   <div class="report-title-group">
                     <div class="report-tags-row">
                       <span class="domain-badge" [attr.data-domain]="r.activityCategory">
-                        {{ r.activityCategory }}
+                        {{ getDomainLabel(r.activityCategory) }}
                       </span>
                       <span class="date-pill">{{ formatDate(r.activityDate) }}</span>
                     </div>
-                    <h1>Activity Report: {{ r.title }}</h1>
+                    <h1>
+                      @if (currentLang() === 'km') {
+                        របាយការណ៍សកម្មភាព៖ {{ r.title }}
+                      } @else {
+                        Activity Report: {{ r.title }}
+                      }
+                    </h1>
                   </div>
                   <div class="tab-actions-group">
                     <button
                       type="button"
                       class="btn-download-clinical"
                       (click)="downloadClinicalReport()"
-                      aria-label="Download Clinical Summary"
+                      [attr.aria-label]="
+                        currentLang() === 'km'
+                          ? 'ទាញយកសេចក្តីសង្ខេបគ្លីនិក'
+                          : 'Download Clinical Summary'
+                      "
                     >
                       <svg
                         aria-hidden="true"
@@ -914,13 +1387,21 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                       </svg>
-                      <span>Download Clinical Summary</span>
+                      <span>
+                        @if (currentLang() === 'km') {
+                          ទាញយកសេចក្តីសង្ខេបគ្លីនិក
+                        } @else {
+                          Download Clinical Summary
+                        }
+                      </span>
                     </button>
                     <button
                       type="button"
                       class="print-btn"
                       (click)="printReport()"
-                      aria-label="Print School Report"
+                      [attr.aria-label]="
+                        currentLang() === 'km' ? 'បោះពុម្ពរបាយការណ៍សាលា' : 'Print School Report'
+                      "
                     >
                       <svg
                         aria-hidden="true"
@@ -939,7 +1420,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                         ></path>
                         <rect x="6" y="14" width="12" height="8"></rect>
                       </svg>
-                      <span>Print Report</span>
+                      <span>
+                        @if (currentLang() === 'km') {
+                          បោះពុម្ពរបាយការណ៍
+                        } @else {
+                          Print Report
+                        }
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -953,7 +1440,9 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                         {{
                           r.reporter
                             ? r.reporter.firstName + ' ' + r.reporter.lastName
-                            : 'Classroom Specialist'
+                            : currentLang() === 'km'
+                              ? 'អ្នកឯកទេសក្នុងថ្នាក់រៀន'
+                              : 'Classroom Specialist'
                         }}
                       </span>
                       @if (r.schoolName) {
@@ -969,12 +1458,20 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                   <section class="report-card">
                     <div class="card-header">
                       <span class="card-icon" aria-hidden="true">✎</span>
-                      <h2>Teacher Observations</h2>
+                      <h2>
+                        @if (currentLang() === 'km') {
+                          ការសង្កេតរបស់គ្រូ
+                        } @else {
+                          Teacher Observations
+                        }
+                      </h2>
                     </div>
                     <p class="observation-text">
                       {{
                         r.teacherObservation ||
-                          'No teacher observations were included in this report.'
+                          (currentLang() === 'km'
+                            ? 'មិនមានកំណត់ត្រាសង្កេតរបស់គ្រូនៅក្នុងរបាយការណ៍នេះទេ។'
+                            : 'No teacher observations were included in this report.')
                       }}
                     </p>
                     @if (r.reporter) {
@@ -988,10 +1485,20 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                   <section class="report-card accommodation-card">
                     <div class="card-header">
                       <span class="card-icon" aria-hidden="true">🛡️</span>
-                      <h2>Classroom Accommodations &amp; Adaptations</h2>
+                      <h2>
+                        @if (currentLang() === 'km') {
+                          ការសម្រួល និងការសម្របសម្រួលក្នុងថ្នាក់រៀន
+                        } @else {
+                          Classroom Accommodations &amp; Adaptations
+                        }
+                      </h2>
                     </div>
                     <p class="section-subtext">
-                      Sensory and classroom adaptations provided during this observation:
+                      @if (currentLang() === 'km') {
+                        ការសម្របសម្រួលផ្នែកវិញ្ញាណ និងបរិយាកាសថ្នាក់រៀនដែលបានផ្តល់កំឡុងពេលសង្កេតនេះ៖
+                      } @else {
+                        Sensory and classroom adaptations provided during this observation:
+                      }
                     </p>
                     <div class="accommodation-tags-list">
                       @for (tag of getAccommodationTags(r); track tag) {
@@ -1006,7 +1513,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                   <section class="report-card">
                     <div class="card-header">
                       <span class="card-icon" aria-hidden="true">▥</span>
-                      <h2>Performance Metrics</h2>
+                      <h2>
+                        @if (currentLang() === 'km') {
+                          រង្វាស់ការអនុវត្ត
+                        } @else {
+                          Performance Metrics
+                        }
+                      </h2>
                     </div>
                     @if (engagementMetrics().length) {
                       <div class="engagement-breakdown">
@@ -1034,14 +1547,26 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                         }
                       </div>
                     } @else {
-                      <p class="empty-note">Performance scores were not included in this report.</p>
+                      <p class="empty-note">
+                        @if (currentLang() === 'km') {
+                          ពិន្ទុនៃការអនុវត្តមិនត្រូវបានបញ្ចូលក្នុងរបាយការណ៍នេះទេ។
+                        } @else {
+                          Performance scores were not included in this report.
+                        }
+                      </p>
                     }
                   </section>
 
                   <section class="report-card">
                     <div class="card-header">
                       <span class="card-icon" aria-hidden="true">▧</span>
-                      <h2>Activity Photos &amp; Documents</h2>
+                      <h2>
+                        @if (currentLang() === 'km') {
+                          រូបថតសកម្មភាព និងឯកសារ
+                        } @else {
+                          Activity Photos &amp; Documents
+                        }
+                      </h2>
                     </div>
                     @if (images().length || documents().length) {
                       <div class="activity-moments">
@@ -1069,12 +1594,24 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                           >
                             <span class="document-icon" aria-hidden="true">▤</span>
                             <span class="document-name">{{ doc.name }}</span>
-                            <span class="document-open">Open ↗</span>
+                            <span class="document-open">
+                              @if (currentLang() === 'km') {
+                                បើក ↗
+                              } @else {
+                                Open ↗
+                              }
+                            </span>
                           </a>
                         }
                       </div>
                     } @else {
-                      <p class="empty-note">No activity photos or documents were attached.</p>
+                      <p class="empty-note">
+                        @if (currentLang() === 'km') {
+                          មិនមានរូបថត ឬឯកសារភ្ជាប់ជាមួយសកម្មភាពនេះទេ។
+                        } @else {
+                          No activity photos or documents were attached.
+                        }
+                      </p>
                     }
                   </section>
                 </div>
@@ -1083,15 +1620,38 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                   <section class="report-card">
                     <div class="card-header">
                       <span class="card-icon" aria-hidden="true">◷</span>
-                      <h2>Activity Summary</h2>
+                      <h2>
+                        @if (currentLang() === 'km') {
+                          សេចក្តីសង្ខេបសកម្មភាព
+                        } @else {
+                          Activity Summary
+                        }
+                      </h2>
                     </div>
                     <p class="summary-description">
-                      {{ r.summary || 'No activity summary was included.' }}
+                      {{
+                        r.summary ||
+                          (currentLang() === 'km'
+                            ? 'មិនមានសេចក្តីសង្ខេបសកម្មភាពទេ។'
+                            : 'No activity summary was included.')
+                      }}
                     </p>
                     <div class="summary-facts">
-                      <span class="fact-chip">Category: {{ r.activityCategory }}</span>
+                      <span class="fact-chip">
+                        @if (currentLang() === 'km') {
+                          ប្រភេទ៖ {{ getDomainLabel(r.activityCategory) }}
+                        } @else {
+                          Category: {{ r.activityCategory }}
+                        }
+                      </span>
                       @if (r.duration !== null) {
-                        <span class="fact-chip">Duration: {{ r.duration }} min</span>
+                        <span class="fact-chip">
+                          @if (currentLang() === 'km') {
+                            រយៈពេល៖ {{ r.duration }} នាទី
+                          } @else {
+                            Duration: {{ r.duration }} min
+                          }
+                        </span>
                       }
                     </div>
                   </section>
@@ -1099,7 +1659,13 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                   <section class="report-card">
                     <div class="card-header">
                       <span class="card-icon" aria-hidden="true">⌂</span>
-                      <h2>Home Recommendations</h2>
+                      <h2>
+                        @if (currentLang() === 'km') {
+                          អនុសាសន៍សម្រាប់អនុវត្តនៅផ្ទះ
+                        } @else {
+                          Home Recommendations
+                        }
+                      </h2>
                     </div>
                     @if (recommendationItems().length) {
                       <ul class="recommendation-list">
@@ -1108,18 +1674,36 @@ const METRIC_DEFS: { key: string; label: string; color: string }[] = [
                         }
                       </ul>
                     } @else {
-                      <p class="empty-note">No specific recommendations included.</p>
+                      <p class="empty-note">
+                        @if (currentLang() === 'km') {
+                          មិនមានអនុសាសន៍ជាក់លាក់ណាមួយត្រូវបានបញ្ចូលទេ។
+                        } @else {
+                          No specific recommendations included.
+                        }
+                      </p>
                     }
                   </section>
 
                   <div class="action-buttons">
                     <button type="button" class="btn-primary" (click)="downloadReport()">
                       <span aria-hidden="true">↓</span>
-                      <span>Download Full Report</span>
+                      <span>
+                        @if (currentLang() === 'km') {
+                          ទាញយករបាយការណ៍ពេញលេញ
+                        } @else {
+                          Download Full Report
+                        }
+                      </span>
                     </button>
                     <button type="button" class="btn-secondary" (click)="shareReport()">
                       <span aria-hidden="true">↗</span>
-                      <span>Share with Specialist</span>
+                      <span>
+                        @if (currentLang() === 'km') {
+                          ចែករំលែកជាមួយអ្នកជំនាញ
+                        } @else {
+                          Share with Specialist
+                        }
+                      </span>
                     </button>
                   </div>
                 </aside>
@@ -2707,6 +3291,9 @@ export class ProgressPage implements OnInit {
   private readonly activityApi = inject(ParentActivityApi);
   private readonly screeningApi = inject(ScreeningApi);
   private readonly activitiesApi = inject(ActivitiesApi);
+  private readonly i18n = inject(I18nService);
+
+  readonly currentLang = this.i18n.currentLang;
 
   readonly activeTab = signal<'milestones' | 'trajectory' | 'reports'>('reports');
   readonly children = signal<
@@ -2735,7 +3322,8 @@ export class ProgressPage implements OnInit {
   }
 
   currentDateFormatted(): string {
-    return new Intl.DateTimeFormat(undefined, { dateStyle: 'long' }).format(new Date());
+    const locale = this.currentLang() === 'km' ? 'km-KH' : 'en-US';
+    return new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(new Date());
   }
 
   // School reports state
@@ -2756,14 +3344,23 @@ export class ProgressPage implements OnInit {
   readonly selectedMilestoneDomain = signal<string>('ALL');
   readonly milestoneSearchQuery = signal<string>('');
 
-  readonly milestoneDomains = [
-    { value: 'ALL', label: 'All Domains' },
-    { value: 'Sensory', label: 'Sensory' },
-    { value: 'Communication', label: 'Communication' },
-    { value: 'Social Skills', label: 'Social Skills' },
-    { value: 'Motor Skills', label: 'Motor Skills' },
-    { value: 'Daily Living', label: 'Daily Living' },
-  ];
+  readonly milestoneDomains = computed(() => [
+    { value: 'ALL', label: this.currentLang() === 'km' ? 'គ្រប់ដែនទាំងអស់' : 'All Domains' },
+    { value: 'Sensory', label: this.currentLang() === 'km' ? 'ញាណដឹង' : 'Sensory' },
+    {
+      value: 'Communication',
+      label: this.currentLang() === 'km' ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication',
+    },
+    {
+      value: 'Social Skills',
+      label: this.currentLang() === 'km' ? 'ទំនាក់ទំនងសង្គម' : 'Social Skills',
+    },
+    { value: 'Motor Skills', label: this.currentLang() === 'km' ? 'ចលករ' : 'Motor Skills' },
+    {
+      value: 'Daily Living',
+      label: this.currentLang() === 'km' ? 'ទម្លាប់ប្រចាំថ្ងៃ' : 'Daily Living',
+    },
+  ]);
 
   readonly activityCatalogueMap = computed(() => {
     const map = new Map<string, string>();
@@ -2813,7 +3410,7 @@ export class ProgressPage implements OnInit {
 
   readonly latestActivityDateLabel = computed(() => {
     const acts = this.completedActivities();
-    if (acts.length === 0) return 'None yet';
+    if (acts.length === 0) return this.currentLang() === 'km' ? 'មិនទាន់មាន' : 'None yet';
     return this.formatDate(acts[0]?.completedAt);
   });
 
@@ -2844,6 +3441,7 @@ export class ProgressPage implements OnInit {
   readonly trajectoryChartData = computed(() => {
     const screenings = this.chronologicalScreenings();
     if (screenings.length === 0) return null;
+    const isKm = this.currentLang() === 'km';
     const width = 560;
     const height = 180;
     const paddingX = 40;
@@ -2864,13 +3462,13 @@ export class ProgressPage implements OnInit {
         const prevPct = screenings[i - 1].result?.riskPercentage ?? 50;
         const diff = pct - prevPct;
         if (diff < 0) {
-          deltaText = `${Math.abs(diff)}% reduction`;
+          deltaText = isKm ? `ថយចុះ ${Math.abs(diff)}%` : `${Math.abs(diff)}% reduction`;
           isImprovement = true;
         } else if (diff > 0) {
-          deltaText = `${diff}% shift`;
+          deltaText = isKm ? `កើនឡើង ${diff}%` : `${diff}% shift`;
           isImprovement = false;
         } else {
-          deltaText = 'stable';
+          deltaText = isKm ? 'មានស្ថិរភាព' : 'stable';
           isImprovement = true;
         }
       }
@@ -2904,14 +3502,27 @@ export class ProgressPage implements OnInit {
 
   readonly overallTrajectoryTrend = computed(() => {
     const points = this.trajectoryChartData()?.points ?? [];
-    if (points.length === 0) return 'No Screenings Completed';
-    if (points.length === 1) return 'Baseline Assessment Established';
+    const isKm = this.currentLang() === 'km';
+    if (points.length === 0) {
+      return isKm ? 'មិនទាន់មានការវាយតម្លៃ' : 'No Screenings Completed';
+    }
+    if (points.length === 1) {
+      return isKm ? 'បានកំណត់កម្រិតគោលដំបូង' : 'Baseline Assessment Established';
+    }
     const first = points[0].riskPercentage;
     const latest = points[points.length - 1].riskPercentage;
     const diff = latest - first;
-    if (diff < -5) return `Risk Reduced by ${Math.abs(diff)}% (Improving Trend)`;
-    if (diff > 5) return `Mild Risk Increase (+${diff}%) — Review Specialist`;
-    return 'Stable Developmental Trajectory';
+    if (diff < -5) {
+      return isKm
+        ? `ហានិភ័យថយចុះ ${Math.abs(diff)}% (និន្នាការវិជ្ជមាន)`
+        : `Risk Reduced by ${Math.abs(diff)}% (Improving Trend)`;
+    }
+    if (diff > 5) {
+      return isKm
+        ? `ហានិភ័យកើនឡើងបន្តិច (+${diff}%) — ពិគ្រោះជាមួយអ្នកឯកទេស`
+        : `Mild Risk Increase (+${diff}%) — Review Specialist`;
+    }
+    return isKm ? 'គន្លងលូតលាស់មានស្ថិរភាព' : 'Stable Developmental Trajectory';
   });
 
   /** The report currently displayed (most recent by default). */
@@ -2926,15 +3537,17 @@ export class ProgressPage implements OnInit {
   readonly engagementMetrics = computed<EngagementMetric[]>(() => {
     const raw = (this.report()?.performanceMetrics ?? null) as Record<string, unknown> | null;
     const metrics: EngagementMetric[] = [];
+    const isKm = this.currentLang() === 'km';
     for (const def of METRIC_DEFS) {
+      const label = isKm ? def.labelKm : def.labelEn;
       const value = raw?.[def.key];
       if (typeof value !== 'number' || Number.isNaN(value)) {
-        metrics.push({ label: def.label, value: 0, display: '—/10', color: def.color });
+        metrics.push({ label, value: 0, display: '—/10', color: def.color });
         continue;
       }
       const clamped = Math.max(0, Math.min(10, value));
       metrics.push({
-        label: def.label,
+        label,
         value: clamped * 10,
         display: `${Math.round(clamped)}/10`,
         color: def.color,
@@ -3003,6 +3616,43 @@ export class ProgressPage implements OnInit {
     return 'Daily Living';
   }
 
+  getDomainLabel(domain?: string | null): string {
+    if (!domain) return '';
+    const isKm = this.currentLang() === 'km';
+    const d = domain.toLowerCase();
+    if (d.includes('sensor')) return isKm ? 'ញាណដឹង' : 'Sensory';
+    if (d.includes('communicat') || d.includes('speech'))
+      return isKm ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication';
+    if (d.includes('social')) return isKm ? 'ទំនាក់ទំនងសង្គម' : 'Social Skills';
+    if (d.includes('motor')) return isKm ? 'ចលករ' : 'Motor Skills';
+    if (d.includes('daily')) return isKm ? 'ទម្លាប់ប្រចាំថ្ងៃ' : 'Daily Living';
+    return domain;
+  }
+
+  getAgeBandLabel(band?: string | null): string {
+    if (!band) return '';
+    const isKm = this.currentLang() === 'km';
+    if (!isKm) return band;
+    switch (band) {
+      case 'INFANT_0_12':
+      case 'INFANT':
+        return 'ទារក (០-១២ ខែ)';
+      case 'TODDLER_12_24':
+      case 'TODDLER_18_24':
+      case 'TODDLER':
+        return 'កុមារតូច (១២-២៤ ខែ)';
+      case 'PRESCHOOL_24_48':
+      case 'PRESCHOOL_36_48':
+      case 'PRESCHOOL':
+        return 'មត្តេយ្យ (២-៤ ឆ្នាំ)';
+      case 'SCHOOL_AGE_48_72':
+      case 'SCHOOL_AGE':
+        return 'វ័យសិក្សា (៤-៦ ឆ្នាំ)';
+      default:
+        return band;
+    }
+  }
+
   getReporterInitials(reporter?: { firstName: string; lastName: string } | null): string {
     if (!reporter) return 'T';
     const first = reporter.firstName?.trim()?.[0] ?? '';
@@ -3014,6 +3664,7 @@ export class ProgressPage implements OnInit {
     const text =
       `${report.title} ${report.summary} ${report.teacherObservation || ''} ${report.recommendations || ''}`.toLowerCase();
     const tags: string[] = [];
+    const isKm = this.currentLang() === 'km';
 
     if (
       text.includes('noise') ||
@@ -3022,7 +3673,7 @@ export class ProgressPage implements OnInit {
       text.includes('auditory') ||
       text.includes('quiet')
     ) {
-      tags.push('Used Noise-Cancelling Headphones');
+      tags.push(isKm ? 'ប្រើកាសទប់សំឡេងរំខាន' : 'Used Noise-Cancelling Headphones');
     }
     if (
       text.includes('break') ||
@@ -3032,7 +3683,7 @@ export class ProgressPage implements OnInit {
       text.includes('decompress') ||
       text.includes('regulation')
     ) {
-      tags.push('Sensory Break Provided');
+      tags.push(isKm ? 'ផ្តល់ពេលសម្រាកសម្រួលវិញ្ញាណ' : 'Sensory Break Provided');
     }
     if (
       text.includes('card') ||
@@ -3041,7 +3692,7 @@ export class ProgressPage implements OnInit {
       text.includes('pecs') ||
       text.includes('picture')
     ) {
-      tags.push('Visual Schedule & Picture Cues');
+      tags.push(isKm ? 'កាលវិភាគរូបភាព និងសញ្ញារូបភាព' : 'Visual Schedule & Picture Cues');
     }
     if (
       text.includes('movement') ||
@@ -3050,7 +3701,7 @@ export class ProgressPage implements OnInit {
       text.includes('walk') ||
       text.includes('seat')
     ) {
-      tags.push('Movement & Flexible Seating');
+      tags.push(isKm ? 'ចលនា និងកន្លែងអង្គុយបត់បែន' : 'Movement & Flexible Seating');
     }
     if (
       text.includes('turn') ||
@@ -3059,19 +3710,31 @@ export class ProgressPage implements OnInit {
       text.includes('praise') ||
       text.includes('token')
     ) {
-      tags.push('Positive Reinforcement Tokens');
+      tags.push(isKm ? 'ការលើកទឹកចិត្តជាវិជ្ជមាន' : 'Positive Reinforcement Tokens');
     }
 
     if (tags.length === 0) {
       const cat = (report.activityCategory || '').toLowerCase();
       if (cat.includes('sensor')) {
-        tags.push('Used Noise-Cancelling Headphones', 'Sensory Break Provided');
+        tags.push(
+          isKm ? 'ប្រើកាសទប់សំឡេងរំខាន' : 'Used Noise-Cancelling Headphones',
+          isKm ? 'ផ្តល់ពេលសម្រាកសម្រួលវិញ្ញាណ' : 'Sensory Break Provided',
+        );
       } else if (cat.includes('communicat')) {
-        tags.push('Visual Schedule & Picture Cues', 'Extended Response Time');
+        tags.push(
+          isKm ? 'កាលវិភាគរូបភាព និងសញ្ញារូបភាព' : 'Visual Schedule & Picture Cues',
+          isKm ? 'បន្ថែមពេលវេលាឆ្លើយតប' : 'Extended Response Time',
+        );
       } else if (cat.includes('motor')) {
-        tags.push('Movement & Flexible Seating', 'Sensory Break Provided');
+        tags.push(
+          isKm ? 'ចលនា និងកន្លែងអង្គុយបត់បែន' : 'Movement & Flexible Seating',
+          isKm ? 'ផ្តល់ពេលសម្រាកសម្រួលវិញ្ញាណ' : 'Sensory Break Provided',
+        );
       } else {
-        tags.push('Used Noise-Cancelling Headphones', 'Sensory Break Provided');
+        tags.push(
+          isKm ? 'ប្រើកាសទប់សំឡេងរំខាន' : 'Used Noise-Cancelling Headphones',
+          isKm ? 'ផ្តល់ពេលសម្រាកសម្រួលវិញ្ញាណ' : 'Sensory Break Provided',
+        );
       }
     }
 
@@ -3080,85 +3743,165 @@ export class ProgressPage implements OnInit {
 
   downloadClinicalReport() {
     const child = this.selectedChild();
-    const childName = this.selectedChildName() || 'Child';
+    const childName = this.selectedChildName() || (this.currentLang() === 'km' ? 'កុមារ' : 'Child');
     const screenings = this.completedScreenings();
     const activities = this.completedActivities();
     const reports = this.reports();
-    const risk = this.latestRiskLevel() ? this.riskLabel(this.latestRiskLevel()) : 'Not Screened';
+    const risk = this.latestRiskLevel()
+      ? this.riskLabel(this.latestRiskLevel())
+      : this.currentLang() === 'km'
+        ? 'មិនទាន់វាយតម្លៃ'
+        : 'Not Screened';
     const trend = this.overallTrajectoryTrend();
+    const isKm = this.currentLang() === 'km';
 
-    const lines = [
-      '========================================================================',
-      'AUTICARE CLINICAL DEVELOPMENTAL HEALTH & PROGRESS REPORT',
-      '========================================================================',
-      `Child Name:         ${childName}`,
-      `Date of Birth:      ${child?.dateOfBirth ? this.formatDate(child.dateOfBirth) : 'Not specified'}`,
-      `Report Generated:   ${this.currentDateFormatted()}`,
-      `Latest Risk Level:  ${risk}`,
-      `Trajectory Trend:   ${trend}`,
-      `Screening Sessions: ${screenings.length}`,
-      `Home Milestones:    ${activities.length}`,
-      `School Reports:     ${reports.length}`,
-      '------------------------------------------------------------------------',
-      '',
-      '1. LONGITUDINAL SCREENING TRAJECTORY',
-      '------------------------------------------------------------------------',
-    ];
+    const lines = isKm
+      ? [
+          '========================================================================',
+          'របាយការណ៍សុខភាព និងការវិវត្តគ្លីនិករបស់កុមារ AUTICARE',
+          '========================================================================',
+          `ឈ្មោះកុមារ៖            ${childName}`,
+          `ថ្ងៃខែឆ្នាំកំណើត៖       ${child?.dateOfBirth ? this.formatDate(child.dateOfBirth) : 'មិនបានបញ្ជាក់'}`,
+          `កាលបរិច្ឆេទបង្កើត៖      ${this.currentDateFormatted()}`,
+          `កម្រិតហានិភ័យចុងក្រោយ៖   ${risk}`,
+          `និន្នាការគន្លងលូតលាស់៖  ${trend}`,
+          `វគ្គវាយតម្លៃគ្លីនិក៖      ${screenings.length}`,
+          `សមិទ្ធផលនៅផ្ទះ៖        ${activities.length}`,
+          `របាយការណ៍សាលារៀន៖     ${reports.length}`,
+          '------------------------------------------------------------------------',
+          '',
+          '១. គន្លងនៃការវាយតម្លៃតាមពេលវេលា',
+          '------------------------------------------------------------------------',
+        ]
+      : [
+          '========================================================================',
+          'AUTICARE CLINICAL DEVELOPMENTAL HEALTH & PROGRESS REPORT',
+          '========================================================================',
+          `Child Name:         ${childName}`,
+          `Date of Birth:      ${child?.dateOfBirth ? this.formatDate(child.dateOfBirth) : 'Not specified'}`,
+          `Report Generated:   ${this.currentDateFormatted()}`,
+          `Latest Risk Level:  ${risk}`,
+          `Trajectory Trend:   ${trend}`,
+          `Screening Sessions: ${screenings.length}`,
+          `Home Milestones:    ${activities.length}`,
+          `School Reports:     ${reports.length}`,
+          '------------------------------------------------------------------------',
+          '',
+          '1. LONGITUDINAL SCREENING TRAJECTORY',
+          '------------------------------------------------------------------------',
+        ];
 
     if (screenings.length === 0) {
-      lines.push('No completed screening assessments recorded.');
+      lines.push(
+        isKm
+          ? 'មិនទាន់មានការវាយតម្លៃដែលបានបញ្ចប់នៅឡើយទេ។'
+          : 'No completed screening assessments recorded.',
+      );
     } else {
       for (const s of screenings) {
         const date = this.formatDate(s.submittedAt || s.startedAt);
         const score = s.result?.score ?? 'N/A';
         const pct = s.result?.riskPercentage ?? 'N/A';
-        const level = s.result?.riskLevel ?? 'N/A';
+        const level = s.result?.riskLevel ? this.riskLabel(s.result.riskLevel) : 'N/A';
         const rec = s.result?.recommendation ?? '';
-        lines.push(`• Assessment Date: ${date} | Score: ${score} | Risk: ${level} (${pct}%)`);
-        if (rec) lines.push(`  Clinical Guidance: ${rec}`);
+        lines.push(
+          isKm
+            ? `• កាលបរិច្ឆេទវាយតម្លៃ៖ ${date} | ពិន្ទុ៖ ${score} | ហានិភ័យ៖ ${level} (${pct}%)`
+            : `• Assessment Date: ${date} | Score: ${score} | Risk: ${level} (${pct}%)`,
+        );
+        if (rec) {
+          lines.push(isKm ? `  ការណែនាំគ្លីនិក៖ ${rec}` : `  Clinical Guidance: ${rec}`);
+        }
       }
     }
 
-    lines.push(
-      '',
-      '2. HOME ACTIVITY MILESTONES BY DOMAIN',
-      '------------------------------------------------------------------------',
-      `• Sensory Practice:         ${this.domainMilestoneCounts().sensory} completed routines`,
-      `• Gross & Fine Motor:       ${this.domainMilestoneCounts().motor} completed routines`,
-      `• Social Interaction:       ${this.domainMilestoneCounts().social} completed routines`,
-      `• Functional Communication: ${this.domainMilestoneCounts().communication} completed routines`,
-      `• Total Milestones:         ${this.domainMilestoneCounts().total} completed routines`,
-    );
-
-    lines.push(
-      '',
-      '3. SCHOOL OBSERVATIONS & CLASSROOM ACCOMMODATIONS',
-      '------------------------------------------------------------------------',
-    );
+    if (isKm) {
+      lines.push(
+        '',
+        '២. សមិទ្ធផលសកម្មភាពនៅផ្ទះតាមដែន',
+        '------------------------------------------------------------------------',
+        `• លំហាត់វិញ្ញាណ៖             ${this.domainMilestoneCounts().sensory} លំហាត់បានបញ្ចប់`,
+        `• ចលករធំ និងតូច៖           ${this.domainMilestoneCounts().motor} លំហាត់បានបញ្ចប់`,
+        `• ទំនាក់ទំនងសង្គម៖           ${this.domainMilestoneCounts().social} លំហាត់បានបញ្ចប់`,
+        `• ការប្រាស្រ័យទាក់ទង៖        ${this.domainMilestoneCounts().communication} លំហាត់បានបញ្ចប់`,
+        `• សមិទ្ធផលសរុប៖              ${this.domainMilestoneCounts().total} លំហាត់បានបញ្ចប់`,
+        '',
+        '៣. ការសង្កេតពីសាលារៀន និងការសម្របសម្រួលក្នុងថ្នាក់រៀន',
+        '------------------------------------------------------------------------',
+      );
+    } else {
+      lines.push(
+        '',
+        '2. HOME ACTIVITY MILESTONES BY DOMAIN',
+        '------------------------------------------------------------------------',
+        `• Sensory Practice:         ${this.domainMilestoneCounts().sensory} completed routines`,
+        `• Gross & Fine Motor:       ${this.domainMilestoneCounts().motor} completed routines`,
+        `• Social Interaction:       ${this.domainMilestoneCounts().social} completed routines`,
+        `• Functional Communication: ${this.domainMilestoneCounts().communication} completed routines`,
+        `• Total Milestones:         ${this.domainMilestoneCounts().total} completed routines`,
+        '',
+        '3. SCHOOL OBSERVATIONS & CLASSROOM ACCOMMODATIONS',
+        '------------------------------------------------------------------------',
+      );
+    }
 
     if (reports.length === 0) {
-      lines.push('No school observation reports recorded.');
+      lines.push(
+        isKm
+          ? 'មិនទាន់មានរបាយការណ៍សង្កេតពីសាលារៀននៅឡើយទេ។'
+          : 'No school observation reports recorded.',
+      );
     } else {
       for (const r of reports) {
         lines.push(`• ${this.formatDate(r.activityDate)} — ${r.title} (${r.schoolName})`);
+        const cat = this.getDomainLabel(r.activityCategory);
+        const teacher = r.reporter
+          ? `${r.reporter.firstName} ${r.reporter.lastName}`
+          : isKm
+            ? 'អ្នកឯកទេសក្នុងថ្នាក់'
+            : 'Classroom Specialist';
         lines.push(
-          `  Category: ${r.activityCategory} | Teacher: ${r.reporter?.firstName} ${r.reporter?.lastName}`,
+          isKm ? `  ប្រភេទ៖ ${cat} | គ្រូ៖ ${teacher}` : `  Category: ${cat} | Teacher: ${teacher}`,
         );
-        if (r.teacherObservation) lines.push(`  Observation: ${r.teacherObservation}`);
+        if (r.teacherObservation) {
+          lines.push(
+            isKm
+              ? `  ការសង្កេត៖ ${r.teacherObservation}`
+              : `  Observation: ${r.teacherObservation}`,
+          );
+        }
         const acc = this.getAccommodationTags(r).join(', ');
-        if (acc) lines.push(`  Accommodations: ${acc}`);
-        if (r.recommendations) lines.push(`  Home Recommendations: ${r.recommendations}`);
+        if (acc) {
+          lines.push(isKm ? `  ការសម្របសម្រួល៖ ${acc}` : `  Accommodations: ${acc}`);
+        }
+        if (r.recommendations) {
+          lines.push(
+            isKm
+              ? `  អនុសាសន៍នៅផ្ទះ៖ ${r.recommendations}`
+              : `  Home Recommendations: ${r.recommendations}`,
+          );
+        }
         lines.push('');
       }
     }
 
-    lines.push(
-      '------------------------------------------------------------------------',
-      'CONFIDENTIAL CLINICAL SUMMARY — PREPARED FOR DEVELOPMENTAL PEDIATRICIAN',
-      'This summary compiles home routines, validated screening trajectories,',
-      'and classroom observations to facilitate multidisciplinary care coordination.',
-      '========================================================================',
-    );
+    if (isKm) {
+      lines.push(
+        '------------------------------------------------------------------------',
+        'សេចក្តីសង្ខេបគ្លីនិកសម្ងាត់ — រៀបចំឡើងសម្រាប់គ្រូពេទ្យឯកទេសកុមារ',
+        'សេចក្តីសង្ខេបនេះចងក្រងទម្លាប់នៅផ្ទះ គន្លងវាយតម្លៃដែលបានផ្ទៀងផ្ទាត់',
+        'និងការសង្កេតក្នុងថ្នាក់រៀន ដើម្បីសម្រួលដល់ការសម្របសម្រួលការថែទាំពហុជំនាញ។',
+        '========================================================================',
+      );
+    } else {
+      lines.push(
+        '------------------------------------------------------------------------',
+        'CONFIDENTIAL CLINICAL SUMMARY — PREPARED FOR DEVELOPMENTAL PEDIATRICIAN',
+        'This summary compiles home routines, validated screening trajectories,',
+        'and classroom observations to facilitate multidisciplinary care coordination.',
+        '========================================================================',
+      );
+    }
 
     const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -3188,51 +3931,76 @@ export class ProgressPage implements OnInit {
   }
 
   riskLabel(level?: RiskLevel | string | null): string {
+    const isKm = this.currentLang() === 'km';
     switch (level) {
       case 'LOW':
-        return 'Low Risk';
+        return isKm ? 'ហានិភ័យទាប' : 'Low Risk';
       case 'MODERATE':
-        return 'Moderate Risk';
+        return isKm ? 'ហានិភ័យមធ្យម' : 'Moderate Risk';
       case 'HIGH':
-        return 'High Risk';
+        return isKm ? 'ហានិភ័យខ្ពស់' : 'High Risk';
       default:
-        return 'Not Screened';
+        return isKm ? 'មិនទាន់វាយតម្លៃ' : 'Not Screened';
     }
   }
 
   formatDate(value: string | null | undefined): string {
     if (!value) return '—';
     const date = new Date(value.includes('T') ? value : `${value}T00:00:00`);
-    return Number.isNaN(date.getTime())
-      ? value
-      : new Intl.DateTimeFormat(undefined, { dateStyle: 'long' }).format(date);
+    if (Number.isNaN(date.getTime())) return value;
+    const locale = this.currentLang() === 'km' ? 'km-KH' : 'en-US';
+    return new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(date);
   }
 
   downloadReport() {
     const report = this.report();
     if (!report) return;
-    const lines = [
-      `Activity Report: ${report.title}`,
-      `Date: ${this.formatDate(report.activityDate)}`,
-      `School: ${report.schoolName}`,
-      `Category: ${report.activityCategory}`,
-      `Duration: ${report.duration ?? 'Not specified'} min`,
-      '',
-      'Activity Summary',
-      report.summary,
-      '',
-      'Teacher Observations',
-      report.teacherObservation || 'No teacher observations included.',
-      '',
-      'Performance Metrics',
-      ...this.engagementMetrics().map((metric) => `${metric.label}: ${metric.display}`),
-      '',
-      'Home Recommendations',
-      ...this.recommendationItems().map((item, index) => `${index + 1}. ${item}`),
-      '',
-      'Attachments',
-      ...(report.photoUrls ?? []),
-    ];
+    const isKm = this.currentLang() === 'km';
+    const lines = isKm
+      ? [
+          `របាយការណ៍សកម្មភាព៖ ${report.title}`,
+          `កាលបរិច្ឆេទ៖ ${this.formatDate(report.activityDate)}`,
+          `សាលារៀន៖ ${report.schoolName}`,
+          `ប្រភេទ៖ ${this.getDomainLabel(report.activityCategory)}`,
+          `រយៈពេល៖ ${report.duration ?? 'មិនបានបញ្ជាក់'} នាទី`,
+          '',
+          'សេចក្តីសង្ខេបសកម្មភាព',
+          report.summary,
+          '',
+          'ការសង្កេតរបស់គ្រូ',
+          report.teacherObservation || 'មិនមានការសង្កេតរបស់គ្រូ។',
+          '',
+          'រង្វាស់ការអនុវត្ត',
+          ...this.engagementMetrics().map((metric) => `${metric.label}: ${metric.display}`),
+          '',
+          'អនុសាសន៍សម្រាប់អនុវត្តនៅផ្ទះ',
+          ...this.recommendationItems().map((item, index) => `${index + 1}. ${item}`),
+          '',
+          'ឯកសារភ្ជាប់',
+          ...(report.photoUrls ?? []),
+        ]
+      : [
+          `Activity Report: ${report.title}`,
+          `Date: ${this.formatDate(report.activityDate)}`,
+          `School: ${report.schoolName}`,
+          `Category: ${report.activityCategory}`,
+          `Duration: ${report.duration ?? 'Not specified'} min`,
+          '',
+          'Activity Summary',
+          report.summary,
+          '',
+          'Teacher Observations',
+          report.teacherObservation || 'No teacher observations included.',
+          '',
+          'Performance Metrics',
+          ...this.engagementMetrics().map((metric) => `${metric.label}: ${metric.display}`),
+          '',
+          'Home Recommendations',
+          ...this.recommendationItems().map((item, index) => `${index + 1}. ${item}`),
+          '',
+          'Attachments',
+          ...(report.photoUrls ?? []),
+        ];
     const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
