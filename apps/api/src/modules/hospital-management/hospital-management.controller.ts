@@ -9,6 +9,8 @@ const param = (value: string | readonly string[] | undefined) => {
   return value;
 };
 export const me = async (req: Request, res: Response) => ok(res, await service.me(req.auth!));
+export const updateMe = async (req: Request, res: Response) =>
+  ok(res, await service.updateProfile(req.auth!, req.body));
 export const appointments = async (req: Request, res: Response) =>
   ok(
     res,

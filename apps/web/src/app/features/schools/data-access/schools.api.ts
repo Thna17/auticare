@@ -29,6 +29,12 @@ import type {
   NotificationResponse,
   UpdateSchoolEnrollmentRequest,
   SchoolEnrollmentMutationResponse,
+  ResendInvitationRequest,
+  ResendInvitationResponse,
+  SchoolFavoriteResponse,
+  CreateSchoolReviewRequest,
+  SchoolReviewResponse,
+  SchoolReviewListResponse,
 } from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
@@ -51,6 +57,7 @@ export class SchoolsApi {
       province?: string;
       availability?: string;
       specializations?: string;
+      isFavorite?: boolean;
       page?: number;
     } = {},
   ) {
@@ -91,9 +98,42 @@ export class SchoolsApi {
       .pipe(map((response) => response.data));
   }
 
+  resendInvitation(input: ResendInvitationRequest) {
+    return this.http
+      .post<{ data: ResendInvitationResponse }>(`${this.apiBaseUrl}/auth/invitations/resend`, input)
+      .pipe(map((response) => response.data));
+  }
+
   updateSchool(schoolId: string, input: UpdateSchoolRequest) {
     return this.http
       .patch<{ data: SchoolResponse }>(`${this.apiBaseUrl}/schools/${schoolId}`, input)
+      .pipe(map((response) => response.data));
+  }
+
+  addFavorite(schoolId: string) {
+    return this.http
+      .post<{ data: SchoolFavoriteResponse }>(
+        `${this.apiBaseUrl}/schools/${schoolId}/favorites`,
+        {},
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  removeFavorite(schoolId: string) {
+    return this.http
+      .delete<{ data: SchoolFavoriteResponse }>(`${this.apiBaseUrl}/schools/${schoolId}/favorites`)
+      .pipe(map((response) => response.data));
+  }
+
+  listReviews(schoolId: string) {
+    return this.http
+      .get<{ data: SchoolReviewListResponse }>(`${this.apiBaseUrl}/schools/${schoolId}/reviews`)
+      .pipe(map((response) => response.data));
+  }
+
+  createReview(schoolId: string, input: CreateSchoolReviewRequest) {
+    return this.http
+      .post<{ data: SchoolReviewResponse }>(`${this.apiBaseUrl}/schools/${schoolId}/reviews`, input)
       .pipe(map((response) => response.data));
   }
 
@@ -105,9 +145,11 @@ export class SchoolsApi {
 
   /**
    * Enriched reports list from GET /schools/reports — includes child name,
-   * photo, and reporter name. Supports optional childId/status filters.
+   * photo, and reporter name. Supports optional childId/status/search filters.
    */
-  listReportsWithChild(params: { childId?: string; status?: string; page?: number } = {}) {
+  listReportsWithChild(
+    params: { childId?: string; status?: string; search?: string; page?: number } = {},
+  ) {
     return this.http
       .get<{ data: ActivityReportListResponse }>(`${this.apiBaseUrl}/schools/reports`, {
         params: Object.fromEntries(

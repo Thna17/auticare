@@ -72,6 +72,17 @@ enum SchoolEnrollmentStatus {
   ENDED
 }
 
+enum AdmissionRequestStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+}
+
+enum ActivityReportStatus {
+  DRAFT
+  SUBMITTED
+}
+
 model Parent {
   id                  String               @id @default(cuid())
   email               String               @unique
@@ -81,11 +92,13 @@ model Parent {
   phoneNumber         String?
   socialMediaAccount  String?
   role                UserRole             @default(PARENT)
+  mustResetPassword   Boolean              @default(false)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   preference          ParentPreference?
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
+  invitations         AccountInvitation[]
   children            Child[]
   favoriteSchools     FavoriteSchool[]
   reviews             Review[]
@@ -95,6 +108,7 @@ model Parent {
   schoolStaffProfiles SchoolStaff[]
   activityReports     ActivityReport[]
   hospitalStaffProfiles HospitalStaff[]
+  reportAttachmentUploads ReportAttachmentUpload[]
 
   @@index([email])
 }
@@ -154,6 +168,7 @@ model Child {
   activityProgress ActivityProgress[]
   schoolEnrollments SchoolChildEnrollment[]
   activityReports     ActivityReport[]
+  admissionRequests   AdmissionRequest[]
 
   @@index([parentId, archivedAt])
 }
@@ -299,6 +314,7 @@ model School {
   childEnrollments      SchoolChildEnrollment[]
   activityReports       ActivityReport[]
   notifications         Notification[]
+  reportAttachmentUploads ReportAttachmentUpload[]
 
   @@index([city, name])
 }
@@ -362,16 +378,21 @@ model Review {
 }
 
 model AdmissionRequest {
-  id        String   @id @default(cuid())
+  id        String                 @id @default(cuid())
   parentId  String
   schoolId  String
   childId   String?
-  message   String?  @db.Text
-  status    String   @default("REQUESTED")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  message   String?                @db.Text
+  status    AdmissionRequestStatus @default(REQUESTED)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  parent    Parent                 @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school    School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  child     Child?                 @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, status])
+  @@index([parentId, createdAt])
+  @@index([childId])
 }
 
 model Hospital {
@@ -404,36 +425,49 @@ model HospitalStaff {
 }
 
 model Doctor {
-  id           String        @id @default(cuid())
-  hospitalId   String
-  fullName     String
-  specialty    String
-  bio          String?       @db.Text
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  hospital     Hospital      @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
-  appointments Appointment[]
+  id                  String        @id @default(cuid())
+  hospitalId          String
+  fullName            String
+  specialty           String
+  bio                 String?       @db.Text
+  availableDays       String        @default("1,2,3,4,5")
+  startHour           Int           @default(9)
+  endHour             Int           @default(17)
+  slotDurationMinutes Int           @default(30)
+  timezone            String        @default("Asia/Phnom_Penh")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  hospital            Hospital      @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  appointments        Appointment[]
+
+  @@index([hospitalId])
 }
 
 model Appointment {
-  id          String            @id @default(cuid())
-  parentId    String
-  childId     String?
-  hospitalId  String
-  doctorId    String?
-  scheduledAt DateTime
-  status      AppointmentStatus @default(REQUESTED)
+  id              String            @id @default(cuid())
+  parentId        String
+  childId         String?
+  hospitalId      String
+  doctorId        String?
+  scheduledAt     DateTime
+  status          AppointmentStatus @default(REQUESTED)
   // The parent's reason for requesting the appointment.
-  reason      String?           @db.Text
+  reason          String?           @db.Text
   // The hospital's explanation when it rejects a request (status CANCELLED).
   // Distinct from `reason` above, which is the parent's own text.
-  rejectionReason String?       @db.Text
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  parent      Parent            @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  child       Child?            @relation(fields: [childId], references: [id])
-  hospital    Hospital          @relation(fields: [hospitalId], references: [id])
-  doctor      Doctor?           @relation(fields: [doctorId], references: [id])
+  rejectionReason String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  parent          Parent            @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  child           Child?            @relation(fields: [childId], references: [id])
+  hospital        Hospital          @relation(fields: [hospitalId], references: [id])
+  doctor          Doctor?           @relation(fields: [doctorId], references: [id])
+
+  @@index([doctorId, scheduledAt])
+  @@index([parentId, scheduledAt])
+  @@index([hospitalId, scheduledAt])
+  @@index([doctorId, status, scheduledAt])
+  @@index([hospitalId, status, scheduledAt])
 }
 
 model Activity {
@@ -462,7 +496,7 @@ model ActivityProgress {
   child             Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
   activity          Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
-  @@index([childId, activityId])
+  @@unique([childId, activityId])
 }
 
 model ActivityReport {
@@ -474,7 +508,7 @@ model ActivityReport {
   title            String
   summary          String                 @db.Text
   activityDate     DateTime
-  status           String                 @default("DRAFT")
+  status           ActivityReportStatus   @default(DRAFT)
   duration         Int? // minutes
   performanceMetrics Json?
   teacherObservation String?              @db.Text
@@ -485,10 +519,13 @@ model ActivityReport {
   school           School                 @relation(fields: [schoolId], references: [id])
   child            Child                  @relation(fields: [childId], references: [id], onDelete: Cascade)
   reporter         Parent                 @relation(fields: [reporterId], references: [id])
+  attachments      ReportAttachmentUpload[]
 
   @@map("SchoolActivityReport")
   @@index([childId, activityDate])
   @@index([schoolId, activityDate])
+  @@index([childId, status, activityDate])
+  @@index([schoolId, status, activityDate])
   @@index([reporterId])
 }
 
@@ -502,10 +539,70 @@ model Notification {
   body           String
   enrollmentId   String?
   reportId       String?
+  appointmentId  String?
   createdAt      DateTime                 @default(now())
   parent         Parent                   @relation(fields: [parentId], references: [id], onDelete: Cascade)
   school         School?                  @relation(fields: [schoolId], references: [id])
 
   @@index([parentId, status])
   @@index([schoolId])
+  @@index([schoolId, status, createdAt])
+  @@index([enrollmentId])
+}
+
+model AccountInvitation {
+  id          String    @id @default(cuid())
+  email       String
+  tokenHash   String    @unique
+  role        UserRole
+  parentId    String?
+  schoolId    String?
+  hospitalId  String?
+  title       String?
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  parent      Parent?   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([tokenHash])
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  action      String
+  actorId     String?
+  actorRole   String?
+  targetId    String?
+  targetEmail String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([action])
+  @@index([actorId])
+  @@index([targetEmail])
+  @@index([createdAt])
+}
+
+model ReportAttachmentUpload {
+  id          String          @id @default(cuid())
+  schoolId    String
+  reporterId  String
+  filename    String          @unique
+  storageKey  String
+  contentType String
+  byteSize    Int
+  reportId    String?
+  createdAt   DateTime        @default(now())
+  expiresAt   DateTime
+  school      School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  reporter    Parent          @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  report      ActivityReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId])
+  @@index([expiresAt, reportId])
+  @@index([reportId])
 }

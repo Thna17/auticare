@@ -7,7 +7,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
-const matchingPasswords = (control: AbstractControl): ValidationErrors | null => {
+export const matchingPasswords = (control: AbstractControl): ValidationErrors | null => {
   const password = control.get('password')?.value;
   const confirmPassword = control.get('confirmPassword')?.value;
 
@@ -29,34 +29,61 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="reset-title">
         <a class="brand" routerLink="/" aria-label="AutiCare home">
-          <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" />
+          <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" width="36" height="34" />
           <span>AutiCare</span>
         </a>
+
         <header>
           <h1 id="reset-title">Create a new password</h1>
-          <p>Use a strong password to keep your family support space protected.</p>
+          <p>Choose a strong, secure password to restore access to your family space.</p>
         </header>
 
-        @if (success()) {
-          <div class="success" role="status">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path
-                d="m5 12 4.2 4.2L19 6.8"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2.4"
-              />
-            </svg>
-            <p>{{ success() }}</p>
+        <!-- Recovery Step Instructions -->
+        <div class="steps-progress" aria-label="Password recovery steps">
+          <div class="step-item">
+            <span class="step-num">✓</span>
+            <span class="step-label">Requested</span>
           </div>
-          <a class="primary-link" routerLink="/login">Continue to log in</a>
+          <div class="step-divider" aria-hidden="true"></div>
+          <div class="step-item active">
+            <span class="step-num">2</span>
+            <span class="step-label">Set Password</span>
+          </div>
+          <div class="step-divider" aria-hidden="true"></div>
+          <div class="step-item" [class.active]="success() !== null">
+            <span class="step-num">3</span>
+            <span class="step-label">Complete</span>
+          </div>
+        </div>
+
+        @if (success()) {
+          <div class="success-card" role="status">
+            <div class="success-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="m5 12 4.2 4.2L19 6.8"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2.6"
+                />
+              </svg>
+            </div>
+            <h2>Password Reset Successful</h2>
+            <p class="success-message">{{ success() }}</p>
+            <p class="next-step-note">
+              Your password has been updated securely. You can now sign in with your new
+              credentials.
+            </p>
+            <a class="primary-link" routerLink="/login">Continue to log in</a>
+          </div>
         } @else {
           <form [formGroup]="form" (ngSubmit)="submit()" acAccessibleForm novalidate>
             @if (!tokenFromUrl()) {
               <ac-ui-field
                 label="Reset token"
+                hint="Paste the verification token provided in your reset email."
                 [required]="true"
                 [error]="
                   form.controls.token.touched && form.controls.token.invalid
@@ -83,12 +110,51 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
                   : null
               "
             >
-              <input
-                [type]="showPassword() ? 'text' : 'password'"
-                formControlName="password"
-                autocomplete="new-password"
-                placeholder="••••••••••••"
-              />
+              <div class="password-field">
+                <input
+                  [type]="showPassword() ? 'text' : 'password'"
+                  formControlName="password"
+                  autocomplete="new-password"
+                  placeholder="••••••••••••"
+                />
+                <button
+                  type="button"
+                  class="visibility-button"
+                  [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                  (click)="togglePasswordVisibility()"
+                >
+                  @if (showPassword()) {
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path
+                        d="M3.5 3.5 20.5 20.5M10.6 10.6a2 2 0 0 0 2.8 2.8M8.7 5.3A9.8 9.8 0 0 1 12 4.7c5.2 0 8.6 4.4 9.8 6.3.3.6.3 1.3 0 1.9a17 17 0 0 1-2.7 3.2M6.4 6.7A17 17 0 0 0 2.2 11c-.3.6-.3 1.3 0 1.9 1.2 1.9 4.6 6.3 9.8 6.3 1.6 0 3-.4 4.3-1"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                      />
+                    </svg>
+                  } @else {
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path
+                        d="M2.2 11c-.3.6-.3 1.3 0 1.9 1.2 1.9 4.6 6.3 9.8 6.3s8.6-4.4 9.8-6.3c.3-.6.3-1.3 0-1.9-1.2-1.9-4.6-6.3-9.8-6.3S3.4 9.1 2.2 11c-.3.6-.3 1.3 0 1.9Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      />
+                    </svg>
+                  }
+                </button>
+              </div>
             </ac-ui-field>
 
             <ac-ui-field
@@ -103,17 +169,75 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
                   : null
               "
             >
-              <input
-                [type]="showPassword() ? 'text' : 'password'"
-                formControlName="confirmPassword"
-                autocomplete="new-password"
-                placeholder="••••••••••••"
-              />
+              <div class="password-field">
+                <input
+                  [type]="showConfirmPassword() ? 'text' : 'password'"
+                  formControlName="confirmPassword"
+                  autocomplete="new-password"
+                  placeholder="••••••••••••"
+                />
+                <button
+                  type="button"
+                  class="visibility-button"
+                  [attr.aria-label]="
+                    showConfirmPassword() ? 'Hide confirm password' : 'Show confirm password'
+                  "
+                  (click)="toggleConfirmPasswordVisibility()"
+                >
+                  @if (showConfirmPassword()) {
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path
+                        d="M3.5 3.5 20.5 20.5M10.6 10.6a2 2 0 0 0 2.8 2.8M8.7 5.3A9.8 9.8 0 0 1 12 4.7c5.2 0 8.6 4.4 9.8 6.3.3.6.3 1.3 0 1.9a17 17 0 0 1-2.7 3.2M6.4 6.7A17 17 0 0 0 2.2 11c-.3.6-.3 1.3 0 1.9 1.2 1.9 4.6 6.3 9.8 6.3 1.6 0 3-.4 4.3-1"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                      />
+                    </svg>
+                  } @else {
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path
+                        d="M2.2 11c-.3.6-.3 1.3 0 1.9 1.2 1.9 4.6 6.3 9.8 6.3s8.6-4.4 9.8-6.3c.3-.6.3-1.3 0-1.9-1.2-1.9-4.6-6.3-9.8-6.3S3.4 9.1 2.2 11c-.3.6-.3 1.3 0 1.9Z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      />
+                    </svg>
+                  }
+                </button>
+              </div>
             </ac-ui-field>
 
-            <button class="toggle-button" type="button" (click)="togglePasswordVisibility()">
-              {{ showPassword() ? 'Hide password' : 'Show password' }}
-            </button>
+            <div class="password-requirements">
+              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                <circle
+                  cx="10"
+                  cy="10"
+                  r="8"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M10 9v4.5M10 6.5h.01"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <p>Passwords must be at least 12 characters and include a mixture of characters.</p>
+            </div>
 
             @if (error()) {
               <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
@@ -136,7 +260,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         }
 
         <footer>
-          <a routerLink="/forgot-password">Request a new link</a>
+          <a routerLink="/forgot-password">Request a new reset link</a>
         </footer>
       </section>
     </main>
@@ -146,10 +270,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       :host {
         display: block;
         min-height: 100svh;
-        background:
-          linear-gradient(115deg, rgb(231 238 223 / 0.52), transparent 36%),
-          linear-gradient(245deg, rgb(232 246 255 / 0.65), transparent 34%),
-          var(--ac-color-background);
+        background: var(--ac-color-background);
         color: var(--ac-color-text-strong);
       }
 
@@ -158,7 +279,7 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 32px 24px;
+        padding: 32px 20px;
       }
 
       .auth-card {
@@ -166,9 +287,10 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         border-radius: 24px;
         background: var(--ac-color-surface);
         box-shadow: 0 18px 60px rgb(41 74 90 / 0.1);
-        padding: 66px 64px 50px;
+        border: 1px solid var(--ac-color-border-slate);
+        padding: 48px 40px 36px;
         display: grid;
-        gap: 34px;
+        gap: 28px;
       }
 
       .brand {
@@ -180,7 +302,6 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         font-size: var(--ac-type-page-title);
         line-height: 1;
         font-weight: var(--ac-font-weight-bold);
-        letter-spacing: 0;
         text-decoration: none;
       }
 
@@ -189,61 +310,103 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         height: 36px;
         border-radius: 999px;
         object-fit: cover;
-        box-shadow: 0 0 0 1px #9bc6d8;
+        box-shadow: 0 0 0 1px var(--ac-color-sky-light);
       }
 
       header {
         text-align: center;
         display: grid;
-        gap: 14px;
+        gap: 8px;
       }
 
       h1,
+      h2,
       p {
         margin: 0;
       }
 
       h1 {
-        font-size: 31px;
+        font-size: 28px;
         line-height: 1.25;
         font-weight: var(--ac-font-weight-bold);
-        letter-spacing: 0;
       }
 
       header p {
         color: var(--ac-color-text-body);
-        font-size: var(--ac-type-page-subtitle);
-        line-height: 1.55;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      /* Step progress indicators */
+      .steps-progress {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: var(--ac-color-surface-info);
+        border: 1px solid var(--ac-color-border-info);
+      }
+
+      .step-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0.6;
+      }
+
+      .step-item.active {
+        opacity: 1;
+      }
+
+      .step-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: var(--ac-font-weight-bold);
+      }
+
+      .step-label {
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-strong);
+      }
+
+      .step-divider {
+        flex: 1;
+        height: 1px;
+        background: var(--ac-color-border-grey);
+        margin: 0 8px;
       }
 
       form {
         display: grid;
-        gap: 22px;
-      }
-
-      .field {
-        display: grid;
-        gap: 10px;
-        font-size: var(--ac-type-body);
-        font-weight: var(--ac-font-weight-semibold);
+        gap: 20px;
       }
 
       input {
         width: 100%;
-        height: 62px;
+        height: 56px;
         border: 1px solid var(--ac-color-border-grey);
-        border-radius: 14px;
-        background: #f2f9ff;
+        border-radius: 12px;
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-strong);
         font: inherit;
-        font-weight: var(--ac-font-weight-regular);
-        padding: 0 24px;
+        font-size: 16px;
+        padding: 0 18px;
+        transition:
+          border-color 160ms ease,
+          box-shadow 160ms ease;
       }
 
       input:focus {
         border-color: var(--ac-color-action);
-        background: var(--ac-color-surface);
-        box-shadow: 0 0 0 4px rgb(61 99 117 / 0.12);
+        box-shadow: 0 0 0 4px var(--ac-color-tint-blue);
         outline: none;
       }
 
@@ -251,51 +414,91 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         border-color: var(--ac-color-red-600);
       }
 
-      .toggle-button {
-        justify-self: start;
+      .password-field {
+        position: relative;
+      }
+
+      .password-field input {
+        padding-right: 52px;
+      }
+
+      .visibility-button {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        width: 36px;
+        height: 36px;
         border: 0;
+        border-radius: 999px;
         background: transparent;
-        color: var(--ac-color-action-deep);
+        color: var(--ac-color-slate-text-subtle);
+        display: grid;
+        place-items: center;
         cursor: pointer;
-        font: inherit;
-        font-weight: var(--ac-font-weight-bold);
-        padding: 0;
+        transform: translateY(-50%);
+        transition:
+          background 160ms ease,
+          color 160ms ease;
       }
 
-      .toggle-button:hover {
-        text-decoration: underline;
+      .visibility-button:hover {
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-action-deep);
       }
 
-      .submit-button,
-      .primary-link {
-        min-height: 64px;
-        border-radius: 14px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        text-decoration: none;
-        font-size: 18px;
-        font-weight: var(--ac-font-weight-bold);
+      .visibility-button svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .password-requirements {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: var(--ac-color-blue-tint-wash);
+        border: 1px solid var(--ac-color-border-info);
+        color: var(--ac-color-text-body);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .password-requirements svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        margin-top: 1px;
+        color: var(--ac-color-action);
       }
 
       .submit-button {
+        height: 56px;
+        border-radius: 12px;
         border: 0;
-        background: var(--ac-color-primary);
-        color: var(--ac-color-ink-d);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         cursor: pointer;
-        box-shadow: 0 14px 28px rgb(61 99 117 / 0.12);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-size: 16px;
+        font-weight: var(--ac-font-weight-semibold);
+        box-shadow: 0 8px 20px rgb(41 74 90 / 0.16);
+        transition:
+          background 160ms ease,
+          box-shadow 160ms ease;
       }
 
       .submit-button svg {
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
       }
 
-      .submit-button:hover:not(:disabled),
-      .primary-link:hover {
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
+      .submit-button:hover:not(:disabled) {
+        background: var(--ac-color-action-alt);
+        box-shadow: 0 10px 24px rgb(41 74 90 / 0.22);
       }
 
       .submit-button:disabled {
@@ -303,54 +506,82 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
         opacity: 0.72;
       }
 
-      .primary-link {
-        background: var(--ac-color-primary);
-        color: var(--ac-color-ink-d);
-      }
-
-      .success {
+      /* Success Feedback Card */
+      .success-card {
         border-radius: 16px;
         background: var(--ac-color-sage-light);
-        color: var(--ac-color-olive-darkest);
+        border: 1px solid var(--ac-color-green-border-soft);
+        padding: 28px 24px;
+        text-align: center;
         display: grid;
-        grid-template-columns: 30px minmax(0, 1fr);
-        align-items: start;
+        justify-items: center;
         gap: 14px;
-        padding: 18px;
+      }
+
+      .success-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+        background: var(--ac-color-green-600);
+        color: var(--ac-color-text-on-action);
+        display: grid;
+        place-items: center;
+      }
+
+      .success-icon svg {
+        width: 28px;
+        height: 28px;
+      }
+
+      .success-card h2 {
+        font-size: 20px;
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-olive-darkest);
+      }
+
+      .success-message {
+        color: var(--ac-color-olive-darkest);
+        font-size: 15px;
         line-height: 1.5;
       }
 
-      .success svg {
-        width: 26px;
-        height: 26px;
+      .next-step-note {
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--ac-color-text-muted);
       }
 
-      .field-error,
-      .form-error {
-        color: var(--ac-color-red-600);
-        font-size: var(--ac-type-label);
-        line-height: 1.4;
-        margin-top: -12px;
+      .primary-link {
+        height: 48px;
+        width: 100%;
+        border-radius: 10px;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: var(--ac-font-weight-semibold);
+        font-size: 15px;
+        text-decoration: none;
+        transition: background 160ms ease;
+        margin-top: 6px;
       }
 
-      .form-error {
-        margin-top: 0;
-        border-radius: 12px;
-        background: var(--ac-color-alert-surface);
-        color: var(--ac-color-alert-strong);
-        padding: 14px 16px;
+      .primary-link:hover {
+        background: var(--ac-color-action-alt);
       }
 
       footer {
-        border-top: 1px solid var(--ac-color-grey-pale-alt);
-        padding-top: 28px;
+        border-top: 1px solid var(--ac-color-border-slate);
+        padding-top: 20px;
         text-align: center;
       }
 
       footer a {
         color: var(--ac-color-action-deep);
-        font-weight: var(--ac-font-weight-bold);
+        font-weight: var(--ac-font-weight-semibold);
         text-decoration: none;
+        font-size: 14px;
       }
 
       footer a:hover {
@@ -358,16 +589,16 @@ const matchingPasswords = (control: AbstractControl): ValidationErrors | null =>
       }
 
       @media (max-width: 560px) {
-        .auth-page {
-          padding: 20px;
-        }
-
         .auth-card {
-          padding: 48px 28px 38px;
+          padding: 32px 20px 24px;
         }
 
-        .brand {
-          font-size: 38px;
+        h1 {
+          font-size: 24px;
+        }
+
+        .step-label {
+          display: none;
         }
       }
     `,
@@ -383,7 +614,9 @@ export class ResetPasswordPage {
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly showPassword = signal(false);
+  readonly showConfirmPassword = signal(false);
   readonly tokenFromUrl = signal(Boolean(this.route.snapshot.queryParamMap.get('token')));
+
   readonly form = this.fb.nonNullable.group(
     {
       token: [this.route.snapshot.queryParamMap.get('token') ?? '', Validators.required],
@@ -392,6 +625,14 @@ export class ResetPasswordPage {
     },
     { validators: matchingPasswords },
   );
+
+  togglePasswordVisibility() {
+    this.showPassword.update((v) => !v);
+  }
+
+  toggleConfirmPasswordVisibility() {
+    this.showConfirmPassword.update((v) => !v);
+  }
 
   submit() {
     this.error.set(null);
@@ -414,9 +655,5 @@ export class ResetPasswordPage {
         this.loading.set(false);
       },
     });
-  }
-
-  togglePasswordVisibility() {
-    this.showPassword.update((visible) => !visible);
   }
 }

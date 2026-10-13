@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { created, ok } from '../../common/http/response.js';
 import { AuthService, type AuthSession } from './auth.service.js';
+import { invitationService } from './invitation.service.js';
 import { TokenService } from './token.service.js';
 
 const authService = new AuthService();
@@ -42,6 +43,12 @@ export const requestPasswordReset = async (req: Request, res: Response) =>
 export const resetPassword = async (req: Request, res: Response) =>
   ok(res, await authService.resetPassword(req.body));
 
+export const changePassword = async (req: Request, res: Response) =>
+  ok(
+    res,
+    await authService.changePassword(req.auth!.parentId, req.body, req.cookies?.auticare_refresh),
+  );
+
 export const refresh = async (req: Request, res: Response) => {
   const session = await authService.refresh(req.cookies.auticare_refresh);
   setAuthCookies(res, session);
@@ -59,3 +66,14 @@ export const me = async (req: Request, res: Response) =>
 
 export const updateMe = async (req: Request, res: Response) =>
   ok(res, await authService.updateMyProfile(req.auth!.parentId, req.body));
+
+export const verifyInvitation = async (req: Request, res: Response) => {
+  const token = String(req.query.token ?? '');
+  return ok(res, await invitationService.verifyInvitation(token));
+};
+
+export const acceptInvitation = async (req: Request, res: Response) =>
+  ok(res, await invitationService.acceptInvitation(req.body));
+
+export const resendInvitation = async (req: Request, res: Response) =>
+  ok(res, await invitationService.resendInvitation(req.body, req.auth));

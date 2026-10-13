@@ -59,6 +59,7 @@ const publicSchoolFields = [
   'admissionRequirements',
   'operatingHours',
   'facilities',
+  'isFavorite',
 ];
 
 beforeAll(async () => {

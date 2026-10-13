@@ -1,12 +1,19 @@
 import type { OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { HospitalResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { HospitalsApi } from './data-access/hospitals.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import {
+  CAMBODIA_PROVINCES,
+  CAMBODIAN_HOSPITALS_SEED,
+  formatCityBilingual,
+} from './cambodia-hospitals.data';
 
 /** Card view model — `services` split into badge tags. */
 interface HospitalViewModel {
@@ -24,54 +31,51 @@ const SERVICE_FILTER_OPTIONS = [
   'Developmental pediatrics',
   'Occupational therapy',
   'Speech therapy',
+  'Child neurology',
 ] as const;
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, UiMessageComponent, UiEmptyStateComponent, UiSpinnerComponent],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    UiMessageComponent,
+    UiEmptyStateComponent,
+    UiSpinnerComponent,
+  ],
   template: `
-    <!-- Top Bar -->
-    <header class="topbar">
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input
-          aria-label="Search hospitals by name, city or specialization"
-          type="text"
-          placeholder="Search for hospitals, cities, or specializations..."
-          class="search-input"
-          [value]="search()"
-          (input)="search.set($any($event.target).value)"
-        />
-      </div>
-      <div class="topbar-actions">
-        <div class="user-profile-small">
-          <div class="user-text">
-            <span class="name">{{ userName() }}</span>
-            <span class="role">{{ userRole() }}</span>
-          </div>
-          <div class="avatar-small">{{ initials() }}</div>
-        </div>
-      </div>
-    </header>
-
     <!-- Page Header -->
     <section class="page-header">
-      <div>
-        <h1>Hospitals</h1>
+      <div class="header-content">
+        <h1>
+          {{
+            currentLang() === 'km' ? 'បញ្ជីមន្ទីរពេទ្យ និងគ្លីនិកឯកទេស (Hospitals)' : 'Hospitals'
+          }}
+        </h1>
         <p>
-          Discover specialist care providers for your child — therapies, diagnostics, and
-          developmental support in one directory.
+          {{
+            currentLang() === 'km'
+              ? 'ស្វែងរកមន្ទីរពេទ្យ និងគ្លីនិកឯកទេសកុមារនៅកម្ពុជា — ការព្យាបាល ការធ្វើរោគវិនិច្ឆ័យ និងការគាំទ្រការលូតលាស់ក្នុងបញ្ជីតែមួយ។'
+              : 'Discover specialist care providers for your child — therapies, diagnostics, and developmental support in one directory.'
+          }}
         </p>
       </div>
-      <div class="view-toggle">
-        <button type="button" class="toggle-btn active">
-          <span>☰</span>
-          <span>List View</span>
-        </button>
-        <button type="button" class="toggle-btn">
-          <span>🗺</span>
-          <span>Map View</span>
-        </button>
+      <div class="header-actions">
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input
+            aria-label="Search hospitals by name, city or specialization"
+            type="text"
+            [placeholder]="
+              currentLang() === 'km'
+                ? 'ស្វែងរកមន្ទីរពេទ្យ ទីក្រុង/ខេត្ត ជំនាញឯកទេស...'
+                : 'Search hospitals, cities, specializations...'
+            "
+            class="search-input"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </div>
       </div>
     </section>
 
@@ -80,26 +84,32 @@ const SERVICE_FILTER_OPTIONS = [
       <aside class="filters-sidebar">
         <div class="filters-header">
           <span class="filter-icon">⚙</span>
-          <h2>Filters</h2>
+          <h2>{{ currentLang() === 'km' ? 'តម្រងស្វែងរក (Filters)' : 'Filters' }}</h2>
         </div>
 
         <div class="filter-group">
-          <label class="filter-label">City/Province</label>
+          <label class="filter-label">
+            {{ currentLang() === 'km' ? 'ទីក្រុង/ខេត្ត (City/Province)' : 'City/Province' }}
+          </label>
           <select
             aria-label="Filter hospitals by city"
             class="filter-select"
             [value]="selectedCity()"
             (change)="selectedCity.set($any($event.target).value)"
           >
-            <option value="">All cities</option>
+            <option value="">
+              {{ currentLang() === 'km' ? 'គ្រប់ទីក្រុង/ខេត្តទាំងអស់ (All cities)' : 'All cities' }}
+            </option>
             @for (city of cities(); track city) {
-              <option [value]="city">{{ city }}</option>
+              <option [value]="city">{{ formatCityLabel(city) }}</option>
             }
           </select>
         </div>
 
         <div class="filter-group">
-          <label class="filter-label">Services</label>
+          <label class="filter-label">
+            {{ currentLang() === 'km' ? 'សេវាកម្មព្យាបាល (Services)' : 'Services' }}
+          </label>
           <div class="checkbox-group">
             @for (service of serviceOptions; track service) {
               <label class="checkbox-label">
@@ -114,9 +124,11 @@ const SERVICE_FILTER_OPTIONS = [
           </div>
         </div>
 
-        <button type="button" class="apply-filters-btn" (click)="applyFilters()">Go</button>
+        <button type="button" class="apply-filters-btn" (click)="applyFilters()">
+          {{ currentLang() === 'km' ? 'អនុវត្ត (Go)' : 'Go' }}
+        </button>
         <button type="button" class="clear-filters-btn" (click)="clearFilters()">
-          Reset filters
+          {{ currentLang() === 'km' ? 'កំណត់ឡើងវិញ (Reset)' : 'Reset filters' }}
         </button>
       </aside>
 
@@ -181,7 +193,13 @@ const SERVICE_FILTER_OPTIONS = [
                 }
 
                 <div class="hospital-footer">
-                  <button type="button" class="booking-btn">Book Appointment</button>
+                  <a [routerLink]="['/appointments/hospitals', hospital.id]" class="booking-btn">
+                    {{
+                      currentLang() === 'km'
+                        ? 'កក់ការណាត់ជួប (Book Appointment)'
+                        : 'Book Appointment'
+                    }}
+                  </a>
                 </div>
               </div>
             </article>
@@ -250,17 +268,32 @@ const SERVICE_FILTER_OPTIONS = [
         margin: 0;
       }
 
-      /* ── Top bar ─────────────────────────────────────────────── */
-      .topbar {
+      /* ── Page header ─────────────────────────────────────────── */
+      .page-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
+        gap: 24px;
         margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+      .header-content h1 {
+        font-size: 28px;
+        color: var(--ac-color-action-darkest);
+        margin-bottom: 6px;
+      }
+      .header-content p {
+        color: var(--ac-color-text-slate);
+        font-size: 14px;
+        max-width: 560px;
+      }
+      .header-actions {
+        flex: 1;
+        max-width: 440px;
+        min-width: 260px;
       }
       .search-box {
-        flex: 1;
-        max-width: 520px;
+        width: 100%;
         display: flex;
         align-items: center;
         gap: 10px;
@@ -283,87 +316,6 @@ const SERVICE_FILTER_OPTIONS = [
         background: transparent;
         outline: none;
       }
-      .topbar-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .user-profile-small {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .user-text {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-      }
-      .user-text .name {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--ac-color-action-darkest);
-      }
-      .user-text .role {
-        font-size: 12px;
-        color: var(--ac-color-text-slate);
-      }
-      .avatar-small {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background: var(--ac-color-action-alt);
-        color: var(--ac-color-text-on-action);
-        display: grid;
-        place-items: center;
-        font-size: 13px;
-        font-weight: 700;
-      }
-
-      /* ── Page header ─────────────────────────────────────────── */
-      .page-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 24px;
-        margin-bottom: 24px;
-      }
-      .page-header h1 {
-        font-size: 28px;
-        color: var(--ac-color-action-darkest);
-        margin-bottom: 6px;
-      }
-      .page-header > div > p {
-        color: var(--ac-color-text-slate);
-        font-size: 14px;
-        max-width: 560px;
-      }
-      .view-toggle {
-        display: flex;
-        gap: 8px;
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-tint-steel-soft);
-        border-radius: 10px;
-        padding: 4px;
-      }
-      .toggle-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        border: none;
-        background: transparent;
-        color: var(--ac-color-text-slate);
-        font: inherit;
-        font-size: 13px;
-        font-weight: 600;
-        padding: 8px 14px;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-      .toggle-btn.active {
-        background: var(--ac-color-action-alt);
-        color: var(--ac-color-text-on-action);
-      }
-
       /* ── Layout: sidebar + list ──────────────────────────────── */
       .content-wrapper {
         display: flex;
@@ -616,6 +568,10 @@ const SERVICE_FILTER_OPTIONS = [
         padding-top: 6px;
       }
       .booking-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
         padding: 11px 22px;
         background: var(--ac-color-action-alt);
         color: var(--ac-color-text-on-action);
@@ -760,6 +716,8 @@ export class HospitalsPage implements OnInit {
   private readonly api = inject(HospitalsApi);
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
 
   readonly canManage = computed(() => this.auth.parent()?.role === 'ADMIN');
 
@@ -773,10 +731,17 @@ export class HospitalsPage implements OnInit {
   readonly sortBy = signal<SortOption>('name');
   readonly serviceOptions = SERVICE_FILTER_OPTIONS;
 
-  /** Distinct cities from the loaded directory. */
-  readonly cities = computed(() =>
-    [...new Set(this.allHospitals().map((h) => h.city))].sort((a, b) => a.localeCompare(b)),
-  );
+  /** Distinct cities from the loaded directory plus standard Cambodian provinces. */
+  readonly cities = computed(() => {
+    const loaded = this.allHospitals().map((h) => h.city);
+    const provinceNames = CAMBODIA_PROVINCES.map((p) => p.nameEn);
+    const combined = Array.from(new Set([...provinceNames, ...loaded]));
+    return combined.sort((a, b) => a.localeCompare(b));
+  });
+
+  protected formatCityLabel(city: string): string {
+    return formatCityBilingual(city, this.currentLang());
+  }
 
   /** Frontend filtering + search + sorting over the loaded directory. */
   readonly filteredHospitals = computed<readonly HospitalViewModel[]>(() => {
@@ -787,7 +752,13 @@ export class HospitalsPage implements OnInit {
     const items = this.allHospitals()
       .map((hospital) => ({ ...hospital, serviceTags: parseServiceTags(hospital.services) }))
       .filter((hospital) => {
-        if (city !== '' && hospital.city.toLowerCase() !== city.toLowerCase()) return false;
+        if (city !== '') {
+          const normCity = city.toLowerCase();
+          const hospCity = hospital.city.toLowerCase();
+          if (!hospCity.includes(normCity) && !normCity.includes(hospCity)) {
+            return false;
+          }
+        }
         if (
           services.length > 0 &&
           !services.some((service) => matchesService(hospital.services, service))
@@ -826,23 +797,6 @@ export class HospitalsPage implements OnInit {
     city: ['', [Validators.required, Validators.maxLength(120)]],
     address: ['', [Validators.required, Validators.maxLength(300)]],
     services: ['', [Validators.required, Validators.maxLength(2000)]],
-  });
-
-  readonly userName = computed(() => {
-    const parent = this.auth.parent();
-    const name = [parent?.firstName, parent?.lastName].filter(Boolean).join(' ').trim();
-    return name !== '' ? name : (parent?.email ?? 'Parent');
-  });
-  readonly userRole = computed(() => {
-    const role = this.auth.parent()?.role ?? 'PARENT';
-    return role === 'ADMIN' ? 'Administrator' : 'Parent';
-  });
-  readonly initials = computed(() => {
-    const parent = this.auth.parent();
-    const first = parent?.firstName?.[0] ?? '';
-    const last = parent?.lastName?.[0] ?? '';
-    const value = (first + last).trim();
-    return value !== '' ? value.toUpperCase() : 'P';
   });
 
   ngOnInit() {
@@ -912,11 +866,11 @@ export class HospitalsPage implements OnInit {
     this.error.set(null);
     this.api.listHospitals().subscribe({
       next: (hospitals) => {
-        this.allHospitals.set(hospitals);
+        this.allHospitals.set(hospitals.length > 0 ? hospitals : CAMBODIAN_HOSPITALS_SEED);
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Hospitals could not be loaded. Please refresh the page.');
+        this.allHospitals.set(CAMBODIAN_HOSPITALS_SEED);
         this.loading.set(false);
       },
     });

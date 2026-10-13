@@ -10,9 +10,12 @@ import { authGuard } from './auth.guard';
  * The guard reads AuthService through signals and may return a boolean or an
  * Observable, so each case states which it expects rather than unwrapping both.
  */
-const runGuard = (options: { authenticated: boolean; loadResolvesTo?: boolean }) => {
+const runGuard = (options: { authenticated: boolean; loadResolvesTo?: boolean; url?: string }) => {
   const loadCurrentUser = vi.fn(() => of(options.loadResolvesTo ?? false));
-  const createUrlTree = vi.fn((commands: readonly string[]) => ({ commands }));
+  const createUrlTree = vi.fn((commands: readonly string[], navOptions?: unknown) => ({
+    commands,
+    navOptions,
+  }));
 
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
@@ -25,8 +28,9 @@ const runGuard = (options: { authenticated: boolean; loadResolvesTo?: boolean })
     ],
   });
 
+  const state = { url: options.url ?? '/dashboard' } as RouterStateSnapshot;
   const result = TestBed.runInInjectionContext(() =>
-    authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    authGuard({} as ActivatedRouteSnapshot, state),
   );
   return { result, loadCurrentUser, createUrlTree };
 };
@@ -54,14 +58,20 @@ describe('authGuard', () => {
     await expect(firstValue(result)).resolves.toBe(true);
   });
 
-  it('redirects to login when the server says the session is gone', async () => {
+  it('redirects to login when the server says the session is gone and preserves returnUrl', async () => {
     const { result, createUrlTree } = runGuard({
       authenticated: false,
       loadResolvesTo: false,
+      url: '/appointments',
     });
 
-    await expect(firstValue(result)).resolves.toEqual({ commands: ['/login'] });
-    expect(createUrlTree).toHaveBeenCalledWith(['/login']);
+    await expect(firstValue(result)).resolves.toEqual({
+      commands: ['/login'],
+      navOptions: { queryParams: { returnUrl: '/appointments' } },
+    });
+    expect(createUrlTree).toHaveBeenCalledWith(['/login'], {
+      queryParams: { returnUrl: '/appointments' },
+    });
   });
 });
 

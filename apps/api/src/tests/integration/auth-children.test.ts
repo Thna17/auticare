@@ -116,10 +116,15 @@ describe('auth refresh rotation and child ownership', () => {
 
     const createResponse = await parentAgent.post('/api/v1/children').send({
       firstName: 'Child',
+      lastName: 'Smith',
       dateOfBirth: '2020-01-02',
+      address: '123 Care Street',
       notes: 'Uses headphones in busy spaces.',
     });
     expect(createResponse.status).toBe(201);
+    expect(createResponse.body.data.firstName).toBe('Child');
+    expect(createResponse.body.data.lastName).toBe('Smith');
+    expect(createResponse.body.data.address).toBe('123 Care Street');
     const childId = createResponse.body.data.id;
 
     const blockedGet = await otherParentAgent.get(`/api/v1/children/${childId}`);
@@ -132,9 +137,13 @@ describe('auth refresh rotation and child ownership', () => {
 
     const updateResponse = await parentAgent.patch(`/api/v1/children/${childId}`).send({
       firstName: 'Updated Child',
+      lastName: 'Johnson',
+      address: '456 Hope Avenue',
     });
     expect(updateResponse.status).toBe(200);
     expect(updateResponse.body.data.firstName).toBe('Updated Child');
+    expect(updateResponse.body.data.lastName).toBe('Johnson');
+    expect(updateResponse.body.data.address).toBe('456 Hope Avenue');
 
     const adminGet = await adminAgent.get(`/api/v1/children/${childId}`);
     expect(adminGet.status).toBe(200);

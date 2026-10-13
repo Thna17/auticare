@@ -1,4 +1,9 @@
-import type { CreateChildRequest, UpdateChildRequest, UserRole } from '@auticare/contracts';
+import type {
+  CreateChildRequest,
+  ListChildrenQuery,
+  UpdateChildRequest,
+  UserRole,
+} from '@auticare/contracts';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { ChildrenRepository } from './children.repository.js';
 import { toChildResponse } from './children.mapper.js';
@@ -19,13 +24,18 @@ const parseDateOfBirth = (dateOfBirth: string): Date => {
 export class ChildrenService {
   constructor(private readonly repository = new ChildrenRepository()) {}
 
-  async list(actor: Actor) {
+  async list(actor: Actor, query?: ListChildrenQuery) {
     if (actor.role === 'ADMIN') {
-      const children = await this.repository.listAllActive();
+      const pagination =
+        query?.page && query?.limit ? { page: query.page, limit: query.limit } : undefined;
+      const children = await this.repository.listAllActive(pagination);
       return children.map(toChildResponse);
     }
     if (actor.role !== 'PARENT') throw forbidden();
-    const children = await this.repository.listByParent(actor.parentId);
+    const children = await this.repository.listByParent(
+      actor.parentId,
+      query?.includeArchived ?? false,
+    );
     return children.map(toChildResponse);
   }
 
@@ -39,7 +49,9 @@ export class ChildrenService {
     const child = await this.repository.create({
       parentId: actor.parentId,
       firstName: input.firstName,
+      ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
       dateOfBirth: parseDateOfBirth(input.dateOfBirth),
+      ...(input.address !== undefined ? { address: input.address } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
     });
     return toChildResponse(child);
@@ -49,9 +61,11 @@ export class ChildrenService {
     await this.getAuthorizedChild(actor, childId);
     const child = await this.repository.update(childId, {
       ...(input.firstName !== undefined ? { firstName: input.firstName } : {}),
+      ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
       ...(input.dateOfBirth !== undefined
         ? { dateOfBirth: parseDateOfBirth(input.dateOfBirth) }
         : {}),
+      ...(input.address !== undefined ? { address: input.address } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
     });
     return toChildResponse(child);
@@ -60,6 +74,12 @@ export class ChildrenService {
   async archive(actor: Actor, childId: string) {
     await this.getAuthorizedChild(actor, childId);
     const child = await this.repository.archive(childId);
+    return toChildResponse(child);
+  }
+
+  async restore(actor: Actor, childId: string) {
+    await this.getAuthorizedChild(actor, childId);
+    const child = await this.repository.restore(childId);
     return toChildResponse(child);
   }
 

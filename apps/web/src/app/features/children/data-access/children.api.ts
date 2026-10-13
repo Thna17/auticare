@@ -7,9 +7,10 @@ import { API_BASE_URL } from '../../../core/config/api.config';
 export class ChildrenApi {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
-  listChildren() {
+  listChildren(params?: { includeArchived?: boolean }) {
+    const qs = params?.includeArchived ? '?includeArchived=true' : '';
     return this.http
-      .get<{ data: ChildResponse[] }>(`${this.apiBaseUrl}/children`)
+      .get<{ data: ChildResponse[] }>(`${this.apiBaseUrl}/children${qs}`)
       .pipe(map((response) => response.data));
   }
   getChild(childId: string) {
@@ -30,6 +31,11 @@ export class ChildrenApi {
   archiveChild(childId: string) {
     return this.http
       .delete<{ data: ChildResponse }>(`${this.apiBaseUrl}/children/${childId}`)
+      .pipe(map((response) => response.data));
+  }
+  restoreChild(childId: string) {
+    return this.http
+      .post<{ data: ChildResponse }>(`${this.apiBaseUrl}/children/${childId}/restore`, {})
       .pipe(map((response) => response.data));
   }
 }

@@ -32,3 +32,15 @@ export const listParentNotifications = async (req: Request, res: Response) =>
     res,
     await service.listNotifications(req.auth!, validatedQuery<ListParentNotificationsQuery>(req)),
   );
+
+export const markNotificationRead = async (req: Request, res: Response) =>
+  ok(res, await service.markNotificationRead(req.auth!, requiredParam(req.params.id)));
+
+export const markAllNotificationsRead = async (req: Request, res: Response) =>
+  ok(res, await service.markAllNotificationsRead(req.auth!));
+
+export const getParentPreferences = async (req: Request, res: Response) =>
+  ok(res, await service.getPreferences(req.auth!));
+
+export const updateParentPreferences = async (req: Request, res: Response) =>
+  ok(res, await service.updatePreferences(req.auth!, req.body));

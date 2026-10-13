@@ -139,4 +139,28 @@ export class AuthRepository {
       { isolationLevel: 'ReadCommitted' as Prisma.TransactionIsolationLevel },
     );
   }
+
+  async changePassword(
+    parentId: string,
+    passwordHash: string,
+    currentTokenHash?: string,
+  ): Promise<void> {
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.parent.update({
+          where: { id: parentId },
+          data: { passwordHash, mustResetPassword: false },
+        });
+        await tx.refreshToken.updateMany({
+          where: {
+            parentId,
+            revokedAt: null,
+            ...(currentTokenHash ? { tokenHash: { not: currentTokenHash } } : {}),
+          },
+          data: { revokedAt: new Date() },
+        });
+      },
+      { isolationLevel: 'ReadCommitted' as Prisma.TransactionIsolationLevel },
+    );
+  }
 }

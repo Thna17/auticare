@@ -21,7 +21,15 @@ const appointment = (
 const makeFacade = (api: Partial<AppointmentsApi>) => {
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
-    providers: [{ provide: AppointmentsApi, useValue: api }],
+    providers: [
+      {
+        provide: AppointmentsApi,
+        useValue: {
+          getDoctorSlots: vi.fn(() => of({ doctorId: '', date: '', timezone: '', slots: [] })),
+          ...api,
+        },
+      },
+    ],
   });
   return TestBed.inject(AppointmentsFacade);
 };
@@ -149,5 +157,131 @@ describe('AppointmentsFacade doctor filtering', () => {
     facade.categoryFilter.set('Psychiatry' as never);
 
     expect(facade.filteredDoctors().map((d) => d.id)).toEqual(['2']);
+  });
+});
+
+describe('AppointmentsFacade slot availability and rescheduling', () => {
+  it('fetches real slots when date is selected for booking', () => {
+    const getDoctorSlots = vi.fn(() =>
+      of({
+        doctorId: 'doc-1',
+        date: '2026-11-20',
+        timezone: 'Asia/Phnom_Penh',
+        slots: [{ time: '09:00 AM', iso: '2026-11-20T02:00:00.000Z', available: true }],
+      }),
+    );
+    const facade = makeFacade({ getDoctorSlots } as unknown as Partial<AppointmentsApi>);
+    facade.openBooking({
+      id: 'doc-1',
+      fullName: 'Dr. Test',
+      specialty: 'Pediatrics',
+      bio: null,
+      hospitalId: 'hosp-1',
+    });
+
+    facade.selectDate('2026-11-20');
+
+    expect(getDoctorSlots).toHaveBeenCalledWith('doc-1', '2026-11-20');
+    expect(facade.booking().slots).toEqual([
+      { time: '09:00 AM', iso: '2026-11-20T02:00:00.000Z', available: true },
+    ]);
+  });
+
+  it('updates appointment scheduledAt on successful reschedule', () => {
+    const original = appointment('app-1', 'REQUESTED', HOUR);
+    const rescheduled = {
+      ...original,
+      scheduledAt: new Date(Date.now() + 24 * HOUR).toISOString(),
+    };
+    const rescheduleAppointment = vi.fn(() => of(rescheduled));
+    const facade = makeFacade({ rescheduleAppointment } as unknown as Partial<AppointmentsApi>);
+
+    facade.appointments.set([original]);
+    facade.openReschedule(original);
+    facade.selectRescheduleDate('2026-11-22');
+    facade.selectRescheduleTime('10:00 AM');
+    facade.confirmReschedule();
+
+    expect(rescheduleAppointment).toHaveBeenCalled();
+    expect(facade.appointments().find((a) => a.id === 'app-1')?.scheduledAt).toBe(
+      rescheduled.scheduledAt,
+    );
+    expect(facade.reschedule().isOpen).toBe(false);
+  });
+
+  it('handles off-days without calling API and clears slots', () => {
+    const getDoctorSlots = vi.fn();
+    const facade = makeFacade({ getDoctorSlots } as unknown as Partial<AppointmentsApi>);
+    facade.openBooking({
+      id: 'doc-1',
+      fullName: 'Dr. Test',
+      specialty: 'Pediatrics',
+      bio: null,
+      hospitalId: 'hosp-1',
+      availableDays: '1,2,3,4,5', // Mon - Fri only
+    });
+
+    // 2026-11-22 is a Sunday (day 0)
+    facade.selectDate('2026-11-22');
+
+    expect(getDoctorSlots).not.toHaveBeenCalled();
+    expect(facade.booking().slots).toEqual([]);
+    expect(facade.booking().slotsLoading).toBe(false);
+  });
+
+  it('refuses to confirm booking when selected time is not in loaded slots', () => {
+    const createAppointment = vi.fn();
+    const facade = makeFacade({ createAppointment } as unknown as Partial<AppointmentsApi>);
+    facade.activeHospital.set({ id: 'hosp-1', name: 'Test Hospital', city: 'Phnom Penh' });
+    facade.openBooking({
+      id: 'doc-1',
+      fullName: 'Dr. Test',
+      specialty: 'Pediatrics',
+      bio: null,
+      hospitalId: 'hosp-1',
+    });
+    facade.selectChild('child-1');
+    facade.selectDate('2026-11-20');
+    // Set time without valid loaded slots
+    facade.selectTime('09:00 AM');
+
+    facade.confirmBooking();
+
+    expect(createAppointment).not.toHaveBeenCalled();
+    expect(facade.booking().error).toBe('Please choose an available appointment slot.');
+  });
+
+  it('confirms booking using real slot ISO timestamp', () => {
+    const createdAppointment = appointment('app-new', 'REQUESTED', 48 * HOUR);
+    const createAppointment = vi.fn(() => of(createdAppointment));
+    const facade = makeFacade({ createAppointment } as unknown as Partial<AppointmentsApi>);
+    facade.activeHospital.set({ id: 'hosp-1', name: 'Test Hospital', city: 'Phnom Penh' });
+    facade.openBooking({
+      id: 'doc-1',
+      fullName: 'Dr. Test',
+      specialty: 'Pediatrics',
+      bio: null,
+      hospitalId: 'hosp-1',
+    });
+    facade.selectChild('child-1');
+    facade.booking.update((s) => ({
+      ...s,
+      date: '2026-11-20',
+      time: '09:00 AM',
+      slots: [{ time: '09:00 AM', iso: '2026-11-20T02:00:00.000Z', available: true }],
+    }));
+
+    facade.confirmBooking();
+
+    expect(createAppointment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        childId: 'child-1',
+        hospitalId: 'hosp-1',
+        doctorId: 'doc-1',
+        scheduledAt: '2026-11-20T02:00:00.000Z',
+      }),
+    );
+    expect(facade.booking().step).toBe('confirmed');
+    expect(facade.booking().confirmed).toEqual(createdAppointment);
   });
 });

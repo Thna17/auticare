@@ -84,7 +84,8 @@ export class ScreeningService {
     if (session.status !== 'DRAFT') {
       throw new AppError('CONFLICT', 'This screening session has already been submitted.', 409);
     }
-    const ageBand = session.ageBand ?? bandForAge((await this.childFor(session)).dateOfBirth);
+    const child = await this.childFor(session);
+    const ageBand = session.ageBand ?? bandForAge(child.dateOfBirth);
     const questions = await this.repository.listActiveQuestionsForBand(ageBand);
     const answeredQuestionIds = new Set(session.answers.map((answer) => answer.questionId));
     const allAnswered =
@@ -125,6 +126,16 @@ export class ScreeningService {
         riskLevel: entry.riskLevel,
         displayOrder: index,
       })),
+      notification: {
+        parentId: child.parentId,
+        type: 'SCREENING',
+        title: 'Screening Completed for ' + child.firstName,
+        body:
+          'Developmental screening finalized with ' +
+          score.riskLevel +
+          ' risk identified. Tap to view summary and clinical recommendations.',
+        reportId: sessionId,
+      },
     });
     return this.buildResultResponse(submitted);
   }

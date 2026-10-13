@@ -81,6 +81,7 @@ export const parentResponseSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   role: z.enum(userRoles),
+  mustResetPassword: z.boolean().optional(),
   /** Optional contact details the account holder can edit themselves. */
   phoneNumber: z.string().nullable(),
   socialMediaAccount: z.string().nullable(),
@@ -146,17 +147,72 @@ export const resetPasswordResponseSchema = z.object({
   message: z.string(),
 });
 export type ResetPasswordResponse = z.infer<typeof resetPasswordResponseSchema>;
+
+export const changePasswordRequestSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(12),
+});
+export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
+
+export const changePasswordResponseSchema = z.object({
+  message: z.string(),
+});
+export type ChangePasswordResponse = z.infer<typeof changePasswordResponseSchema>;
+
+// ── Account Invitation Schemas ───────────────────────────────────────────
+
+export const verifyInvitationQuerySchema = z.object({
+  token: z.string().min(1),
+});
+export type VerifyInvitationQuery = z.infer<typeof verifyInvitationQuerySchema>;
+
+export const verifyInvitationResponseSchema = z.object({
+  valid: z.boolean(),
+  email: z.string().email(),
+  role: z.enum(userRoles),
+  firstName: z.string(),
+  lastName: z.string(),
+  organizationName: z.string().nullable().optional(),
+});
+export type VerifyInvitationResponse = z.infer<typeof verifyInvitationResponseSchema>;
+
+export const acceptInvitationRequestSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(12),
+});
+export type AcceptInvitationRequest = z.infer<typeof acceptInvitationRequestSchema>;
+
+export const acceptInvitationResponseSchema = z.object({
+  message: z.string(),
+  parent: parentResponseSchema,
+});
+export type AcceptInvitationResponse = z.infer<typeof acceptInvitationResponseSchema>;
+
+export const resendInvitationRequestSchema = z.object({
+  email: z.string().email(),
+});
+export type ResendInvitationRequest = z.infer<typeof resendInvitationRequestSchema>;
+
+export const resendInvitationResponseSchema = z.object({
+  message: z.string(),
+  invitationUrl: z.string().url().optional(),
+});
+export type ResendInvitationResponse = z.infer<typeof resendInvitationResponseSchema>;
 export const childResponseSchema = z.object({
   id: z.string(),
   firstName: z.string(),
+  lastName: z.string().nullable().optional(),
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format.'),
+  address: z.string().nullable().optional(),
   notes: z.string().nullable(),
   archivedAt: z.string().nullable(),
 });
 export type ChildResponse = z.infer<typeof childResponseSchema>;
 export const createChildRequestSchema = z.object({
   firstName: z.string().min(1).max(80),
+  lastName: z.string().max(80).optional(),
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format.'),
+  address: z.string().max(500).optional(),
   notes: z.string().max(2000).optional(),
 });
 export type CreateChildRequest = z.infer<typeof createChildRequestSchema>;
@@ -168,6 +224,14 @@ export const updateChildRequestSchema = createChildRequestSchema
     'At least one child profile field must be provided.',
   );
 export type UpdateChildRequest = z.infer<typeof updateChildRequestSchema>;
+
+export const listChildrenQuerySchema = paginationQuerySchema.extend({
+  includeArchived: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((val) => val === 'true'),
+});
+export type ListChildrenQuery = z.infer<typeof listChildrenQuerySchema>;
 
 export const hospitalResponseSchema = z.object({
   id: z.string(),
@@ -188,6 +252,16 @@ export const createHospitalRequestSchema = z.object({
 });
 export type CreateHospitalRequest = z.infer<typeof createHospitalRequestSchema>;
 
+export const updateHospitalProfileRequestSchema = z.object({
+  name: z.string().trim().min(1).max(160).optional(),
+  phone: z.string().trim().max(40).nullable().optional(),
+  address: z.string().trim().min(1).max(300).optional(),
+  city: z.string().trim().min(1).max(120).optional(),
+  description: z.string().trim().max(2000).nullable().optional(),
+  services: z.string().trim().min(1).max(2000).optional(),
+});
+export type UpdateHospitalProfileRequest = z.infer<typeof updateHospitalProfileRequestSchema>;
+
 export const appointmentStatuses = ['REQUESTED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'] as const;
 export type AppointmentStatus = (typeof appointmentStatuses)[number];
 export const doctorResponseSchema = z.object({
@@ -196,8 +270,35 @@ export const doctorResponseSchema = z.object({
   fullName: z.string(),
   specialty: z.string(),
   bio: z.string().nullable(),
+  availableDays: z.string().optional(),
+  startHour: z.number().optional(),
+  endHour: z.number().optional(),
+  slotDurationMinutes: z.number().optional(),
+  timezone: z.string().optional(),
 });
 export type DoctorResponse = z.infer<typeof doctorResponseSchema>;
+
+export const doctorSlotSchema = z.object({
+  time: z.string(), // e.g. "09:00 AM"
+  iso: z.string(), // e.g. "2026-10-15T02:00:00.000Z" (UTC ISO)
+  available: z.boolean(),
+});
+export type DoctorSlot = z.infer<typeof doctorSlotSchema>;
+
+export const doctorAvailabilityQuerySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be formatted as YYYY-MM-DD'),
+  timezone: z.string().trim().optional(),
+});
+export type DoctorAvailabilityQuery = z.infer<typeof doctorAvailabilityQuerySchema>;
+
+export const doctorAvailabilityResponseSchema = z.object({
+  doctorId: z.string(),
+  date: z.string(),
+  timezone: z.string(),
+  slots: z.array(doctorSlotSchema),
+});
+export type DoctorAvailabilityResponse = z.infer<typeof doctorAvailabilityResponseSchema>;
+
 export const appointmentResponseSchema = z.object({
   id: z.string(),
   parentId: z.string(),
@@ -213,6 +314,11 @@ export const appointmentResponseSchema = z.object({
   reason: z.string().nullable(),
   /** The hospital's explanation when it rejected the request. */
   rejectionReason: z.string().nullable(),
+  parentName: z.string().nullable().optional(),
+  parentEmail: z.string().nullable().optional(),
+  parentPhoneNumber: z.string().nullable().optional(),
+  childDateOfBirth: z.string().nullable().optional(),
+  childNotes: z.string().nullable().optional(),
 });
 export type AppointmentResponse = z.infer<typeof appointmentResponseSchema>;
 
@@ -221,6 +327,12 @@ export const appointmentListResponseSchema = z.object({
   pagination: paginationMetaSchema,
 });
 export type AppointmentListResponse = z.infer<typeof appointmentListResponseSchema>;
+
+export const listAppointmentsQuerySchema = paginationQuerySchema.extend({
+  childId: z.string().trim().min(1).optional(),
+  status: z.enum(appointmentStatuses).optional(),
+});
+export type ListAppointmentsQuery = z.infer<typeof listAppointmentsQuerySchema>;
 export const createAppointmentRequestSchema = z.object({
   childId: z.string().min(1),
   hospitalId: z.string().min(1),
@@ -229,6 +341,12 @@ export const createAppointmentRequestSchema = z.object({
   reason: z.string().max(2000).optional(),
 });
 export type CreateAppointmentRequest = z.infer<typeof createAppointmentRequestSchema>;
+
+export const rescheduleAppointmentRequestSchema = z.object({
+  scheduledAt: z.string().datetime(),
+  reason: z.string().max(2000).optional(),
+});
+export type RescheduleAppointmentRequest = z.infer<typeof rescheduleAppointmentRequestSchema>;
 /**
  * Hospital-side appointment list filters (GET /hospital-management/appointments).
  *
@@ -259,13 +377,18 @@ export const doctorRequestSchema = z.object({
   fullName: z.string().min(1).max(160),
   specialty: z.string().min(1).max(160),
   bio: z.string().max(4000).nullable().optional(),
+  availableDays: z.union([z.string().max(60), z.array(z.string())]).optional(),
+  startHour: z.number().int().min(0).max(23).optional(),
+  endHour: z.number().int().min(1).max(24).optional(),
+  slotDurationMinutes: z.number().int().min(10).max(120).optional(),
+  timezone: z.string().max(80).optional(),
 });
 export type DoctorRequest = z.infer<typeof doctorRequestSchema>;
 export const createHospitalAccountRequestSchema = z.object({
   hospital: createHospitalRequestSchema,
   account: z.object({
     email: z.string().email(),
-    password: z.string().min(12),
+    password: z.string().min(12).optional(),
     firstName: z.string().min(1).max(80),
     lastName: z.string().min(1).max(80),
     title: z.string().max(120).optional(),
@@ -282,7 +405,10 @@ export const adminHospitalAccountResponseSchema = z.object({
   hospital: hospitalResponseSchema,
   staff: hospitalStaffResponseSchema,
   account: parentResponseSchema,
+  invitationSent: z.boolean().optional(),
+  invitationUrl: z.string().url().optional(),
 });
+export type AdminHospitalAccountResponse = z.infer<typeof adminHospitalAccountResponseSchema>;
 
 export const screeningDisclaimer =
   'AutiCare screening is informational support only and is not a medical diagnosis. Please consult a qualified clinician for diagnosis or treatment decisions.';
@@ -318,6 +444,7 @@ export const schoolResponseSchema = z.object({
   isVerified: z.boolean(),
   rating: z.number().nullable(),
   reviewCount: z.number().int(),
+  isFavorite: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -335,6 +462,7 @@ export const parentSchoolSearchQuerySchema = z
     province: z.string().trim().max(120).optional(),
     availability: z.enum(schoolAvailabilityStatuses).optional(),
     specializations: z.string().trim().max(400).optional(),
+    isFavorite: z.union([z.boolean(), z.string().transform((val) => val === 'true')]).optional(),
   })
   .merge(paginationQuerySchema);
 export type ParentSchoolSearchQuery = z.infer<typeof parentSchoolSearchQuerySchema>;
@@ -354,8 +482,40 @@ export const schoolDetailResponseSchema = schoolResponseSchema.extend({
   admissionRequirements: z.string().nullable(),
   operatingHours: z.string().nullable(),
   facilities: z.array(z.string()),
+  isFavorite: z.boolean().optional(),
 });
 export type SchoolDetailResponse = z.infer<typeof schoolDetailResponseSchema>;
+
+export const schoolFavoriteResponseSchema = z.object({
+  favorited: z.boolean(),
+  schoolId: z.string(),
+});
+export type SchoolFavoriteResponse = z.infer<typeof schoolFavoriteResponseSchema>;
+
+export const createSchoolReviewRequestSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().trim().max(1000).optional(),
+});
+export type CreateSchoolReviewRequest = z.infer<typeof createSchoolReviewRequestSchema>;
+
+export const schoolReviewResponseSchema = z.object({
+  id: z.string(),
+  schoolId: z.string(),
+  parentId: z.string(),
+  parentName: z.string(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type SchoolReviewResponse = z.infer<typeof schoolReviewResponseSchema>;
+
+export const schoolReviewListResponseSchema = z.object({
+  reviews: z.array(schoolReviewResponseSchema),
+  averageRating: z.number().nullable(),
+  totalReviews: z.number().int(),
+});
+export type SchoolReviewListResponse = z.infer<typeof schoolReviewListResponseSchema>;
 
 // School-owned self-update (PATCH /schools/me). Deliberately OMITS isVerified and
 // rating so they cannot be set here — unknown keys are stripped by zod on parse.
@@ -415,7 +575,7 @@ export const createSchoolAccountRequestSchema = z.object({
   }),
   account: z.object({
     email: z.string().email(),
-    password: z.string().min(12),
+    password: z.string().min(12).optional(),
     firstName: z.string().min(1).max(80),
     lastName: z.string().min(1).max(80),
     title: z.string().max(120).optional(),
@@ -429,6 +589,7 @@ export const updateSchoolRequestSchema = z
     city: z.string().min(1).max(120).optional(),
     address: z.string().min(1).max(300).optional(),
     description: z.string().max(2000).nullable().optional(),
+    isVerified: z.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, 'At least one school field is required.');
 export type UpdateSchoolRequest = z.infer<typeof updateSchoolRequestSchema>;
@@ -437,6 +598,8 @@ export const adminSchoolAccountResponseSchema = z.object({
   school: schoolResponseSchema,
   staff: schoolStaffResponseSchema,
   account: parentResponseSchema,
+  invitationSent: z.boolean().optional(),
+  invitationUrl: z.string().url().optional(),
 });
 export type AdminSchoolAccountResponse = z.infer<typeof adminSchoolAccountResponseSchema>;
 
@@ -463,6 +626,9 @@ export type SchoolActivityReportResponse = ActivityReportResponse;
 
 export const reportStatuses = ['DRAFT', 'SUBMITTED'] as const;
 export type ReportStatus = (typeof reportStatuses)[number];
+export const activityReportStatuses = reportStatuses;
+export const activityReportStatusSchema = z.enum(activityReportStatuses);
+export type ActivityReportStatus = ReportStatus;
 
 export const createActivityReportRequestSchema = z.object({
   childId: z.string().min(1),
@@ -516,6 +682,7 @@ export const listActivityReportsQuerySchema = z
   .object({
     childId: z.string().optional(),
     status: z.enum(reportStatuses).optional(),
+    search: z.string().trim().max(120).optional(),
   })
   .merge(paginationQuerySchema);
 export type ListActivityReportsQuery = z.infer<typeof listActivityReportsQuerySchema>;
@@ -611,6 +778,7 @@ export const notificationResponseSchema = z.object({
   body: z.string(),
   enrollmentId: z.string().nullable(),
   reportId: z.string().nullable(),
+  appointmentId: z.string().nullable().optional(),
   createdAt: z.string(),
 });
 export type NotificationResponse = z.infer<typeof notificationResponseSchema>;
@@ -621,6 +789,28 @@ export const parentNotificationListResponseSchema = z.object({
 });
 export type ParentNotificationListResponse = z.infer<typeof parentNotificationListResponseSchema>;
 
+// ── Parent preferences ──────────────────────────────────────────────────
+
+export const updateParentPreferencesRequestSchema = z.object({
+  reducedMotion: z.boolean().optional(),
+  highContrast: z.boolean().optional(),
+  preferredLanguage: z.string().trim().min(2).max(10).optional(),
+});
+export type UpdateParentPreferencesRequest = z.infer<typeof updateParentPreferencesRequestSchema>;
+
+export const parentPreferenceSchema = z.object({
+  preferredLanguage: z.string(),
+  reducedMotion: z.boolean(),
+  highContrast: z.boolean(),
+  updatedAt: z.string().optional(),
+});
+export type ParentPreference = z.infer<typeof parentPreferenceSchema>;
+
+export const parentPreferencesResponseSchema = z.object({
+  preference: parentPreferenceSchema,
+});
+export type ParentPreferencesResponse = z.infer<typeof parentPreferencesResponseSchema>;
+
 // ── Admission / enrollment requests ─────────────────────────────────────
 
 export const createAdmissionRequestSchema = z.object({
@@ -630,13 +820,19 @@ export const createAdmissionRequestSchema = z.object({
 });
 export type CreateAdmissionRequestRequest = z.infer<typeof createAdmissionRequestSchema>;
 
+export const admissionRequestStatuses = ['REQUESTED', 'APPROVED', 'REJECTED'] as const;
+export const admissionRequestStatusSchema = z.enum(admissionRequestStatuses);
+export type AdmissionRequestStatus = (typeof admissionRequestStatuses)[number];
+
 export const admissionRequestResponseSchema = z.object({
   id: z.string(),
   schoolId: z.string(),
   schoolName: z.string(),
+  schoolCity: z.string().nullable().optional(),
+  schoolAddress: z.string().nullable().optional(),
   childId: z.string().nullable(),
   childName: z.string(),
-  status: z.string(),
+  status: admissionRequestStatusSchema,
   message: z.string().nullable(),
   createdAt: z.string(),
 });
@@ -1112,3 +1308,119 @@ export const parentActivityReportListResponseSchema = z.object({
 export type ParentActivityReportListResponse = z.infer<
   typeof parentActivityReportListResponseSchema
 >;
+
+// ── Role-Specific Dashboards (Parent & Administrator) ───────────────────
+
+export const parentDashboardWeeklyProgressSchema = z.object({
+  days: z.array(
+    z.object({
+      day: z.string(),
+      count: z.number().int(),
+      percentage: z.number().int(),
+    }),
+  ),
+  totalCompletedThisWeek: z.number().int(),
+});
+export type ParentDashboardWeeklyProgress = z.infer<typeof parentDashboardWeeklyProgressSchema>;
+
+export const parentDashboardScreeningSummarySchema = z.object({
+  hasScreening: z.boolean(),
+  sessionId: z.string().nullable(),
+  status: z.enum(screeningStatuses).nullable(),
+  riskLevel: z.enum(riskLevels).nullable(),
+  riskPercentage: z.number().int().nullable(),
+  score: z.number().int().nullable(),
+  completedDate: z.string().nullable(),
+  recommendation: z.string().nullable(),
+});
+export type ParentDashboardScreeningSummary = z.infer<typeof parentDashboardScreeningSummarySchema>;
+
+export const parentDashboardUpcomingAppointmentSchema = z.object({
+  id: z.string(),
+  hospitalName: z.string(),
+  doctorName: z.string().nullable(),
+  specialty: z.string().nullable(),
+  scheduledAt: z.string(),
+  status: z.enum(appointmentStatuses),
+  reason: z.string().nullable(),
+  childFirstName: z.string().nullable(),
+});
+export type ParentDashboardUpcomingAppointment = z.infer<
+  typeof parentDashboardUpcomingAppointmentSchema
+>;
+
+export const parentDashboardRecommendedActionSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  actionPath: z.string(),
+  actionLabel: z.string(),
+  source: z.enum(['SCREENING_RESULT', 'NO_CHILD', 'NO_SCREENING', 'GENERAL_SUPPORT']),
+});
+export type ParentDashboardRecommendedAction = z.infer<
+  typeof parentDashboardRecommendedActionSchema
+>;
+
+export const parentDashboardQuerySchema = z.object({
+  childId: z.string().optional(),
+});
+export type ParentDashboardQuery = z.infer<typeof parentDashboardQuerySchema>;
+
+export const parentDashboardResponseSchema = z.object({
+  selectedChild: z
+    .object({
+      id: z.string(),
+      firstName: z.string(),
+      lastName: z.string().nullable(),
+      dateOfBirth: z.string(),
+      photoUrl: z.string().nullable(),
+    })
+    .nullable(),
+  totalChildren: z.number().int(),
+  children: z
+    .array(
+      z.object({
+        id: z.string(),
+        firstName: z.string(),
+        lastName: z.string().nullable(),
+        dateOfBirth: z.string(),
+        photoUrl: z.string().nullable(),
+      }),
+    )
+    .optional(),
+  screeningSummary: parentDashboardScreeningSummarySchema,
+  weeklyProgress: parentDashboardWeeklyProgressSchema,
+  upcomingAppointment: parentDashboardUpcomingAppointmentSchema.nullable(),
+  recommendedAction: parentDashboardRecommendedActionSchema,
+});
+export type ParentDashboardResponse = z.infer<typeof parentDashboardResponseSchema>;
+
+export const adminDashboardResponseSchema = z.object({
+  stats: z.object({
+    totalFamilies: z.number().int(),
+    activeChildren: z.number().int(),
+    totalHospitals: z.number().int(),
+    totalSchools: z.number().int(),
+    totalAppointments: z.number().int(),
+    pendingAppointments: z.number().int(),
+  }),
+  recentAppointments: z.array(
+    z.object({
+      id: z.string(),
+      parentName: z.string(),
+      childName: z.string().nullable(),
+      hospitalName: z.string(),
+      scheduledAt: z.string(),
+      status: z.enum(appointmentStatuses),
+    }),
+  ),
+  recentAuditEvents: z.array(
+    z.object({
+      id: z.string(),
+      action: z.string(),
+      actorEmail: z.string().nullable(),
+      targetEmail: z.string().nullable(),
+      createdAt: z.string(),
+    }),
+  ),
+});
+export type AdminDashboardResponse = z.infer<typeof adminDashboardResponseSchema>;

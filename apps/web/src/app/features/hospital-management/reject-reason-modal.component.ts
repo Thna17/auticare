@@ -55,13 +55,14 @@ const presetReasons = [
 
       <div dialogFooter class="modal-footer">
         <ac-ui-button variant="secondary" (click)="cancel.emit()">Cancel</ac-ui-button>
-        <ac-ui-button
-          variant="destructive"
+        <button
+          type="button"
+          class="reject-confirm-btn"
           [disabled]="!canConfirm()"
           (click)="confirm.emit(finalReason())"
         >
           Confirm rejection
-        </ac-ui-button>
+        </button>
       </div>
     </ac-ui-dialog>
   `,
@@ -102,6 +103,22 @@ const presetReasons = [
         display: flex;
         justify-content: flex-end;
         gap: var(--ac-space-2);
+      }
+
+      .reject-confirm-btn {
+        min-height: 44px;
+        border: 0;
+        border-radius: var(--ac-radius-md);
+        padding: 0 var(--ac-space-4);
+        background: var(--ac-color-red-700);
+        color: white;
+        font-weight: var(--ac-font-weight-semibold);
+        cursor: pointer;
+      }
+
+      .reject-confirm-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
     `,
   ],

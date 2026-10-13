@@ -5,16 +5,37 @@ import type {
   DoctorRequest,
   DoctorResponse,
   HospitalResponse,
+  UpdateHospitalProfileRequest,
 } from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../core/config/api.config';
+export type HospitalStaffMember = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  phone?: string | null;
+  phoneNumber?: string | null;
+};
+
 @Injectable({ providedIn: 'root' })
 export class HospitalManagementApi {
   private readonly http = inject(HttpClient);
   private readonly base = inject(API_BASE_URL);
   me() {
     return this.http
-      .get<{ data: { hospital: HospitalResponse } }>(`${this.base}/hospital-management/me`)
+      .get<{ data: { hospital: HospitalResponse; staff?: HospitalStaffMember } }>(
+        `${this.base}/hospital-management/me`,
+      )
+      .pipe(map((r) => r.data));
+  }
+  updateProfile(input: UpdateHospitalProfileRequest) {
+    return this.http
+      .patch<{ data: { hospital: HospitalResponse; staff?: HospitalStaffMember } }>(
+        `${this.base}/hospital-management/me`,
+        input,
+      )
       .pipe(map((r) => r.data));
   }
   appointments() {
@@ -41,6 +62,11 @@ export class HospitalManagementApi {
   createDoctor(input: DoctorRequest) {
     return this.http
       .post<{ data: DoctorResponse }>(`${this.base}/hospital-management/doctors`, input)
+      .pipe(map((r) => r.data));
+  }
+  updateDoctor(id: string, payload: Partial<DoctorRequest>) {
+    return this.http
+      .patch<{ data: DoctorResponse }>(`${this.base}/hospital-management/doctors/${id}`, payload)
       .pipe(map((r) => r.data));
   }
   deleteDoctor(id: string) {

@@ -8,6 +8,8 @@ import type {
   SchoolAvailabilityStatus,
   SchoolChildEnrollment,
   SchoolStaff,
+  ActivityReportStatus,
+  AdmissionRequestStatus,
 } from '@prisma/client';
 import type { SchoolChildEnrollmentStatus } from '@auticare/contracts';
 import { prisma } from '../../database/prisma.js';
@@ -24,6 +26,37 @@ type Page = { skip: number; take: number };
 /** A page of rows plus the unfiltered-by-page total, for the response meta. */
 type Paged<TRow> = { items: TRow[]; total: number };
 
+export type ActivityReportFilter = {
+  childId?: string | undefined;
+  status?: ActivityReportStatus | undefined;
+  search?: string | undefined;
+};
+
+const buildReportSearchFilter = (search?: string): Prisma.ActivityReportWhereInput | undefined => {
+  const trimmed = search?.trim();
+  if (!trimmed) return undefined;
+
+  const orConditions: Prisma.ActivityReportWhereInput[] = [
+    { title: { contains: trimmed } },
+    { activityCategory: { contains: trimmed } },
+    { child: { firstName: { contains: trimmed } } },
+    { child: { lastName: { contains: trimmed } } },
+  ];
+
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    orConditions.push({
+      child: {
+        AND: words.map((w) => ({
+          OR: [{ firstName: { contains: w } }, { lastName: { contains: w } }],
+        })),
+      },
+    });
+  }
+
+  return { OR: orConditions };
+};
+
 export class SchoolsRepository {
   async listSchools(
     // `| undefined` is explicit because exactOptionalPropertyTypes is on and
@@ -33,10 +66,18 @@ export class SchoolsRepository {
       province?: string | undefined;
       availability?: SchoolAvailabilityStatus | undefined;
       specializations?: string[] | undefined;
+      isFavorite?: boolean | undefined;
+      parentId?: string | undefined;
     } = {},
     page: Page,
   ): Promise<Paged<School>> {
     const where: Prisma.SchoolWhereInput = { status: 'ACTIVE' };
+
+    if (filters.isFavorite && filters.parentId) {
+      where.favorites = {
+        some: { parentId: filters.parentId },
+      };
+    }
 
     if (filters.province !== undefined && filters.province !== '') {
       // NOTE: `mode: 'insensitive'` is PostgreSQL-only — MySQL is already
@@ -114,9 +155,86 @@ export class SchoolsRepository {
     );
   }
 
+  async addFavorite(parentId: string, schoolId: string): Promise<boolean> {
+    await prisma.favoriteSchool.upsert({
+      where: { parentId_schoolId: { parentId, schoolId } },
+      create: { parentId, schoolId },
+      update: {},
+    });
+    return true;
+  }
+
+  async removeFavorite(parentId: string, schoolId: string): Promise<boolean> {
+    await prisma.favoriteSchool.deleteMany({
+      where: { parentId, schoolId },
+    });
+    return false;
+  }
+
+  async isFavorite(parentId: string, schoolId: string): Promise<boolean> {
+    const favorite = await prisma.favoriteSchool.findUnique({
+      where: { parentId_schoolId: { parentId, schoolId } },
+    });
+    return favorite !== null;
+  }
+
+  async getFavoriteSchoolIds(parentId: string, schoolIds: string[]): Promise<Set<string>> {
+    if (schoolIds.length === 0) return new Set();
+    const favorites = await prisma.favoriteSchool.findMany({
+      where: {
+        parentId,
+        schoolId: { in: schoolIds },
+      },
+      select: { schoolId: true },
+    });
+    return new Set(favorites.map((f) => f.schoolId));
+  }
+
+  async listReviews(schoolId: string) {
+    return prisma.review.findMany({
+      where: { schoolId },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createReview(parentId: string, schoolId: string, rating: number, comment?: string | null) {
+    return prisma.review.create({
+      data: {
+        parentId,
+        schoolId,
+        rating,
+        comment: comment?.trim() || null,
+      },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+  }
+
   updateSchool(
     schoolId: string,
-    input: { name?: string; city?: string; address?: string; description?: string | null },
+    input: {
+      name?: string;
+      city?: string;
+      address?: string;
+      description?: string | null;
+      isVerified?: boolean;
+    },
   ): Promise<School> {
     return prisma.school.update({ where: { id: schoolId }, data: input });
   }
@@ -160,6 +278,7 @@ export class SchoolsRepository {
       firstName: string;
       lastName: string;
       title: string | null;
+      mustResetPassword?: boolean;
     };
   }): Promise<SchoolAccountRecord> {
     return prisma.$transaction(
@@ -179,6 +298,7 @@ export class SchoolsRepository {
             firstName: input.account.firstName,
             lastName: input.account.lastName,
             role: 'SCHOOL',
+            mustResetPassword: input.account.mustResetPassword ?? false,
             preference: { create: {} },
           },
         });
@@ -307,26 +427,14 @@ export class SchoolsRepository {
     title: string;
     summary: string;
     activityDate: Date;
-    status?: string;
+    status?: ActivityReportStatus;
     duration?: number;
     performanceMetrics?: Prisma.InputJsonValue;
     teacherObservation?: string;
     recommendations?: string;
     photoUrls?: string[];
   }): Promise<ActivityReport> {
-    return prisma.$transaction(async (tx) => {
-      const report = await tx.activityReport.create({ data: input });
-      const child = await tx.child.findUniqueOrThrow({ where: { id: input.childId } });
-      await tx.notification.create({
-        data: {
-          parentId: child.parentId,
-          type: 'REPORT_REQUEST',
-          title: 'New school activity report',
-          body: input.title,
-        },
-      });
-      return report;
-    });
+    return prisma.activityReport.create({ data: input });
   }
 
   // childId/status used to be filtered in memory after fetching every report
@@ -334,13 +442,15 @@ export class SchoolsRepository {
   // would be applied before the filter and pages would contain the wrong rows.
   async listReportsForParent(
     parentId: string,
-    filters: { childId?: string | undefined; status?: string | undefined },
+    filters: ActivityReportFilter,
     page: Page,
   ): Promise<Paged<ActivityReport>> {
+    const searchFilter = buildReportSearchFilter(filters.search);
     const where: Prisma.ActivityReportWhereInput = {
       child: { parentId },
       ...(filters.childId !== undefined && { childId: filters.childId }),
       ...(filters.status !== undefined && { status: filters.status }),
+      ...(searchFilter ? { AND: [searchFilter] } : {}),
     };
     const [items, total] = await prisma.$transaction([
       prisma.activityReport.findMany({ where, orderBy: { activityDate: 'desc' }, ...page }),
@@ -383,13 +493,15 @@ export class SchoolsRepository {
 
   async listReportsForSchoolWithRelations(
     schoolId: string,
-    filters: { childId?: string | undefined; status?: string | undefined },
+    filters: ActivityReportFilter,
     page: Page,
   ) {
+    const searchFilter = buildReportSearchFilter(filters.search);
     const where: Prisma.ActivityReportWhereInput = {
       schoolId,
       ...(filters.childId !== undefined && { childId: filters.childId }),
       ...(filters.status !== undefined && { status: filters.status }),
+      ...(searchFilter ? { AND: [searchFilter] } : {}),
     };
     const [items, total] = await prisma.$transaction([
       prisma.activityReport.findMany({
@@ -408,13 +520,15 @@ export class SchoolsRepository {
 
   async listReportsForSchool(
     schoolId: string,
-    filters: { childId?: string | undefined; status?: string | undefined },
+    filters: ActivityReportFilter,
     page: Page,
   ): Promise<Paged<ActivityReport>> {
+    const searchFilter = buildReportSearchFilter(filters.search);
     const where: Prisma.ActivityReportWhereInput = {
       schoolId,
       ...(filters.childId !== undefined && { childId: filters.childId }),
       ...(filters.status !== undefined && { status: filters.status }),
+      ...(searchFilter ? { AND: [searchFilter] } : {}),
     };
     const [items, total] = await prisma.$transaction([
       prisma.activityReport.findMany({ where, orderBy: { activityDate: 'desc' }, ...page }),
@@ -423,13 +537,12 @@ export class SchoolsRepository {
     return { items, total };
   }
 
-  async listAllReports(
-    filters: { childId?: string | undefined; status?: string | undefined },
-    page: Page,
-  ): Promise<Paged<ActivityReport>> {
+  async listAllReports(filters: ActivityReportFilter, page: Page): Promise<Paged<ActivityReport>> {
+    const searchFilter = buildReportSearchFilter(filters.search);
     const where: Prisma.ActivityReportWhereInput = {
       ...(filters.childId !== undefined && { childId: filters.childId }),
       ...(filters.status !== undefined && { status: filters.status }),
+      ...(searchFilter ? { AND: [searchFilter] } : {}),
     };
     const [items, total] = await prisma.$transaction([
       prisma.activityReport.findMany({ where, orderBy: { activityDate: 'desc' }, ...page }),
@@ -445,7 +558,7 @@ export class SchoolsRepository {
       title?: string;
       summary?: string;
       activityDate?: Date;
-      status?: string;
+      status?: ActivityReportStatus;
       duration?: number | null;
       performanceMetrics?: Prisma.InputJsonValue | null;
       teacherObservation?: string | null;
@@ -508,7 +621,8 @@ export class SchoolsRepository {
     // first instead. Both queries are scoped to this school, so the id set is
     // bounded by the school's own request history.
     if (filters.view !== undefined) {
-      const statuses = filters.view === 'PENDING' ? ['REQUESTED'] : ['APPROVED', 'REJECTED'];
+      const statuses: AdmissionRequestStatus[] =
+        filters.view === 'PENDING' ? ['REQUESTED'] : ['APPROVED', 'REJECTED'];
       const requests = await prisma.admissionRequest.findMany({
         where: { schoolId, status: { in: statuses } },
         select: { id: true },
@@ -530,14 +644,25 @@ export class SchoolsRepository {
     return { items, total };
   }
 
-  /** Admission request linked to a notification (via enrollmentId pointer).
-   * Note: AdmissionRequest has no Child relation — the child name is resolved
-   * separately via findChildNameById. */
+  /** Admission request linked to a notification (via enrollmentId pointer). */
   findAdmissionRequestById(id: string) {
     return prisma.admissionRequest.findUnique({
       where: { id },
       include: {
         parent: { select: { id: true, firstName: true, lastName: true } },
+        child: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+  }
+
+  /** Batch-fetch admission requests linked to notifications to avoid N+1 queries. */
+  findAdmissionRequestsByIds(ids: string[]) {
+    if (ids.length === 0) return Promise.resolve([]);
+    return prisma.admissionRequest.findMany({
+      where: { id: { in: ids } },
+      include: {
+        parent: { select: { id: true, firstName: true, lastName: true } },
+        child: { select: { id: true, firstName: true, lastName: true } },
       },
     });
   }
@@ -546,6 +671,15 @@ export class SchoolsRepository {
   findChildNameById(childId: string) {
     return prisma.child.findUnique({
       where: { id: childId },
+      select: { id: true, firstName: true, lastName: true },
+    });
+  }
+
+  /** Batch-fetch child display info to avoid N+1 queries. */
+  findChildNamesByIds(childIds: string[]) {
+    if (childIds.length === 0) return Promise.resolve([]);
+    return prisma.child.findMany({
+      where: { id: { in: childIds } },
       select: { id: true, firstName: true, lastName: true },
     });
   }
@@ -656,12 +790,12 @@ export class SchoolsRepository {
     });
   }
 
-  /** Count of reports with status 'DRAFT' or 'PENDING_REVIEW'. */
+  /** Count of reports with status 'DRAFT'. */
   countPendingReports(schoolId: string): Promise<number> {
     return prisma.activityReport.count({
       where: {
         schoolId,
-        status: { in: ['DRAFT', 'PENDING_REVIEW'] },
+        status: 'DRAFT',
       },
     });
   }
@@ -681,7 +815,11 @@ export class SchoolsRepository {
   }
 
   /** Count of reports with a specific status, optionally since a given date. */
-  countReportsWithStatus(schoolId: string, status: string, since?: Date): Promise<number> {
+  countReportsWithStatus(
+    schoolId: string,
+    status: ActivityReportStatus,
+    since?: Date,
+  ): Promise<number> {
     return prisma.activityReport.count({
       where: {
         schoolId,
@@ -772,6 +910,7 @@ export class SchoolsRepository {
             firstName: input.guardian.firstName,
             lastName: input.guardian.lastName,
             role: 'PARENT',
+            mustResetPassword: true,
             phoneNumber: input.guardian.phoneNumber ?? null,
             socialMediaAccount: input.guardian.socialMediaAccount ?? null,
             preference: { create: {} },

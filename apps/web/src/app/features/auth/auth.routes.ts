@@ -10,4 +10,8 @@ export const AUTH_ROUTES: Routes = [
     path: 'reset-password',
     loadComponent: () => import('./reset-password.page').then((m) => m.ResetPasswordPage),
   },
+  {
+    path: 'accept-invitation',
+    loadComponent: () => import('./accept-invitation.page').then((m) => m.AcceptInvitationPage),
+  },
 ];

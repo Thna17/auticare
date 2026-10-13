@@ -9,20 +9,22 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ChildrenFacade } from '../children/state/children.facade';
-import { AppointmentsFacade, visitReasons } from './state/appointments.facade';
+import { AppointmentsFacade, visitReasons, type VisitReason } from './state/appointments.facade';
 import { AppointmentConfirmationComponent } from './appointment-confirmation.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 type CalendarDay = {
   readonly iso: string;
   readonly label: number;
   readonly isCurrentMonth: boolean;
   readonly isPast: boolean;
+  readonly isOffDay: boolean;
 };
 
-const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
+export type WizardStep = 1 | 2 | 3;
 
 @Component({
   standalone: true,
@@ -36,7 +38,13 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
   selector: 'ac-book-appointment-modal',
   template: `
     <ac-ui-dialog
-      [heading]="facade.booking().step === 'confirmed' ? '' : 'Book Appointment'"
+      [heading]="
+        facade.booking().step === 'confirmed'
+          ? ''
+          : currentLang() === 'km'
+            ? 'កក់ការណាត់ជួបពិគ្រោះ (Book Appointment)'
+            : 'Book Appointment'
+      "
       [ariaLabel]="dialogLabel()"
       [showCloseButton]="true"
       size="md"
@@ -45,137 +53,485 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
       @if (facade.booking().step === 'confirmed' && facade.booking().confirmed) {
         <ac-appointment-confirmation [appointment]="facade.booking().confirmed!" (done)="close()" />
       } @else {
-        <section class="section">
-          <p id="booking-patient-label" class="section-title">
-            Who is this visit for? <span aria-hidden="true">*</span>
-          </p>
-          <div
-            class="patient-grid"
-            role="radiogroup"
-            aria-labelledby="booking-patient-label"
-            aria-required="true"
-            data-booking-required="child"
+        <!-- Multi-step Wizard Navigation Header -->
+        <nav class="wizard-stepper" aria-label="Booking steps" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            class="wizard-step"
+            [class.active]="step() === 1"
+            [class.completed]="step() > 1"
+            [attr.aria-selected]="step() === 1"
+            (click)="setStep(1)"
           >
-            @for (child of children.children(); track child.id) {
-              <button
-                type="button"
-                role="radio"
-                [attr.aria-checked]="facade.booking().childId === child.id"
-                class="patient-card"
-                [class.selected]="facade.booking().childId === child.id"
-                (click)="facade.selectChild(child.id)"
+            <span class="step-badge">1</span>
+            <span class="step-label">{{
+              currentLang() === 'km' ? 'កុមារ និងមូលហេតុ (Child & Reason)' : 'Child & Reason'
+            }}</span>
+          </button>
+          <div class="step-divider" [class.filled]="step() > 1" aria-hidden="true"></div>
+
+          <button
+            type="button"
+            role="tab"
+            class="wizard-step"
+            [class.active]="step() === 2"
+            [class.completed]="step() > 2"
+            [attr.aria-selected]="step() === 2"
+            [disabled]="!facade.booking().childId"
+            (click)="setStep(2)"
+          >
+            <span class="step-badge">2</span>
+            <span class="step-label">{{
+              currentLang() === 'km' ? 'កាលបរិច្ឆេទ និងម៉ោង (Date & Slot)' : 'Date & Slot'
+            }}</span>
+          </button>
+          <div class="step-divider" [class.filled]="step() > 2" aria-hidden="true"></div>
+
+          <button
+            type="button"
+            role="tab"
+            class="wizard-step"
+            [class.active]="step() === 3"
+            [attr.aria-selected]="step() === 3"
+            [disabled]="
+              !facade.booking().childId || !facade.booking().date || !facade.booking().time
+            "
+            (click)="setStep(3)"
+          >
+            <span class="step-badge">3</span>
+            <span class="step-label">{{
+              currentLang() === 'km'
+                ? 'កំណត់សម្គាល់ (Care Notes & Confirm)'
+                : 'Care Notes & Confirm'
+            }}</span>
+          </button>
+        </nav>
+
+        <!-- Specialist Banner Summary (always visible for context) -->
+        <div class="specialist-context-card">
+          <div class="doctor-avatar" aria-hidden="true">
+            {{ initials(facade.booking().doctor?.fullName ?? 'DR') }}
+          </div>
+          <div class="doctor-context-details">
+            <strong class="doctor-name">{{
+              facade.booking().doctor?.fullName ?? 'Clinical Specialist'
+            }}</strong>
+            <span class="doctor-specialty">{{
+              facade.booking().doctor?.specialty ?? 'Developmental Pediatrics'
+            }}</span>
+            <small class="doctor-schedule">
+              <svg
+                viewBox="0 0 24 24"
+                width="13"
+                height="13"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
               >
-                <span class="avatar" aria-hidden="true">{{ initials(child.firstName) }}</span>
-                <span class="patient-copy">
-                  <strong>{{ child.firstName }}</strong>
-                  <span>{{ ageLabel(child.dateOfBirth) }}</span>
-                </span>
-              </button>
-            }
-            <a class="patient-card add-new" routerLink="/children/new">
-              <span class="avatar plus" aria-hidden="true">+</span>
-              <span class="patient-copy"><strong>Add New</strong></span>
-            </a>
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              {{ formatSchedule(facade.booking().doctor) }}
+            </small>
           </div>
-        </section>
+        </div>
 
-        <section class="section">
-          <p class="section-title">Specialist</p>
-          <div class="doctor-summary">
-            <strong>{{ facade.booking().doctor?.fullName }}</strong>
-            <span>{{ facade.booking().doctor?.specialty }}</span>
-          </div>
-        </section>
+        <!-- ── STEP 1: CHOOSE CHILD & VISIT REASON ──────────────────── -->
+        @if (step() === 1) {
+          <section class="section" aria-labelledby="booking-patient-label">
+            <div class="section-header-row">
+              <h3 id="booking-patient-label" class="section-title">
+                1. Select Patient &amp; Visit Reason (១. ជ្រើសរើសអ្នកជំងឺ និងមូលហេតុ)
+                <span aria-hidden="true">*</span>
+              </h3>
+              <span class="step-hint">{{
+                currentLang() === 'km'
+                  ? 'តើកុមាររូបណាដែលត្រូវមកពិនិត្យ និងអ្វីជាការផ្តោតសំខាន់? / Who will attend and what is the primary focus?'
+                  : 'Who will attend and what is the primary focus?'
+              }}</span>
+            </div>
 
-        <section class="section">
-          <p id="booking-date-label" class="section-title">
-            Choose a date <span aria-hidden="true">*</span>
-          </p>
-          <div class="calendar">
-            <div class="calendar-header">
-              <button type="button" (click)="shiftMonth(-1)" aria-label="Previous month">‹</button>
-              <span>{{ monthLabel() }}</span>
-              <button type="button" (click)="shiftMonth(1)" aria-label="Next month">›</button>
-            </div>
-            <div class="weekday-row">
-              @for (day of weekdayLabels; track day) {
-                <span>{{ day }}</span>
-              }
-            </div>
             <div
-              class="day-grid"
+              class="patient-grid"
               role="radiogroup"
-              aria-labelledby="booking-date-label"
+              aria-labelledby="booking-patient-label"
               aria-required="true"
-              data-booking-required="date"
+              data-booking-required="child"
             >
-              @for (day of calendarDays(); track day.iso) {
+              @for (child of children.children(); track child.id) {
                 <button
                   type="button"
                   role="radio"
-                  [attr.aria-checked]="facade.booking().date === day.iso"
-                  class="day-cell"
-                  [class.muted]="!day.isCurrentMonth"
-                  [class.selected]="facade.booking().date === day.iso"
-                  [disabled]="day.isPast"
-                  (click)="facade.selectDate(day.iso)"
+                  [attr.aria-checked]="facade.booking().childId === child.id"
+                  class="patient-card"
+                  [class.selected]="facade.booking().childId === child.id"
+                  (click)="facade.selectChild(child.id)"
                 >
-                  {{ day.label }}
+                  <span class="avatar" aria-hidden="true">{{ initials(child.firstName) }}</span>
+                  <span class="patient-copy">
+                    <strong>{{ child.firstName }}</strong>
+                    <span>{{ ageLabel(child.dateOfBirth) }}</span>
+                  </span>
                 </button>
               }
+              <a class="patient-card add-new" routerLink="/children/new">
+                <span class="avatar plus" aria-hidden="true">+</span>
+                <span class="patient-copy"
+                  ><strong>{{
+                    currentLang() === 'km' ? '+ បន្ថែមកុមារថ្មី (Add New Child)' : 'Add New Child'
+                  }}</strong></span
+                >
+              </a>
             </div>
-          </div>
-        </section>
 
-        @if (facade.booking().date) {
-          <section class="section">
-            <p id="booking-time-label" class="section-title">
-              Available slots <span aria-hidden="true">*</span>
-            </p>
-            <div
-              class="slot-row"
-              role="radiogroup"
-              aria-labelledby="booking-time-label"
-              aria-required="true"
-              data-booking-required="time"
-            >
-              @for (slot of timeSlots; track slot) {
-                <button
-                  type="button"
-                  role="radio"
-                  [attr.aria-checked]="facade.booking().time === slot"
-                  class="slot"
-                  [class.selected]="facade.booking().time === slot"
-                  (click)="facade.selectTime(slot)"
-                >
-                  {{ slot }}
-                </button>
-              }
+            <!-- Visit Reason & Common Symptoms -->
+            <div class="reason-section-group">
+              <div class="section-header-row sub-header">
+                <h4 id="booking-reason-label" class="sub-section-title">
+                  Primary Consultation Reason (មូលហេតុចម្បងនៃការពិគ្រោះ)
+                  <span aria-hidden="true">*</span>
+                </h4>
+                <span class="step-hint">{{
+                  currentLang() === 'km'
+                    ? 'ជួយវេជ្ជបណ្ឌិតត្រៀមរៀបចំជាមុន / Helps the specialist prepare'
+                    : 'Helps the specialist prepare'
+                }}</span>
+              </div>
+
+              <div class="reason-row" role="radiogroup" aria-labelledby="booking-reason-label">
+                @for (reason of visitReasons; track reason) {
+                  <button
+                    type="button"
+                    role="radio"
+                    [attr.aria-checked]="facade.booking().visitReason === reason"
+                    class="reason-chip"
+                    [class.selected]="facade.booking().visitReason === reason"
+                    (click)="facade.selectVisitReason(reason)"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    {{ formatVisitReason(reason) }}
+                  </button>
+                }
+              </div>
+
+              <div class="symptom-chips-container">
+                <span class="symptoms-label">{{
+                  currentLang() === 'km'
+                    ? 'ចំណុចផ្តោតសំខាន់នៃការលូតលាស់ទូទៅ (Common Developmental Focus Areas):'
+                    : 'Common Developmental Focus Areas:'
+                }}</span>
+                <div class="symptom-chips-row">
+                  @for (symptom of commonSymptoms; track symptom) {
+                    <button
+                      type="button"
+                      class="symptom-chip"
+                      [class.selected]="isSymptomSelected(symptom)"
+                      (click)="toggleSymptom(symptom)"
+                    >
+                      {{ isSymptomSelected(symptom) ? '✓ ' : '+ '
+                      }}{{ formatSymptomLabel(symptom) }}
+                    </button>
+                  }
+                </div>
+              </div>
             </div>
           </section>
         }
 
-        @if (facade.booking().time) {
-          <section class="section">
-            <p class="section-title">Reason for visit</p>
-            <div class="reason-row">
-              @for (reason of visitReasons; track reason) {
+        <!-- ── STEP 2: SELECT DATE & SLOT ───────────────────────────── -->
+        @if (step() === 2) {
+          <section class="section" aria-labelledby="booking-date-label">
+            <div class="section-header-row">
+              <h3 id="booking-date-label" class="section-title">
+                2. Choose Date &amp; Time Slot (២. ជ្រើសរើសថ្ងៃ និងម៉ោងពិនិត្យ)
+                <span aria-hidden="true">*</span>
+              </h3>
+              <span class="step-hint">{{
+                currentLang() === 'km'
+                  ? 'ជ្រើសរើសថ្ងៃធ្វើការដែលមានវេជ្ជបណ្ឌិត / Select an available working day'
+                  : 'Select an available working day'
+              }}</span>
+            </div>
+
+            <!-- Calendar Container -->
+            <div class="calendar-wrapper">
+              <div class="calendar-header">
                 <button
                   type="button"
-                  class="reason-chip"
-                  [class.selected]="facade.booking().visitReason === reason"
-                  (click)="facade.selectVisitReason(reason)"
+                  class="month-nav-btn"
+                  (click)="shiftMonth(-1)"
+                  aria-label="Previous month"
                 >
-                  {{ reason }}
+                  ‹
                 </button>
+                <span class="month-label">{{ monthLabel() }}</span>
+                <button
+                  type="button"
+                  class="month-nav-btn"
+                  (click)="shiftMonth(1)"
+                  aria-label="Next month"
+                >
+                  ›
+                </button>
+              </div>
+
+              <div class="weekday-row">
+                @for (day of weekdayLabels; track day) {
+                  <span>{{ day }}</span>
+                }
+              </div>
+
+              <div
+                class="day-grid"
+                role="radiogroup"
+                aria-labelledby="booking-date-label"
+                aria-required="true"
+                data-booking-required="date"
+              >
+                @for (day of calendarDays(); track day.iso) {
+                  <button
+                    type="button"
+                    role="radio"
+                    [attr.aria-checked]="facade.booking().date === day.iso"
+                    class="day-cell"
+                    [class.muted]="!day.isCurrentMonth"
+                    [class.off-day]="day.isOffDay"
+                    [class.selected]="facade.booking().date === day.iso"
+                    [disabled]="day.isPast || day.isOffDay"
+                    [attr.aria-disabled]="day.isPast || day.isOffDay ? 'true' : null"
+                    [title]="day.isOffDay ? 'Specialist off duty' : day.iso"
+                    (click)="facade.selectDate(day.iso)"
+                  >
+                    {{ day.label }}
+                  </button>
+                }
+              </div>
+
+              <div class="calendar-legend">
+                <span class="legend-item"
+                  ><span class="legend-dot available"></span>
+                  {{ currentLang() === 'km' ? 'អាចកក់បាន (Available)' : 'Available' }}</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot off-duty"></span>
+                  {{ currentLang() === 'km' ? 'ថ្ងៃឈប់សម្រាក (Off duty)' : 'Off duty' }}</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot selected"></span>
+                  {{ currentLang() === 'km' ? 'បានជ្រើសរើស (Selected)' : 'Selected' }}</span
+                >
+              </div>
+            </div>
+
+            <!-- Slots Section -->
+            @if (facade.booking().date) {
+              <div class="slots-container" aria-labelledby="booking-time-label">
+                <div class="section-header-row">
+                  <h4 id="booking-time-label" class="sub-section-title">
+                    Available Slots for {{ formatSelectedDate(facade.booking().date!) }}
+                    <span aria-hidden="true">*</span>
+                  </h4>
+                </div>
+
+                @if (facade.booking().slotsLoading) {
+                  <p class="loading-slots">
+                    <span class="loading-spinner" aria-hidden="true"></span>
+                    {{
+                      currentLang() === 'km'
+                        ? 'កំពុងពិនិត្យកាលវិភាគផ្ទាល់របស់វេជ្ជបណ្ឌិត… (Checking schedule…)'
+                        : 'Checking specialist live schedule…'
+                    }}
+                  </p>
+                } @else if (facade.booking().slots.length > 0) {
+                  <div
+                    class="slot-groups"
+                    role="radiogroup"
+                    aria-labelledby="booking-time-label"
+                    aria-required="true"
+                    data-booking-required="time"
+                  >
+                    <!-- Morning Slots Group -->
+                    @if (morningSlots().length > 0) {
+                      <div class="slot-group">
+                        <span class="slot-group-heading">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="14"
+                            height="14"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            aria-hidden="true"
+                          >
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                          </svg>
+                          Morning Sessions (វគ្គពេលព្រឹក)
+                        </span>
+                        <div class="slot-row">
+                          @for (slot of morningSlots(); track slot.iso) {
+                            <button
+                              type="button"
+                              role="radio"
+                              [attr.aria-checked]="facade.booking().time === slot.time"
+                              class="slot"
+                              [class.selected]="facade.booking().time === slot.time"
+                              [disabled]="!slot.available"
+                              (click)="facade.selectTime(slot.time)"
+                            >
+                              {{ slot.time }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Afternoon Slots Group -->
+                    @if (afternoonSlots().length > 0) {
+                      <div class="slot-group">
+                        <span class="slot-group-heading">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="14"
+                            height="14"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+                            ></path>
+                          </svg>
+                          Afternoon Sessions (វគ្គពេលរសៀល)
+                        </span>
+                        <div class="slot-row">
+                          @for (slot of afternoonSlots(); track slot.iso) {
+                            <button
+                              type="button"
+                              role="radio"
+                              [attr.aria-checked]="facade.booking().time === slot.time"
+                              class="slot"
+                              [class.selected]="facade.booking().time === slot.time"
+                              [disabled]="!slot.available"
+                              (click)="facade.selectTime(slot.time)"
+                            >
+                              {{ slot.time }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="no-slots-notice" role="status">
+                    <p>
+                      No appointments available on this date. Doctor's schedule:
+                      <strong>{{ formatSchedule(facade.booking().doctor) }}</strong
+                      >. Please select another working date.
+                    </p>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        <!-- ── STEP 3: CARE NOTES & CONFIRM ─────────────────────────── -->
+        @if (step() === 3) {
+          <section class="section" aria-labelledby="booking-review-label">
+            <div class="section-header-row">
+              <h3 id="booking-review-label" class="section-title">
+                3. Care Notes &amp; Confirm (៣. កំណត់សម្គាល់ និងបញ្ជាក់)
+              </h3>
+              <span class="step-hint">{{
+                currentLang() === 'km'
+                  ? 'ផ្ទៀងផ្ទាត់ព័ត៌មានកក់ និងចែករំលែកតម្រូវការសម្របសម្រួលញ្ញាណ / Verify details and share accommodations'
+                  : 'Verify your booking details and share sensory accommodations'
+              }}</span>
+            </div>
+
+            <!-- Booking Summary Review Card -->
+            <div class="review-card">
+              <div class="review-item">
+                <span class="review-key">{{
+                  currentLang() === 'km' ? 'អ្នកជំងឺ (Patient)' : 'Patient'
+                }}</span>
+                <strong class="review-val">{{ selectedChildName() }}</strong>
+              </div>
+              <div class="review-item">
+                <span class="review-key">{{
+                  currentLang() === 'km' ? 'វេជ្ជបណ្ឌិត (Specialist)' : 'Specialist'
+                }}</span>
+                <strong class="review-val">{{
+                  facade.booking().doctor?.fullName ?? 'Specialist'
+                }}</strong>
+              </div>
+              <div class="review-item">
+                <span class="review-key">{{
+                  currentLang() === 'km' ? 'កាលបរិច្ឆេទ និងម៉ោង (Date & Time)' : 'Date & Time'
+                }}</span>
+                <strong class="review-val">
+                  {{ formatSelectedDate(facade.booking().date!) }} at {{ facade.booking().time }}
+                </strong>
+              </div>
+              @if (facade.booking().visitReason) {
+                <div class="review-item">
+                  <span class="review-key">{{
+                    currentLang() === 'km' ? 'ប្រភេទជួប (Visit Type)' : 'Visit Type'
+                  }}</span>
+                  <strong class="review-val">{{ facade.booking().visitReason }}</strong>
+                </div>
+              }
+              @if (selectedSymptomsList().length > 0) {
+                <div class="review-item symptoms-summary-item">
+                  <span class="review-key">{{
+                    currentLang() === 'km' ? 'ចំណុចផ្តោត (Focus Areas)' : 'Focus Areas'
+                  }}</span>
+                  <div class="review-symptom-tags">
+                    @for (s of selectedSymptomsList(); track s) {
+                      <span class="review-symptom-tag">{{ s }}</span>
+                    }
+                  </div>
+                </div>
               }
             </div>
-            <ac-ui-field label="Notes" [optional]="true">
+
+            <!-- Care Notes field -->
+            <ac-ui-field
+              [label]="
+                currentLang() === 'km'
+                  ? 'ការសម្របសម្រួលញ្ញាណ និងកំណត់សម្គាល់ថែទាំ (Sensory Accommodations & Care Notes)'
+                  : 'Sensory Accommodations & Care Notes'
+              "
+              [optional]="true"
+            >
               <textarea
                 class="notes-input"
                 rows="3"
                 maxlength="2000"
-                placeholder="Anything the specialist should know ahead of the visit"
+                [placeholder]="
+                  currentLang() === 'km'
+                    ? 'សូមចែករំលែកពីភាពងាយរងរំញោចញ្ញាណ (សំឡេង ពន្លឺ ការប៉ះពាល់) ឧបករណ៍ជំនួយទំនាក់ទំនង ឬគោលដៅនៃការជួបពិគ្រោះនេះ… (Share sensory sensitivities, communication tools, or goals…)'
+                    : 'Share any sensory sensitivities (sound, light, tactile), special communication tools, or goals for this session…'
+                "
                 [value]="facade.booking().notes"
                 (input)="facade.setNotes($any($event.target).value)"
               ></textarea>
@@ -187,64 +543,263 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
           <ac-ui-message tone="error">{{ facade.booking().error }}</ac-ui-message>
         }
 
+        <!-- Modal Step Navigation Footer -->
         <div dialogFooter class="modal-footer">
-          <button type="button" class="secondary" (click)="close()">Cancel</button>
-          <button
-            type="button"
-            class="primary"
-            [disabled]="facade.booking().step === 'submitting'"
-            (click)="confirmBooking()"
-          >
-            {{ facade.booking().step === 'submitting' ? 'Booking...' : 'Confirm Booking' }}
-          </button>
+          @if (step() === 1) {
+            <button type="button" class="secondary" (click)="close()">
+              {{ currentLang() === 'km' ? 'បោះបង់ (Cancel)' : 'Cancel' }}
+            </button>
+            <button
+              type="button"
+              class="primary"
+              [disabled]="!facade.booking().childId"
+              (click)="setStep(2)"
+            >
+              {{
+                currentLang() === 'km'
+                  ? 'បន្តទៅថ្ងៃ និងម៉ោង (Continue to Date & Slot) →'
+                  : 'Continue to Date & Slot →'
+              }}
+            </button>
+          } @else if (step() === 2) {
+            <button type="button" class="secondary" (click)="setStep(1)">
+              {{
+                currentLang() === 'km'
+                  ? '← ត្រឡប់ទៅកុមារ និងមូលហេតុ (Back)'
+                  : '← Back to Child & Reason'
+              }}
+            </button>
+            <button
+              type="button"
+              class="primary"
+              [disabled]="!facade.booking().date || !facade.booking().time"
+              (click)="setStep(3)"
+            >
+              {{
+                currentLang() === 'km'
+                  ? 'បន្តទៅផ្ទៀងផ្ទាត់ (Continue to Confirm) →'
+                  : 'Continue to Confirm →'
+              }}
+            </button>
+          } @else if (step() === 3) {
+            <button type="button" class="secondary" (click)="setStep(2)">
+              {{
+                currentLang() === 'km' ? '← ត្រឡប់ទៅថ្ងៃ និងម៉ោង (Back)' : '← Back to Date & Slot'
+              }}
+            </button>
+            <button
+              type="button"
+              class="primary"
+              [disabled]="facade.booking().step === 'submitting'"
+              (click)="confirmBooking()"
+            >
+              {{
+                facade.booking().step === 'submitting'
+                  ? currentLang() === 'km'
+                    ? 'កំពុងផ្ញើសំណើ… (Submitting…)'
+                    : 'Submitting Request…'
+                  : currentLang() === 'km'
+                    ? 'បញ្ជាក់ការកក់ណាត់ (Confirm Appointment)'
+                    : 'Confirm Appointment'
+              }}
+            </button>
+          }
         </div>
       }
     </ac-ui-dialog>
   `,
   styles: [
     `
-      .section {
+      .wizard-stepper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        margin-bottom: 20px;
+        padding: 6px 4px;
+      }
+
+      .wizard-step {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 0;
+        background: transparent;
+        padding: 4px 6px;
+        cursor: pointer;
+        font: inherit;
+        border-radius: var(--ac-radius-sm);
+        transition: all 0.2s ease;
+      }
+
+      .wizard-step:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .step-badge {
+        width: 26px;
+        height: 26px;
+        border-radius: var(--ac-radius-pill);
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-bold);
+        background: var(--ac-color-slate-surface-light);
+        color: var(--ac-color-text-slate);
+      }
+
+      .wizard-step.active .step-badge {
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+      }
+
+      .wizard-step.completed .step-badge {
+        background: var(--ac-color-sage);
+        color: var(--ac-color-text-on-action);
+      }
+
+      .step-label {
+        font-size: 13px;
+        font-weight: var(--ac-font-weight-medium);
+        color: var(--ac-color-text-muted);
+      }
+
+      .wizard-step.active .step-label {
+        color: var(--ac-color-text-strong);
+        font-weight: var(--ac-font-weight-bold);
+      }
+
+      .step-divider {
+        flex: 1;
+        height: 2px;
+        background: var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-pill);
+      }
+
+      .step-divider.filled {
+        background: var(--ac-color-sage);
+      }
+
+      .specialist-context-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: var(--ac-color-tint-blue-soft);
+        border-radius: var(--ac-radius-md);
+        border: 1px solid var(--ac-color-border-info);
         margin-bottom: 20px;
       }
 
+      .doctor-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-deep);
+        border: 1.5px solid var(--ac-color-border-info);
+        display: grid;
+        place-items: center;
+        font-weight: var(--ac-font-weight-bold);
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .doctor-context-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .doctor-name {
+        color: var(--ac-color-text-strong);
+        font-size: 14px;
+      }
+
+      .doctor-specialty {
+        color: var(--ac-color-text-body);
+        font-size: var(--ac-type-meta);
+      }
+
+      .doctor-schedule {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+        color: var(--ac-color-action-deep);
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-medium);
+      }
+
+      .section {
+        margin-bottom: 22px;
+      }
+
+      .section-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
       .section-title {
-        margin: 0 0 10px;
+        margin: 0;
+        color: var(--ac-color-text-strong);
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-bold);
+      }
+
+      .step-hint {
+        color: var(--ac-color-text-muted);
+        font-size: 12px;
+      }
+
+      .sub-section-title {
+        margin: 0;
         color: var(--ac-color-text-dark);
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
-        text-transform: uppercase;
       }
 
       .patient-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 12px;
       }
 
       .patient-card {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: 10px;
         border: 1.5px solid var(--ac-color-border);
-        border-radius: 12px;
+        border-radius: var(--ac-radius-md);
         background: var(--ac-color-surface);
-        padding: 12px;
+        padding: 14px;
         cursor: pointer;
         text-decoration: none;
         text-align: left;
         font: inherit;
+        transition: all 0.2s ease;
+      }
+
+      .patient-card:hover {
+        border-color: var(--ac-color-border-info);
+        background: var(--ac-color-surface-slate);
       }
 
       .patient-card.selected {
-        border-color: var(--ac-color-text-dark);
+        border-color: var(--ac-color-action);
         background: var(--ac-color-tint-blue-soft);
+        box-shadow: 0 0 0 1px var(--ac-color-action);
       }
 
       .patient-card .avatar {
-        width: 34px;
-        height: 34px;
-        border-radius: 999px;
+        width: 36px;
+        height: 36px;
+        border-radius: var(--ac-radius-pill);
         background: var(--ac-color-olive-light);
         color: var(--ac-color-olive-dark);
         display: grid;
@@ -254,8 +809,8 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
       }
 
       .patient-card .avatar.plus {
-        background: #e5f6ff;
-        color: var(--ac-color-text-dark);
+        background: var(--ac-color-tint-blue-soft);
+        color: var(--ac-color-action);
         font-size: 18px;
       }
 
@@ -272,41 +827,43 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         font-size: var(--ac-type-body);
       }
 
-      .doctor-summary {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        border-radius: 10px;
-        background: var(--ac-color-tint-blue-soft);
-        padding: 12px 14px;
-      }
-
-      .doctor-summary strong {
-        color: var(--ac-color-text-strong);
-      }
-
-      .doctor-summary span {
-        color: var(--ac-color-text-body);
-        font-size: var(--ac-type-meta);
+      .calendar-wrapper {
+        border: 1.5px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md);
+        padding: 16px;
+        background: var(--ac-color-surface);
+        margin-bottom: 18px;
       }
 
       .calendar-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 8px;
-        color: var(--ac-color-text-strong);
-        font-weight: var(--ac-font-weight-semibold);
+        margin-bottom: 10px;
       }
 
-      .calendar-header button {
-        width: 28px;
-        height: 28px;
+      .month-label {
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
+        font-size: var(--ac-type-label);
+      }
+
+      .month-nav-btn {
+        width: 32px;
+        height: 32px;
         border: 0;
-        border-radius: 999px;
+        border-radius: var(--ac-radius-pill);
         background: var(--ac-color-tint-blue-soft);
+        color: var(--ac-color-action-deep);
         cursor: pointer;
-        font-size: 1rem;
+        font-size: 1.1rem;
+        display: grid;
+        place-items: center;
+        transition: background-color 0.2s ease;
+      }
+
+      .month-nav-btn:hover {
+        background: var(--ac-color-border-info);
       }
 
       .weekday-row,
@@ -321,31 +878,112 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         color: var(--ac-color-text-muted);
         font-size: 11px;
         font-weight: var(--ac-font-weight-bold);
+        padding: 4px 0;
       }
 
       .day-cell {
         aspect-ratio: 1;
         border: 0;
-        border-radius: 8px;
+        border-radius: var(--ac-radius-sm);
         background: transparent;
         color: var(--ac-color-text-dark);
         font-size: var(--ac-type-meta);
         cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .day-cell:hover:not(:disabled) {
+        background: var(--ac-color-tint-blue-soft);
       }
 
       .day-cell.muted {
-        color: #c3ccce;
+        color: var(--ac-color-slate-tint-soft);
       }
 
       .day-cell:disabled {
-        color: #c3ccce;
+        color: var(--ac-color-slate-tint-soft);
         cursor: not-allowed;
       }
 
+      .day-cell.off-day {
+        opacity: 0.35;
+        cursor: not-allowed;
+        text-decoration: line-through;
+        background: var(--ac-color-red-tint-50);
+        color: var(--ac-color-alert-strong);
+      }
+
       .day-cell.selected {
-        background: var(--ac-color-text-dark);
-        color: var(--ac-color-text-on-action);
+        background: var(--ac-color-action) !important;
+        color: var(--ac-color-text-on-action) !important;
         font-weight: var(--ac-font-weight-bold);
+        box-shadow: var(--ac-shadow-xs);
+      }
+
+      .calendar-legend {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--ac-color-border-slate);
+        font-size: 11px;
+        color: var(--ac-color-text-muted);
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .legend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: var(--ac-radius-pill);
+      }
+
+      .legend-dot.available {
+        background: var(--ac-color-success);
+      }
+
+      .legend-dot.off-duty {
+        background: var(--ac-color-red-border);
+      }
+
+      .legend-dot.selected {
+        background: var(--ac-color-action);
+      }
+
+      .slots-container {
+        padding: 16px;
+        background: var(--ac-color-surface-slate);
+        border: 1.5px solid var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-md);
+      }
+
+      .slot-groups {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 10px;
+      }
+
+      .slot-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .slot-group-heading {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--ac-color-text-dark);
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-bold);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
       }
 
       .slot-row {
@@ -357,91 +995,242 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
       .slot {
         min-height: 40px;
         border: 1.5px solid var(--ac-color-border);
-        border-radius: 999px;
+        border-radius: var(--ac-radius-pill);
         background: var(--ac-color-surface);
         color: var(--ac-color-text-dark);
         padding: 0 16px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
         cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .slot:hover:not(:disabled) {
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-tint-blue-soft);
       }
 
       .slot.selected {
-        border-color: var(--ac-color-text-dark);
-        background: var(--ac-color-text-dark);
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-action);
         color: var(--ac-color-text-on-action);
+        box-shadow: var(--ac-shadow-xs);
+      }
+
+      .slot:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        background: var(--ac-color-surface-slate);
+        border-color: var(--ac-color-border-slate);
+        text-decoration: line-through;
+      }
+
+      .loading-slots {
+        margin: 10px 0;
+        color: var(--ac-color-text-muted);
+        font-size: var(--ac-type-meta);
+        font-style: italic;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .no-slots-notice {
+        padding: 14px 16px;
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-amber-tint-warm);
+        border: 1px solid var(--ac-color-amber-tint-sand);
+        color: var(--ac-color-text-body);
+        font-size: var(--ac-type-meta);
+        line-height: var(--ac-line-body);
+        margin-top: 10px;
+      }
+
+      .no-slots-notice p {
+        margin: 0;
       }
 
       .reason-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 12px;
+        gap: 10px;
+        margin-bottom: 16px;
       }
 
       .reason-chip {
-        min-height: 36px;
+        min-height: 42px;
         border: 1.5px solid var(--ac-color-border);
-        border-radius: 999px;
+        border-radius: var(--ac-radius-pill);
         background: var(--ac-color-surface);
         color: var(--ac-color-text-dark);
-        padding: 0 14px;
+        padding: 0 18px;
         font-size: var(--ac-type-meta);
-        font-weight: var(--ac-font-weight-medium);
+        font-weight: var(--ac-font-weight-semibold);
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .reason-chip:hover {
+        background: var(--ac-color-surface-slate);
       }
 
       .reason-chip.selected {
         border-color: var(--ac-color-sage);
         background: var(--ac-color-sage-light);
         color: var(--ac-color-text-dark);
+        box-shadow: var(--ac-shadow-xs);
       }
 
-      .notes-label {
-        display: block;
-        margin-bottom: 6px;
+      .reason-guidance {
+        margin: 0;
         color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
+        line-height: var(--ac-line-body);
+        background: var(--ac-color-tint-blue-soft);
+        padding: 12px 14px;
+        border-radius: var(--ac-radius-md);
+      }
+
+      .reason-section-group {
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px dashed var(--ac-color-border);
+      }
+
+      .sub-header {
+        margin-bottom: 12px;
+      }
+
+      .symptom-chips-container {
+        margin-top: 16px;
+      }
+
+      .symptoms-label {
+        display: block;
+        font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-medium);
+        color: var(--ac-color-text-muted);
+        margin-bottom: 8px;
+      }
+
+      .symptom-chips-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .symptom-chip {
+        min-height: 34px;
+        padding: 0 14px;
+        border-radius: var(--ac-radius-pill);
+        border: 1px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-body);
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-medium);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .symptom-chip:hover {
+        background: var(--ac-color-tint-blue-soft);
+        border-color: var(--ac-color-border-info);
+      }
+
+      .symptom-chip.selected {
+        background: var(--ac-color-action);
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+      }
+
+      .symptoms-summary-item {
+        grid-column: 1 / -1;
+      }
+
+      .review-symptom-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .review-symptom-tag {
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-tint-blue-soft);
+        color: var(--ac-color-action-deep);
+        font-weight: var(--ac-font-weight-semibold);
+      }
+
+      .review-card {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        padding: 16px;
+        background: var(--ac-color-tint-blue-soft);
+        border: 1px solid var(--ac-color-border-info);
+        border-radius: var(--ac-radius-md);
+        margin-bottom: 18px;
+      }
+
+      .review-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .review-key {
+        font-size: 11px;
+        color: var(--ac-color-text-muted);
+        text-transform: uppercase;
+        font-weight: var(--ac-font-weight-semibold);
+        letter-spacing: 0.03em;
+      }
+
+      .review-val {
+        color: var(--ac-color-text-strong);
+        font-size: 14px;
       }
 
       .notes-input {
         width: 100%;
-        border: 1px solid var(--ac-color-border);
+        border: 1.5px solid var(--ac-color-border);
         border-radius: var(--ac-radius-md);
-        padding: 10px 12px;
+        padding: 12px 14px;
         font-family: inherit;
         font-size: var(--ac-type-meta);
         color: var(--ac-color-text);
         resize: vertical;
+        box-sizing: border-box;
+        transition: border-color 0.2s ease;
       }
 
       .notes-input:focus-visible {
-        outline: 3px solid var(--ac-color-warning);
-        outline-offset: 1px;
-      }
-
-      .error {
-        margin: 0 0 16px;
-        border-radius: 10px;
-        background: #fee2e2;
-        color: var(--ac-color-alert-slate);
-        padding: 10px 14px;
-        font-size: var(--ac-type-meta);
+        outline: none;
+        border-color: var(--ac-color-action);
+        box-shadow: 0 0 0 3px var(--ac-color-tint-blue);
       }
 
       .modal-footer {
         display: flex;
         justify-content: flex-end;
-        gap: 10px;
+        align-items: center;
+        gap: 12px;
+        margin-top: 10px;
       }
 
       .modal-footer button {
         min-height: 44px;
-        border-radius: 10px;
+        border-radius: var(--ac-radius-md);
         padding: 0 20px;
         font-weight: var(--ac-font-weight-semibold);
+        font-size: var(--ac-type-meta);
         cursor: pointer;
+        transition: all 0.2s ease;
       }
 
       .secondary {
@@ -450,15 +1239,44 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
         color: var(--ac-color-text-body);
       }
 
+      .secondary:hover {
+        background: var(--ac-color-surface-slate);
+      }
+
       .primary {
         border: 0;
-        background: var(--ac-color-text-dark);
+        background: var(--ac-color-action);
         color: var(--ac-color-text-on-action);
+        box-shadow: var(--ac-shadow-sm);
+      }
+
+      .primary:hover:not(:disabled) {
+        background: var(--ac-color-action-deep);
+        box-shadow: var(--ac-shadow-md);
       }
 
       .primary:disabled {
-        opacity: 0.6;
+        opacity: 0.55;
         cursor: not-allowed;
+      }
+
+      @media (max-width: 540px) {
+        .wizard-stepper {
+          overflow-x: auto;
+        }
+
+        .step-label {
+          display: none;
+        }
+
+        .modal-footer {
+          flex-direction: column-reverse;
+          align-items: stretch;
+        }
+
+        .modal-footer button {
+          width: 100%;
+        }
       }
     `,
   ],
@@ -467,15 +1285,100 @@ const timeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as const;
 export class BookAppointmentModalComponent implements OnInit {
   protected readonly facade = inject(AppointmentsFacade);
   protected readonly children = inject(ChildrenFacade);
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-  protected readonly timeSlots = timeSlots;
+
+  protected readonly step = signal<WizardStep>(1);
   protected readonly visitReasons = visitReasons;
+  protected readonly commonSymptoms = [
+    'Speech & Language Delay',
+    'Sensory Sensitivity (Sound/Light)',
+    'Social & Peer Communication',
+    'Repetitive Motor Behaviors',
+    'Emotional Regulation',
+    'School Learning Accommodations',
+  ] as const;
+  protected readonly selectedSymptoms = signal<ReadonlySet<string>>(new Set());
+  protected readonly selectedSymptomsList = computed(() => Array.from(this.selectedSymptoms()));
+
+  protected formatVisitReason(reason: VisitReason): string {
+    const isKm = this.currentLang() === 'km';
+    switch (reason) {
+      case 'Consultation':
+        return isKm ? 'ការពិគ្រោះយោបល់ (Consultation)' : 'Consultation';
+      case 'Follow-up':
+        return isKm ? 'ការតាមដានបន្ត (Follow-up)' : 'Follow-up';
+      case 'Test results':
+        return isKm ? 'លទ្ធផលតេស្ត (Test Results)' : 'Test results';
+      case 'Other':
+        return isKm ? 'ផ្សេងៗ (Other)' : 'Other';
+      default:
+        return reason;
+    }
+  }
+
+  protected formatSymptomLabel(symptom: string): string {
+    const isKm = this.currentLang() === 'km';
+    switch (symptom) {
+      case 'Speech & Language Delay':
+        return isKm ? 'ការយឺតយ៉ាវក្នុងការនិយាយ (Speech Delay)' : 'Speech & Language Delay';
+      case 'Sensory Sensitivity (Sound/Light)':
+        return isKm
+          ? 'ភាពងាយរងរំញោចញ្ញាណ (Sensory Sensitivity)'
+          : 'Sensory Sensitivity (Sound/Light)';
+      case 'Social & Peer Communication':
+        return isKm ? 'ទំនាក់ទំនងសង្គម (Social Interaction)' : 'Social & Peer Communication';
+      case 'Repetitive Motor Behaviors':
+        return isKm ? 'ចលនារាងកាយច្រំដែល (Repetitive Behaviors)' : 'Repetitive Motor Behaviors';
+      case 'Emotional Regulation':
+        return isKm ? 'ការគ្រប់គ្រងអារម្មណ៍ (Emotional Regulation)' : 'Emotional Regulation';
+      case 'School Learning Accommodations':
+        return isKm
+          ? 'ការសម្របសម្រួលនៅសាលា (School Accommodations)'
+          : 'School Learning Accommodations';
+      default:
+        return symptom;
+    }
+  }
+
+  protected isSymptomSelected(symptom: string): boolean {
+    return this.selectedSymptoms().has(symptom);
+  }
+
+  protected toggleSymptom(symptom: string): void {
+    this.selectedSymptoms.update((current) => {
+      const next = new Set(current);
+      if (next.has(symptom)) {
+        next.delete(symptom);
+      } else {
+        next.add(symptom);
+      }
+      return next;
+    });
+  }
+
   protected readonly weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   private readonly viewMonth = signal(startOfMonth(new Date()));
 
   protected readonly monthLabel = computed(() =>
     this.viewMonth().toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
   );
+
+  protected readonly morningSlots = computed(() =>
+    this.facade.booking().slots.filter((slot) => isMorningSlot(slot.time)),
+  );
+
+  protected readonly afternoonSlots = computed(() =>
+    this.facade.booking().slots.filter((slot) => !isMorningSlot(slot.time)),
+  );
+
+  protected readonly selectedChildName = computed(() => {
+    const childId = this.facade.booking().childId;
+    if (!childId) return 'Not selected';
+    const child = this.children.children().find((c) => c.id === childId);
+    return child ? `${child.firstName} ${child.lastName ?? ''}`.trim() : 'Patient';
+  });
 
   protected readonly calendarDays = computed<readonly CalendarDay[]>(() => {
     const month = this.viewMonth();
@@ -486,14 +1389,26 @@ export class BookAppointmentModalComponent implements OnInit {
     gridStart.setDate(gridStart.getDate() - firstOfMonth.getDay());
     const today = startOfDay(new Date());
 
+    const doctor = this.facade.booking().doctor;
+    const availableDaysList = doctor?.availableDays
+      ? doctor.availableDays
+          .split(',')
+          .map((d) => Number.parseInt(d.trim(), 10))
+          .filter((n) => !Number.isNaN(n) && n >= 0 && n <= 6)
+      : [1, 2, 3, 4, 5];
+    const availableDaysSet = new Set(availableDaysList);
+
     return Array.from({ length: 42 }, (_, index) => {
       const date = new Date(gridStart);
       date.setDate(gridStart.getDate() + index);
+      const isPast = startOfDay(date).getTime() < today.getTime();
+      const isOffDay = !availableDaysSet.has(date.getDay());
       return {
         iso: toIsoDate(date),
         label: date.getDate(),
         isCurrentMonth: date.getMonth() === monthIndex,
-        isPast: startOfDay(date).getTime() < today.getTime(),
+        isPast,
+        isOffDay,
       };
     });
   });
@@ -504,6 +1419,42 @@ export class BookAppointmentModalComponent implements OnInit {
 
   ngOnInit() {
     this.children.load();
+  }
+
+  protected setStep(step: WizardStep) {
+    this.step.set(step);
+  }
+
+  protected formatSchedule(
+    doctor?: {
+      availableDays?: string;
+      startHour?: number;
+      endHour?: number;
+    } | null,
+  ): string {
+    if (!doctor) return 'Schedule details upon inquiry';
+    const days = doctor.availableDays ?? '1,2,3,4,5';
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const activeDays = days
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((n) => !Number.isNaN(n) && n >= 0 && n <= 6)
+      .map((n) => dayNames[n])
+      .join(', ');
+
+    const start = doctor.startHour ?? 9;
+    const end = doctor.endHour ?? 17;
+    const timeRange = `${start.toString().padStart(2, '0')}:00 - ${end.toString().padStart(2, '0')}:00`;
+
+    return activeDays ? `${activeDays} (${timeRange})` : `Hours: ${timeRange}`;
+  }
+
+  protected formatSelectedDate(isoDate: string): string {
+    return new Date(`${isoDate}T00:00:00`).toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   protected shiftMonth(delta: number) {
@@ -527,15 +1478,28 @@ export class BookAppointmentModalComponent implements OnInit {
           : !booking.time
             ? 'time'
             : null;
+
       if (!missing || !booking.error) return;
+
+      if (missing === 'child') {
+        this.step.set(1);
+      } else if (missing === 'date' || missing === 'time') {
+        this.step.set(2);
+      }
+
       this.host.nativeElement
         .querySelector<HTMLElement>(`[data-booking-required="${missing}"] button:not(:disabled)`)
         ?.focus();
     });
   }
 
-  protected initials(firstName: string): string {
-    return firstName.slice(0, 2).toUpperCase();
+  protected initials(name: string): string {
+    const clean = name.replace(/^Dr\.?\s+/i, '').trim();
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return clean.slice(0, 2).toUpperCase() || 'CH';
   }
 
   protected ageLabel(dateOfBirth: string): string {
@@ -548,6 +1512,14 @@ export class BookAppointmentModalComponent implements OnInit {
     }
     return `Age ${Math.max(years, 0)}`;
   }
+}
+
+function isMorningSlot(time: string): boolean {
+  const t = time.trim().toUpperCase();
+  if (t.includes('AM')) return true;
+  if (t.includes('PM')) return false;
+  const hour = Number.parseInt(t.split(':')[0], 10);
+  return !Number.isNaN(hour) && hour < 12;
 }
 
 function startOfMonth(date: Date): Date {

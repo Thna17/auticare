@@ -41,13 +41,18 @@ import type { AfterContentInit } from '@angular/core';
         <ng-content select="[fieldAction]" />
       </div>
 
-      <ng-content />
+      <div class="control-wrapper">
+        <ng-content />
+      </div>
 
       @if (hint() && !error()) {
         <small class="hint" [id]="hintId">{{ hint() }}</small>
       }
       @if (error()) {
-        <small class="error" [id]="errorId" role="alert">{{ error() }}</small>
+        <small class="error" [id]="errorId" role="alert">
+          <span class="error-glyph" aria-hidden="true">⚠</span>
+          <span>{{ error() }}</span>
+        </small>
       }
     </div>
   `,
@@ -74,18 +79,23 @@ import type { AfterContentInit } from '@angular/core';
       }
 
       .label {
-        font-weight: var(--ac-font-weight-bold);
+        font-weight: var(--ac-font-weight-semibold);
         color: var(--ac-color-text-strong);
+        font-size: var(--ac-type-label);
+        letter-spacing: -0.01em;
       }
 
       .optional {
         font-style: normal;
         font-weight: var(--ac-font-weight-regular);
         color: var(--ac-color-text-muted);
+        font-size: var(--ac-type-meta);
       }
 
       .required-indicator {
         color: var(--ac-color-alert-strong);
+        font-weight: var(--ac-font-weight-bold);
+        margin-left: 2px;
       }
 
       .visually-hidden {
@@ -100,14 +110,69 @@ import type { AfterContentInit } from '@angular/core';
         border: 0;
       }
 
+      .control-wrapper {
+        display: contents;
+      }
+
+      ::ng-deep ac-ui-field input:not([type='checkbox']):not([type='radio']),
+      ::ng-deep ac-ui-field select,
+      ::ng-deep ac-ui-field textarea {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 14px;
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-sm);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font: inherit;
+        font-size: var(--ac-type-body);
+        line-height: var(--ac-line-body);
+        transition:
+          border-color var(--ac-motion-fast),
+          box-shadow var(--ac-motion-fast);
+      }
+
+      ::ng-deep ac-ui-field textarea {
+        min-height: 96px;
+        resize: vertical;
+      }
+
+      ::ng-deep ac-ui-field input:not([type='checkbox']):not([type='radio']):focus,
+      ::ng-deep ac-ui-field select:focus,
+      ::ng-deep ac-ui-field textarea:focus {
+        outline: none;
+        border-color: var(--ac-color-action-alt);
+        box-shadow: 0 0 0 3px var(--ac-color-tint-blue);
+      }
+
+      ::ng-deep ac-ui-field input[aria-invalid='true'],
+      ::ng-deep ac-ui-field select[aria-invalid='true'],
+      ::ng-deep ac-ui-field textarea[aria-invalid='true'] {
+        border-color: var(--ac-color-alert-strong);
+        box-shadow: 0 0 0 3px var(--ac-color-alert-surface);
+      }
+
       .hint {
         font-weight: var(--ac-font-weight-regular);
         color: var(--ac-color-text-muted);
+        font-size: var(--ac-type-meta);
+        line-height: var(--ac-line-body);
       }
 
       .error {
-        font-weight: var(--ac-font-weight-regular);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: var(--ac-font-weight-medium);
         color: var(--ac-color-red-700);
+        font-size: var(--ac-type-meta);
+        line-height: 1.3;
+      }
+
+      .error-glyph {
+        font-size: 13px;
+        line-height: 1;
+        flex-shrink: 0;
       }
     `,
   ],

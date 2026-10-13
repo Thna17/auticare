@@ -10,12 +10,19 @@ import {
   register,
   requestPasswordReset,
   resetPassword,
+  changePassword,
+  verifyInvitation,
+  acceptInvitation,
+  resendInvitation,
 } from './auth.controller.js';
-import { requireAuth } from './auth.middleware.js';
+import { optionalAuth, requireAuth } from './auth.middleware.js';
 import {
+  acceptInvitationRequestSchema,
+  changePasswordRequestSchema,
   loginRequestSchema,
   passwordResetRequestSchema,
   registerRequestSchema,
+  resendInvitationRequestSchema,
   resetPasswordRequestSchema,
   updateMyProfileRequestSchema,
 } from './auth.schemas.js';
@@ -34,6 +41,25 @@ authRoutes.post(
   passwordResetRateLimit,
   validateBody(resetPasswordRequestSchema),
   resetPassword,
+);
+authRoutes.post(
+  '/change-password',
+  requireAuth,
+  validateBody(changePasswordRequestSchema),
+  changePassword,
+);
+
+authRoutes.get('/invitations/verify', verifyInvitation);
+authRoutes.post(
+  '/invitations/accept',
+  validateBody(acceptInvitationRequestSchema),
+  acceptInvitation,
+);
+authRoutes.post(
+  '/invitations/resend',
+  optionalAuth,
+  validateBody(resendInvitationRequestSchema),
+  resendInvitation,
 );
 authRoutes.post('/logout', logout);
 authRoutes.post('/refresh', refresh);

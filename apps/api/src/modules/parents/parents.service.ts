@@ -1,9 +1,12 @@
 import type {
   AdmissionRequestResponse,
   ListParentNotificationsQuery,
+  NotificationResponse,
   PaginationQuery,
   ParentActivityReportListResponse,
   ParentNotificationListResponse,
+  ParentPreferencesResponse,
+  UpdateParentPreferencesRequest,
 } from '@auticare/contracts';
 import { toPaginationMeta, toSkipTake } from '../../common/http/pagination.js';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
@@ -99,19 +102,38 @@ export class ParentsService {
     }
 
     const childName = child.firstName;
-    const request = await this.repository.createAdmissionRequestWithNotification({
-      parentId: actor.parentId,
-      schoolId: input.schoolId,
-      childId: input.childId,
-      childName,
-      schoolName: school.name,
-      ...(input.message !== undefined && { message: input.message }),
-    });
+    let request;
+    try {
+      request = await this.repository.createAdmissionRequestWithNotification({
+        parentId: actor.parentId,
+        schoolId: input.schoolId,
+        childId: input.childId,
+        childName,
+        schoolName: school.name,
+        ...(input.message !== undefined && { message: input.message }),
+      });
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        (err.code === 'P2034' || err.code === 'P2002')
+      ) {
+        throw new AppError(
+          'VALIDATION_ERROR',
+          'A request for this child at this school is already awaiting a decision.',
+          409,
+        );
+      }
+      throw err;
+    }
 
     return {
       id: request.id,
       schoolId: request.schoolId,
       schoolName: school.name,
+      schoolCity: school.city ?? null,
+      schoolAddress: school.address ?? null,
       childId: request.childId,
       childName,
       status: request.status,
@@ -125,17 +147,15 @@ export class ParentsService {
     if (actor.role !== 'PARENT') throw forbidden();
 
     const requests = await this.repository.listAdmissionRequestsForParent(actor.parentId);
-    const childNames = await this.repository.findChildNamesByIds(
-      requests.map((r) => r.childId).filter((id): id is string => id !== null),
-    );
-    const namesById = new Map(childNames.map((c) => [c.id, c]));
 
     return requests.map((request) => {
-      const child = request.childId ? namesById.get(request.childId) : undefined;
+      const child = request.child;
       return {
         id: request.id,
         schoolId: request.schoolId,
         schoolName: request.school.name,
+        schoolCity: request.school.city ?? null,
+        schoolAddress: request.school.address ?? null,
         childId: request.childId,
         childName: child
           ? [child.firstName, child.lastName].filter(Boolean).join(' ')
@@ -168,9 +188,94 @@ export class ParentsService {
       body: notification.body,
       enrollmentId: notification.enrollmentId,
       reportId: notification.reportId,
+      appointmentId: notification.appointmentId,
       createdAt: notification.createdAt.toISOString(),
     }));
 
     return { notifications, pagination: toPaginationMeta(query, total) };
+  }
+
+  /**
+   * PATCH /parents/notifications/:id/read — mark a single notification read.
+   * Scoped strictly to the authenticated parent.
+   */
+  async markNotificationRead(actor: Actor, notificationId: string): Promise<NotificationResponse> {
+    if (actor.role !== 'PARENT') throw forbidden();
+    const notification = await this.repository.findNotificationById(notificationId);
+    if (!notification) throw notFound('Notification was not found.');
+    if (notification.parentId !== actor.parentId) throw forbidden();
+
+    const updated = await this.repository.markNotificationRead(notificationId);
+    return {
+      id: updated.id,
+      type: updated.type,
+      status: updated.status,
+      title: updated.title,
+      body: updated.body,
+      enrollmentId: updated.enrollmentId,
+      reportId: updated.reportId,
+      appointmentId: updated.appointmentId,
+      createdAt: updated.createdAt.toISOString(),
+    };
+  }
+
+  /**
+   * PATCH /parents/notifications/read-all — mark all unread notifications read.
+   * Scoped strictly to the authenticated parent.
+   */
+  async markAllNotificationsRead(actor: Actor): Promise<{ updatedCount: number }> {
+    if (actor.role !== 'PARENT') throw forbidden();
+    const result = await this.repository.markAllNotificationsRead(actor.parentId);
+    return { updatedCount: result.count };
+  }
+
+  /**
+   * GET /parents/preferences — load accessibility and localization preferences.
+   */
+  async getPreferences(actor: { parentId: string }): Promise<ParentPreferencesResponse> {
+    const pref = await this.repository.findPreferences(actor.parentId);
+    if (!pref) {
+      return {
+        preference: {
+          preferredLanguage: 'en',
+          reducedMotion: false,
+          highContrast: false,
+        },
+      };
+    }
+    return {
+      preference: {
+        preferredLanguage: pref.preferredLanguage,
+        reducedMotion: pref.reducedMotion,
+        highContrast: pref.highContrast,
+        updatedAt: pref.updatedAt.toISOString(),
+      },
+    };
+  }
+
+  /**
+   * PATCH /parents/preferences — update accessibility and localization preferences.
+   */
+  async updatePreferences(
+    actor: { parentId: string },
+    input: UpdateParentPreferencesRequest,
+  ): Promise<ParentPreferencesResponse> {
+    if (
+      input.preferredLanguage === undefined &&
+      input.reducedMotion === undefined &&
+      input.highContrast === undefined
+    ) {
+      throw new AppError('VALIDATION_ERROR', 'Provide at least one preference to update.', 400);
+    }
+
+    const pref = await this.repository.upsertPreferences(actor.parentId, input);
+    return {
+      preference: {
+        preferredLanguage: pref.preferredLanguage,
+        reducedMotion: pref.reducedMotion,
+        highContrast: pref.highContrast,
+        updatedAt: pref.updatedAt.toISOString(),
+      },
+    };
   }
 }

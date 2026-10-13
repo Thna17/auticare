@@ -1,11 +1,11 @@
-// school-reports.page.ts — School Activity Reports list.
+// school-reports.page.ts — School Activity Reports list & observation feed.
 // Loads real submitted/draft reports for the authenticated school
-// (GET /schools/reports), with status/child filters and expandable details.
+// (GET /schools/reports), with status/child/developmental domain filters and expandable details.
 // Report creation lives on the canonical form at /schools/reports/new.
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SchoolsApi } from './data-access/schools.api';
 import type { EnrolledStudentOption } from './data-access/schools.api';
 import type { ActivityReportListItem, PaginationMeta } from '@auticare/contracts';
@@ -33,6 +33,21 @@ const METRIC_LABELS: ReadonlyArray<readonly [string, string]> = [
 
 const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 
+export interface DomainFilterOption {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+const DOMAIN_OPTIONS: DomainFilterOption[] = [
+  { id: 'ALL', label: 'All Domains', icon: '🌟' },
+  { id: 'Sensory', label: 'Sensory & Motor', icon: '🌈' },
+  { id: 'Social', label: 'Social & Emotional', icon: '🤝' },
+  { id: 'Communication', label: 'Language & Speech', icon: '💬' },
+  { id: 'Cognitive', label: 'Cognitive & Focus', icon: '🧩' },
+  { id: 'Adaptive', label: 'Adaptive & Routine', icon: '🌱' },
+];
+
 @Component({
   standalone: true,
   imports: [
@@ -45,41 +60,77 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
     UiSpinnerComponent,
   ],
   template: `
-    <ac-school-topbar />
+    @if (isSchoolStaff()) {
+      <ac-school-topbar />
+    }
 
     <!-- Page Header -->
-    <header class="reports-header">
-      <div>
-        <h1>Activity Reports</h1>
-        <p class="reports-subtitle">Everything your school has recorded for its students.</p>
+    <header class="reports-header" [class.admin-header]="isAdmin()">
+      <div class="header-titles">
+        <div class="header-badge-row">
+          <span class="header-badge">Clinical Observation Feed</span>
+          <span class="header-badge-sub">Progress Monitoring</span>
+        </div>
+        <h1>
+          {{ isAdmin() ? 'Administrative School Reports Oversight' : 'Activity Reports' }}
+        </h1>
+        <p class="reports-subtitle">
+          {{
+            isSchoolStaff()
+              ? 'Developmental observation logs, milestones, and therapeutic reports recorded for enrolled students.'
+              : isAdmin()
+                ? 'Administrative platform oversight of student activity and developmental reports.'
+                : 'Activity reports recorded by partner schools.'
+          }}
+        </p>
       </div>
-      <a class="btn-new-report" routerLink="/schools/reports/new">＋ New Report</a>
+      @if (isSchoolStaff()) {
+        <a class="btn-new-report" routerLink="/schools/reports/new">＋ New Report</a>
+      }
     </header>
 
-    <!-- Filters -->
+    <!-- Developmental Domain Filter Pills -->
+    <section class="domain-pills-bar" aria-label="Developmental domain filters">
+      <span class="domain-bar-label">Developmental Domain:</span>
+      <div class="domain-pills-list">
+        @for (opt of domainOptions; track opt.id) {
+          <button
+            type="button"
+            class="domain-pill-btn"
+            [class.active]="selectedDomain() === opt.id"
+            (click)="selectDomain(opt.id)"
+          >
+            <span class="pill-icon">{{ opt.icon }}</span>
+            <span>{{ opt.label }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
+    <!-- Filters Row -->
     <div class="filters-row">
       <div class="filter-group">
-        <label class="filter-label" for="status-filter">Status</label>
+        <label class="filter-label" for="status-filter">Report Status</label>
         <select
           id="status-filter"
           class="filter-select"
           [value]="statusFilter()"
           (change)="onStatusChange($event)"
         >
-          <option value="ALL">All</option>
-          <option value="SUBMITTED">Submitted</option>
-          <option value="DRAFT">Draft</option>
+          <option value="ALL">All Statuses</option>
+          <option value="SUBMITTED">Submitted (Published)</option>
+          <option value="DRAFT">Draft Only</option>
         </select>
       </div>
       <div class="filter-group">
-        <label class="filter-label" for="child-filter">Student</label>
+        <label class="filter-label" for="child-filter">Enrolled Student</label>
         <select
           id="child-filter"
           class="filter-select"
           [value]="childFilter()"
           (change)="onChildChange($event)"
         >
-          <option value="">All students</option>
+          <option value="">All students ({{ students().length }})</option>
           @for (student of students(); track student.childId) {
             <option [value]="student.childId">
               {{ student.firstName }} {{ student.lastName }}
@@ -90,33 +141,63 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
       <span class="filter-count">{{ pagination()?.total ?? reports().length }} report(s)</span>
     </div>
 
+    @if (searchQuery()) {
+      <div class="active-search-bar" role="status">
+        <span class="search-tag">
+          <span
+            >Filtering by: <strong>"{{ searchQuery() }}"</strong></span
+          >
+          <button
+            type="button"
+            class="btn-clear-search"
+            (click)="clearSearch()"
+            aria-label="Clear search"
+          >
+            ✕ Clear search
+          </button>
+        </span>
+      </div>
+    }
+
     @if (actionMessage()) {
       <p class="action-message" role="status">{{ actionMessage() }}</p>
     }
 
     <!-- States -->
     @if (loading()) {
-      <ac-ui-spinner label="Loading reports…" />
+      <ac-ui-spinner label="Loading developmental reports…" />
     } @else if (error(); as loadError) {
       <ac-ui-message tone="error">
         {{ loadError }}
         <button type="button" class="retry-btn" (click)="loadReports()">Retry</button>
       </ac-ui-message>
-    } @else if (reports().length === 0) {
+    } @else if (filteredReports().length === 0) {
       <ac-ui-empty-state
         title="No reports found"
         [message]="
-          reports().length === 0
-            ? 'No activity reports have been created yet.'
-            : 'No reports match the current filters.'
+          searchQuery()
+            ? 'No activity reports match &quot;' + searchQuery() + '&quot;.'
+            : statusFilter() !== 'ALL' || childFilter() !== '' || selectedDomain() !== 'ALL'
+              ? 'No reports match the current filters. Try resetting the filters or choosing another domain.'
+              : 'No activity reports have been created yet.'
         "
       >
-        <a routerLink="/schools/reports/new" class="inline-link">Create school report</a>
+        @if (searchQuery()) {
+          <button type="button" class="btn-clear-search-pill" (click)="clearSearch()">
+            Clear search
+          </button>
+        } @else if (selectedDomain() !== 'ALL') {
+          <button type="button" class="btn-clear-search-pill" (click)="selectDomain('ALL')">
+            Reset domain filter
+          </button>
+        } @else if (isSchoolStaff()) {
+          <a routerLink="/schools/reports/new" class="inline-link">Create school report</a>
+        }
       </ac-ui-empty-state>
     } @else {
       <!-- Report list -->
       <div class="report-list">
-        @for (report of reports(); track report.id) {
+        @for (report of filteredReports(); track report.id) {
           <article class="report-card">
             <button
               type="button"
@@ -136,7 +217,9 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
                 }
                 <div class="report-child-meta">
                   <span class="report-child-name">{{ childName(report) }}</span>
-                  <span class="report-category">{{ report.activityCategory }}</span>
+                  <span class="domain-tag" [class]="domainTone(report.activityCategory)">
+                    {{ report.activityCategory }}
+                  </span>
                 </div>
               </div>
 
@@ -151,7 +234,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
                 </span>
                 <span class="report-date">{{ report.activityDate | date: 'MMM d, y' }}</span>
                 @if (report.duration) {
-                  <span class="report-duration">{{ report.duration }} min</span>
+                  <span class="report-duration">⏱️ {{ report.duration }} min</span>
                 }
               </div>
 
@@ -185,13 +268,13 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
               <div class="report-detail">
                 <div class="detail-grid">
                   <section class="detail-section">
-                    <h3>Summary</h3>
+                    <h3>Summary & Objective</h3>
                     <p class="detail-text">{{ report.summary }}</p>
                   </section>
 
                   @if (metricsOf(report).length > 0) {
                     <section class="detail-section">
-                      <h3>Performance</h3>
+                      <h3>Developmental Performance (0–10 Scale)</h3>
                       <div class="metric-rows">
                         @for (metric of metricsOf(report); track metric.label) {
                           <div class="metric-row">
@@ -211,7 +294,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 
                   @if (report.teacherObservation) {
                     <section class="detail-section">
-                      <h3>Teacher Observations</h3>
+                      <h3>Teacher & Specialist Observations</h3>
                       <blockquote class="detail-quote">
                         {{ report.teacherObservation }}
                       </blockquote>
@@ -220,14 +303,17 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 
                   @if (report.recommendations) {
                     <section class="detail-section">
-                      <h3>Recommendations</h3>
-                      <p class="detail-text">{{ report.recommendations }}</p>
+                      <h3>Home & Caregiver Recommendations</h3>
+                      <div class="recommendations-box">
+                        <span class="rec-icon">💡</span>
+                        <p class="detail-text">{{ report.recommendations }}</p>
+                      </div>
                     </section>
                   }
 
                   @if (imagesOf(report).length > 0) {
                     <section class="detail-section">
-                      <h3>Photos</h3>
+                      <h3>Observation Photos</h3>
                       <div class="photo-grid">
                         @for (url of imagesOf(report); track url) {
                           <a [href]="url" target="_blank" rel="noopener">
@@ -240,12 +326,12 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 
                   @if (documentsOf(report).length > 0) {
                     <section class="detail-section">
-                      <h3>Documents</h3>
+                      <h3>Supporting Documents</h3>
                       <ul class="doc-list">
                         @for (url of documentsOf(report); track url) {
                           <li>
                             <a class="inline-link" [href]="url" target="_blank" rel="noopener">
-                              {{ fileNameOf(url) }}
+                              📄 {{ fileNameOf(url) }}
                             </a>
                           </li>
                         }
@@ -254,10 +340,11 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
                   }
 
                   <section class="detail-section detail-section--meta">
-                    <h3>Recorded by</h3>
+                    <h3>Observation Record Details</h3>
                     <p class="detail-text">
-                      {{ report.reporterFirstName }} {{ report.reporterLastName }} · created
-                      {{ report.createdAt | date: 'MMM d, y' }}
+                      Recorded by
+                      <strong>{{ report.reporterFirstName }} {{ report.reporterLastName }}</strong>
+                      · Created on {{ report.createdAt | date: 'MMMM d, y' }}
                     </p>
                   </section>
                 </div>
@@ -286,16 +373,45 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         justify-content: space-between;
         align-items: center;
         gap: 16px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .header-titles {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .header-badge-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 2px;
+      }
+      .header-badge {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: var(--ac-color-tint-blue-wash);
+        color: var(--ac-color-action-alt);
+        padding: 2px 8px;
+        border-radius: 6px;
+        border: 1px solid var(--ac-color-border-info);
+      }
+      .header-badge-sub {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ac-color-text-slate);
       }
       .reports-header h1 {
         margin: 0;
         font-size: 26px;
         font-weight: 800;
         color: var(--ac-color-action-darkest);
+        letter-spacing: -0.02em;
       }
       .reports-subtitle {
-        margin: 4px 0 0;
+        margin: 2px 0 0;
         color: var(--ac-color-grey-a);
         font-size: 14px;
       }
@@ -307,20 +423,81 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         color: var(--ac-color-text-on-action);
         border-radius: 10px;
         font-weight: 700;
-        font-size: 14px;
+        font-size: 13.5px;
         text-decoration: none;
         white-space: nowrap;
+        transition:
+          background 0.15s ease,
+          transform 0.1s ease;
       }
       .btn-new-report:hover {
-        background: #245764;
+        background: var(--ac-color-ink-a);
+        transform: translateY(-1px);
       }
 
+      /* Domain Filter Pills Bar */
+      .domain-pills-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .domain-bar-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ac-color-text-slate);
+        white-space: nowrap;
+      }
+      .domain-pills-list {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .domain-pill-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--ac-color-border-slate);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-slate-strong);
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .domain-pill-btn:hover {
+        border-color: var(--ac-color-action-alt);
+        background: var(--ac-color-tint-blue-wash);
+      }
+      .domain-pill-btn.active {
+        background: var(--ac-color-action-alt);
+        color: var(--ac-color-text-on-action);
+        border-color: var(--ac-color-action-alt);
+      }
+      .pill-icon {
+        font-size: 13px;
+      }
+
+      /* Filters Row */
       .filters-row {
         display: flex;
         align-items: center;
         gap: 16px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
         flex-wrap: wrap;
+        padding: 14px 18px;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 12px;
       }
       .filter-group {
         display: flex;
@@ -328,45 +505,79 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         gap: 4px;
       }
       .filter-label {
-        font-size: 12px;
+        font-size: 11.5px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         color: var(--ac-color-grey-a);
       }
       .filter-select {
-        min-width: 160px;
+        min-width: 170px;
         padding: 8px 12px;
-        border: 1px solid var(--ac-color-tint-steel);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         background: var(--ac-color-surface);
         color: var(--ac-color-action-darkest);
-        font-size: 14px;
+        font-size: 13.5px;
+        font-weight: 500;
+        min-height: 40px;
+      }
+      .filter-select:focus {
+        border-color: var(--ac-color-action-alt);
+        outline: none;
       }
       .filter-count {
         margin-left: auto;
         color: var(--ac-color-grey-a);
         font-size: 13px;
+        font-weight: 600;
       }
 
-      .state-card {
-        padding: 32px;
-        border: 1px dashed var(--ac-color-slate-300);
-        border-radius: 12px;
-        background: var(--ac-color-surface-slate);
-        color: var(--ac-color-slate-600);
-        text-align: center;
-        font-size: 14px;
-      }
-      .state-card--error {
-        border-color: #fecaca;
-        background: var(--ac-color-red-50);
-        color: var(--ac-color-alert-slate);
+      .active-search-bar {
+        margin-bottom: 16px;
         display: flex;
-        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      .search-tag {
+        display: inline-flex;
         align-items: center;
         gap: 10px;
+        background: var(--ac-color-tint-blue-mist);
+        border: 1px solid var(--ac-color-border-slate);
+        color: var(--ac-color-text-slate-strong);
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 13px;
       }
+      .btn-clear-search {
+        background: none;
+        border: none;
+        color: var(--ac-color-action-alt);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 4px;
+        transition: background 0.15s;
+      }
+      .btn-clear-search:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+      .btn-clear-search-pill {
+        display: inline-flex;
+        align-items: center;
+        background: var(--ac-color-action-alt);
+        color: var(--ac-color-text-on-action);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 12px;
+      }
+
       .retry-btn {
         padding: 6px 18px;
         border: 1px solid var(--ac-color-alert-slate);
@@ -395,24 +606,26 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         position: relative;
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 14px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
         overflow: hidden;
-        transition: box-shadow 0.15s ease;
+        transition:
+          box-shadow 0.15s ease,
+          border-color 0.15s ease;
       }
       .report-list > .report-card {
         margin-bottom: 16px;
       }
       .report-card:hover {
-        box-shadow: 0 4px 14px rgba(16, 48, 59, 0.08);
+        box-shadow: 0 6px 18px rgba(16, 48, 59, 0.08);
       }
       .report-card-main {
         display: grid;
-        grid-template-columns: minmax(180px, 1.1fr) 2fr minmax(150px, auto) 24px;
+        grid-template-columns: minmax(200px, 1.2fr) 2fr minmax(150px, auto) 24px;
         align-items: center;
         gap: 16px;
         width: 100%;
-        padding: 20px 112px 20px 24px;
+        padding: 18px 112px 18px 22px;
         background: none;
         border: 0;
         text-align: left;
@@ -421,8 +634,8 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
       }
       .report-card-actions {
         position: absolute;
-        top: 22px;
-        right: 20px;
+        top: 20px;
+        right: 18px;
         z-index: 1;
         display: flex;
         align-items: center;
@@ -437,9 +650,10 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 9px;
         background: var(--ac-color-surface);
-        font-size: 17px;
+        font-size: 16px;
         text-decoration: none;
         cursor: pointer;
+        transition: all 0.15s;
       }
       .report-action--edit {
         color: var(--ac-color-green-teal);
@@ -460,16 +674,17 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         font-size: 14px;
         font-weight: 600;
       }
+
       .report-child-block {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         min-width: 0;
       }
       .report-avatar {
-        width: 42px;
-        height: 42px;
-        border-radius: 10px;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
         object-fit: cover;
         background: var(--ac-color-tint-blue-mist);
         border: 1px solid var(--ac-color-border-slate);
@@ -486,28 +701,54 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
       .report-child-meta {
         display: flex;
         flex-direction: column;
+        gap: 3px;
         min-width: 0;
       }
       .report-child-name {
         font-weight: 700;
         color: var(--ac-color-action-darkest);
-        font-size: 15px;
+        font-size: 14.5px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .report-category {
-        font-size: 12px;
-        color: var(--ac-color-grey-a);
+      .domain-tag {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 4px;
+        display: inline-block;
+        width: fit-content;
       }
+      .domain-tag.sensory {
+        background: var(--ac-color-purple-tint);
+        color: var(--ac-color-purple-700);
+      }
+      .domain-tag.social {
+        background: var(--ac-color-amber-tint-cream);
+        color: var(--ac-color-amber-700);
+      }
+      .domain-tag.communication {
+        background: var(--ac-color-blue-tint-pure);
+        color: var(--ac-color-blue-600);
+      }
+      .domain-tag.cognitive {
+        background: var(--ac-color-tint-blue-mist);
+        color: var(--ac-color-action-alt);
+      }
+      .domain-tag.adaptive {
+        background: var(--ac-color-green-50);
+        color: var(--ac-color-emerald-600);
+      }
+
       .report-title-block {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 3px;
         min-width: 0;
       }
       .report-title {
-        font-weight: 600;
+        font-weight: 700;
         color: var(--ac-color-action-darkest);
         font-size: 14px;
         white-space: nowrap;
@@ -528,38 +769,40 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         gap: 3px;
       }
       .status-badge {
-        padding: 2px 10px;
+        padding: 3px 10px;
         border-radius: 999px;
         background: var(--ac-color-green-50);
         color: var(--ac-color-green-600);
-        font-size: 12px;
+        font-size: 11.5px;
         font-weight: 700;
       }
       .status-badge--draft {
-        background: #fdf3e2;
-        color: #a4691a;
+        background: var(--ac-color-amber-tint-warm);
+        color: var(--ac-color-amber-700);
       }
       .report-date {
         font-size: 12px;
         color: var(--ac-color-grey-a);
       }
       .report-duration {
-        font-size: 12px;
+        font-size: 11.5px;
         color: var(--ac-color-slate-400);
       }
       .expand-chevron {
         color: var(--ac-color-slate-400);
         transition: transform 0.15s ease;
         text-align: center;
+        font-size: 16px;
       }
       .expand-chevron--open {
         transform: rotate(180deg);
       }
 
+      /* Detail Box */
       .report-detail {
-        border-top: 1px solid #eef2f6;
-        background: #fbfdfe;
-        padding: 18px 20px 22px;
+        border-top: 1px solid var(--ac-color-slate-border-mist);
+        background: var(--ac-color-blue-tint-pure);
+        padding: 20px 24px;
       }
       .detail-grid {
         display: grid;
@@ -571,7 +814,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
       }
       .detail-section h3 {
         margin: 0 0 8px;
-        font-size: 12px;
+        font-size: 11.5px;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -580,20 +823,33 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
       .detail-text {
         margin: 0;
         color: var(--ac-color-ink-h);
-        font-size: 14px;
+        font-size: 13.5px;
         line-height: 1.55;
         white-space: pre-wrap;
       }
       .detail-quote {
         margin: 0;
-        padding: 10px 14px;
+        padding: 12px 16px;
         border-left: 3px solid var(--ac-color-action-alt);
-        background: var(--ac-color-tint-blue-mist);
-        border-radius: 0 8px 8px 0;
+        background: var(--ac-color-surface);
+        border-radius: 0 10px 10px 0;
         color: var(--ac-color-ink-h);
-        font-size: 14px;
+        font-size: 13.5px;
         line-height: 1.55;
         white-space: pre-wrap;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+      }
+
+      .recommendations-box {
+        display: flex;
+        gap: 10px;
+        background: var(--ac-color-surface);
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--ac-color-border-slate);
+      }
+      .rec-icon {
+        font-size: 18px;
       }
 
       .metric-rows {
@@ -608,22 +864,23 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
         gap: 10px;
       }
       .metric-label {
-        font-size: 13px;
+        font-size: 12.5px;
         color: var(--ac-color-ink-h);
+        font-weight: 500;
       }
       .metric-bar-track {
-        height: 8px;
-        background: #e6eef3;
+        height: 7px;
+        background: var(--ac-color-slate-line-faint);
         border-radius: 999px;
         overflow: hidden;
       }
       .metric-bar-fill {
         height: 100%;
-        background: linear-gradient(90deg, #4ba3b8, var(--ac-color-action-alt));
+        background: linear-gradient(90deg, var(--ac-color-teal-accent), var(--ac-color-action-alt));
         border-radius: 999px;
       }
       .metric-value {
-        font-size: 12.5px;
+        font-size: 12px;
         font-weight: 700;
         color: var(--ac-color-action-alt);
         text-align: right;
@@ -644,12 +901,11 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
       }
       .doc-list {
         margin: 0;
-        padding-left: 18px;
-        color: var(--ac-color-ink-h);
-        font-size: 14px;
+        padding-left: 0;
+        list-style: none;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
       }
 
       @media (max-width: 860px) {
@@ -659,6 +915,7 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
             'child side'
             'title side'
             'chev chev';
+          padding-right: 90px;
         }
         .report-child-block {
           grid-area: child;
@@ -683,7 +940,10 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 export class SchoolReportsPage implements OnInit {
   private readonly api = inject(SchoolsApi);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
+  readonly domainOptions = DOMAIN_OPTIONS;
   readonly reports = signal<ActivityReportListItem[]>([]);
   readonly students = signal<EnrolledStudentOption[]>([]);
   readonly loading = signal(true);
@@ -691,26 +951,69 @@ export class SchoolReportsPage implements OnInit {
 
   readonly statusFilter = signal<'ALL' | 'SUBMITTED' | 'DRAFT'>('ALL');
   readonly childFilter = signal('');
+  readonly selectedDomain = signal<string>('ALL');
+  readonly searchQuery = signal('');
   readonly expandedId = signal<string | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly actionMessage = signal<string | null>(null);
   readonly canManageReports = computed(() => this.auth.parent()?.role === 'SCHOOL');
+  readonly isSchoolStaff = this.canManageReports;
+  readonly isAdmin = computed(() => this.auth.parent()?.role === 'ADMIN');
+  readonly isParent = computed(() => this.auth.parent()?.role === 'PARENT');
 
   readonly pagination = signal<PaginationMeta | null>(null);
   readonly page = signal(1);
+
+  readonly filteredReports = computed(() => {
+    const domain = this.selectedDomain();
+    const list = this.reports();
+    if (domain === 'ALL') return list;
+    return list.filter((r) => {
+      const cat = (r.activityCategory ?? '').toLowerCase();
+      const title = (r.title ?? '').toLowerCase();
+      const d = domain.toLowerCase();
+      return cat.includes(d) || title.includes(d);
+    });
+  });
 
   goToPage(page: number) {
     this.page.set(page);
     void this.loadReports();
   }
 
+  selectDomain(domainId: string) {
+    this.selectedDomain.set(domainId);
+  }
+
+  domainTone(category: string): string {
+    const cat = category.toLowerCase();
+    if (cat.includes('sensory') || cat.includes('motor')) return 'sensory';
+    if (cat.includes('social') || cat.includes('emotion')) return 'social';
+    if (cat.includes('language') || cat.includes('communicat')) return 'communication';
+    if (cat.includes('cognit') || cat.includes('develop')) return 'cognitive';
+    if (cat.includes('adapt') || cat.includes('routine')) return 'adaptive';
+    return 'cognitive';
+  }
+
   ngOnInit() {
-    void this.loadReports();
-    this.api.getEnrolledStudents().subscribe({
-      next: (students) => this.students.set(students),
-      // Filters degrade gracefully if the student list fails — no error state.
-      error: () => this.students.set([]),
+    if (this.auth.parent()?.role === 'PARENT') {
+      void this.router.navigateByUrl('/progress');
+      return;
+    }
+
+    this.route.queryParams.subscribe((params) => {
+      const q = (params['search'] as string | undefined)?.trim() ?? '';
+      this.searchQuery.set(q);
+      this.page.set(1);
+      this.loadReports();
     });
+
+    if (this.isSchoolStaff()) {
+      this.api.getEnrolledStudents().subscribe({
+        next: (students) => this.students.set(students),
+        error: () => this.students.set([]),
+      });
+    }
   }
 
   loadReports() {
@@ -719,10 +1022,12 @@ export class SchoolReportsPage implements OnInit {
 
     const status = this.statusFilter();
     const childId = this.childFilter();
+    const search = this.searchQuery();
     this.api
       .listReportsWithChild({
         ...(status !== 'ALL' && { status }),
         ...(childId !== '' && { childId }),
+        ...(search !== '' && { search }),
         page: this.page(),
       })
       .subscribe({
@@ -736,6 +1041,15 @@ export class SchoolReportsPage implements OnInit {
           this.error.set('Could not load reports. Check your connection and try again.');
         },
       });
+  }
+
+  clearSearch() {
+    this.searchQuery.set('');
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   onStatusChange(event: Event) {
@@ -806,8 +1120,6 @@ export class SchoolReportsPage implements OnInit {
     return rows;
   }
 
-  // Both return authorised, report-scoped download URLs rather than the stored
-  // path: attachments are no longer served by a public static mount.
   imagesOf(report: ActivityReportListItem): string[] {
     return (report.photoUrls ?? [])
       .filter((url) => IMAGE_EXTENSIONS.test(url))

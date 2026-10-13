@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
+import type { ListChildrenQuery } from '@auticare/contracts';
 import { created, ok } from '../../common/http/response.js';
+import { validatedQuery } from '../../common/middleware/validate-query.js';
 import { ChildrenService } from './children.service.js';
 
 const service = new ChildrenService();
@@ -10,7 +12,7 @@ const requiredParam = (value: string | readonly string[] | undefined): string =>
 };
 
 export const listChildren = async (req: Request, res: Response) =>
-  ok(res, await service.list(req.auth!));
+  ok(res, await service.list(req.auth!, validatedQuery<ListChildrenQuery>(req)));
 
 export const getChild = async (req: Request, res: Response) =>
   ok(res, await service.get(req.auth!, requiredParam(req.params.childId)));
@@ -23,3 +25,6 @@ export const updateChild = async (req: Request, res: Response) =>
 
 export const archiveChild = async (req: Request, res: Response) =>
   ok(res, await service.archive(req.auth!, requiredParam(req.params.childId)));
+
+export const restoreChild = async (req: Request, res: Response) =>
+  ok(res, await service.restore(req.auth!, requiredParam(req.params.childId)));

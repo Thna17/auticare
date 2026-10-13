@@ -32,30 +32,33 @@ export class SchoolNotificationsService {
       toSkipTake(query),
     );
 
-    const items: SchoolNotificationItem[] = [];
-    for (const notification of notifications) {
+    // Batch-fetch linked admission requests and child relation to eliminate N+1 queries.
+    const admissionRequestIds = notifications
+      .filter((n) => n.type === 'ENROLLMENT_REQUEST' && n.enrollmentId)
+      .map((n) => n.enrollmentId as string);
+
+    const admissionRequests = await this.repository.findAdmissionRequestsByIds(admissionRequestIds);
+    const admissionRequestMap = new Map(admissionRequests.map((req) => [req.id, req]));
+
+    const items: SchoolNotificationItem[] = notifications.map((notification) => {
       let admissionStatus: string | null = null;
       let studentName: string | null = null;
       let requestMessage: string | null = null;
 
-      // ENROLLMENT_REQUEST notifications carry their admission request id in
-      // the enrollmentId pointer. AdmissionRequest has no Child relation, so
-      // the student name is resolved via the plain childId column.
       if (notification.type === 'ENROLLMENT_REQUEST' && notification.enrollmentId) {
-        const request = await this.repository.findAdmissionRequestById(notification.enrollmentId);
+        const request = admissionRequestMap.get(notification.enrollmentId);
         if (request) {
           admissionStatus = request.status;
           requestMessage = request.message;
-          if (request.childId) {
-            const child = await this.repository.findChildNameById(request.childId);
-            studentName = child
-              ? [child.firstName, child.lastName].filter(Boolean).join(' ')
-              : null;
+          if (request.child) {
+            studentName = [request.child.firstName, request.child.lastName]
+              .filter(Boolean)
+              .join(' ');
           }
         }
       }
 
-      items.push({
+      return {
         id: notification.id,
         type: notification.type,
         status: notification.status,
@@ -70,8 +73,8 @@ export class SchoolNotificationsService {
         admissionStatus,
         studentName,
         requestMessage,
-      });
-    }
+      };
+    });
 
     return { notifications: items, pagination: toPaginationMeta(query, total) };
   }

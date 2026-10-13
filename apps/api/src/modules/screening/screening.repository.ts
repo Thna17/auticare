@@ -102,6 +102,13 @@ export class ScreeningRepository {
       riskLevel: RiskLevel;
       displayOrder: number;
     }[];
+    notification?: {
+      parentId: string;
+      type: 'SCREENING';
+      title: string;
+      body: string;
+      reportId: string;
+    };
   }): Promise<ScreeningSessionRecord> {
     return prisma.$transaction(async (tx) => {
       await tx.screeningResult.create({
@@ -111,6 +118,18 @@ export class ScreeningRepository {
           categoryScores: { create: input.categoryScores },
         },
       });
+      if (input.notification) {
+        await tx.notification.create({
+          data: {
+            parentId: input.notification.parentId,
+            type: input.notification.type,
+            title: input.notification.title,
+            body: input.notification.body,
+            reportId: input.notification.reportId,
+            status: 'UNREAD',
+          },
+        });
+      }
       return tx.screening.update({
         where: { id: input.screeningId },
         data: { status: 'ANALYZED', submittedAt: new Date() },

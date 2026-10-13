@@ -1,6 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { CreateHospitalRequest, HospitalResponse } from '@auticare/contracts';
+import type {
+  AdminHospitalAccountResponse,
+  CreateHospitalAccountRequest,
+  CreateHospitalRequest,
+  HospitalResponse,
+  ResendInvitationRequest,
+  ResendInvitationResponse,
+} from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
 
@@ -18,6 +25,27 @@ export class HospitalsApi {
   createHospital(input: CreateHospitalRequest) {
     return this.http
       .post<{ data: HospitalResponse }>(`${this.apiBaseUrl}/hospitals`, input)
+      .pipe(map((response) => response.data));
+  }
+
+  createHospitalAccount(input: CreateHospitalAccountRequest) {
+    return this.http
+      .post<{ data: AdminHospitalAccountResponse }>(
+        `${this.apiBaseUrl}/hospitals/admin/accounts`,
+        input,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  listAdminHospitalAccounts() {
+    return this.http
+      .get<{ data: AdminHospitalAccountResponse[] }>(`${this.apiBaseUrl}/hospitals/admin/accounts`)
+      .pipe(map((response) => response.data));
+  }
+
+  resendInvitation(input: ResendInvitationRequest) {
+    return this.http
+      .post<{ data: ResendInvitationResponse }>(`${this.apiBaseUrl}/auth/invitations/resend`, input)
       .pipe(map((response) => response.data));
   }
 }

@@ -443,16 +443,88 @@ async function main() {
   await prisma.screeningQuestion.deleteMany({ where: { answers: { none: {} } } });
   await prisma.screeningQuestion.createMany({ data: screeningQuestions });
 
-  const school = await prisma.school.upsert({
-    where: { id: 'demo-school-1' },
-    update: {},
-    create: {
+  const cambodianSchools = [
+    {
       id: 'demo-school-1',
-      name: 'Calm Path Learning Center',
+      name: 'Rabbit School Organization (អង្គការសាលាទន្សាយ)',
       city: 'Phnom Penh',
-      address: 'Development Road 12',
-      description: 'Inclusive learning support.',
+      address: 'Toul Kork & Sen Sok, Phnom Penh',
+      description:
+        'Premier special education and vocational training center in Cambodia empowering children with autism and intellectual disabilities through inclusive classrooms and life-skills.',
+      studentTeacherRatio: '3:1',
+      availabilityStatus: 'IMMEDIATE' as const,
+      isVerified: true,
+      facilities: ['Sensory Room', 'Therapy Gym', 'Special Classrooms', 'Outdoor Play Area'],
+      specializations: ['Sensory Integration', 'Speech Therapy', 'Life Skills', 'Social Skills'],
     },
+    {
+      id: 'demo-school-hands-of-hope',
+      name: 'Hands of Hope Community (សហគមន៍ដៃនៃក្តីសង្ឃឹម)',
+      city: 'Kandal',
+      address: 'Takhmao, Kandal',
+      description:
+        'Compassionate community education and developmental therapy for children with autism and down syndrome, fostering family collaboration and individualized education plans (IEP).',
+      studentTeacherRatio: '2:1',
+      availabilityStatus: 'WAITLIST' as const,
+      waitlistEstimate: '1–2 months',
+      isVerified: true,
+      facilities: ['Calming Room', 'Educational Garden', 'Speech Therapy Room', 'IEP Center'],
+      specializations: ['ABA', 'Speech Therapy', 'Sensory Integration', 'Occupational Therapy'],
+    },
+    {
+      id: 'demo-school-nise',
+      name: 'National Institute of Special Education (វិទ្យាស្ថានជាតិអប់រំពិសេស - NISE)',
+      city: 'Phnom Penh',
+      address: 'Phnom Penh',
+      description:
+        'National government institute under MoEYS dedicated to special education teacher training, standardized inclusive curricula, and developmental progress assessment.',
+      studentTeacherRatio: '4:1',
+      availabilityStatus: 'IMMEDIATE' as const,
+      isVerified: true,
+      facilities: ['Assessment Suite', 'Special Classrooms', 'Sensory Room'],
+      specializations: [
+        'Special Education',
+        'Curriculum Adaptation',
+        'Sign Language',
+        'Social Skills',
+      ],
+    },
+    {
+      id: 'demo-school-grace-house',
+      name: 'Grace House Community Inclusive Classrooms',
+      city: 'Siem Reap',
+      address: 'Siem Reap',
+      description:
+        'Community-led inclusive education project in Siem Reap providing sensory accommodation, speech therapy access, and supportive learning environments for neurodivergent children.',
+      studentTeacherRatio: '3:1',
+      availabilityStatus: 'IMMEDIATE' as const,
+      isVerified: true,
+      facilities: ['Sensory Room', 'Outdoor Play Area', 'Special Classrooms'],
+      specializations: ['Inclusive Education', 'Sensory Integration', 'Speech Therapy'],
+    },
+  ];
+
+  for (const s of cambodianSchools) {
+    await prisma.school.upsert({
+      where: { id: s.id },
+      update: {
+        name: s.name,
+        city: s.city,
+        address: s.address,
+        description: s.description,
+        studentTeacherRatio: s.studentTeacherRatio,
+        availabilityStatus: s.availabilityStatus,
+        waitlistEstimate: s.waitlistEstimate ?? null,
+        isVerified: s.isVerified,
+        facilities: s.facilities,
+        specializations: s.specializations,
+      },
+      create: s,
+    });
+  }
+
+  const school = await prisma.school.findUniqueOrThrow({
+    where: { id: 'demo-school-1' },
   });
 
   await prisma.schoolStaff.upsert({
@@ -467,28 +539,107 @@ async function main() {
     create: { schoolId: school.id, childId: 'demo-child-1' },
   });
 
-  const hospital = await prisma.hospital.upsert({
-    where: { id: 'demo-hospital-1' },
-    update: {},
-    create: {
+  const cambodianHospitals = [
+    {
       id: 'demo-hospital-1',
-      name: 'Family Development Clinic',
+      name: 'National Pediatric Hospital (មន្ទីរពេទ្យកុមារជាតិ)',
       city: 'Phnom Penh',
-      address: 'Care Street 4',
-      services: 'Developmental pediatrics, occupational therapy',
+      address: 'Russian Federation Blvd, Tuol Kork, Phnom Penh',
+      services: 'Developmental pediatrics, speech therapy, child neurology, autism screening',
     },
+    {
+      id: 'demo-hospital-kantha-bopha',
+      name: 'Kantha Bopha Children’s Hospital (មន្ទីរពេទ្យគន្ធបុប្ផា)',
+      city: 'Phnom Penh',
+      address: 'Wat Phnom, Daun Penh, Phnom Penh & Jayavarman VII, Siem Reap',
+      services: 'Pediatric emergency care, child neurology, free pediatric inpatient',
+    },
+    {
+      id: 'demo-hospital-sunrise',
+      name: 'Sunrise Japan Hospital (មន្ទីរពេទ្យ សាន់រ៉ាយស៍ ជប៉ុន)',
+      city: 'Phnom Penh',
+      address: 'Kola Loum St, Chroy Changvar, Phnom Penh',
+      services: 'Pediatrics, child neurology, occupational therapy, sensory integration',
+    },
+    {
+      id: 'demo-hospital-calmette',
+      name: 'Calmette Hospital (មន្ទីរពេទ្យកាល់ម៉ែត)',
+      city: 'Phnom Penh',
+      address: 'No 3 Monivong Blvd, Daun Penh, Phnom Penh',
+      services: 'Pediatric consultation, neurodevelopmental diagnostics, child mental health',
+    },
+    {
+      id: 'demo-hospital-khmer-soviet',
+      name: 'Khmer-Soviet Friendship Hospital (មន្ទីរពេទ្យមិត្តភាពខ្មែរ-សូវៀត)',
+      city: 'Phnom Penh',
+      address: 'Yothapol Khemarak Phoumin Blvd (271), Chamkar Mon, Phnom Penh',
+      services: 'Pediatrics, physical therapy, speech therapy, occupational therapy',
+    },
+    {
+      id: 'demo-hospital-ahc',
+      name: 'Angkor Hospital for Children (មន្ទីរពេទ្យកុមារអង្គរ)',
+      city: 'Siem Reap',
+      address: 'Tep Vong St & Oum Chhay St, Svay Dangkum, Siem Reap',
+      services: 'Pediatric intensive care, developmental pediatrics, speech support',
+    },
+  ];
+
+  for (const h of cambodianHospitals) {
+    await prisma.hospital.upsert({
+      where: { id: h.id },
+      update: { name: h.name, city: h.city, address: h.address, services: h.services },
+      create: h,
+    });
+  }
+
+  const hospital = await prisma.hospital.findUniqueOrThrow({
+    where: { id: 'demo-hospital-1' },
   });
 
-  await prisma.doctor.upsert({
-    where: { id: 'demo-doctor-1' },
-    update: {},
-    create: {
+  const cambodianDoctors = [
+    {
       id: 'demo-doctor-1',
-      hospitalId: hospital.id,
+      hospitalId: 'demo-hospital-1',
       fullName: 'Dr. Lina Sok',
-      specialty: 'Developmental Pediatrics',
+      specialty: 'Developmental Pediatrician',
+      bio: 'Leading pediatric developmental specialist at National Pediatric Hospital.',
     },
-  });
+    {
+      id: 'demo-doctor-2',
+      hospitalId: 'demo-hospital-kantha-bopha',
+      fullName: 'Dr. Chan Vicheth',
+      specialty: 'Speech-Language Pathologist',
+      bio: 'Specialist in early communication interventions and pediatric speech therapy.',
+    },
+    {
+      id: 'demo-doctor-3',
+      hospitalId: 'demo-hospital-sunrise',
+      fullName: 'Dr. Sreymom Keo',
+      specialty: 'Occupational Therapist',
+      bio: 'Sensory integration and pediatric motor skills development expert.',
+    },
+    {
+      id: 'demo-doctor-4',
+      hospitalId: 'demo-hospital-calmette',
+      fullName: 'Dr. Sophea Meng',
+      specialty: 'Child Neurologist',
+      bio: 'Pediatric neurologist specializing in neurodevelopmental assessments.',
+    },
+  ];
+
+  for (const doc of cambodianDoctors) {
+    await prisma.doctor.upsert({
+      where: { id: doc.id },
+      update: { fullName: doc.fullName, specialty: doc.specialty, bio: doc.bio },
+      create: {
+        id: doc.id,
+        hospitalId: doc.hospitalId,
+        fullName: doc.fullName,
+        specialty: doc.specialty,
+        bio: doc.bio,
+      },
+    });
+  }
 
   await prisma.hospitalStaff.upsert({
     where: { parentId_hospitalId: { parentId: hospitalUser.id, hospitalId: hospital.id } },
@@ -533,11 +684,48 @@ async function main() {
   const demoActivities = [
     {
       id: 'demo-activity-1',
-      title: 'Calm Sorting Game',
-      category: 'fine-motor',
+      title: 'Sensory Rice & Grain Bin (ការលេងអង្ករ និងគ្រាប់ធញ្ញជាតិចម្រុះពណ៌)',
+      category: 'Sensory',
+      minAgeMonths: 18,
+      maxAgeMonths: 72,
+      summary:
+        'Tactile exploration using jasmine rice and dry lentils to provide soothing tactile sensory input and promote calm focus.',
+    },
+    {
+      id: 'demo-activity-2',
+      title: 'Calming Coconut Water & Bubble Play (ល្បែងពពុះទឹក និងសំបកដូងបន្ធូរអារម្មណ៍)',
+      category: 'Sensory',
+      minAgeMonths: 24,
+      maxAgeMonths: 60,
+      summary:
+        'Gentle bubble blowing with coconut shell bowls supporting oral-motor regulation, deep breathing, and visual tracking.',
+    },
+    {
+      id: 'demo-activity-3',
+      title: 'Banana Leaf & Paper Folding (ការបត់ស្លឹកចេក និងក្រដាស)',
+      category: 'Fine Motor',
       minAgeMonths: 36,
       maxAgeMonths: 84,
-      summary: 'A low-pressure sorting activity using familiar household objects.',
+      summary:
+        'Traditional Cambodian banana leaf and paper folding exercises building fine motor precision, bilateral coordination, and finger strength.',
+    },
+    {
+      id: 'demo-activity-4',
+      title: 'Clay & Soft Dough Sculpting (ការឆ្លាក់ដីឥដ្ឋទន់ និងម្សៅពណ៌)',
+      category: 'Sensory',
+      minAgeMonths: 24,
+      maxAgeMonths: 72,
+      summary:
+        'Deep proprioceptive pressure and creative modeling with soft homemade dough or local clay for emotional grounding and hand dexterity.',
+    },
+    {
+      id: 'demo-activity-5',
+      title: 'Rhythm & Clapping Games with Khmer Rhymes (ល្បែងទះដៃ និងចង្វាក់ភ្លេងខ្មែរ)',
+      category: 'Social',
+      minAgeMonths: 24,
+      maxAgeMonths: 72,
+      summary:
+        'Predictable musical turn-taking and clapping routines using Khmer childhood rhymes to foster eye contact and social engagement.',
     },
   ];
   for (const activity of demoActivities) {

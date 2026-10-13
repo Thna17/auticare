@@ -178,4 +178,78 @@ describe('PATCH /auth/me', () => {
     expect(res.body.data.parent).toHaveProperty('phoneNumber', '+855 11 222 333');
     expect(res.body.data.parent).toHaveProperty('socialMediaAccount');
   });
+
+  describe('POST /api/v1/auth/change-password', () => {
+    it('requires authentication', async () => {
+      const res = await request(app)
+        .post('/api/v1/auth/change-password')
+        .send({ currentPassword: password, newPassword: 'BrandNewValidPassword123' });
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects new password under 12 characters', async () => {
+      const res = await parentAgent
+        .post('/api/v1/auth/change-password')
+        .send({ currentPassword: password, newPassword: 'short' });
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects incorrect current password', async () => {
+      const res = await parentAgent
+        .post('/api/v1/auth/change-password')
+        .send({ currentPassword: 'WrongPassword123!', newPassword: 'BrandNewValidPassword123' });
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toContain('Current password does not match');
+    });
+
+    it('successfully changes password and allows sign-in with new password', async () => {
+      const newPassword = 'NewSecretPassword123!';
+      const res = await parentAgent
+        .post('/api/v1/auth/change-password')
+        .send({ currentPassword: password, newPassword });
+      expect(res.status).toBe(200);
+      expect(res.body.data.message).toBe('Password changed successfully.');
+
+      // Verify login succeeds with the new password
+      const loginRes = await request(app)
+        .post('/api/v1/auth/login')
+        .send({ email: parentEmail, password: newPassword });
+      expect(loginRes.status).toBe(200);
+      expect(loginRes.body.data.parent.id).toBe(parentId);
+    });
+  });
+
+  describe('GET & PATCH /api/v1/parents/preferences', () => {
+    it('requires authentication', async () => {
+      const res = await request(app).get('/api/v1/parents/preferences');
+      expect(res.status).toBe(401);
+    });
+
+    it('returns preferences on GET', async () => {
+      const res = await parentAgent.get('/api/v1/parents/preferences');
+      expect(res.status).toBe(200);
+      expect(res.body.data.preference).toBeDefined();
+      expect(res.body.data.preference).toHaveProperty('preferredLanguage');
+      expect(res.body.data.preference).toHaveProperty('reducedMotion');
+      expect(res.body.data.preference).toHaveProperty('highContrast');
+    });
+
+    it('updates preferences on PATCH', async () => {
+      const res = await parentAgent.patch('/api/v1/parents/preferences').send({
+        reducedMotion: true,
+        highContrast: true,
+        preferredLanguage: 'vi',
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.data.preference.reducedMotion).toBe(true);
+      expect(res.body.data.preference.highContrast).toBe(true);
+      expect(res.body.data.preference.preferredLanguage).toBe('vi');
+
+      // Verify saved in DB
+      const dbPref = await prisma.parentPreference.findUnique({ where: { parentId } });
+      expect(dbPref?.reducedMotion).toBe(true);
+      expect(dbPref?.highContrast).toBe(true);
+      expect(dbPref?.preferredLanguage).toBe('vi');
+    });
+  });
 });

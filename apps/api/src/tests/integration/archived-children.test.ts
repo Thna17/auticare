@@ -207,4 +207,23 @@ describe('archived children and the school roster', () => {
     expect(child).not.toBeNull();
     expect(child?.archivedAt).toBeTruthy();
   });
+
+  it('includes archived children when includeArchived=true is requested', async () => {
+    const res = await parentAgent.get('/api/v1/children?includeArchived=true');
+    expect(res.status).toBe(200);
+    const listed = names(res.body.data);
+    expect(listed).toContain('Kept');
+    expect(listed).toContain('Archived');
+  });
+
+  it('restores the archived child on POST /api/v1/children/:childId/restore', async () => {
+    const res = await parentAgent.post(`/api/v1/children/${archivedChildId}/restore`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.archivedAt).toBeNull();
+
+    // Verify it is now visible in the standard default list without includeArchived
+    const activeList = await parentAgent.get('/api/v1/children');
+    expect(activeList.status).toBe(200);
+    expect(names(activeList.body.data)).toContain('Archived');
+  });
 });

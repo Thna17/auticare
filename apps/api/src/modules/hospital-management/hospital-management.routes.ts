@@ -1,6 +1,10 @@
 import { Router } from 'express';
-import { doctorRequestSchema, updateAppointmentStatusRequestSchema } from '@auticare/contracts';
-import { hospitalAppointmentFiltersQuerySchema } from '@auticare/contracts';
+import {
+  doctorRequestSchema,
+  hospitalAppointmentFiltersQuerySchema,
+  updateAppointmentStatusRequestSchema,
+  updateHospitalProfileRequestSchema,
+} from '@auticare/contracts';
 import { validateBody } from '../../common/middleware/validate.js';
 import { validateQuery } from '../../common/middleware/validate-query.js';
 import { requireAuth, requireRole } from '../auth/index.js';
@@ -12,10 +16,12 @@ import {
   doctors,
   me,
   updateDoctor,
+  updateMe,
 } from './hospital-management.controller.js';
 export const hospitalManagementRoutes = Router();
 hospitalManagementRoutes.use(requireAuth, requireRole('HOSPITAL'));
 hospitalManagementRoutes.get('/me', me);
+hospitalManagementRoutes.patch('/me', validateBody(updateHospitalProfileRequestSchema), updateMe);
 hospitalManagementRoutes.get(
   '/appointments',
   validateQuery(hospitalAppointmentFiltersQuerySchema),

@@ -17,6 +17,7 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
 import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import { NotificationsStateService } from '../../core/notifications/notifications-state.service';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
 
@@ -222,7 +223,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
     `
       .notifications-card {
         background: var(--ac-color-surface);
-        border: 1px solid #e3edf2;
+        border: 1px solid var(--ac-color-slate-line-light);
         border-radius: 14px;
         padding: 20px;
         margin: 20px;
@@ -260,7 +261,8 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         align-items: center;
       }
       .advanced-filter-btn {
-        padding: 7px 14px;
+        padding: 8px 16px;
+        min-height: 44px;
         border: 1px solid var(--ac-color-tint-steel);
         border-radius: 8px;
         background: var(--ac-color-surface);
@@ -268,20 +270,27 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
       }
       .advanced-filter-btn:disabled {
         opacity: 0.6;
         cursor: default;
       }
       .icon-btn {
-        width: 34px;
-        height: 34px;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
         border: 1px solid var(--ac-color-tint-steel);
         border-radius: 8px;
         background: var(--ac-color-surface);
         color: var(--ac-color-grey-a);
         cursor: pointer;
         font-size: 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .state-card {
@@ -294,7 +303,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         font-size: 14px;
       }
       .state-card--error {
-        border-color: #fecaca;
+        border-color: var(--ac-color-red-tint-200);
         background: var(--ac-color-red-50);
         color: var(--ac-color-alert-slate);
         display: flex;
@@ -322,18 +331,18 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         text-align: left;
         font-size: 11px;
         letter-spacing: 0.06em;
-        color: #7b8fa0;
+        color: var(--ac-color-slate-muted-alt);
         padding: 10px 12px;
-        border-bottom: 1px solid #e8eff4;
+        border-bottom: 1px solid var(--ac-color-slate-surface-light);
       }
       .notifications-table td {
         padding: 14px 12px;
-        border-bottom: 1px solid #eef3f7;
+        border-bottom: 1px solid var(--ac-color-slate-border-clean);
         vertical-align: top;
-        color: #24404e;
+        color: var(--ac-color-ink-deep-slate);
       }
       .unread-row {
-        background: #f4fbfd;
+        background: var(--ac-color-blue-tint-polar);
       }
       .sender-cell {
         display: flex;
@@ -345,7 +354,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         width: 38px;
         height: 38px;
         border-radius: 10px;
-        background: #e7f3f7;
+        background: var(--ac-color-blue-surface-soft);
         color: var(--ac-color-action-alt);
         display: flex;
         align-items: center;
@@ -355,7 +364,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         flex-shrink: 0;
       }
       .avatar.system {
-        background: #eef2f6;
+        background: var(--ac-color-slate-border-mist);
       }
       .system-icon {
         font-size: 16px;
@@ -371,7 +380,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
       }
       .student-name {
         font-size: 12px;
-        color: #6b8494;
+        color: var(--ac-color-slate-text-dim);
       }
       .message-cell {
         display: flex;
@@ -401,8 +410,8 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         font-weight: 700;
       }
       .status-pill--pending {
-        background: #fdf3e2;
-        color: #a4691a;
+        background: var(--ac-color-amber-tint-warm);
+        color: var(--ac-color-amber-700);
       }
       .status-pill--approved {
         background: var(--ac-color-green-50);
@@ -410,10 +419,10 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
       }
       .status-pill--rejected {
         background: var(--ac-color-red-100);
-        color: #b04343;
+        color: var(--ac-color-red-rose);
       }
       .status-pill--info {
-        background: #eef2f6;
+        background: var(--ac-color-slate-border-mist);
         color: var(--ac-color-grey-a);
       }
       .actions-cell {
@@ -431,17 +440,17 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         color: var(--ac-color-green-600);
       }
       .status-link.reject {
-        color: #b04343;
+        color: var(--ac-color-red-rose);
       }
       .status-link.details {
         color: var(--ac-color-action-alt);
       }
       .acting-label {
-        color: #6b8494;
+        color: var(--ac-color-slate-text-dim);
         font-size: 12.5px;
       }
       .no-actions {
-        color: #a8bcc7;
+        color: var(--ac-color-slate-border-dim-alt);
       }
 
       .feedback-bar {
@@ -455,7 +464,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
       }
       .feedback-bar--error {
         background: var(--ac-color-red-100);
-        color: #b04343;
+        color: var(--ac-color-red-rose);
       }
 
       @media (max-width: 860px) {
@@ -465,7 +474,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         .notifications-table tr {
           display: block;
           padding: 12px 0;
-          border-bottom: 1px solid #eef3f7;
+          border-bottom: 1px solid var(--ac-color-slate-border-clean);
         }
         .notifications-table td {
           display: block;
@@ -482,6 +491,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
 })
 export class SchoolNotificationsPage implements OnInit {
   private readonly api = inject(SchoolsApi);
+  private readonly notificationsState = inject(NotificationsStateService);
 
   readonly notifications = signal<SchoolNotificationItem[]>([]);
   readonly loading = signal(true);
@@ -555,6 +565,9 @@ export class SchoolNotificationsPage implements OnInit {
     this.api.decideEnrollmentRequest(notification.id, decision).subscribe({
       next: () => {
         this.actingId.set(null);
+        if (notification.status === 'UNREAD') {
+          this.notificationsState.decrementUnread(1);
+        }
         this.notifications.update((items) =>
           items.map((item) =>
             item.id === notification.id
@@ -591,6 +604,7 @@ export class SchoolNotificationsPage implements OnInit {
   markRead(notification: SchoolNotificationItem) {
     this.api.markNotificationRead(notification.id).subscribe({
       next: () => {
+        this.notificationsState.decrementUnread(1);
         this.notifications.update((items) =>
           items.map((item) =>
             item.id === notification.id ? { ...item, status: 'READ' as const } : item,
@@ -609,6 +623,7 @@ export class SchoolNotificationsPage implements OnInit {
     this.api.markAllNotificationsRead().subscribe({
       next: () => {
         this.markingAll.set(false);
+        this.notificationsState.clearUnread();
         this.notifications.update((items) =>
           items.map((item) => ({ ...item, status: 'READ' as const })),
         );

@@ -18,198 +18,351 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
     AccessibleFormDirective,
   ],
   template: `
-    <a class="back-link" routerLink="/children">Back to children</a>
+    <a class="back-link" routerLink="/children">&larr; Back to children</a>
 
-    <section class="page-header">
-      <p class="eyebrow">Family profiles</p>
-      <h1>Add a child</h1>
-      <p>Create a profile with the details that help AutiCare keep support organised.</p>
-    </section>
+    <header class="page-header">
+      <p class="eyebrow">Child Registration</p>
+      <h1>Add a Child Profile</h1>
+      <p class="subtitle">
+        Set up your child's clinical profile for developmental milestone tracking, autism
+        screenings, and specialized pediatric care.
+      </p>
+    </header>
 
     <form class="child-form" [formGroup]="form" (ngSubmit)="submit()" acAccessibleForm novalidate>
-      <ac-ui-field
-        label="First name"
-        [required]="true"
-        [error]="
-          form.controls.firstName.touched && form.controls.firstName.invalid
-            ? 'Enter a first name.'
-            : null
-        "
-      >
-        <input type="text" formControlName="firstName" autocomplete="off" maxlength="80" />
-      </ac-ui-field>
+      <!-- Step 1: Personal Identity -->
+      <section class="step-card" aria-labelledby="step-1-title">
+        <div class="step-header">
+          <span class="step-badge">Step 1 of 3</span>
+          <h2 id="step-1-title">Personal Identity</h2>
+          <p>
+            Legal or everyday name and birth date for age-normed clinical screening questionnaires.
+          </p>
+        </div>
 
-      <ac-ui-field
-        label="Date of birth"
-        [required]="true"
-        [error]="
-          form.controls.dateOfBirth.touched && form.controls.dateOfBirth.invalid
-            ? 'Enter a date of birth.'
-            : null
-        "
-      >
-        <input type="date" formControlName="dateOfBirth" [max]="today" />
-      </ac-ui-field>
+        <div class="fields-stack">
+          <ac-ui-field
+            label="First name"
+            [required]="true"
+            [error]="
+              form.controls.firstName.touched && form.controls.firstName.invalid
+                ? 'Enter a first name.'
+                : null
+            "
+          >
+            <input
+              type="text"
+              formControlName="firstName"
+              autocomplete="off"
+              maxlength="80"
+              placeholder="e.g. Maya"
+            />
+          </ac-ui-field>
 
-      <ac-ui-field label="Support notes" [optional]="true">
-        <textarea
-          rows="6"
-          formControlName="notes"
-          maxlength="2000"
-          placeholder="Sensory preferences, communication needs, routines, or anything useful for support."
-        ></textarea>
-      </ac-ui-field>
+          <ac-ui-field label="Last name" [optional]="true">
+            <input
+              type="text"
+              formControlName="lastName"
+              autocomplete="off"
+              maxlength="80"
+              placeholder="Optional family or surname"
+            />
+          </ac-ui-field>
+
+          <ac-ui-field
+            label="Date of birth"
+            [required]="true"
+            [error]="
+              form.controls.dateOfBirth.touched && form.controls.dateOfBirth.invalid
+                ? 'Enter a date of birth.'
+                : null
+            "
+          >
+            <input type="date" formControlName="dateOfBirth" [max]="today" />
+          </ac-ui-field>
+        </div>
+
+        <div class="guidance-tip">
+          <span class="tip-icon" aria-hidden="true">ℹ️</span>
+          <p>
+            <strong>Age-normed screening:</strong> Behavioral and sensory screening questionnaires
+            automatically adapt to your child's chronological age in months.
+          </p>
+        </div>
+      </section>
+
+      <!-- Step 2: Residential Context -->
+      <section class="step-card" aria-labelledby="step-2-title">
+        <div class="step-header">
+          <span class="step-badge">Step 2 of 3</span>
+          <h2 id="step-2-title">Residential Information</h2>
+          <p>
+            Home location helps us discover and recommend nearby pediatric hospitals and
+            developmental specialists.
+          </p>
+        </div>
+
+        <div class="fields-stack">
+          <ac-ui-field label="Residential address" [optional]="true">
+            <input
+              type="text"
+              formControlName="address"
+              autocomplete="off"
+              maxlength="500"
+              placeholder="e.g. Phnom Penh, Cambodia"
+            />
+          </ac-ui-field>
+        </div>
+
+        <div class="guidance-tip">
+          <span class="tip-icon" aria-hidden="true">📍</span>
+          <p>
+            Location data is kept private and used only for matching specialist appointments and
+            local center recommendations.
+          </p>
+        </div>
+      </section>
+
+      <!-- Step 3: Support & Sensory Notes -->
+      <section class="step-card" aria-labelledby="step-3-title">
+        <div class="step-header">
+          <span class="step-badge">Step 3 of 3</span>
+          <h2 id="step-3-title">Support & Sensory Care Notes</h2>
+          <p>
+            Record initial observations, sensory sensitivities, communication methods, or calming
+            routines.
+          </p>
+        </div>
+
+        <div class="fields-stack">
+          <ac-ui-field label="Support notes & preferences" [optional]="true">
+            <textarea
+              rows="5"
+              formControlName="notes"
+              maxlength="2000"
+              placeholder="Sensory preferences (e.g. sound sensitivity), communication styles, favorite comfort items, or clinical background notes."
+            ></textarea>
+          </ac-ui-field>
+        </div>
+
+        <div class="guidance-tip">
+          <span class="tip-icon" aria-hidden="true">💡</span>
+          <p>
+            <strong>Clinical privacy:</strong> Care notes are private by default. You can reference
+            them anytime during specialist consultations or export them in clinical progress
+            summaries.
+          </p>
+        </div>
+      </section>
 
       @if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
       }
 
-      <div class="form-actions">
-        <a routerLink="/children">Cancel</a>
-        <button type="submit" [disabled]="saving()">
-          {{ saving() ? 'Creating profile...' : 'Create child profile' }}
+      <footer class="form-actions">
+        <a class="cancel-link" routerLink="/children">Cancel</a>
+        <button type="submit" class="submit-button" [disabled]="saving()">
+          {{ saving() ? 'Creating profile...' : 'Create Child Profile' }}
         </button>
-      </div>
+      </footer>
     </form>
   `,
   styles: [
     `
       :host {
         display: block;
-        max-width: 760px;
+        max-width: 780px;
+        margin: 0 auto;
       }
-      h1,
-      p {
-        margin: 0;
-      }
+
       .back-link {
         color: var(--ac-color-action-deep);
         display: inline-flex;
-        margin-bottom: 22px;
-        font-weight: var(--ac-font-weight-bold);
+        margin-bottom: 24px;
         text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        transition: transform var(--ac-motion-fast);
       }
-      .back-link:hover,
-      .form-actions a:hover {
+
+      .back-link:hover {
         text-decoration: underline;
+        transform: translateX(-2px);
       }
+
       .page-header {
-        display: grid;
-        gap: 9px;
-        margin-bottom: 28px;
+        margin-bottom: 30px;
       }
+
       .eyebrow {
-        color: var(--ac-color-olive);
-        font-size: var(--ac-type-label);
-        font-weight: var(--ac-font-weight-bold);
+        margin: 0 0 6px;
+        color: var(--ac-color-action-mid);
+        font-size: var(--ac-type-meta);
+        font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
+
       h1 {
+        margin: 0;
         color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
-        line-height: 1.2;
+        line-height: var(--ac-line-tight);
+        font-weight: 700;
       }
-      .page-header p:last-child {
+
+      .subtitle {
+        margin: 10px 0 0;
         color: var(--ac-color-text-body);
         font-size: var(--ac-type-page-subtitle);
-        line-height: 1.55;
+        line-height: var(--ac-line-body);
       }
+
       .child-form {
-        border: 1px solid var(--ac-color-border);
-        border-radius: 8px;
-        background: var(--ac-color-surface);
-        box-shadow: 0 8px 30px rgb(41 74 90 / 0.06);
-        display: grid;
-        gap: 20px;
-        padding: 26px;
-      }
-      .field {
-        color: var(--ac-color-text-strong);
-        display: grid;
-        font-weight: var(--ac-font-weight-bold);
-        gap: 10px;
-      }
-      em {
-        color: var(--ac-color-grey-c);
-        font-style: normal;
-        font-weight: var(--ac-font-weight-semibold);
-      }
-      input,
-      textarea {
-        box-sizing: border-box;
-        width: 100%;
-        border: 1px solid var(--ac-color-border-grey);
-        border-radius: 12px;
-        background: var(--ac-color-tint-blue-pale);
-        color: var(--ac-color-text-strong);
-        font: inherit;
-        font-weight: var(--ac-font-weight-regular);
-        padding: 14px 16px;
-      }
-      input {
-        min-height: 54px;
-      }
-      textarea {
-        min-height: 144px;
-        resize: vertical;
-      }
-      input:focus,
-      textarea:focus {
-        border-color: var(--ac-color-action);
-        background: var(--ac-color-surface);
-        box-shadow: 0 0 0 4px rgb(61 99 117 / 0.12);
-        outline: none;
-      }
-      .field-error,
-      .form-error {
-        border-radius: 8px;
-        background: var(--ac-color-alert-surface);
-        color: var(--ac-color-alert-strong);
-        margin: -8px 0 0;
-        padding: 12px 14px;
-      }
-      .form-actions {
-        align-items: center;
         display: flex;
-        justify-content: space-between;
+        flex-direction: column;
+        gap: 22px;
+      }
+
+      .step-card {
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-lg);
+        background: var(--ac-color-surface);
+        box-shadow: var(--ac-shadow-sm);
+        padding: 24px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        transition: box-shadow var(--ac-motion-fast);
+      }
+
+      .step-card:hover {
+        box-shadow: var(--ac-shadow-md);
+      }
+
+      .step-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface-info);
+        border: 1px solid var(--ac-color-border-info);
+        color: var(--ac-color-action-deep);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 8px;
+      }
+
+      .step-header h2 {
+        margin: 0;
+        color: var(--ac-color-text-strong);
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .step-header p {
+        margin: 4px 0 0;
+        color: var(--ac-color-text-body);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .fields-stack {
+        display: flex;
+        flex-direction: column;
         gap: 16px;
       }
-      .form-actions a {
-        color: var(--ac-color-action-deep);
-        font-weight: var(--ac-font-weight-bold);
-        text-decoration: none;
+
+      .guidance-tip {
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface-info);
+        border: 1px solid var(--ac-color-border-subtle);
+        padding: 12px 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
       }
-      button {
+
+      .tip-icon {
+        font-size: 16px;
+        line-height: 1.2;
+        flex: 0 0 auto;
+      }
+
+      .guidance-tip p {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--ac-color-text-body);
+      }
+
+      .guidance-tip p strong {
+        color: var(--ac-color-text-strong);
+      }
+
+      .form-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 8px;
+        padding-top: 12px;
+      }
+
+      .cancel-link {
+        color: var(--ac-color-action-deep);
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+        padding: 8px 12px;
+        border-radius: var(--ac-radius-md);
+        transition: background var(--ac-motion-fast);
+      }
+
+      .cancel-link:hover {
+        background: var(--ac-color-surface-info);
+        text-decoration: underline;
+      }
+
+      .submit-button {
         min-height: 48px;
         border: 0;
-        border-radius: 12px;
+        border-radius: var(--ac-radius-md);
         background: var(--ac-color-action);
         color: var(--ac-color-text-on-action);
-        cursor: pointer;
         font: inherit;
-        font-weight: var(--ac-font-weight-bold);
-        padding: 0 20px;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 0 26px;
+        cursor: pointer;
+        box-shadow: var(--ac-shadow-sm);
+        transition: all var(--ac-motion-fast);
       }
-      button:hover:not(:disabled) {
-        background: var(--ac-color-ink-j);
+
+      .submit-button:hover:not(:disabled) {
+        background: var(--ac-color-action-deep);
+        box-shadow: var(--ac-shadow-hover);
+        transform: translateY(-1px);
       }
-      button:disabled {
-        cursor: progress;
-        opacity: 0.72;
+
+      .submit-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
       }
+
       @media (max-width: 640px) {
-        h1 {
-          font-size: 32px;
+        .step-card {
+          padding: 18px 20px;
         }
-        .child-form {
-          padding: 20px;
-        }
+
         .form-actions {
-          align-items: stretch;
           flex-direction: column-reverse;
+          align-items: stretch;
         }
-        .form-actions a,
-        button {
+
+        .cancel-link,
+        .submit-button {
           text-align: center;
           width: 100%;
         }
@@ -228,7 +381,9 @@ export class CreateChildPage {
   readonly error = signal<string | null>(null);
   readonly form = this.fb.nonNullable.group({
     firstName: ['', [Validators.required, Validators.maxLength(80)]],
+    lastName: ['', Validators.maxLength(80)],
     dateOfBirth: ['', Validators.required],
+    address: ['', Validators.maxLength(500)],
     notes: ['', Validators.maxLength(2000)],
   });
 
@@ -258,7 +413,9 @@ export class CreateChildPage {
     this.api
       .createChild({
         firstName: value.firstName.trim(),
+        lastName: value.lastName.trim() || undefined,
         dateOfBirth,
+        address: value.address.trim() || undefined,
         notes: value.notes.trim() || undefined,
       })
       .subscribe({

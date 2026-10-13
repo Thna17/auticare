@@ -26,13 +26,25 @@ export type StatusPresentation = {
 };
 
 export const statusPresentation: Record<AppointmentStatus, StatusPresentation> = {
-  REQUESTED: { label: 'Pending', foreground: '#9a6a00', background: '#fef3c7' },
-  CONFIRMED: { label: 'Confirmed', foreground: '#15803d', background: '#dcfce7' },
-  COMPLETED: { label: 'Completed', foreground: '#1d4ed8', background: 'var(--ac-color-blue-100)' },
+  REQUESTED: {
+    label: 'Pending',
+    foreground: 'var(--ac-color-amber-700-alt)',
+    background: 'var(--ac-color-amber-tint-100)',
+  },
+  CONFIRMED: {
+    label: 'Confirmed',
+    foreground: 'var(--ac-color-green-700-alt)',
+    background: 'var(--ac-color-green-tint-100)',
+  },
+  COMPLETED: {
+    label: 'Completed',
+    foreground: 'var(--ac-color-blue-700)',
+    background: 'var(--ac-color-blue-100)',
+  },
   CANCELLED: {
     label: 'Cancelled',
     foreground: 'var(--ac-color-alert-slate)',
-    background: '#fee2e2',
+    background: 'var(--ac-color-red-tint-100)',
   },
 };
 

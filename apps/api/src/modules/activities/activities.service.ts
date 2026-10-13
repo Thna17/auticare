@@ -6,7 +6,6 @@ import type {
 } from '@auticare/contracts';
 import { forbidden, notFound } from '../../common/errors/app-error.js';
 import { ActivitiesRepository } from './activities.repository.js';
-import type { ActivityProgressWithActivity } from './activities.repository.js';
 import { toActivityProgressResponse, toActivityResponse } from './activities.mapper.js';
 
 type Actor = { parentId: string; role: string };
@@ -79,14 +78,8 @@ export class ActivitiesService {
     const activity = await this.repository.findActivityById(activityId);
     if (!activity) throw notFound('Activity was not found.');
 
-    const existing = await this.repository.findProgressForChildAndActivity(childId, activityId);
-    if (existing) {
-      const withActivity = await this.repository.findProgressById(existing.id);
-      return toActivityProgressResponse(withActivity as ActivityProgressWithActivity);
-    }
-
-    const created = await this.repository.createProgress({ childId, activityId });
-    return toActivityProgressResponse(created);
+    const progress = await this.repository.upsertProgress({ childId, activityId });
+    return toActivityProgressResponse(progress);
   }
 
   /**

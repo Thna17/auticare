@@ -1,7 +1,8 @@
 // school-topbar.component.ts
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { NotificationsStateService } from '../../core/notifications/notifications-state.service';
 
 @Component({
   standalone: true,
@@ -10,23 +11,28 @@ import { AuthService } from '../../core/auth/auth.service';
   template: `
     <header class="topbar">
       <div class="search-box">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon" aria-hidden="true">🔍</span>
         <input
           aria-label="Search students, therapists or records"
           type="text"
           placeholder="Search students, therapists, or records..."
           class="search-input"
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          (keyup.enter)="executeSearch()"
         />
       </div>
 
       <div class="topbar-actions">
-        <button class="icon-btn" aria-label="Notifications">
-          <span class="icon">🔔</span>
-          <span class="badge"></span>
-        </button>
-        <button class="icon-btn" aria-label="Help">
-          <span class="icon">?</span>
-        </button>
+        <a class="icon-btn" aria-label="Notifications" routerLink="/notifications">
+          <span class="icon" aria-hidden="true">🔔</span>
+          @if (unreadCount() > 0) {
+            <span class="badge" [attr.aria-label]="unreadCount() + ' unread notifications'"></span>
+          }
+        </a>
+        <a class="icon-btn" aria-label="Help" routerLink="/support">
+          <span class="icon" aria-hidden="true">?</span>
+        </a>
         <a class="user-profile" routerLink="/schools/profile">
           <div class="user-info">
             <span class="user-name">{{ displayName() }}</span>
@@ -92,10 +98,22 @@ import { AuthService } from '../../core/auth/auth.service';
         padding: 8px;
         border-radius: 8px;
         transition: background 0.2s;
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: inherit;
       }
 
       .icon-btn:hover {
         background: var(--ac-color-slate-100);
+      }
+
+      .icon-btn:focus-visible {
+        outline: 2px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
 
       .icon {
@@ -122,6 +140,7 @@ import { AuthService } from '../../core/auth/auth.service';
         color: inherit;
         cursor: pointer;
         transition: opacity 0.2s;
+        min-height: 44px;
       }
 
       .user-profile:hover {
@@ -155,7 +174,7 @@ import { AuthService } from '../../core/auth/auth.service';
         justify-content: center;
         font-size: 14px;
         font-weight: 700;
-        color: #1e40af;
+        color: var(--ac-color-blue-800);
       }
     `,
   ],
@@ -163,7 +182,21 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class SchoolTopbarComponent {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly notificationsState = inject(NotificationsStateService);
   private readonly parent = this.auth.parent;
+
+  protected readonly searchQuery = signal('');
+  protected readonly unreadCount = this.notificationsState.unreadCount;
+
+  protected executeSearch() {
+    const q = this.searchQuery().trim();
+    if (!q) {
+      void this.router.navigate(['/schools/reports'], { queryParams: {} });
+      return;
+    }
+    void this.router.navigate(['/schools/reports'], { queryParams: { search: q } });
+  }
 
   protected readonly displayName = computed(() => {
     const p = this.parent();

@@ -3,6 +3,7 @@ import type {
   AppointmentStatus,
   DoctorRequest,
   UpdateAppointmentStatusRequest,
+  UpdateHospitalProfileRequest,
   UserRole,
 } from '@auticare/contracts';
 import type { Doctor } from '@prisma/client';
@@ -20,12 +21,52 @@ const mapDoctor = (d: Doctor) => ({
   fullName: d.fullName,
   specialty: d.specialty,
   bio: d.bio,
+  availableDays: d.availableDays,
+  startHour: d.startHour,
+  endHour: d.endHour,
+  slotDurationMinutes: d.slotDurationMinutes,
+  timezone: d.timezone,
 });
+
+const normalizeDays = (days?: string | readonly string[]): string | undefined => {
+  if (!days) return undefined;
+  const list: readonly string[] = typeof days === 'string' ? days.split(',') : days;
+  const dayMap: Record<string, number> = {
+    sun: 0,
+    sunday: 0,
+    '0': 0,
+    mon: 1,
+    monday: 1,
+    '1': 1,
+    tue: 2,
+    tuesday: 2,
+    '2': 2,
+    wed: 3,
+    wednesday: 3,
+    '3': 3,
+    thu: 4,
+    thursday: 4,
+    '4': 4,
+    fri: 5,
+    friday: 5,
+    '5': 5,
+    sat: 6,
+    saturday: 6,
+    '6': 6,
+  };
+  const mapped = list
+    .map((d: string) => dayMap[d.trim().toLowerCase()])
+    .filter((n: number | undefined): n is number => n !== undefined);
+  if (mapped.length > 0) {
+    return Array.from(new Set(mapped)).sort().join(',');
+  }
+  return typeof days === 'string' ? days : days.join(',');
+};
 const mapAppointment = (a: AppointmentWithRelations) => ({
   id: a.id,
   parentId: a.parentId,
   childId: a.childId,
-  childName: a.child?.firstName ?? null,
+  childName: a.child ? `${a.child.firstName} ${a.child.lastName ?? ''}`.trim() : null,
   hospitalId: a.hospitalId,
   hospitalName: a.hospital.name,
   doctorId: a.doctorId,
@@ -35,6 +76,10 @@ const mapAppointment = (a: AppointmentWithRelations) => ({
   reason: a.reason,
   rejectionReason: a.rejectionReason,
   parentName: `${a.parent.firstName} ${a.parent.lastName}`.trim(),
+  parentEmail: a.parent.email,
+  parentPhoneNumber: a.parent.phoneNumber ?? null,
+  childDateOfBirth: a.child?.dateOfBirth ? a.child.dateOfBirth.toISOString().slice(0, 10) : null,
+  childNotes: a.child?.notes ?? null,
 });
 export class HospitalManagementService {
   constructor(private readonly repository = new HospitalManagementRepository()) {}
@@ -46,12 +91,14 @@ export class HospitalManagementService {
   }
   async me(actor: Actor) {
     const staff = await this.staff(actor);
+    const phone = staff.parent.phoneNumber ?? null;
     return {
       staff: {
         id: staff.id,
         parentId: staff.parentId,
         hospitalId: staff.hospitalId,
         title: staff.title,
+        phone,
       },
       hospital: {
         id: staff.hospital.id,
@@ -59,10 +106,40 @@ export class HospitalManagementService {
         city: staff.hospital.city,
         address: staff.hospital.address,
         services: staff.hospital.services,
+        phone,
         createdAt: staff.hospital.createdAt.toISOString(),
         updatedAt: staff.hospital.updatedAt.toISOString(),
       },
     };
+  }
+  async updateProfile(actor: Actor, input: UpdateHospitalProfileRequest) {
+    const staff = await this.staff(actor);
+    const update: {
+      name?: string;
+      city?: string;
+      address?: string;
+      services?: string;
+    } = {};
+
+    if (input.name !== undefined) update.name = input.name.trim();
+    if (input.city !== undefined) update.city = input.city.trim();
+    if (input.address !== undefined) update.address = input.address.trim();
+    if (input.services !== undefined) {
+      update.services = input.services.trim();
+    } else if (input.description !== undefined && input.description !== null) {
+      const desc = input.description.trim();
+      if (desc) update.services = desc;
+    }
+
+    if (Object.keys(update).length > 0) {
+      await this.repository.updateHospital(staff.hospitalId, update);
+    }
+
+    if (input.phone !== undefined) {
+      await this.repository.updateStaffPhone(staff.parentId, input.phone?.trim() || null);
+    }
+
+    return this.me(actor);
   }
   async appointments(
     actor: Actor,
@@ -132,11 +209,20 @@ export class HospitalManagementService {
   }
   async createDoctor(actor: Actor, input: DoctorRequest) {
     const staff = await this.staff(actor);
+    const availableDays =
+      input.availableDays !== undefined ? normalizeDays(input.availableDays) : undefined;
     return mapDoctor(
       await this.repository.createDoctor(staff.hospitalId, {
         fullName: input.fullName.trim(),
         specialty: input.specialty.trim(),
         bio: input.bio?.trim() || null,
+        ...(availableDays !== undefined ? { availableDays } : {}),
+        ...(input.startHour !== undefined ? { startHour: input.startHour } : {}),
+        ...(input.endHour !== undefined ? { endHour: input.endHour } : {}),
+        ...(input.slotDurationMinutes !== undefined
+          ? { slotDurationMinutes: input.slotDurationMinutes }
+          : {}),
+        ...(input.timezone !== undefined ? { timezone: input.timezone } : {}),
       }),
     );
   }
@@ -144,11 +230,20 @@ export class HospitalManagementService {
     const staff = await this.staff(actor);
     if (!(await this.repository.doctor(id, staff.hospitalId)))
       throw notFound('Doctor was not found.');
+    const availableDays =
+      input.availableDays !== undefined ? normalizeDays(input.availableDays) : undefined;
     return mapDoctor(
       await this.repository.updateDoctor(id, {
         ...(input.fullName !== undefined ? { fullName: input.fullName.trim() } : {}),
         ...(input.specialty !== undefined ? { specialty: input.specialty.trim() } : {}),
         ...(input.bio !== undefined ? { bio: input.bio?.trim() || null } : {}),
+        ...(availableDays !== undefined ? { availableDays } : {}),
+        ...(input.startHour !== undefined ? { startHour: input.startHour } : {}),
+        ...(input.endHour !== undefined ? { endHour: input.endHour } : {}),
+        ...(input.slotDurationMinutes !== undefined
+          ? { slotDurationMinutes: input.slotDurationMinutes }
+          : {}),
+        ...(input.timezone !== undefined ? { timezone: input.timezone } : {}),
       }),
     );
   }

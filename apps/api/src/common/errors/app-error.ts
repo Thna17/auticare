@@ -11,7 +11,7 @@ export class AppError extends Error {
 }
 export const unauthorized = () =>
   new AppError('AUTHENTICATION_REQUIRED', 'Authentication is required.', 401);
-export const forbidden = () =>
-  new AppError('AUTHORIZATION_FAILED', 'You are not allowed to access this resource.', 403);
+export const forbidden = (message = 'You are not allowed to access this resource.') =>
+  new AppError('AUTHORIZATION_FAILED', message, 403);
 export const notFound = (message = 'The requested resource was not found.') =>
   new AppError('NOT_FOUND', message, 404);

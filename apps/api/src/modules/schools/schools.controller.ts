@@ -26,6 +26,7 @@ const searchFilters = (req: Request): ParentSchoolSearchQuery => {
     ...(parsed.province !== undefined && { province: parsed.province }),
     ...(parsed.availability !== undefined && { availability: parsed.availability }),
     ...(parsed.specializations !== undefined && { specializations: parsed.specializations }),
+    ...(parsed.isFavorite !== undefined && { isFavorite: parsed.isFavorite }),
   };
 };
 
@@ -74,3 +75,15 @@ export const endEnrollment = async (req: Request, res: Response) =>
 
 export const listEnrollments = async (req: Request, res: Response) =>
   ok(res, await service.listEnrollments(req.auth!));
+
+export const addFavorite = async (req: Request, res: Response) =>
+  ok(res, await service.addFavorite(req.auth!, requiredParam(req.params.id)));
+
+export const removeFavorite = async (req: Request, res: Response) =>
+  ok(res, await service.removeFavorite(req.auth!, requiredParam(req.params.id)));
+
+export const listReviews = async (req: Request, res: Response) =>
+  ok(res, await service.listReviews(req.auth!, requiredParam(req.params.id)));
+
+export const createReview = async (req: Request, res: Response) =>
+  created(res, await service.createReview(req.auth!, requiredParam(req.params.id), req.body));

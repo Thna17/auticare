@@ -8,6 +8,24 @@ export const routes: Routes = [
     loadComponent: () => import('./features/public/landing.page').then((m) => m.LandingPage),
   },
   {
+    path: 'privacy',
+    loadComponent: () => import('./features/public/privacy.page').then((m) => m.PrivacyPage),
+  },
+  {
+    path: 'terms',
+    loadComponent: () => import('./features/public/terms.page').then((m) => m.TermsPage),
+  },
+  {
+    path: 'crisis',
+    loadComponent: () =>
+      import('./features/public/crisis-resources.page').then((m) => m.CrisisResourcesPage),
+  },
+  {
+    path: 'emergency',
+    redirectTo: 'crisis',
+    pathMatch: 'full',
+  },
+  {
     path: '',
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
@@ -50,7 +68,7 @@ export const routes: Routes = [
       {
         path: 'appointments',
         canActivate: [roleGuard],
-        data: { roles: ['PARENT'] },
+        data: { roles: ['PARENT', 'ADMIN'] },
         loadChildren: () =>
           import('./features/appointments/appointments.routes').then((m) => m.APPOINTMENTS_ROUTES),
       },

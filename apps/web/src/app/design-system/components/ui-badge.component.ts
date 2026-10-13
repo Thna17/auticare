@@ -1,29 +1,24 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-export type BadgeTone = 'positive' | 'caution' | 'alert' | 'neutral';
+export type BadgeTone =
+  'positive' | 'caution' | 'alert' | 'neutral' | 'success' | 'warning' | 'error' | 'info';
 
 /**
- * Shared status badge. Promoted from the screening feature's
- * `screening-badge.component.ts` (which flagged itself as a promotion
- * candidate) so the whole app has one badge instead of three
- * disagreeing implementations (screening-badge hardcoded hex,
- * appointments.types.ts `statusPresentation` hardcoded hex, and the
- * unused tokens.scss semantic colors).
+ * Shared status badge.
  *
  * Tones map to tokens.scss:
- *   positive -> --ac-color-sage        caution -> --ac-color-warning
- *   alert    -> --ac-color-attention   neutral -> --ac-color-primary
+ *   positive / success -> --ac-color-sage        caution / warning -> --ac-color-warning
+ *   alert / error      -> --ac-color-attention   info              -> --ac-color-surface-info
+ *   neutral            -> --ac-color-primary
  *
- * Renders as a tint (light background, dark text) to match what
- * patients already see from `statusPresentation`, plus a small
- * leading glyph so status is never conveyed by color alone
- * (WCAG 1.4.1).
+ * Renders as a tint (light background, dark text) plus a leading glyph so status
+ * is never conveyed by color alone (WCAG 1.4.1).
  */
 @Component({
   selector: 'ac-ui-badge',
   standalone: true,
   template: `
-    <span class="badge" [class]="tone()">
+    <span class="badge" [class]="normalizedTone()">
       <span class="glyph" aria-hidden="true">{{ glyph() }}</span>
       <ng-content />
     </span>
@@ -33,13 +28,18 @@ export type BadgeTone = 'positive' | 'caution' | 'alert' | 'neutral';
       .badge {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        border-radius: 999px;
-        padding: 4px 12px;
+        vertical-align: middle;
+        gap: 6px;
+        border-radius: var(--ac-radius-pill);
+        padding: 4px 10px;
         font-weight: var(--ac-font-weight-semibold);
         font-size: var(--ac-type-meta);
-        line-height: 1.2;
+        line-height: 1.25;
         white-space: nowrap;
+        letter-spacing: 0.01em;
+        transition:
+          background-color var(--ac-motion-fast),
+          border-color var(--ac-motion-fast);
       }
 
       .glyph {
@@ -49,25 +49,32 @@ export type BadgeTone = 'positive' | 'caution' | 'alert' | 'neutral';
 
       .positive {
         background: var(--ac-color-sage-light);
-        color: #1f3d22;
+        color: var(--ac-color-green-dark);
+        border: 1px solid var(--ac-color-green-border-soft);
       }
 
       .caution {
-        /* --ac-color-warning tinted, kept as a literal hex rather than
-           color-mix() since the rest of the app targets browsers without
-           relying on it (see appointments.types.ts statusPresentation). */
-        background: #f6e6c8;
-        color: #6b4a12;
+        background: var(--ac-color-amber-tint-sand);
+        color: var(--ac-color-amber-dark);
+        border: 1px solid var(--ac-color-amber-tint-cream);
       }
 
       .alert {
-        background: #f3d9d5;
-        color: #6e2e26;
+        background: var(--ac-color-red-tint-muted);
+        color: var(--ac-color-red-terracotta);
+        border: 1px solid var(--ac-color-red-border);
+      }
+
+      .info {
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-action-deep);
+        border: 1px solid var(--ac-color-border-info);
       }
 
       .neutral {
-        background: #dceaf0;
+        background: var(--ac-color-ice-blue-faint);
         color: var(--ac-color-ink-f);
+        border: 1px solid var(--ac-color-border-info);
       }
     `,
   ],
@@ -76,14 +83,24 @@ export type BadgeTone = 'positive' | 'caution' | 'alert' | 'neutral';
 export class UiBadgeComponent {
   readonly tone = input<BadgeTone>('neutral');
 
+  readonly normalizedTone = computed(() => {
+    const t = this.tone();
+    if (t === 'success') return 'positive';
+    if (t === 'warning') return 'caution';
+    if (t === 'error') return 'alert';
+    return t;
+  });
+
   protected glyph(): string {
-    switch (this.tone()) {
+    switch (this.normalizedTone()) {
       case 'positive':
         return '\u2713'; // check
       case 'caution':
         return '\u25CF'; // pending dot
       case 'alert':
         return '\u2715'; // x
+      case 'info':
+        return '\u2139'; // info
       default:
         return '\u25CF';
     }

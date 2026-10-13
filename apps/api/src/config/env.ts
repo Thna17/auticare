@@ -1,5 +1,20 @@
-import 'dotenv/config';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
 import { z } from 'zod';
+
+dotenv.config();
+const configDir = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(configDir, '../../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+
+if (process.env.NODE_ENV === 'test') {
+  process.env.DATABASE_URL ??= 'mysql://auticare:auticare@localhost:3306/auticare';
+  process.env.APP_ORIGIN ??= 'http://localhost:4200';
+  process.env.API_ORIGIN ??= 'http://localhost:3000';
+  process.env.JWT_ACCESS_SECRET ??= 'test_access_secret_with_32_characters_minimum';
+  process.env.JWT_REFRESH_SECRET ??= 'test_refresh_secret_with_32_characters_minimum';
+}
 
 const envSchema = z
   .object({
@@ -14,9 +29,16 @@ const envSchema = z
     REFRESH_TOKEN_TTL: z.string().default('7d'),
     COOKIE_DOMAIN: z.string().optional(),
     LOG_LEVEL: z.string().default('info'),
+    STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+    STORAGE_S3_BUCKET: z.string().optional(),
+    STORAGE_S3_REGION: z.string().default('us-east-1'),
+    STORAGE_S3_ENDPOINT: z.string().optional(),
+    STORAGE_S3_ACCESS_KEY_ID: z.string().optional(),
+    STORAGE_S3_SECRET_ACCESS_KEY: z.string().optional(),
+    STORAGE_UPLOAD_RETENTION_HOURS: z.coerce.number().int().positive().default(24),
     SMTP_HOST: z.string().min(1).optional(),
     SMTP_PORT: z.coerce.number().int().min(1).max(65535).optional(),
-    SMTP_USER: z.string().email().optional(),
+    SMTP_USER: z.string().min(1).optional(),
     SMTP_PASS: z.string().min(1).optional(),
     SMTP_FROM: z.string().min(1).optional(),
   })
@@ -29,6 +51,47 @@ const envSchema = z
         code: 'custom',
         message: 'SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS must be configured together.',
       });
+    }
+
+    if (value.STORAGE_DRIVER === 's3') {
+      if (!value.STORAGE_S3_BUCKET) {
+        context.addIssue({
+          code: 'custom',
+          path: ['STORAGE_S3_BUCKET'],
+          message: 'STORAGE_S3_BUCKET is required when STORAGE_DRIVER is "s3".',
+        });
+      }
+      if (!value.STORAGE_S3_ACCESS_KEY_ID) {
+        context.addIssue({
+          code: 'custom',
+          path: ['STORAGE_S3_ACCESS_KEY_ID'],
+          message: 'STORAGE_S3_ACCESS_KEY_ID is required when STORAGE_DRIVER is "s3".',
+        });
+      }
+      if (!value.STORAGE_S3_SECRET_ACCESS_KEY) {
+        context.addIssue({
+          code: 'custom',
+          path: ['STORAGE_S3_SECRET_ACCESS_KEY'],
+          message: 'STORAGE_S3_SECRET_ACCESS_KEY is required when STORAGE_DRIVER is "s3".',
+        });
+      }
+    }
+
+    if (value.NODE_ENV === 'production') {
+      if (value.JWT_ACCESS_SECRET.includes('test') || value.JWT_ACCESS_SECRET.includes('dev')) {
+        context.addIssue({
+          code: 'custom',
+          path: ['JWT_ACCESS_SECRET'],
+          message: 'Production JWT_ACCESS_SECRET must not contain test or dev tokens.',
+        });
+      }
+      if (value.JWT_REFRESH_SECRET.includes('test') || value.JWT_REFRESH_SECRET.includes('dev')) {
+        context.addIssue({
+          code: 'custom',
+          path: ['JWT_REFRESH_SECRET'],
+          message: 'Production JWT_REFRESH_SECRET must not contain test or dev tokens.',
+        });
+      }
     }
   });
 export const env = envSchema.parse(process.env);

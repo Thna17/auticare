@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { ParentNotificationListResponse } from '@auticare/contracts';
+import type { NotificationResponse, ParentNotificationListResponse } from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
 
@@ -25,6 +25,24 @@ export class ParentNotificationsApi {
       .get<{ data: ParentNotificationListResponse }>(`${this.apiBaseUrl}/parents/notifications`, {
         params: isRead === undefined ? { page } : { page, isRead },
       })
+      .pipe(map((response) => response.data));
+  }
+
+  markRead(notificationId: string) {
+    return this.http
+      .patch<{ data: NotificationResponse }>(
+        `${this.apiBaseUrl}/parents/notifications/${notificationId}/read`,
+        {},
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  markAllRead() {
+    return this.http
+      .patch<{ data: { updatedCount: number } }>(
+        `${this.apiBaseUrl}/parents/notifications/read-all`,
+        {},
+      )
       .pipe(map((response) => response.data));
   }
 }

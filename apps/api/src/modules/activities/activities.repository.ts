@@ -67,6 +67,39 @@ export class ActivitiesRepository {
     return prisma.activityProgress.create({ data: input, include: { activity: true } });
   }
 
+  async upsertProgress(input: {
+    childId: string;
+    activityId: string;
+  }): Promise<ActivityProgressWithActivity> {
+    try {
+      return await prisma.activityProgress.upsert({
+        where: {
+          childId_activityId: {
+            childId: input.childId,
+            activityId: input.activityId,
+          },
+        },
+        create: input,
+        update: {},
+        include: { activity: true },
+      });
+    } catch (err: unknown) {
+      if (typeof err === 'object' && err !== null && 'code' in err && err.code === 'P2002') {
+        const existing = await prisma.activityProgress.findUnique({
+          where: {
+            childId_activityId: {
+              childId: input.childId,
+              activityId: input.activityId,
+            },
+          },
+          include: { activity: true },
+        });
+        if (existing) return existing;
+      }
+      throw err;
+    }
+  }
+
   updateProgress(
     progressId: string,
     data: { completedAt?: Date | null; parentObservation?: string | null },
