@@ -237,7 +237,7 @@ describe('SchoolsPage', () => {
 
     expect(card?.querySelector('.school-image')).toBeTruthy();
     expect(card?.querySelector('.verified-badge')?.textContent).toContain('Verified');
-    expect(card?.querySelector('.meta-item')?.textContent).toContain('INCLUSIVE SUPPORT RATIO');
+    expect(card?.querySelector('.meta-item')?.textContent).toContain('Student-Teacher Ratio');
     expect(card?.querySelector('.meta-item')?.textContent).toContain('4:1');
 
     const enrollBtn = card?.querySelector('.enrollment-btn');
@@ -381,6 +381,40 @@ describe('SchoolsPage', () => {
     expect(root.textContent).toContain('អង្គការសាលាទន្សាយ');
     expect(root.textContent).toContain('សហគមន៍ដៃនៃក្តីសង្ឃឹម');
     expect(root.textContent).toContain('វិទ្យាស្ថានជាតិអប់រំពិសេស');
+
+    // Reset back to English
+    i18nService.setLanguage('en');
+    fixture.detectChanges();
+  });
+
+  it('correctly translates availability badges, student-teacher ratio label, and specializations in Khmer and English modes', () => {
+    const fixture = TestBed.createComponent(SchoolsPage);
+    flushInitialRequests(fixture);
+    const comp = fixture.componentInstance;
+
+    // English mode
+    i18nService.setLanguage('en');
+    fixture.detectChanges();
+    let root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Student-Teacher Ratio');
+    expect(comp.availabilityLabel('IMMEDIATE')).toBe('Immediate');
+    expect(comp.availabilityLabel('WAITLIST')).toBe('Waitlist');
+    expect(comp['formatSpecialization']('Sensory Room')).toBe('Sensory Room');
+    expect(comp['formatSpecialization']('Speech Therapy')).toBe('Speech Therapy');
+    expect(comp['formatSpecialization']('Life Skills')).toBe('Life Skills');
+    expect(comp['formatSpecialization']('Special Education')).toBe('Special Education');
+
+    // Khmer mode
+    i18nService.setLanguage('km');
+    fixture.detectChanges();
+    root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('សមាមាត្រសិស្សនិងគ្រូ');
+    expect(comp.availabilityLabel('IMMEDIATE')).toBe('ចូលរៀនបានភ្លាមៗ');
+    expect(comp.availabilityLabel('WAITLIST')).toBe('បញ្ជីរង់ចាំ');
+    expect(comp['formatSpecialization']('Sensory Room')).toBe('បន្ទប់ញាណដឹង');
+    expect(comp['formatSpecialization']('Speech Therapy')).toBe('ការព្យាបាលការនិយាយ');
+    expect(comp['formatSpecialization']('Life Skills')).toBe('ជំនាញជីវិត');
+    expect(comp['formatSpecialization']('Special Education')).toBe('ការអប់រំពិសេស');
 
     // Reset back to English
     i18nService.setLanguage('en');

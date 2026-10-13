@@ -8,7 +8,7 @@ export const availabilityLabel = (
   if (lang === 'km') {
     switch (status) {
       case 'IMMEDIATE':
-        return 'មានកន្លែងភ្លាមៗ';
+        return 'ចូលរៀនបានភ្លាមៗ';
       case 'WAITLIST':
         return 'បញ្ជីរង់ចាំ';
       case 'CLOSED':
@@ -17,7 +17,7 @@ export const availabilityLabel = (
   }
   switch (status) {
     case 'IMMEDIATE':
-      return 'Accepting now';
+      return 'Immediate';
     case 'WAITLIST':
       return 'Waitlist';
     case 'CLOSED':

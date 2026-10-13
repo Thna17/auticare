@@ -294,7 +294,7 @@ import { formatCityBilingual } from '../hospitals/cambodia-hospitals.data';
               </div>
               <div class="highlight-content">
                 <span class="highlight-caption">
-                  {{ currentLang() === 'km' ? 'សមាមាត្រសិស្សនិងគ្រូ' : 'Teacher-Student Ratio' }}
+                  {{ currentLang() === 'km' ? 'សមាមាត្រសិស្សនិងគ្រូ' : 'Student-Teacher Ratio' }}
                 </span>
                 <span class="highlight-val">{{ s.studentTeacherRatio || '1:3' }}</span>
               </div>
@@ -2362,16 +2362,35 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
   }
 
   protected formatSpecialization(spec: string): string {
-    if (this.currentLang() === 'en') return spec;
-    switch (spec.trim().toLowerCase()) {
+    const s = spec.trim().toLowerCase();
+    if (this.currentLang() === 'en') {
+      if (s === 'speech therapy') return 'Speech Therapy';
+      if (s === 'sensory room') return 'Sensory Room';
+      if (s === 'life skills') return 'Life Skills';
+      if (s === 'special education') return 'Special Education';
+      if (s === 'sensory integration') return 'Sensory Integration';
+      if (s === 'occupational therapy') return 'Occupational Therapy';
+      if (s === 'social skills') return 'Social Skills';
+      if (s === 'aba') return 'ABA';
+      return spec;
+    }
+    switch (s) {
       case 'speech therapy':
         return 'ការព្យាបាលការនិយាយ';
+      case 'sensory room':
+        return 'បន្ទប់ញាណដឹង';
       case 'sensory integration':
         return 'ការរួមបញ្ចូលញ្ញាណ';
+      case 'life skills':
+        return 'ជំនាញជីវិត';
+      case 'special education':
+        return 'ការអប់រំពិសេស';
       case 'occupational therapy':
         return 'ការព្យាបាលការបំពេញមុខងារ';
       case 'social skills':
         return 'ជំនាញសង្គម';
+      case 'aba':
+        return 'ការព្យាបាលអាកប្បកិរិយា (ABA)';
       default:
         return spec;
     }

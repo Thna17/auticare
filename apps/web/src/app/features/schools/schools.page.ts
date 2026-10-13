@@ -39,7 +39,10 @@ interface SchoolViewModel extends SchoolResponse {
 const SPECIALIZATION_OPTIONS = [
   'ABA',
   'Speech Therapy',
+  'Sensory Room',
   'Sensory Integration',
+  'Life Skills',
+  'Special Education',
   'Occupational Therapy',
   'Social Skills',
 ] as const;
@@ -263,7 +266,7 @@ const SPECIALIZATION_OPTIONS = [
                 {{ currentLang() === 'km' ? 'គ្រប់ស្ថានភាពទទួល' : 'Any availability' }}
               </option>
               <option value="IMMEDIATE">
-                {{ currentLang() === 'km' ? 'មានកន្លែងភ្លាមៗ' : 'Immediate openings' }}
+                {{ currentLang() === 'km' ? 'ចូលរៀនបានភ្លាមៗ' : 'Immediate' }}
               </option>
               <option value="WAITLIST">
                 {{ currentLang() === 'km' ? 'បញ្ជីរង់ចាំ' : 'Waitlist' }}
@@ -473,7 +476,7 @@ const SPECIALIZATION_OPTIONS = [
                           {{
                             currentLang() === 'km'
                               ? 'សមាមាត្រសិស្សនិងគ្រូ'
-                              : 'INCLUSIVE SUPPORT RATIO'
+                              : 'Student-Teacher Ratio'
                           }}
                         </span>
                         <span class="meta-value">{{ school.studentTeacherRatio ?? '—' }}</span>
@@ -2008,16 +2011,35 @@ export class SchoolsPage implements OnInit {
   }
 
   protected formatSpecialization(spec: string): string {
-    if (this.currentLang() === 'en') return spec;
-    switch (spec.trim().toLowerCase()) {
+    const s = spec.trim().toLowerCase();
+    if (this.currentLang() === 'en') {
+      if (s === 'speech therapy') return 'Speech Therapy';
+      if (s === 'sensory room') return 'Sensory Room';
+      if (s === 'life skills') return 'Life Skills';
+      if (s === 'special education') return 'Special Education';
+      if (s === 'sensory integration') return 'Sensory Integration';
+      if (s === 'occupational therapy') return 'Occupational Therapy';
+      if (s === 'social skills') return 'Social Skills';
+      if (s === 'aba') return 'ABA';
+      return spec;
+    }
+    switch (s) {
       case 'speech therapy':
         return 'ការព្យាបាលការនិយាយ';
+      case 'sensory room':
+        return 'បន្ទប់ញាណដឹង';
       case 'sensory integration':
         return 'ការរួមបញ្ចូលញ្ញាណ';
+      case 'life skills':
+        return 'ជំនាញជីវិត';
+      case 'special education':
+        return 'ការអប់រំពិសេស';
       case 'occupational therapy':
         return 'ការព្យាបាលការបំពេញមុខងារ';
       case 'social skills':
         return 'ជំនាញសង្គម';
+      case 'aba':
+        return 'ការព្យាបាលអាកប្បកិរិយា (ABA)';
       default:
         return spec;
     }
@@ -2204,7 +2226,7 @@ export class SchoolsPage implements OnInit {
     if (this.currentLang() === 'km') {
       switch (status) {
         case 'IMMEDIATE':
-          return 'មានកន្លែងភ្លាមៗ';
+          return 'ចូលរៀនបានភ្លាមៗ';
         case 'WAITLIST':
           return 'បញ្ជីរង់ចាំ';
         case 'CLOSED':

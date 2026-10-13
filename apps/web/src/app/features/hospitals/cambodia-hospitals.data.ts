@@ -12,32 +12,32 @@ export const CAMBODIA_PROVINCES: readonly CambodianProvince[] = [
   {
     key: 'Phnom Penh',
     nameEn: 'Phnom Penh',
-    nameKm: 'រាជធានីភ្នំពេញ',
-    label: 'Phnom Penh (រាជធានីភ្នំពេញ)',
+    nameKm: 'ភ្នំពេញ',
+    label: 'Phnom Penh',
   },
   {
     key: 'Siem Reap',
     nameEn: 'Siem Reap',
-    nameKm: 'ខេត្តសៀមរាប',
-    label: 'Siem Reap (ខេត្តសៀមរាប)',
+    nameKm: 'សៀមរាប',
+    label: 'Siem Reap',
   },
   {
     key: 'Battambang',
     nameEn: 'Battambang',
-    nameKm: 'ខេត្តបាត់ដំបង',
-    label: 'Battambang (ខេត្តបាត់ដំបង)',
+    nameKm: 'បាត់ដំបង',
+    label: 'Battambang',
   },
   {
     key: 'Kandal',
     nameEn: 'Kandal',
-    nameKm: 'ខេត្តកណ្តាល',
-    label: 'Kandal (ខេត្តកណ្តាល)',
+    nameKm: 'កណ្តាល',
+    label: 'Kandal',
   },
   {
     key: 'Sihanoukville',
     nameEn: 'Sihanoukville',
-    nameKm: 'ខេត្តព្រះសីហនុ',
-    label: 'Sihanoukville (ខេត្តព្រះសីហនុ)',
+    nameKm: 'ព្រះសីហនុ',
+    label: 'Sihanoukville',
   },
 ];
 
@@ -118,7 +118,13 @@ export function formatSpecialtyBilingual(specialty: string, lang = 'km'): string
 export function formatCityBilingual(city: string, lang = 'km'): string {
   const norm = (city || '').toLowerCase().trim();
   const match = CAMBODIA_PROVINCES.find(
-    (p) => p.key.toLowerCase() === norm || p.nameEn.toLowerCase() === norm || p.nameKm === city,
+    (p) =>
+      p.key.toLowerCase() === norm ||
+      p.nameEn.toLowerCase() === norm ||
+      p.nameKm.toLowerCase() === norm ||
+      norm.includes(p.nameEn.toLowerCase()) ||
+      norm.includes(p.nameKm.toLowerCase()) ||
+      (p.key === 'Phnom Penh' && (norm.includes('phnom penh') || norm.includes('ភ្នំពេញ'))),
   );
   if (!match) return city;
   if (lang === 'km') {

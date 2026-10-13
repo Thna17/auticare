@@ -407,17 +407,34 @@ describe('SpecialistDiscoveryPage', () => {
       fixture.detectChanges();
     });
 
-    it('renders Cambodian provinces in the city dropdown filter', () => {
-      const compiled = fixture.nativeElement as HTMLElement;
-      const citySelect = compiled.querySelector<HTMLSelectElement>('.city-select');
+    it('renders Cambodian provinces in the city dropdown filter in English and Khmer modes', () => {
+      // English mode
+      i18nService.setLanguage('en');
+      fixture.detectChanges();
+      let compiled = fixture.nativeElement as HTMLElement;
+      let citySelect = compiled.querySelector<HTMLSelectElement>('.city-select');
       expect(citySelect).not.toBeNull();
 
-      const optionsText = citySelect?.textContent ?? '';
+      let optionsText = citySelect?.textContent ?? '';
       expect(optionsText).toContain('Phnom Penh');
       expect(optionsText).toContain('Siem Reap');
       expect(optionsText).toContain('Battambang');
       expect(optionsText).toContain('Kandal');
-      expect(optionsText).toContain('Sihanoukville');
+
+      // Khmer mode
+      i18nService.setLanguage('km');
+      fixture.detectChanges();
+      compiled = fixture.nativeElement as HTMLElement;
+      citySelect = compiled.querySelector<HTMLSelectElement>('.city-select');
+      optionsText = citySelect?.textContent ?? '';
+      expect(optionsText).toContain('ភ្នំពេញ');
+      expect(optionsText).toContain('សៀមរាប');
+      expect(optionsText).toContain('បាត់ដំបង');
+      expect(optionsText).toContain('កណ្តាល');
+
+      // Reset
+      i18nService.setLanguage('en');
+      fixture.detectChanges();
     });
 
     it('renders Cambodian hospitals including NPH, Kantha Bopha, Sunrise Japan, Calmette, Khmer-Soviet, and Angkor Hospital for Children', () => {

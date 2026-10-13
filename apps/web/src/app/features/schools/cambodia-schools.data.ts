@@ -16,6 +16,21 @@ export const CAMBODIAN_FACILITY_MAP: Record<string, { km: string; en: string; bi
       en: 'Sensory Room',
       bilingual: 'បន្ទប់ញាណដឹង (Sensory Room)',
     },
+    'speech therapy': {
+      km: 'ការព្យាបាលការនិយាយ',
+      en: 'Speech Therapy',
+      bilingual: 'ការព្យាបាលការនិយាយ (Speech Therapy)',
+    },
+    'life skills': {
+      km: 'ជំនាញជីវិត',
+      en: 'Life Skills',
+      bilingual: 'ជំនាញជីវិត (Life Skills)',
+    },
+    'special education': {
+      km: 'ការអប់រំពិសេស',
+      en: 'Special Education',
+      bilingual: 'ការអប់រំពិសេស (Special Education)',
+    },
     'calming room': {
       km: 'បន្ទប់ស្ងប់អារម្មណ៍',
       en: 'Calming Room',

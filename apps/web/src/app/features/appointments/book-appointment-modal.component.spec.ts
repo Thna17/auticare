@@ -41,6 +41,7 @@ interface TestBookingState {
 describe('BookAppointmentModalComponent', () => {
   let fixture: ComponentFixture<BookAppointmentModalComponent>;
   let component: BookAppointmentModalComponent;
+  let i18nService: I18nService;
 
   let mockChildrenFacade: {
     children: ReturnType<typeof signal<MockChild[]>>;
@@ -129,8 +130,8 @@ describe('BookAppointmentModalComponent', () => {
       ],
     }).compileComponents();
 
-    const i18n = TestBed.inject(I18nService);
-    i18n.setLanguage('en');
+    i18nService = TestBed.inject(I18nService);
+    i18nService.setLanguage('en');
 
     fixture = TestBed.createComponent(BookAppointmentModalComponent);
     component = fixture.componentInstance;
@@ -256,5 +257,98 @@ describe('BookAppointmentModalComponent', () => {
     expect(compiled.querySelector('.export-btn')).not.toBeNull();
     expect(compiled.querySelector('.google-btn')).not.toBeNull();
     expect(compiled.querySelector('.ical-btn')).not.toBeNull();
+  });
+
+  it('translates calendar date pickers, slots, specialty tags, care notes, and confirmation modal in Khmer and English', () => {
+    // English mode
+    i18nService.setLanguage('en');
+    fixture.detectChanges();
+    expect(component['formatSpecialty']('Pediatric Neurologist')).toBe('Child Neurologist');
+    expect(component['formatSpecialty']('Speech Therapy')).toBe('Speech-Language Pathologist');
+    expect(component['weekdayLabels']()).toEqual(['S', 'M', 'T', 'W', 'T', 'F', 'S']);
+    expect(
+      component['formatDayAriaLabel']({
+        iso: '2026-11-20',
+        label: 20,
+        isCurrentMonth: true,
+        isOffDay: true,
+        isPast: false,
+      }),
+    ).toBe('2026-11-20 (Off duty)');
+
+    // Khmer mode
+    i18nService.setLanguage('km');
+    fixture.detectChanges();
+    expect(component['formatSpecialty']('Pediatric Neurologist')).toBe(
+      'វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ',
+    );
+    expect(component['formatSpecialty']('Speech Therapy')).toBe('អ្នកព្យាបាលការនិយាយ និងភាសា');
+    expect(component['weekdayLabels']()).toEqual(['អា', 'ច', 'អ', 'ព', 'ព្រ', 'សុ', 'ស']);
+    expect(
+      component['formatDayAriaLabel']({
+        iso: '2026-11-20',
+        label: 20,
+        isCurrentMonth: true,
+        isOffDay: true,
+        isPast: false,
+      }),
+    ).toBe('2026-11-20 (ឈប់សម្រាក)');
+
+    // Step 2 in Khmer mode
+    bookingSignal.update((s) => ({
+      ...s,
+      childId: 'child_1',
+      date: '2026-11-20',
+    }));
+    component['step'].set(2);
+    fixture.detectChanges();
+
+    let compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('វគ្គពេលព្រឹក');
+    expect(compiled.textContent).toContain('វគ្គពេលរសៀល');
+
+    // Step 3 in Khmer mode
+    component['step'].set(3);
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('ការសម្របសម្រួលញ្ញាណ និងកំណត់សម្គាល់ថែទាំ');
+
+    // Confirmation in Khmer mode
+    bookingSignal.set({
+      isOpen: true,
+      step: 'confirmed',
+      doctor: null,
+      childId: 'child_1',
+      date: '2026-11-20',
+      time: '09:30 AM',
+      slots: [],
+      slotsLoading: false,
+      visitReason: 'Consultation',
+      notes: '',
+      error: null,
+      confirmed: {
+        id: 'apt_confirmed_1',
+        parentId: 'parent_1',
+        childId: 'child_1',
+        childName: 'Liam Miller',
+        hospitalId: 'hosp_1',
+        hospitalName: 'Children Hospital',
+        doctorId: 'doc_1',
+        doctorName: 'Dr. Sarah Connor',
+        scheduledAt: '2026-11-20T09:30:00.000Z',
+        status: 'REQUESTED',
+        reason: 'Consultation',
+        rejectionReason: null,
+      },
+    });
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('បានបញ្ជូនសំណើសុំការណាត់ជួប');
+    expect(compiled.textContent).toContain('កាលបរិច្ឆេទ');
+    expect(compiled.textContent).toContain('មន្ទីរពេទ្យ');
+
+    // Reset back to English
+    i18nService.setLanguage('en');
+    fixture.detectChanges();
   });
 });

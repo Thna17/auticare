@@ -15,6 +15,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { formatSpecialtyBilingual } from '../hospitals/cambodia-hospitals.data';
 
 type CalendarDay = {
   readonly iso: string;
@@ -117,8 +118,7 @@ export type WizardStep = 1 | 2 | 3;
                 (currentLang() === 'km' ? 'វេជ្ជបណ្ឌិតឯកទេស' : 'Clinical Specialist')
             }}</strong>
             <span class="doctor-specialty">{{
-              facade.booking().doctor?.specialty ??
-                (currentLang() === 'km' ? 'វេជ្ជបណ្ឌិតកុមារឯកទេស' : 'Developmental Pediatrics')
+              formatSpecialty(facade.booking().doctor?.specialty)
             }}</span>
             <small class="doctor-schedule">
               <svg
@@ -323,6 +323,7 @@ export type WizardStep = 1 | 2 | 3;
                     [class.selected]="facade.booking().date === day.iso"
                     [disabled]="day.isPast || day.isOffDay"
                     [attr.aria-disabled]="day.isPast || day.isOffDay ? 'true' : null"
+                    [attr.aria-label]="formatDayAriaLabel(day)"
                     [title]="
                       day.isOffDay
                         ? currentLang() === 'km'
@@ -515,6 +516,14 @@ export type WizardStep = 1 | 2 | 3;
                 <strong class="review-val">{{
                   facade.booking().doctor?.fullName ??
                     (currentLang() === 'km' ? 'អ្នកឯកទេស' : 'Specialist')
+                }}</strong>
+              </div>
+              <div class="review-item">
+                <span class="review-key">{{
+                  currentLang() === 'km' ? 'ជំនាញឯកទេស' : 'Specialty'
+                }}</span>
+                <strong class="review-val">{{
+                  formatSpecialty(facade.booking().doctor?.specialty)
                 }}</strong>
               </div>
               <div class="review-item">
@@ -1360,6 +1369,24 @@ export class BookAppointmentModalComponent implements OnInit {
       default:
         return symptom;
     }
+  }
+
+  protected formatSpecialty(specialty?: string | null): string {
+    if (!specialty) {
+      return this.currentLang() === 'km' ? 'វេជ្ជបណ្ឌិតកុមារឯកទេស' : 'Developmental Pediatrics';
+    }
+    return formatSpecialtyBilingual(specialty, this.currentLang());
+  }
+
+  protected formatDayAriaLabel(day: CalendarDay): string {
+    const isKm = this.currentLang() === 'km';
+    if (day.isOffDay) {
+      return `${day.iso} ${isKm ? '(ឈប់សម្រាក)' : '(Off duty)'}`;
+    }
+    if (day.isPast) {
+      return `${day.iso} ${isKm ? '(កន្លងផុត)' : '(Past)'}`;
+    }
+    return day.iso;
   }
 
   protected isSymptomSelected(symptom: string): boolean {

@@ -71,7 +71,7 @@ import { formatHospitalName } from '../hospitals/cambodia-hospitals.data';
                   : 'Visit Reason & Notes'
               }}
             </dt>
-            <dd class="symptoms-text">{{ appointment().reason }}</dd>
+            <dd class="symptoms-text">{{ formatReason(appointment().reason) }}</dd>
           </div>
         }
       </dl>
@@ -288,6 +288,23 @@ export class AppointmentConfirmationComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly currentLang = this.i18n.currentLang;
   protected readonly formatHospitalName = formatHospitalName;
+
+  protected formatReason(reason?: string | null): string {
+    if (!reason) return '';
+    const isKm = this.currentLang() === 'km';
+    switch (reason.trim()) {
+      case 'Consultation':
+        return isKm ? 'ការពិគ្រោះយោបល់' : 'Consultation';
+      case 'Follow-up':
+        return isKm ? 'ការតាមដានបន្ត' : 'Follow-up';
+      case 'Test results':
+        return isKm ? 'លទ្ធផលតេស្ត' : 'Test results';
+      case 'Other':
+        return isKm ? 'ផ្សេងៗ' : 'Other';
+      default:
+        return reason;
+    }
+  }
 
   protected formattedDate(): string {
     const locale = this.currentLang() === 'km' ? 'km-KH' : undefined;
