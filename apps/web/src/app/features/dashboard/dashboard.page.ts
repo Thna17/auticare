@@ -59,7 +59,7 @@ const quickActions: readonly QuickAction[] = [
   },
   {
     titleKm: 'សកម្មភាពលេងកម្សាន្ត',
-    titleEn: 'Log Daily Milestone (Sensory Play)',
+    titleEn: 'Log Daily Milestone',
     descriptionKm: 'សកម្មភាពលូតលាស់ និងការលេងសម្របសម្រួលញាណនៅផ្ទះ',
     descriptionEn: 'Home-based developmental activities & sensory play',
     path: '/activities',
@@ -318,20 +318,15 @@ const quickActions: readonly QuickAction[] = [
                     class="care-context-pill"
                     (click)="toggleChildDropdown()"
                     [attr.aria-expanded]="childDropdownOpen()"
-                    aria-label="Viewing care for child"
+                    [attr.aria-label]="
+                      currentLang() === 'km' ? 'កំពុងមើលការថែទាំកុមារ' : 'Viewing care for child'
+                    "
                   >
                     <span class="care-dot" aria-hidden="true"></span>
                     <span class="care-label">
                       {{
                         currentLang() === 'km' ? 'កំពុងមើលការថែទាំសម្រាប់៖ ' : 'Viewing care for: '
                       }}<strong>{{ child.firstName }}</strong>
-                      <span class="care-bilingual-tag"
-                        >({{
-                          currentLang() === 'km'
-                            ? 'Viewing care for: ' + child.firstName
-                            : 'កំពុងមើលការថែទាំសម្រាប់៖ ' + child.firstName
-                        }})</span
-                      >
                     </span>
                     <span class="care-chevron" aria-hidden="true">▼</span>
                   </button>
@@ -361,11 +356,7 @@ const quickActions: readonly QuickAction[] = [
                         (click)="closeChildDropdown()"
                       >
                         +
-                        {{
-                          currentLang() === 'km'
-                            ? 'បន្ថែមទិន្នន័យកុមារ (Add another child)'
-                            : 'Add another child'
-                        }}
+                        {{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add another child' }}
                       </a>
                     </div>
                   }
@@ -375,9 +366,7 @@ const quickActions: readonly QuickAction[] = [
             <h1>
               @if (currentLang() === 'km') {
                 <span class="greeting-km">សូមស្វាគមន៍មកកាន់ AutiCare</span>
-                <span class="greeting-subtext"
-                  >, {{ parentFirstName() }} (Good {{ dayPart() }} · Welcome to AutiCare)</span
-                >
+                <span class="greeting-subtext">, {{ parentFirstName() }}</span>
               } @else {
                 <span class="greeting-en">Welcome to AutiCare</span>
                 <span class="greeting-subtext">
@@ -398,21 +387,19 @@ const quickActions: readonly QuickAction[] = [
                       ? ' នេះជាព័ត៌មានលម្អិត និងវឌ្ឍនភាពថ្ងៃនេះសម្រាប់ ' + child.firstName + '។'
                       : " Here's what's happening with " + child.firstName + ' today.'
                   }}
-                  <span class="hero-subtext-bilingual">
-                    (Here's what's happening with {{ child.firstName }} today.)</span
-                  >
                 } @else {
                   {{
                     currentLang() === 'km'
                       ? ' បង្កើតប្រវត្តិកុមារដើម្បីកំណត់ផ្ទាំងគ្រប់គ្រងផ្ទាល់ខ្លួនរបស់អ្នក។'
                       : ' Create a child profile to personalize your care dashboard.'
                   }}
-                  <span class="hero-subtext-bilingual">
-                    (Create a child profile to personalize your care dashboard.)</span
-                  >
                 }
               } @else {
-                Manage the care directory and review family support records from one place.
+                {{
+                  currentLang() === 'km'
+                    ? 'គ្រប់គ្រងបញ្ជីថែទាំ និងពិនិត្យកំណត់ត្រាគាំទ្រគ្រួសារពីកន្លែងតែមួយ។'
+                    : 'Manage the care directory and review family support records from one place.'
+                }}
               }
             </p>
             @if (isParent() && hasMultipleChildren()) {
@@ -439,9 +426,7 @@ const quickActions: readonly QuickAction[] = [
                 <span class="child-avatar" aria-hidden="true">{{ childInitials(child) }}</span>
                 <span>
                   <strong>{{ childFullName(child) }}, {{ ageLabel(child.dateOfBirth) }}</strong>
-                  <small>{{
-                    currentLang() === 'km' ? 'បើកប្រវត្តិរូប (Open profile)' : 'Open profile'
-                  }}</small>
+                  <small>{{ currentLang() === 'km' ? 'បើកប្រវត្តិរូប' : 'Open profile' }}</small>
                 </span>
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                   <path
@@ -454,35 +439,33 @@ const quickActions: readonly QuickAction[] = [
                   />
                 </svg>
               </a>
-              <a class="hero-add-child-btn" routerLink="/children/new" title="Add child profile">
+              <a
+                class="hero-add-child-btn"
+                routerLink="/children/new"
+                [title]="currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add child profile'"
+              >
                 <span class="hero-add-icon" aria-hidden="true">+</span>
                 <span>{{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add Child' }}</span>
-                <span class="hero-btn-sub"
-                  >({{ currentLang() === 'km' ? 'Add Child' : 'បន្ថែមទិន្នន័យកុមារ' }})</span
-                >
               </a>
             } @else if (isParent()) {
               <a class="child-switcher empty" routerLink="/children">
                 <span class="child-avatar" aria-hidden="true">+</span>
                 <span>
                   <strong>{{
-                    currentLang() === 'km'
-                      ? 'មិនទាន់បានជ្រើសរើសកុមារ (No child selected)'
-                      : 'No child selected'
+                    currentLang() === 'km' ? 'មិនទាន់បានជ្រើសរើសកុមារ' : 'No child selected'
                   }}</strong>
                   <small>{{
-                    currentLang() === 'km'
-                      ? 'បន្ថែមទិន្នន័យកុមារ (Add child profile)'
-                      : 'Add child profile'
+                    currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add child profile'
                   }}</small>
                 </span>
               </a>
-              <a class="hero-add-child-btn" routerLink="/children/new">
+              <a
+                class="hero-add-child-btn"
+                routerLink="/children/new"
+                [title]="currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add child profile'"
+              >
                 <span class="hero-add-icon" aria-hidden="true">+</span>
                 <span>{{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add Child' }}</span>
-                <span class="hero-btn-sub"
-                  >({{ currentLang() === 'km' ? 'Add Child' : 'បន្ថែមទិន្នន័យកុមារ' }})</span
-                >
               </a>
             }
           </div>
@@ -640,12 +623,7 @@ const quickActions: readonly QuickAction[] = [
               </div>
               <div class="quick-card-text">
                 <div class="quick-card-title-row">
-                  <strong>
-                    {{ currentLang() === 'km' ? action.titleKm : action.titleEn }}
-                    <small class="quick-card-title-sub"
-                      >({{ currentLang() === 'km' ? action.titleEn : action.titleKm }})</small
-                    >
-                  </strong>
+                  <strong>{{ currentLang() === 'km' ? action.titleKm : action.titleEn }}</strong>
                   @if (
                     currentLang() === 'km' ? action.timeEstimateKm : action.timeEstimateEn;
                     as est
@@ -676,7 +654,9 @@ const quickActions: readonly QuickAction[] = [
                 <div
                   class="progress-wrap"
                   [attr.aria-label]="
-                    'Screening risk ' + (data.screeningSummary.riskPercentage ?? 0) + ' percent'
+                    (currentLang() === 'km' ? 'កម្រិតហានិភ័យ ' : 'Screening risk ') +
+                    (data.screeningSummary.riskPercentage ?? 0) +
+                    (currentLang() === 'km' ? ' ភាគរយ' : ' percent')
                   "
                 >
                   <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
@@ -693,22 +673,34 @@ const quickActions: readonly QuickAction[] = [
                   </svg>
                   <div>
                     <strong>{{ data.screeningSummary.riskPercentage ?? 0 }}%</strong>
-                    <span>Risk Level</span>
+                    <span>{{ currentLang() === 'km' ? 'កម្រិតហានិភ័យ' : 'Risk Level' }}</span>
                   </div>
                 </div>
 
                 <div class="screening-copy">
                   <span class="status-pill">
-                    Status: {{ formatRiskLevel(data.screeningSummary.riskLevel) }}
+                    {{ currentLang() === 'km' ? 'ស្ថានភាព៖ ' : 'Status: '
+                    }}{{ formatRiskLevel(data.screeningSummary.riskLevel) }}
                   </span>
-                  <h2>{{ data.screeningSummary.riskLevel ?? 'Completed' }} Support Identified</h2>
+                  <h2>
+                    {{
+                      currentLang() === 'km'
+                        ? 'ការគាំទ្រត្រូវបានកំណត់ (' +
+                          formatRiskLevel(data.screeningSummary.riskLevel) +
+                          ')'
+                        : (data.screeningSummary.riskLevel ?? 'Completed') + ' Support Identified'
+                    }}
+                  </h2>
                   <p>
                     @if (data.screeningSummary.completedDate) {
-                      Completed on {{ formatDate(data.screeningSummary.completedDate) }}.
+                      {{ currentLang() === 'km' ? 'បានបញ្ចប់នៅ ' : 'Completed on '
+                      }}{{ formatDate(data.screeningSummary.completedDate) }}.
                     }
                     {{
                       data.screeningSummary.recommendation ||
-                        'Screening results recorded and available for review.'
+                        (currentLang() === 'km'
+                          ? 'លទ្ធផលវាយតម្លៃត្រូវបានកត់ត្រា និងអាចពិនិត្យឡើងវិញបាន។'
+                          : 'Screening results recorded and available for review.')
                     }}
                   </p>
                   @if (data.screeningSummary.sessionId) {
@@ -716,26 +708,48 @@ const quickActions: readonly QuickAction[] = [
                       class="primary-button"
                       [routerLink]="['/screening/result', data.screeningSummary.sessionId]"
                     >
-                      View results
+                      {{ currentLang() === 'km' ? 'មើលលទ្ធផល' : 'View results' }}
                     </a>
                   } @else {
-                    <a class="primary-button" routerLink="/screening">View screening</a>
+                    <a class="primary-button" routerLink="/screening">
+                      {{ currentLang() === 'km' ? 'មើលការវាយតម្លៃ' : 'View screening' }}
+                    </a>
                   }
                 </div>
               } @else {
                 <div class="screening-empty">
-                  <span class="status-pill">No Screening Record</span>
-                  <h2>No screening completed yet</h2>
+                  <span class="status-pill">
+                    {{ currentLang() === 'km' ? 'មិនមានកំណត់ត្រាវាយតម្លៃ' : 'No Screening Record' }}
+                  </span>
+                  <h2>
+                    {{
+                      currentLang() === 'km'
+                        ? 'មិនទាន់បានបញ្ចប់ការវាយតម្លៃនៅឡើយទេ'
+                        : 'No screening completed yet'
+                    }}
+                  </h2>
                   <p>
                     @if (data.selectedChild) {
-                      Complete an initial screening questionnaire for
-                      {{ data.selectedChild.firstName }} to identify strengths and support areas.
+                      {{
+                        currentLang() === 'km'
+                          ? 'បំពេញកម្រងសំណួរវាយតម្លៃបឋមសម្រាប់ ' +
+                            data.selectedChild.firstName +
+                            ' ដើម្បីកំណត់ចំណុចខ្លាំង និងតម្រូវការគាំទ្រ។'
+                          : 'Complete an initial screening questionnaire for ' +
+                            data.selectedChild.firstName +
+                            ' to identify strengths and support areas.'
+                      }}
                     } @else {
-                      Add a child profile and complete a screening to track developmental
-                      milestones.
+                      {{
+                        currentLang() === 'km'
+                          ? 'បន្ថែមទិន្នន័យកុមារ និងបំពេញការវាយតម្លៃដើម្បីតាមដានដំណាក់កាលលូតលាស់។'
+                          : 'Add a child profile and complete a screening to track developmental milestones.'
+                      }}
                     }
                   </p>
-                  <a class="primary-button" routerLink="/screening">Start screening</a>
+                  <a class="primary-button" routerLink="/screening">
+                    {{ currentLang() === 'km' ? 'ចាប់ផ្តើមការវាយតម្លៃ' : 'Start screening' }}
+                  </a>
                 </div>
               }
             </article>
@@ -754,14 +768,14 @@ const quickActions: readonly QuickAction[] = [
                       stroke-width="2"
                     />
                   </svg>
-                  Upcoming Appointment
+                  {{ currentLang() === 'km' ? 'ការណាត់ជួបខាងមុខ' : 'Upcoming Appointment' }}
                 </span>
                 @if (data.upcomingAppointment; as appt) {
                   <div class="schedule-top-badges">
                     <span class="countdown-badge">{{
                       getAppointmentCountdown(appt.scheduledAt)
                     }}</span>
-                    <strong class="status-tag">{{ appt.status }}</strong>
+                    <strong class="status-tag">{{ formatAppointmentStatus(appt.status) }}</strong>
                   </div>
                 }
               </div>
@@ -770,12 +784,21 @@ const quickActions: readonly QuickAction[] = [
                 <h2>{{ appt.hospitalName }}</h2>
                 <p>
                   @if (appt.doctorName) {
-                    Consultation with {{ appt.doctorName }}
+                    {{
+                      currentLang() === 'km'
+                        ? 'ការពិគ្រោះយោបល់ជាមួយ ' + appt.doctorName
+                        : 'Consultation with ' + appt.doctorName
+                    }}
                     @if (appt.specialty) {
                       ({{ appt.specialty }})
                     }
                   } @else {
-                    {{ appt.reason || 'Hospital Appointment' }}
+                    {{
+                      appt.reason ||
+                        (currentLang() === 'km'
+                          ? 'ការណាត់ជួបនៅមន្ទីរពេទ្យ'
+                          : 'Hospital Appointment')
+                    }}
                   }
                 </p>
                 <div class="appointment-meta">
@@ -808,15 +831,29 @@ const quickActions: readonly QuickAction[] = [
                 </div>
                 <div class="appointment-footer-actions">
                   <a class="reschedule-action-link" routerLink="/appointments">
-                    Manage appointments &rarr;
+                    {{ currentLang() === 'km' ? 'គ្រប់គ្រងការណាត់ជួប' : 'Manage appointments' }}
+                    &rarr;
                   </a>
                 </div>
               } @else {
                 <div class="appointment-empty">
-                  <h2>No upcoming appointments</h2>
-                  <p>Book developmental consultations with verified hospitals in your area.</p>
+                  <h2>
+                    {{
+                      currentLang() === 'km'
+                        ? 'មិនមានការណាត់ជួបខាងមុខទេ'
+                        : 'No upcoming appointments'
+                    }}
+                  </h2>
+                  <p>
+                    {{
+                      currentLang() === 'km'
+                        ? 'កក់ការពិគ្រោះយោបល់ការលូតលាស់ជាមួយមន្ទីរពេទ្យដែលបានបញ្ជាក់នៅក្នុងតំបន់របស់អ្នក។'
+                        : 'Book developmental consultations with verified hospitals in your area.'
+                    }}
+                  </p>
                   <a class="text-link" routerLink="/hospitals">
-                    Find care provider <span aria-hidden="true">-&gt;</span>
+                    {{ currentLang() === 'km' ? 'ស្វែងរកអ្នកផ្តល់ការថែទាំ' : 'Find care provider' }}
+                    <span aria-hidden="true">-&gt;</span>
                   </a>
                 </div>
               }
@@ -827,10 +864,22 @@ const quickActions: readonly QuickAction[] = [
               <article class="card bento-tile-children" aria-label="Children Roster">
                 <div class="children-roster-header">
                   <div>
-                    <h2>Family Children Roster</h2>
-                    <span class="roster-count">{{ data.children.length }} registered</span>
+                    <h2>
+                      {{
+                        currentLang() === 'km' ? 'បញ្ជីកុមារក្នុងគ្រួសារ' : 'Family Children Roster'
+                      }}
+                    </h2>
+                    <span class="roster-count"
+                      >{{ data.children.length }}
+                      {{ currentLang() === 'km' ? 'បានចុះឈ្មោះ' : 'registered' }}</span
+                    >
                   </div>
-                  <a routerLink="/children" class="roster-manage-link">Manage profiles &rarr;</a>
+                  <a routerLink="/children" class="roster-manage-link"
+                    >{{
+                      currentLang() === 'km' ? 'គ្រប់គ្រងប្រវត្តិរូប' : 'Manage profiles'
+                    }}
+                    &rarr;</a
+                  >
                 </div>
                 <div class="children-roster-grid">
                   @for (c of data.children; track c.id) {
@@ -851,7 +900,13 @@ const quickActions: readonly QuickAction[] = [
                           }}</span>
                         } @else {
                           <span class="roster-badge">{{
-                            selectedChild()?.id === c.id ? 'Active' : 'Switch'
+                            selectedChild()?.id === c.id
+                              ? currentLang() === 'km'
+                                ? 'សកម្ម'
+                                : 'Active'
+                              : currentLang() === 'km'
+                                ? 'ប្តូរ'
+                                : 'Switch'
                           }}</span>
                         }
                       </div>
@@ -859,7 +914,7 @@ const quickActions: readonly QuickAction[] = [
                         class="roster-arrow-btn"
                         [routerLink]="['/children', c.id]"
                         (click)="$event.stopPropagation()"
-                        title="View profile"
+                        [title]="currentLang() === 'km' ? 'មើលប្រវត្តិរូប' : 'View profile'"
                       >
                         &rsaquo;
                       </a>
@@ -867,7 +922,7 @@ const quickActions: readonly QuickAction[] = [
                   }
                   <a class="roster-add-card" routerLink="/children/new">
                     <span class="roster-add-plus">+</span>
-                    <span>Add child</span>
+                    <span>{{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add child' }}</span>
                   </a>
                 </div>
               </article>
@@ -877,16 +932,16 @@ const quickActions: readonly QuickAction[] = [
             <article class="card weekly-card bento-tile-progress">
               <div class="section-title">
                 <div class="title-with-streak">
-                  <h2>Weekly Progress</h2>
+                  <h2>
+                    {{ currentLang() === 'km' ? 'វឌ្ឍនភាពប្រចាំសប្តាហ៍' : 'Weekly Progress' }}
+                  </h2>
                   @if (data.weeklyProgress.totalCompletedThisWeek > 0) {
                     <span class="streak-badge">
                       <span class="streak-icon" aria-hidden="true">🔥</span>
                       <span
                         >{{ data.weeklyProgress.totalCompletedThisWeek }}
                         {{
-                          currentLang() === 'km'
-                            ? 'សកម្មភាពបានបញ្ចប់ (Streak: Completed)'
-                            : 'Activities Completed'
+                          currentLang() === 'km' ? 'សកម្មភាពបានបញ្ចប់' : 'Activities Completed'
                         }}</span
                       >
                     </span>
@@ -906,7 +961,10 @@ const quickActions: readonly QuickAction[] = [
               <div
                 class="bar-chart"
                 [attr.aria-label]="
-                  data.weeklyProgress.totalCompletedThisWeek + ' activities completed this week'
+                  currentLang() === 'km'
+                    ? data.weeklyProgress.totalCompletedThisWeek +
+                      ' សកម្មភាពបានបញ្ចប់ក្នុងសប្តាហ៍នេះ'
+                    : data.weeklyProgress.totalCompletedThisWeek + ' activities completed this week'
                 "
               >
                 @for (day of data.weeklyProgress.days; track day.day) {
@@ -916,37 +974,29 @@ const quickActions: readonly QuickAction[] = [
                         <strong>{{ day.count }}</strong>
                       }
                     </span>
-                    <small class="bar-day-name">{{ day.day }}</small>
+                    <small class="bar-day-name">{{ formatDayName(day.day) }}</small>
                   </div>
                 }
               </div>
               @if (data.weeklyProgress.totalCompletedThisWeek > 0) {
                 <p>
-                  <strong
-                    >{{ data.weeklyProgress.totalCompletedThisWeek }} activities ({{
-                      data.weeklyProgress.totalCompletedThisWeek
-                    }}
-                    {{
-                      currentLang() === 'km' ? 'សកម្មភាពបានបញ្ចប់' : 'activities completed'
-                    }})</strong
-                  >
+                  <strong>
+                    {{ data.weeklyProgress.totalCompletedThisWeek }}
+                    {{ currentLang() === 'km' ? 'សកម្មភាពបានបញ្ចប់' : 'activities' }}
+                  </strong>
                   {{
                     currentLang() === 'km'
-                      ? 'ក្នុងសប្តាហ៍នេះ។ បន្តការចូលរួមដ៏ល្អនេះ!'
-                      : 'completed this week. Keep up the great engagement!'
+                      ? ' ក្នុងសប្តាហ៍នេះ។ បន្តការចូលរួមដ៏ល្អនេះ!'
+                      : ' completed this week. Keep up the great engagement!'
                   }}
                 </p>
               } @else {
                 <p>
                   {{
                     currentLang() === 'km'
-                      ? 'មិនទាន់មានសកម្មភាពដែលបានបញ្ចប់នៅសប្តាហ៍នេះទេ។'
+                      ? 'មិនទាន់មានសកម្មភាពដែលបានបញ្ចប់នៅសប្តាហ៍នេះទេ។ សូមស្វែងរកសកម្មភាពដើម្បីចាប់ផ្តើម។'
                       : 'No activities completed yet this week. Explore activities to get started.'
                   }}
-                  <span class="hero-subtext-bilingual">
-                    (No activities completed yet this week. Explore activities to get
-                    started.)</span
-                  >
                 </p>
               }
 
@@ -955,18 +1005,34 @@ const quickActions: readonly QuickAction[] = [
                 <div class="milestone-feed-item">
                   <span class="milestone-feed-icon" aria-hidden="true">✓</span>
                   <div class="milestone-feed-content">
-                    <span class="milestone-domain-badge domain-sensory">Sensory & Play</span>
-                    <strong class="milestone-feed-title">Sensory Integration Activity</strong>
+                    <span class="milestone-domain-badge domain-sensory">{{
+                      currentLang() === 'km' ? 'ញាណដឹង និងការលេង' : 'Sensory & Play'
+                    }}</span>
+                    <strong class="milestone-feed-title">{{
+                      currentLang() === 'km'
+                        ? 'សកម្មភាពសម្របសម្រួលញាណ'
+                        : 'Sensory Integration Activity'
+                    }}</strong>
                   </div>
-                  <a routerLink="/activities" class="milestone-feed-link">View</a>
+                  <a routerLink="/activities" class="milestone-feed-link">{{
+                    currentLang() === 'km' ? 'មើល' : 'View'
+                  }}</a>
                 </div>
                 <div class="milestone-feed-item">
                   <span class="milestone-feed-icon" aria-hidden="true">✓</span>
                   <div class="milestone-feed-content">
-                    <span class="milestone-domain-badge domain-communication">Communication</span>
-                    <strong class="milestone-feed-title">Visual Turn-Taking Play</strong>
+                    <span class="milestone-domain-badge domain-communication">{{
+                      currentLang() === 'km' ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication'
+                    }}</span>
+                    <strong class="milestone-feed-title">{{
+                      currentLang() === 'km'
+                        ? 'ការលេងឆ្លាស់វេនតាមរូបភាព'
+                        : 'Visual Turn-Taking Play'
+                    }}</strong>
                   </div>
-                  <a routerLink="/activities" class="milestone-feed-link">View</a>
+                  <a routerLink="/activities" class="milestone-feed-link">{{
+                    currentLang() === 'km' ? 'មើល' : 'View'
+                  }}</a>
                 </div>
               </div>
             </article>
@@ -990,10 +1056,10 @@ const quickActions: readonly QuickAction[] = [
                   />
                 </svg>
               </div>
-              <h2>{{ data.recommendedAction.title }}</h2>
-              <p>{{ data.recommendedAction.description }}</p>
+              <h2>{{ formatActionTitle(data.recommendedAction.title) }}</h2>
+              <p>{{ formatActionDescription(data.recommendedAction.description) }}</p>
               <a class="text-link" [routerLink]="data.recommendedAction.actionPath">
-                {{ data.recommendedAction.actionLabel }}
+                {{ formatActionLabel(data.recommendedAction.actionLabel) }}
                 <span aria-hidden="true">-&gt;</span>
               </a>
             </article>
@@ -1001,12 +1067,23 @@ const quickActions: readonly QuickAction[] = [
 
           @if (!data.selectedChild) {
             <section class="empty-state">
-              <h2>Personalize your dashboard</h2>
+              <h2>
+                {{
+                  currentLang() === 'km'
+                    ? 'កំណត់ផ្ទាំងគ្រប់គ្រងផ្ទាល់ខ្លួនរបស់អ្នក'
+                    : 'Personalize your dashboard'
+                }}
+              </h2>
               <p>
-                Add your first child profile to connect screenings, activities, school reports, and
-                care notes.
+                {{
+                  currentLang() === 'km'
+                    ? 'បន្ថែមប្រវត្តិកុមារដំបូងរបស់អ្នកដើម្បីភ្ជាប់ការវាយតម្លៃ សកម្មភាព របាយការណ៍សាលា និងកំណត់ត្រាថែទាំ។'
+                    : 'Add your first child profile to connect screenings, activities, school reports, and care notes.'
+                }}
               </p>
-              <a class="primary-button" routerLink="/children">Open child profiles</a>
+              <a class="primary-button" routerLink="/children">{{
+                currentLang() === 'km' ? 'បើកប្រវត្តិកុមារ' : 'Open child profiles'
+              }}</a>
             </section>
           }
         }
@@ -3446,13 +3523,13 @@ export class DashboardPage implements OnInit {
       alerts.push({
         id: 'screening-due',
         title: isKm
-          ? `ដល់ពេលវាយតម្លៃការលូតលាស់របស់ ${data.selectedChild.firstName} (Screening due for ${data.selectedChild.firstName})`
+          ? `ដល់ពេលវាយតម្លៃការលូតលាស់របស់ ${data.selectedChild.firstName}`
           : `Screening due for ${data.selectedChild.firstName}`,
         description: isKm
-          ? `បំពេញកម្រងសំណួរដំណាក់កាលលូតលាស់រយៈពេល 5 នាទីដើម្បីកំណត់ចំណុចខ្លាំង និងតម្រូវការគាំទ្រ។ (Complete an initial 5-minute milestone questionnaire to identify strengths and support areas.)`
+          ? `បំពេញកម្រងសំណួរដំណាក់កាលលូតលាស់រយៈពេល 5 នាទីដើម្បីកំណត់ចំណុចខ្លាំង និងតម្រូវការគាំទ្រ។`
           : `Complete an initial 5-minute milestone questionnaire to identify strengths and support areas.`,
         actionPath: '/screening',
-        actionLabel: isKm ? 'ចាប់ផ្តើមការវាយតម្លៃ (Start Screening)' : 'Start Screening',
+        actionLabel: isKm ? 'ចាប់ផ្តើមការវាយតម្លៃ' : 'Start Screening',
         tone: 'caution',
         icon: 'clipboard',
       });
@@ -3464,11 +3541,11 @@ export class DashboardPage implements OnInit {
       alerts.push({
         id: 'upcoming-appt',
         title: isKm
-          ? `ការណាត់ជួបត្រូវបានបញ្ជាក់ជាមួយ ${docOrHosp} (Appointment confirmed for ${docOrHosp})`
+          ? `ការណាត់ជួបត្រូវបានបញ្ជាក់ជាមួយ ${docOrHosp}`
           : `Appointment confirmed for ${docOrHosp}`,
         description: `${this.formatDate(appt.scheduledAt)} at ${this.formatTime(appt.scheduledAt)}${appt.specialty ? ` · ${appt.specialty}` : ''}`,
         actionPath: '/appointments',
-        actionLabel: isKm ? 'មើលព័ត៌មានលម្អិត (View Details)' : 'View Details',
+        actionLabel: isKm ? 'មើលព័ត៌មានលម្អិត' : 'View Details',
         tone: 'info',
         icon: 'calendar',
       });
@@ -3477,14 +3554,12 @@ export class DashboardPage implements OnInit {
     if (data.selectedChild && data.screeningSummary.hasScreening) {
       alerts.push({
         id: 'school-report',
-        title: isKm
-          ? 'មានរបាយការណ៍សង្កេតថ្មីពីសាលារៀន (1 new school report)'
-          : '1 new school report',
+        title: isKm ? 'មានរបាយការណ៍សង្កេតថ្មីពីសាលារៀន' : '1 new school report',
         description: isKm
           ? 'គ្រូបង្រៀនបានកត់ត្រាការសង្កេតថ្មីស្តីពីការសម្របសម្រួលញាណដឹង និងការប្រាស្រ័យទាក់ទង។'
           : 'Teachers recorded new observations on sensory accommodation and communication wins.',
         actionPath: '/schools',
-        actionLabel: isKm ? 'មើលរបាយការណ៍សាលា (View Report)' : 'View Report',
+        actionLabel: isKm ? 'មើលរបាយការណ៍សាលា' : 'View Report',
         tone: 'info',
         icon: 'clipboard',
       });
@@ -3497,10 +3572,10 @@ export class DashboardPage implements OnInit {
     ) {
       alerts.push({
         id: 'recommended-action',
-        title: data.recommendedAction.title,
-        description: data.recommendedAction.description,
+        title: this.formatActionTitle(data.recommendedAction.title),
+        description: this.formatActionDescription(data.recommendedAction.description),
         actionPath: data.recommendedAction.actionPath,
-        actionLabel: data.recommendedAction.actionLabel,
+        actionLabel: this.formatActionLabel(data.recommendedAction.actionLabel),
         tone: 'neutral',
         icon: 'sparkles',
       });
@@ -3509,12 +3584,12 @@ export class DashboardPage implements OnInit {
     if (!data.selectedChild) {
       alerts.push({
         id: 'add-child',
-        title: isKm ? 'បន្ថែមទិន្នន័យកុមារ (Add a child profile)' : 'Add a child profile',
+        title: isKm ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add a child profile',
         description: isKm
-          ? 'បង្កើតប្រវត្តិកុមារដើម្បីតាមដានការវាយតម្លៃ និងសកម្មភាពផ្ទាល់ខ្លួន។ (Create a child profile to track personalized screenings and activities.)'
+          ? 'បង្កើតប្រវត្តិកុមារដើម្បីតាមដានការវាយតម្លៃ និងសកម្មភាពផ្ទាល់ខ្លួន។'
           : 'Create a child profile to track personalized screenings and activities.',
         actionPath: '/children/new',
-        actionLabel: isKm ? 'បន្ថែមទិន្នន័យកុមារ (Add Child Profile)' : 'Add Child Profile',
+        actionLabel: isKm ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add Child Profile',
         tone: 'info',
         icon: 'child',
       });
@@ -3624,6 +3699,10 @@ export class DashboardPage implements OnInit {
       years -= 1;
     }
     const safeYears = Math.max(years, 0);
+    const isKm = this.currentLang() === 'km';
+    if (isKm) {
+      return `អាយុ ${safeYears} ឆ្នាំ`;
+    }
     return safeYears === 1 ? 'age 1' : `age ${safeYears}`;
   }
 
@@ -3640,13 +3719,14 @@ export class DashboardPage implements OnInit {
   }
 
   protected getReminderLabel(urgency: string): string {
+    const isKm = this.currentLang() === 'km';
     switch (urgency) {
       case 'today':
-        return 'DUE TODAY';
+        return isKm ? 'ថ្ងៃនេះ' : 'DUE TODAY';
       case 'tomorrow':
-        return 'TOMORROW';
+        return isKm ? 'ថ្ងៃស្អែក' : 'TOMORROW';
       default:
-        return 'UPCOMING';
+        return isKm ? 'ខាងមុខ' : 'UPCOMING';
     }
   }
 
@@ -3660,14 +3740,19 @@ export class DashboardPage implements OnInit {
     ).getTime();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const diffDays = Math.round((apptDay - today) / (1000 * 60 * 60 * 24));
+    const isKm = this.currentLang() === 'km';
 
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Tomorrow';
-    if (diffDays === -1) return 'Yesterday';
-    if (diffDays > 1 && diffDays <= 7) return `In ${diffDays} days`;
-    if (diffDays > 7 && diffDays <= 30) return `In ${Math.round(diffDays / 7)} weeks`;
-    if (diffDays > 30) return `In ${Math.round(diffDays / 30)} months`;
-    return 'Upcoming';
+    if (diffDays === 0) return isKm ? 'ថ្ងៃនេះ' : 'Today';
+    if (diffDays === 1) return isKm ? 'ថ្ងៃស្អែក' : 'Tomorrow';
+    if (diffDays === -1) return isKm ? 'ម្សិលមិញ' : 'Yesterday';
+    if (diffDays > 1 && diffDays <= 7) return isKm ? `${diffDays} ថ្ងៃទៀត` : `In ${diffDays} days`;
+    if (diffDays > 7 && diffDays <= 30)
+      return isKm
+        ? `${Math.round(diffDays / 7)} សប្តាហ៍ទៀត`
+        : `In ${Math.round(diffDays / 7)} weeks`;
+    if (diffDays > 30)
+      return isKm ? `${Math.round(diffDays / 30)} ខែទៀត` : `In ${Math.round(diffDays / 30)} months`;
+    return isKm ? 'ខាងមុខ' : 'Upcoming';
   }
 
   protected formatDate(dateStr: string): string {
@@ -3686,18 +3771,95 @@ export class DashboardPage implements OnInit {
   }
 
   protected formatRiskLevel(riskLevel: string | null): string {
-    if (!riskLevel) return 'Not Screened';
+    const isKm = this.currentLang() === 'km';
+    if (!riskLevel) return isKm ? 'មិនទាន់វាយតម្លៃ' : 'Not Screened';
     const normalized = riskLevel.toUpperCase();
     if (normalized === 'LOW') {
-      return 'ការបារម្ភកម្រិតទាប (Low Concern)';
+      return isKm ? 'ការបារម្ភកម្រិតទាប' : 'Low Concern';
     }
     if (normalized === 'MODERATE') {
-      return 'ការបារម្ភកម្រិតមធ្យម (Moderate Concern)';
+      return isKm ? 'ការបារម្ភកម្រិតមធ្យម' : 'Moderate Concern';
     }
     if (normalized === 'HIGH' || normalized === 'ELEVATED') {
-      return 'ការបារម្ភកម្រិតខ្ពស់ (Elevated Concern)';
+      return isKm ? 'ការបារម្ភកម្រិតខ្ពស់' : 'Elevated Concern';
     }
-    return `${riskLevel.charAt(0) + riskLevel.slice(1).toLowerCase()} Risk`;
+    return isKm
+      ? `កម្រិតហានិភ័យ ${riskLevel}`
+      : `${riskLevel.charAt(0) + riskLevel.slice(1).toLowerCase()} Risk`;
+  }
+
+  protected formatAppointmentStatus(status: string): string {
+    const isKm = this.currentLang() === 'km';
+    if (!isKm) return status;
+    const normalized = status.toUpperCase();
+    if (normalized === 'CONFIRMED') return 'បានបញ្ជាក់';
+    if (normalized === 'PENDING') return 'កំពុងរង់ចាំ';
+    if (normalized === 'CANCELLED') return 'បានបោះបង់';
+    if (normalized === 'COMPLETED') return 'បានបញ្ចប់';
+    return status;
+  }
+
+  protected formatDayName(day: string): string {
+    const isKm = this.currentLang() === 'km';
+    if (!isKm) return day;
+    switch (day) {
+      case 'Mon':
+        return 'ចន្ទ';
+      case 'Tue':
+        return 'អង្គារ';
+      case 'Wed':
+        return 'ពុធ';
+      case 'Thu':
+        return 'ព្រហ';
+      case 'Fri':
+        return 'សុក្រ';
+      case 'Sat':
+        return 'សៅរ៍';
+      case 'Sun':
+        return 'អាទិត្យ';
+      default:
+        return day;
+    }
+  }
+
+  protected formatActionTitle(title: string): string {
+    const isKm = this.currentLang() === 'km';
+    if (!isKm) return title;
+    if (title.startsWith('Start screening for')) {
+      const name = title.replace('Start screening for ', '');
+      return `ចាប់ផ្តើមការវាយតម្លៃសម្រាប់ ${name}`;
+    }
+    if (title === 'Add a child profile') return 'បន្ថែមទិន្នន័យកុមារ';
+    if (title === 'Screening Recommendation') return 'អនុសាសន៍នៃការវាយតម្លៃ';
+    if (title === 'Start Clinical Screening') return 'ចាប់ផ្តើមការវាយតម្លៃ';
+    return title;
+  }
+
+  protected formatActionDescription(desc: string): string {
+    const isKm = this.currentLang() === 'km';
+    if (!isKm) return desc;
+    if (desc === 'Create a child profile to track personalized screenings and activities.') {
+      return 'បង្កើតប្រវត្តិកុមារដើម្បីតាមដានការវាយតម្លៃ និងសកម្មភាពផ្ទាល់ខ្លួន។';
+    }
+    if (
+      desc ===
+      'Complete an initial developmental screening questionnaire to identify support areas.'
+    ) {
+      return 'បំពេញកម្រងសំណួរវាយតម្លៃការលូតលាស់បឋមដើម្បីកំណត់តម្រូវការគាំទ្រ។';
+    }
+    if (desc === 'Targeted visual and speech exercises recommended.') {
+      return 'បានណែនាំលំហាត់ប្រាណពង្រឹងចក្ខុវិស័យ និងការនិយាយ។';
+    }
+    return desc;
+  }
+
+  protected formatActionLabel(label: string): string {
+    const isKm = this.currentLang() === 'km';
+    if (!isKm) return label;
+    if (label === 'Add Child Profile') return 'បន្ថែមទិន្នន័យកុមារ';
+    if (label === 'Start Screening') return 'ចាប់ផ្តើមការវាយតម្លៃ';
+    if (label === 'View Screening Result') return 'មើលលទ្ធផលវាយតម្លៃ';
+    return label;
   }
 
   protected getDashOffset(percentage: number | null): number {

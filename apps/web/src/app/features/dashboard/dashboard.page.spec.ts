@@ -356,6 +356,10 @@ describe('DashboardPage', () => {
   });
 
   describe('Parent role dashboard rendering', () => {
+    beforeEach(() => {
+      TestBed.inject(I18nService).setLanguage('en');
+    });
+
     it('handles zero-data state honestly (no child added)', () => {
       // Simulate parent user
       setAuthState(mockParentUser);
@@ -713,6 +717,10 @@ describe('DashboardPage', () => {
   });
 
   describe('Administrator role dashboard rendering', () => {
+    beforeEach(() => {
+      TestBed.inject(I18nService).setLanguage('en');
+    });
+
     it('loads and renders real admin statistics, recent appointments, and audit events', () => {
       setAuthState(mockAdminUser);
 
@@ -782,6 +790,10 @@ describe('DashboardPage', () => {
   });
 
   describe('Bilingual Parent Dashboard & Child Context Switcher (PROMPT 64)', () => {
+    beforeEach(() => {
+      TestBed.inject(I18nService).setLanguage('km');
+    });
+
     it('renders welcoming Khmer greeting by default and toggles to English', () => {
       setAuthState(mockParentUser);
       const fixture = TestBed.createComponent(DashboardPage);
@@ -797,12 +809,14 @@ describe('DashboardPage', () => {
       // Khmer greeting present
       expect(element.textContent).toContain('សូមស្វាគមន៍មកកាន់ AutiCare');
       expect(element.textContent).toContain('Alice');
+      expect(element.textContent).not.toContain('(Good');
 
       // Switch language to English
       i18n.setLanguage('en');
       fixture.detectChanges();
 
       expect(element.textContent).toContain('Welcome to AutiCare');
+      expect(element.textContent).toContain('Good');
     });
 
     it('renders active child context pill with Khmer label and switches child context', () => {
@@ -821,10 +835,12 @@ describe('DashboardPage', () => {
       expect(contextPill).toBeTruthy();
       expect(contextPill.textContent).toContain('កំពុងមើលការថែទាំសម្រាប់៖');
       expect(contextPill.textContent).toContain('Maya');
+      expect(contextPill.textContent).not.toContain('(Viewing care for:');
 
       // Add child button in hero
       const addBtn = element.querySelector('.hero-add-child-btn');
       expect(addBtn?.textContent).toContain('បន្ថែមទិន្នន័យកុមារ');
+      expect(addBtn?.textContent).not.toContain('(Add Child)');
     });
 
     it('renders bilingual priority action ticker alerts for screening due, confirmed appointment, and school report', () => {
@@ -841,6 +857,7 @@ describe('DashboardPage', () => {
 
       const element: HTMLElement = fixture.nativeElement;
       expect(element.textContent).toContain('ដល់ពេលវាយតម្លៃការលូតលាស់របស់ Leo');
+      expect(element.textContent).not.toContain('(Screening due for');
 
       // Test with populated dashboard (upcoming appointment + school report)
       const fixture2 = TestBed.createComponent(DashboardPage);
@@ -851,7 +868,9 @@ describe('DashboardPage', () => {
 
       const element2: HTMLElement = fixture2.nativeElement;
       expect(element2.textContent).toContain('ការណាត់ជួបត្រូវបានបញ្ជាក់ជាមួយ Dr. Johnathan Vance');
+      expect(element2.textContent).not.toContain('(Appointment confirmed');
       expect(element2.textContent).toContain('មានរបាយការណ៍សង្កេតថ្មីពីសាលារៀន');
+      expect(element2.textContent).not.toContain('(1 new school report)');
     });
 
     it('renders 4 quick action cards with Khmer titles and 5-minute screening estimate', () => {
@@ -873,11 +892,13 @@ describe('DashboardPage', () => {
 
       // Card 1: Screening
       expect(quickCards[0].textContent).toContain('ចាប់ផ្តើមការវាយតម្លៃ');
+      expect(quickCards[0].textContent).not.toContain('Start Clinical Screening');
       expect(quickCards[0].textContent).toContain('5 នាទី');
       expect(quickCards[0].getAttribute('href')).toBe('/screening');
 
       // Card 2: Sensory Play
       expect(quickCards[1].textContent).toContain('សកម្មភាពលេងកម្សាន្ត');
+      expect(quickCards[1].textContent).not.toContain('Log Daily Milestone');
       expect(quickCards[1].getAttribute('href')).toBe('/activities');
 
       // Card 3: Book Specialist
@@ -906,18 +927,63 @@ describe('DashboardPage', () => {
       const element: HTMLElement = fixture.nativeElement;
 
       // Risk badge in screening card
-      expect(element.textContent).toContain('ការបារម្ភកម្រិតមធ្យម (Moderate Concern)');
+      expect(element.textContent).toContain('ការបារម្ភកម្រិតមធ្យម');
+      expect(element.textContent).not.toContain('(Moderate Concern)');
 
-      // Risk helper formatting for LOW and ELEVATED
-      expect(comp.formatRiskLevel('LOW')).toContain('ការបារម្ភកម្រិតទាប (Low Concern)');
-      expect(comp.formatRiskLevel('HIGH')).toContain('ការបារម្ភកម្រិតខ្ពស់ (Elevated Concern)');
-      expect(comp.formatRiskLevel('ELEVATED')).toContain('ការបារម្ភកម្រិតខ្ពស់ (Elevated Concern)');
+      // Risk helper formatting for LOW and ELEVATED in km
+      expect(comp.formatRiskLevel('LOW')).toBe('ការបារម្ភកម្រិតទាប');
+      expect(comp.formatRiskLevel('MODERATE')).toBe('ការបារម្ភកម្រិតមធ្យម');
+      expect(comp.formatRiskLevel('HIGH')).toBe('ការបារម្ភកម្រិតខ្ពស់');
+      expect(comp.formatRiskLevel('ELEVATED')).toBe('ការបារម្ភកម្រិតខ្ពស់');
 
-      // Streak badge indicator
+      // Switch to en and verify formatRiskLevel
+      i18n.setLanguage('en');
+      expect(comp.formatRiskLevel('LOW')).toBe('Low Concern');
+      expect(comp.formatRiskLevel('MODERATE')).toBe('Moderate Concern');
+      expect(comp.formatRiskLevel('HIGH')).toBe('Elevated Concern');
+      expect(comp.formatRiskLevel('ELEVATED')).toBe('Elevated Concern');
+
+      // Streak badge indicator in km
+      i18n.setLanguage('km');
+      fixture.detectChanges();
       const streakBadge = element.querySelector('.streak-badge');
       expect(streakBadge).toBeTruthy();
       expect(streakBadge?.textContent).toContain('សកម្មភាពបានបញ្ចប់');
+      expect(streakBadge?.textContent).not.toContain('Streak: Completed');
       expect(streakBadge?.textContent).toContain('4');
+    });
+
+    it('ensures zero English parentheticals in Khmer mode and zero Khmer in English mode', () => {
+      setAuthState(mockParentUser);
+      const fixture = TestBed.createComponent(DashboardPage);
+      const i18n = TestBed.inject(I18nService);
+      i18n.setLanguage('km');
+      fixture.detectChanges();
+
+      const req = httpTesting.expectOne('/api/v1/dashboard/parent');
+      req.flush({ data: populatedParentDashboard });
+      fixture.detectChanges();
+
+      const element: HTMLElement = fixture.nativeElement;
+      // In Khmer mode, verify clean Khmer and no parenthetical English
+      expect(element.textContent).toContain('សូមស្វាគមន៍មកកាន់ AutiCare');
+      expect(element.textContent).not.toContain('(Good');
+      expect(element.textContent).not.toContain('(Viewing care for:');
+      expect(element.textContent).not.toContain('(Add Child)');
+      expect(element.textContent).not.toContain('(Streak: Completed)');
+      expect(element.textContent).not.toContain('(Moderate Concern)');
+
+      // Toggle to English
+      i18n.setLanguage('en');
+      fixture.detectChanges();
+
+      // In English mode, verify clean English and no Khmer
+      expect(element.textContent).toContain('Welcome to AutiCare');
+      expect(element.textContent).toContain('Viewing care for:');
+      expect(element.textContent).toContain('Moderate Concern');
+      expect(element.textContent).toContain('Activities Completed');
+      expect(element.textContent).not.toContain('សូមស្វាគមន៍');
+      expect(element.textContent).not.toContain('ការបារម្ភកម្រិតមធ្យម');
     });
   });
 });
