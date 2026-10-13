@@ -1,14 +1,18 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { SchoolsApi } from './data-access/schools.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, UiCardComponent, UiMessageComponent],
+  imports: [RouterLink, ReactiveFormsModule, UiCardComponent, UiMessageComponent],
   template: `
+    <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+      <a routerLink="/schools/admin" class="back-link">← Back to Directory</a>
+    </nav>
+
     <section class="page-header">
       <p class="eyebrow">Administration</p>
       <h1>Create school account</h1>
@@ -51,18 +55,15 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 
         <fieldset formGroupName="account">
           <legend>Login account</legend>
+          <p class="invite-notice">
+            The school coordinator will receive a secure single-use invitation email to set up their
+            password.
+          </p>
           <label>
             Email
             <input type="email" formControlName="email" />
             @if (showError('account.email')) {
               <span class="field-error">Enter a valid email address.</span>
-            }
-          </label>
-          <label>
-            Password
-            <input type="password" formControlName="password" />
-            @if (showError('account.password')) {
-              <span class="field-error">Password must be at least 12 characters.</span>
             }
           </label>
           <label>
@@ -95,14 +96,32 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
           <ac-ui-message tone="success">{{ message() }}</ac-ui-message>
         }
 
-        <button type="submit" [disabled]="saving()">
-          {{ saving() ? 'Creating...' : 'Create school account' }}
-        </button>
+        <div class="form-actions">
+          <button type="submit" [disabled]="saving()">
+            {{ saving() ? 'Creating...' : 'Create school account' }}
+          </button>
+          <a routerLink="/schools/admin" class="cancel-btn">Cancel</a>
+        </div>
       </form>
     </ac-ui-card>
   `,
   styles: [
     `
+      .breadcrumb-nav {
+        margin-bottom: 16px;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--ac-color-action);
+        text-decoration: none;
+        font-weight: var(--ac-font-weight-semibold);
+        font-size: 14px;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
       .page-header {
         max-width: 760px;
         margin-bottom: 28px;
@@ -141,6 +160,12 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
         padding: 12px;
         font: inherit;
       }
+      .form-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+      }
       button {
         width: fit-content;
         border: 0;
@@ -149,6 +174,24 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
         color: var(--ac-color-text-on-action);
         padding: 12px 18px;
         font-weight: var(--ac-font-weight-bold);
+        cursor: pointer;
+      }
+      .cancel-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--ac-color-border-grey);
+        border-radius: 8px;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-body);
+        padding: 12px 18px;
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+      }
+      .cancel-btn:hover {
+        background: var(--ac-color-surface-slate);
       }
       .error {
         color: var(--ac-color-alert-text);
@@ -183,7 +226,6 @@ export class CreateSchoolAccountPage {
     }),
     account: this.fb.nonNullable.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(12)]],
       firstName: ['', [Validators.required, Validators.maxLength(80)]],
       lastName: ['', [Validators.required, Validators.maxLength(80)]],
       title: ['', [Validators.maxLength(120)]],
@@ -211,7 +253,6 @@ export class CreateSchoolAccountPage {
         },
         account: {
           email: value.account.email.trim(),
-          password: value.account.password,
           firstName: value.account.firstName.trim(),
           lastName: value.account.lastName.trim(),
           title: value.account.title.trim() || undefined,
@@ -219,7 +260,7 @@ export class CreateSchoolAccountPage {
       })
       .subscribe({
         next: (created) => {
-          this.message.set(`${created.school.name} can now sign in.`);
+          this.message.set(`Invitation sent for ${created.school.name}.`);
           this.saving.set(false);
           void this.router.navigateByUrl('/schools/admin');
         },

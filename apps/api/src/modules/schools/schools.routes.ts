@@ -15,10 +15,15 @@ import {
   listSchools,
   updateMySchool,
   updateSchool,
+  addFavorite,
+  removeFavorite,
+  listReviews,
+  createReview,
 } from './schools.controller.js';
 import {
   createSchoolAccountRequestSchema,
   createSchoolChildEnrollmentRequestSchema,
+  createSchoolReviewRequestSchema,
   updateSchoolProfileRequestSchema,
   updateSchoolRequestSchema,
 } from './schools.schemas.js';
@@ -124,6 +129,19 @@ schoolsRoutes.patch(
   requireRole('ADMIN'),
   validateBody(updateSchoolRequestSchema),
   updateSchool,
+);
+
+// Parent favorites / bookmarks
+schoolsRoutes.post('/:id/favorites', requireRole('PARENT'), addFavorite);
+schoolsRoutes.delete('/:id/favorites', requireRole('PARENT'), removeFavorite);
+
+// School reviews
+schoolsRoutes.get('/:id/reviews', requireRole('PARENT', 'ADMIN', 'SCHOOL'), listReviews);
+schoolsRoutes.post(
+  '/:id/reviews',
+  requireRole('PARENT'),
+  validateBody(createSchoolReviewRequestSchema),
+  createReview,
 );
 
 // Public read-only detail (any authenticated account). Registered LAST so it never

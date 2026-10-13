@@ -1,20 +1,21 @@
-import type { Prisma } from '@prisma/client';
+import { Prisma, type ActivityReportStatus } from '@prisma/client';
 import type {
   CreateActivityReportRequest,
   ListActivityReportsQuery,
   UpdateActivityReportRequest,
 } from '@auticare/contracts';
-import fs from 'fs';
 import path from 'path';
 import { toPaginationMeta, toSkipTake } from '../../common/http/pagination.js';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
+import { MIME_BY_EXTENSION, STORED_FILENAME_PATTERN } from '../uploads/uploads.controller.js';
 import {
-  MIME_BY_EXTENSION,
-  STORED_FILENAME_PATTERN,
-  uploadDir,
-} from '../uploads/uploads.controller.js';
+  defaultStorageDriver,
+  type StorageDriver,
+  type StorageReadResult,
+} from '../storage/storage.driver.js';
 import { SchoolsRepository } from './schools.repository.js';
 import { toActivityReportResponse } from './schools.mapper.js';
+import { prisma } from '../../database/prisma.js';
 
 type Actor = { parentId: string; role: string };
 
@@ -27,7 +28,69 @@ const parseActivityDate = (activityDate: string): Date => {
 };
 
 export class SchoolsReportsService {
-  constructor(private readonly repository = new SchoolsRepository()) {}
+  constructor(
+    private readonly repository = new SchoolsRepository(),
+    private readonly storage: StorageDriver = defaultStorageDriver,
+    private readonly db = prisma,
+  ) {}
+
+  /**
+   * Helper to validate that all filenames in photoUrls belong to the caller's school.
+   * Prevents one school from attaching another school's uploaded attachments.
+   */
+  private async validateAndAssociateUploads(
+    schoolId: string,
+    photoUrls: string[] | undefined | null,
+    reportId: string,
+  ) {
+    if (!photoUrls || photoUrls.length === 0) return;
+
+    for (const url of photoUrls) {
+      if (typeof url !== 'string') continue;
+      const filename = path.posix.basename(url);
+      if (!STORED_FILENAME_PATTERN.test(filename)) {
+        throw new AppError('VALIDATION_ERROR', `Invalid attachment filename: ${filename}`, 400);
+      }
+
+      // Check tracking record
+      const uploadRecord = await this.db.reportAttachmentUpload.findUnique({
+        where: { filename },
+      });
+
+      if (uploadRecord) {
+        if (uploadRecord.schoolId !== schoolId) {
+          throw forbidden('Cannot attach an upload belonging to another school.');
+        }
+        // Associate with this report
+        await this.db.reportAttachmentUpload.update({
+          where: { id: uploadRecord.id },
+          data: { reportId },
+        });
+      }
+    }
+  }
+
+  /**
+   * Helper to delete attachment files from storage driver and database tracking.
+   */
+  private async deleteAttachments(photoUrls: unknown[]) {
+    if (!Array.isArray(photoUrls)) return;
+    for (const url of photoUrls) {
+      if (typeof url !== 'string') continue;
+      const filename = path.posix.basename(url);
+      if (!STORED_FILENAME_PATTERN.test(filename)) continue;
+
+      try {
+        await this.storage.delete(filename);
+      } catch {
+        // Continue cleaning up
+      }
+
+      await this.db.reportAttachmentUpload.deleteMany({
+        where: { filename },
+      });
+    }
+  }
 
   /**
    * Create a new activity report. The schoolId and reporterId are derived from
@@ -47,6 +110,22 @@ export class SchoolsReportsService {
       throw forbidden();
     }
 
+    // Pre-validate that all photoUrls belong to staff.schoolId
+    if (Array.isArray(input.photoUrls) && input.photoUrls.length > 0) {
+      for (const url of input.photoUrls) {
+        const filename = path.posix.basename(url);
+        if (!STORED_FILENAME_PATTERN.test(filename)) {
+          throw new AppError('VALIDATION_ERROR', `Invalid attachment filename: ${filename}`, 400);
+        }
+        const record = await this.db.reportAttachmentUpload.findUnique({
+          where: { filename },
+        });
+        if (record && record.schoolId !== staff.schoolId) {
+          throw forbidden('Cannot attach an upload belonging to another school.');
+        }
+      }
+    }
+
     // activityName is the canonical field; title/summary/activityDate are
     // optional aliases/derivations so the frontend payload stays lean.
     const title = input.activityName ?? input.title ?? input.activityCategory;
@@ -56,28 +135,58 @@ export class SchoolsReportsService {
         .filter(Boolean)
         .join(' — ');
     const activityDate = input.activityDate ?? new Date().toISOString().slice(0, 10);
+    const status = input.status ?? 'DRAFT';
 
-    const report = await this.repository.createActivityReport({
-      schoolId: staff.schoolId,
-      childId: input.childId,
-      reporterId: actor.parentId,
-      activityCategory: input.activityCategory,
-      title,
-      summary,
-      activityDate: parseActivityDate(activityDate),
-      ...(input.duration !== undefined && { duration: input.duration }),
-      ...(input.performanceMetrics !== undefined && {
-        performanceMetrics: input.performanceMetrics as Prisma.InputJsonValue,
-      }),
-      ...(input.teacherObservation !== undefined && {
-        teacherObservation: input.teacherObservation,
-      }),
-      ...(input.recommendations !== undefined && {
-        recommendations: input.recommendations,
-      }),
-      ...(input.photoUrls !== undefined && { photoUrls: input.photoUrls }),
-      status: input.status ?? 'DRAFT',
+    const report = await this.db.$transaction(async (tx) => {
+      const created = await tx.activityReport.create({
+        data: {
+          schoolId: staff.schoolId,
+          childId: input.childId,
+          reporterId: actor.parentId,
+          activityCategory: input.activityCategory,
+          title,
+          summary,
+          activityDate: parseActivityDate(activityDate),
+          ...(input.duration !== undefined && { duration: input.duration }),
+          ...(input.performanceMetrics !== undefined && {
+            performanceMetrics: input.performanceMetrics as Prisma.InputJsonValue,
+          }),
+          ...(input.teacherObservation !== undefined && {
+            teacherObservation: input.teacherObservation,
+          }),
+          ...(input.recommendations !== undefined && {
+            recommendations: input.recommendations,
+          }),
+          ...(input.photoUrls !== undefined && { photoUrls: input.photoUrls }),
+          status,
+        },
+      });
+
+      if (status === 'SUBMITTED') {
+        const child = await tx.child.findUnique({ where: { id: input.childId } });
+        const school = await tx.school.findUnique({ where: { id: staff.schoolId } });
+        if (child) {
+          await tx.notification.create({
+            data: {
+              parentId: child.parentId,
+              schoolId: staff.schoolId,
+              type: 'SCHOOL_REPORT',
+              status: 'UNREAD',
+              reportId: created.id,
+              title: `New School Report for ${child.firstName}`,
+              body: `${school?.name ?? 'The school'} posted a developmental observation report: ${created.title}`,
+            },
+          });
+        }
+      }
+
+      return created;
     });
+
+    // Associate uploads with report
+    if (input.photoUrls) {
+      await this.validateAndAssociateUploads(staff.schoolId, input.photoUrls, report.id);
+    }
 
     return toActivityReportResponse(report);
   }
@@ -92,15 +201,14 @@ export class SchoolsReportsService {
       throw forbidden();
     }
 
-    // childId/status are now part of the database query for every role. The
-    // PARENT and ADMIN branches used to fetch every report and filter the array
-    // afterwards, which cannot be paginated: skip/take would be applied before
-    // the filter, so a page would be cut from the unfiltered set and then
-    // thinned — page 1 of a status filter could come back empty while later
-    // pages had rows.
-    const filters: { childId?: string | undefined; status?: string | undefined } = {
+    const filters: {
+      childId?: string | undefined;
+      status?: ActivityReportStatus | undefined;
+      search?: string | undefined;
+    } = {
       childId: query.childId,
-      status: query.status,
+      status: query.status as ActivityReportStatus | undefined,
+      search: query.search?.trim() || undefined,
     };
     const page = toSkipTake(query);
 
@@ -145,20 +253,20 @@ export class SchoolsReportsService {
   }
 
   /**
-   * Delete a report owned by the caller's school.
-   *
-   * Moved here from SchoolsService, which was the only thing DELETE
-   * /schools/activity-reports/:id still provided that this module did not.
+   * Delete a report owned by the caller's school and clean up all attachments.
    */
   async deleteReport(actor: Actor, reportId: string) {
     if (actor.role !== 'SCHOOL') throw forbidden();
     const staff = await this.requireSchoolStaff(actor);
     const report = await this.repository.findActivityReportById(reportId);
-    // notFound rather than forbidden for the cross-school case, matching
-    // getReportById: a 403 would confirm the id exists to a caller probing it.
     if (!report || report.schoolId !== staff.schoolId) {
       throw notFound('Activity report was not found.');
     }
+
+    // Delete stored files associated with this report
+    const urls = Array.isArray(report.photoUrls) ? (report.photoUrls as unknown[]) : [];
+    await this.deleteAttachments(urls);
+
     await this.repository.deleteActivityReport(reportId);
     return { success: true };
   }
@@ -174,16 +282,11 @@ export class SchoolsReportsService {
     const report = await this.repository.findActivityReportByIdWithRelations(reportId);
     if (!report) throw notFound('Activity report was not found.');
 
-    // Both scope checks raise notFound rather than forbidden: a 403 would confirm
-    // that a report with this id exists, letting a caller enumerate other
-    // families' and schools' reports by id.
     if (actor.role === 'SCHOOL') {
       const staff = await this.requireSchoolStaff(actor);
       if (staff.schoolId !== report.schoolId) throw notFound('Activity report was not found.');
     }
 
-    // A PARENT may only read reports about their own child. This check was
-    // missing, so any authenticated parent could read any report by id.
     if (actor.role === 'PARENT' && report.child.parentId !== actor.parentId) {
       throw notFound('Activity report was not found.');
     }
@@ -192,25 +295,20 @@ export class SchoolsReportsService {
   }
 
   /**
-   * Resolve one of a report's attachments to an absolute path on disk, for the
-   * authorised download route.
-   *
-   * Authorisation is deliberately delegated to getReportById, so an attachment
-   * is readable exactly when its report is: the owning school, the parent of the
-   * child it is about, or an ADMIN. Everything else raises notFound, so a caller
-   * cannot probe for files or report ids.
-   *
-   * A file is only served if the report actually references it. Orphaned uploads
-   * — accepted but never attached to a saved report — are therefore unreachable,
-   * which is the safe default.
+   * Resolve one of a report's attachments for the authorised download route.
+   * Supports local files and streamable remote storage drivers.
    */
   async getReportAttachment(
     actor: Actor,
     reportId: string,
     filename: string,
-  ): Promise<{ absolutePath: string; contentType: string; filename: string }> {
+  ): Promise<{
+    absolutePath: string | null;
+    streamResult: StorageReadResult;
+    contentType: string;
+    filename: string;
+  }> {
     if (!STORED_FILENAME_PATTERN.test(filename)) {
-      // Not a name we could have written, so not a name we will look up on disk.
       throw notFound('Attachment was not found.');
     }
 
@@ -226,20 +324,28 @@ export class SchoolsReportsService {
     const contentType = MIME_BY_EXTENSION[extension];
     if (contentType === undefined) throw notFound('Attachment was not found.');
 
-    const absolutePath = path.join(uploadDir, filename);
-    // uploadDir is fixed and filename is pattern-checked above, so this cannot
-    // escape the directory; assert it anyway in case the pattern ever loosens.
-    if (!absolutePath.startsWith(uploadDir + path.sep)) {
+    const localPath = this.storage.resolveLocalPath
+      ? this.storage.resolveLocalPath(filename)
+      : null;
+    let streamResult: StorageReadResult;
+    try {
+      streamResult = await this.storage.read(filename);
+    } catch {
       throw notFound('Attachment was not found.');
     }
-    if (!fs.existsSync(absolutePath)) throw notFound('Attachment was not found.');
 
-    return { absolutePath, contentType, filename };
+    return {
+      absolutePath: localPath,
+      streamResult,
+      contentType,
+      filename,
+    };
   }
 
   /**
    * Update an existing activity report. Only the original author or a school
    * staff member at the same school may update the report.
+   * Handles deletion of removed attachments and association of new attachments.
    */
   async updateReport(actor: Actor, reportId: string, input: UpdateActivityReportRequest) {
     if (actor.role !== 'SCHOOL' && actor.role !== 'ADMIN') throw forbidden();
@@ -249,24 +355,45 @@ export class SchoolsReportsService {
 
     // Authorization: author OR school admin.
     const isAuthor = report.reporterId === actor.parentId;
+    let schoolId = report.schoolId;
     if (!isAuthor) {
       if (actor.role !== 'SCHOOL') throw forbidden();
       const staff = await this.requireSchoolStaff(actor);
       if (staff.schoolId !== report.schoolId || staff.role !== 'ADMIN') throw forbidden();
+      schoolId = staff.schoolId;
     }
 
-    const update: {
-      activityCategory?: string;
-      title?: string;
-      summary?: string;
-      activityDate?: Date;
-      status?: string;
-      duration?: number | null;
-      performanceMetrics?: Prisma.InputJsonValue | null;
-      teacherObservation?: string | null;
-      recommendations?: string | null;
-      photoUrls?: string[] | null;
-    } = {};
+    // Pre-validate new attachments if provided
+    if (input.photoUrls !== undefined && Array.isArray(input.photoUrls)) {
+      for (const url of input.photoUrls) {
+        const filename = path.posix.basename(url);
+        if (!STORED_FILENAME_PATTERN.test(filename)) {
+          throw new AppError('VALIDATION_ERROR', `Invalid attachment filename: ${filename}`, 400);
+        }
+        const record = await this.db.reportAttachmentUpload.findUnique({
+          where: { filename },
+        });
+        if (record && record.schoolId !== schoolId) {
+          throw forbidden('Cannot attach an upload belonging to another school.');
+        }
+      }
+
+      // Check which attachments were removed
+      const oldUrls: string[] = Array.isArray(report.photoUrls)
+        ? (report.photoUrls as string[])
+        : [];
+      const newUrls: string[] = input.photoUrls;
+      const removedUrls = oldUrls.filter((old) => !newUrls.includes(old));
+
+      if (removedUrls.length > 0) {
+        await this.deleteAttachments(removedUrls);
+      }
+
+      // Associate newly added attachments
+      await this.validateAndAssociateUploads(schoolId, newUrls, reportId);
+    }
+
+    const update: Prisma.ActivityReportUpdateInput = {};
 
     if (input.activityCategory !== undefined) update.activityCategory = input.activityCategory;
     if (input.title !== undefined) update.title = input.title;
@@ -276,14 +403,45 @@ export class SchoolsReportsService {
     if (input.status !== undefined) update.status = input.status;
     if (input.duration !== undefined) update.duration = input.duration;
     if (input.performanceMetrics !== undefined) {
-      update.performanceMetrics = input.performanceMetrics as Prisma.InputJsonValue;
+      update.performanceMetrics =
+        input.performanceMetrics === null
+          ? Prisma.JsonNull
+          : (input.performanceMetrics as Prisma.InputJsonValue);
     }
     if (input.teacherObservation !== undefined)
       update.teacherObservation = input.teacherObservation;
     if (input.recommendations !== undefined) update.recommendations = input.recommendations;
-    if (input.photoUrls !== undefined) update.photoUrls = input.photoUrls;
+    if (input.photoUrls !== undefined) {
+      update.photoUrls = input.photoUrls === null ? Prisma.JsonNull : input.photoUrls;
+    }
 
-    const updated = await this.repository.updateActivityReport(reportId, update);
+    const updated = await this.db.$transaction(async (tx) => {
+      const res = await tx.activityReport.update({
+        where: { id: reportId },
+        data: update,
+      });
+
+      if (input.status === 'SUBMITTED') {
+        const child = await tx.child.findUnique({ where: { id: report.childId } });
+        const school = await tx.school.findUnique({ where: { id: schoolId } });
+        if (child) {
+          await tx.notification.create({
+            data: {
+              parentId: child.parentId,
+              schoolId,
+              type: 'SCHOOL_REPORT',
+              status: 'UNREAD',
+              reportId: res.id,
+              title: `New School Report for ${child.firstName}`,
+              body: `${school?.name ?? 'The school'} posted a developmental observation report: ${res.title}`,
+            },
+          });
+        }
+      }
+
+      return res;
+    });
+
     return toActivityReportResponse(updated);
   }
 

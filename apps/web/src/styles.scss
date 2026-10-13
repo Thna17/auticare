@@ -8,10 +8,14 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   text-size-adjust: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
+  max-width: 100%;
+  overflow-x: clip;
   font-family: var(--ac-font-family);
   font-size: var(--ac-type-body);
   font-weight: var(--ac-font-weight-medium);
@@ -32,6 +36,24 @@ select {
   font: inherit;
   font-family: var(--ac-font-family);
   letter-spacing: 0;
+}
+
+:where(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  color: var(--ac-color-text);
+}
+
+h1 {
+  line-height: var(--ac-line-tight);
+}
+
+h2,
+h3,
+h4 {
+  line-height: var(--ac-line-title);
+}
+
+p {
+  line-height: var(--ac-line-body);
 }
 
 h1,
@@ -55,11 +77,13 @@ h4 {
 
 a {
   color: var(--ac-color-text-dark);
+  transition: color var(--ac-motion-fast);
 }
 
 :focus-visible {
-  outline: 3px solid var(--ac-color-warning);
+  outline: 2px solid var(--ac-color-focus);
   outline-offset: 2px;
+  box-shadow: 0 0 0 3px var(--ac-color-tint-blue);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -72,5 +96,96 @@ a {
   *::after {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
+  }
+}
+
+:root.reduced-motion,
+html.reduced-motion {
+  scroll-behavior: auto;
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+:root.high-contrast,
+html.high-contrast {
+  --ac-color-text: #000000;
+  --ac-color-text-strong: #000000;
+  --ac-color-text-body: #111111;
+  --ac-color-border: #000000;
+  --ac-color-border-grey: #000000;
+  --ac-color-action: #00364d;
+  --ac-color-action-alt: #002e42;
+  filter: contrast(115%);
+}
+
+:root.calming-palette,
+html.calming-palette {
+  filter: saturate(80%) brightness(98%);
+}
+
+:root.font-scale-normal,
+html.font-scale-normal {
+  font-size: 16px;
+}
+
+:root.font-scale-large,
+html.font-scale-large {
+  font-size: 18px;
+}
+
+:root.font-scale-xlarge,
+html.font-scale-xlarge {
+  font-size: 20px;
+}
+
+:root[lang='km'],
+html[lang='km'],
+.lang-km {
+  line-height: 1.65;
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.45;
+  }
+
+  p {
+    line-height: 1.7;
+  }
+}
+
+@media print {
+  header,
+  nav,
+  aside,
+  .app-sidebar,
+  .school-topbar,
+  .topbar,
+  .sidebar,
+  .user-menu,
+  .navigation-bar,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  main,
+  .main-content,
+  .page-container {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
   }
 }

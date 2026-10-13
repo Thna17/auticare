@@ -178,7 +178,7 @@ test.describe('journey: a parent books, the hospital rejects with a reason, the 
       await dates.nth((await dates.count()) > 1 ? 1 : 0).click();
       const slots = booking.getByRole('radiogroup', { name: /available slots/i });
       await expect(slots).toBeVisible();
-      await slots.getByRole('radio').first().click();
+      await slots.locator('button[role="radio"]:not([disabled])').first().click();
       await booking.getByRole('button', { name: /confirm booking/i }).click();
 
       // The booking dialog is replaced by a confirmation one rather than closing,
@@ -289,5 +289,74 @@ test.describe('journey: a school writes a report, the parent reads it', () => {
       await schoolContext.close();
       await parentContext.close();
     }
+  });
+});
+
+test.describe('journey: notification lifecycle, mark as read, and deep linking', () => {
+  test.setTimeout(120_000);
+
+  test('parent receives notifications, follows deep link, and marks read with live badge updates', async ({
+    page,
+  }) => {
+    const id = stamp();
+    const name = `Notif Parent ${id}`;
+    const email = `parent-notif-${id}@auticare.test`;
+
+    // 1. Register parent and add a child
+    await register(page, name, email);
+    await addChild(page, `Child${id}`, '2021-03-15');
+
+    // 2. Book an appointment using the hospital specialist flow
+    await page.goto('/appointments/new');
+    await page.locator('.hospital-card').first().click();
+    await page
+      .getByRole('button', { name: /request appointment/i })
+      .first()
+      .click();
+
+    const booking = page.getByRole('dialog');
+    await expect(booking).toBeVisible();
+    await booking
+      .getByRole('radiogroup', { name: /who is this visit for/i })
+      .getByRole('radio')
+      .first()
+      .click();
+
+    const dates = booking
+      .getByRole('radiogroup', { name: /choose a date/i })
+      .locator('button[role="radio"]:not([disabled])');
+    await dates.nth((await dates.count()) > 1 ? 1 : 0).click();
+
+    const slots = booking.getByRole('radiogroup', { name: /available slots/i });
+    await expect(slots).toBeVisible();
+    await slots.locator('button[role="radio"]:not([disabled])').first().click();
+    await booking.getByRole('button', { name: /confirm booking/i }).click();
+
+    await expect(booking.getByRole('heading', { name: /appointment requested/i })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    // 3. Check notifications page
+    await page.goto('/notifications');
+    await expect(page.locator('.row')).toHaveCount(1, { timeout: 10_000 });
+    await expect(page.locator('.unread-pill')).toContainText('1 unread');
+
+    // 4. Test deep link navigation
+    const aptLink = page.locator('.row-actions a[href*="/appointments"]');
+    await expect(aptLink).toBeVisible();
+    await expect(aptLink).toContainText('View appointment');
+    await aptLink.click();
+    await expect(page).toHaveURL(/\/appointments\?id=/);
+
+    // 5. Navigate back to notifications and mark as read
+    await page.goto('/notifications');
+    const markReadBtn = page.locator('.mark-read-btn');
+    await expect(markReadBtn).toBeVisible();
+    await markReadBtn.click();
+
+    // Verify unread indicator disappears immediately
+    await expect(page.locator('.dot')).toHaveCount(0);
+    await expect(page.locator('.unread-pill')).toHaveCount(0);
+    await expect(page.locator('.mark-read-btn')).toHaveCount(0);
   });
 });

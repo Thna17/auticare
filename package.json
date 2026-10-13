@@ -27,9 +27,16 @@
     "db:seed": "pnpm --filter @auticare/contracts build && pnpm --filter @auticare/api db:seed",
     "db:studio": "pnpm --filter @auticare/api db:studio",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
+    "check:openapi": "node scripts/check-openapi-drift.mjs",
+    "check:links": "node scripts/check-broken-links.mjs",
+    "check:migrations": "node scripts/check-migration-drift.mjs",
+    "audit:prod": "pnpm audit --prod --audit-level=high",
+    "prod:secrets": "node scripts/generate-prod-secrets.mjs",
+    "prod:validate": "node scripts/validate-prod-env.mjs",
+    "prod:smoke": "node scripts/smoke-test-prod.mjs",
+    "email:test": "node scripts/test-email.mjs",
     "prepare": "husky",
-    "validate": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build"
+    "validate": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm check:links && pnpm check:openapi && pnpm check:migrations && pnpm audit:prod && pnpm test:unit && pnpm build"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
@@ -47,10 +54,12 @@
     "*.{ts,js,html,scss,json,md,yml,yaml}": "prettier --write"
   },
   "type": "module",
-  "dependencies": {
-    "@angular/common": "^21.2.20",
-    "@angular/core": "^21.2.20",
-    "@angular/forms": "^21.2.20",
-    "@angular/router": "^21.2.20"
+  "pnpm": {
+    "overrides": {
+      "proxy-addr": ">=2.0.8",
+      "ip-address": ">=10.7.1",
+      "qs": ">=6.16.0",
+      "deepmerge-ts": ">=8.0.0"
+    }
   }
 }

@@ -51,4 +51,27 @@ export class AppointmentsApi {
       .post<{ data: AppointmentResponse }>(`${this.apiBaseUrl}/appointments`, input)
       .pipe(map((response) => response.data));
   }
+
+  rescheduleAppointment(appointmentId: string, input: { scheduledAt: string; reason?: string }) {
+    return this.http
+      .patch<{ data: AppointmentResponse }>(
+        `${this.apiBaseUrl}/appointments/${appointmentId}/reschedule`,
+        input,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getDoctorSlots(doctorId: string, date: string, timezone?: string) {
+    const tzParam = timezone ? `&timezone=${encodeURIComponent(timezone)}` : '';
+    return this.http
+      .get<{
+        data: {
+          doctorId: string;
+          date: string;
+          timezone: string;
+          slots: { time: string; iso: string; available: boolean }[];
+        };
+      }>(`${this.apiBaseUrl}/appointments/doctors/${doctorId}/slots?date=${date}${tzParam}`)
+      .pipe(map((response) => response.data));
+  }
 }

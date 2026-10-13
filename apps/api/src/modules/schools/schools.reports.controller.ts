@@ -23,22 +23,32 @@ export const getReportById = async (req: Request, res: Response) =>
 /**
  * GET /api/v1/schools/reports/:id/attachments/:filename
  *
- * Replaces the old unauthenticated `express.static('/uploads')` mount. Headers
- * are set explicitly: the Content-Type comes from our own extension allowlist
+ * Downloads an authorized report attachment.
+ * Headers are set explicitly: the Content-Type comes from our own extension allowlist
  * (never from the upload), `nosniff` stops the browser second-guessing it, and
- * `attachment` means even a file that slipped through cannot execute in the
- * origin's context.
+ * `attachment` ensures safe handling in the browser.
+ * Works seamlessly with local storage (sendFile) and remote streamable storage.
  */
 export const getReportAttachment = async (req: Request, res: Response) => {
-  const { absolutePath, contentType, filename } = await service.getReportAttachment(
+  const { absolutePath, streamResult, contentType, filename } = await service.getReportAttachment(
     req.auth!,
     requiredParam(req.params.id),
     requiredParam(req.params.filename),
   );
+
   res.setHeader('Content-Type', contentType);
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-  res.sendFile(absolutePath);
+
+  if (streamResult.byteLength !== undefined) {
+    res.setHeader('Content-Length', streamResult.byteLength);
+  }
+
+  if (absolutePath) {
+    res.sendFile(absolutePath);
+  } else {
+    streamResult.stream.pipe(res);
+  }
 };
 
 export const updateReport = async (req: Request, res: Response) =>

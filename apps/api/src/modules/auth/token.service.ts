@@ -31,11 +31,19 @@ export class TokenService {
     return crypto.randomBytes(48).toString('base64url');
   }
 
+  createInvitationToken(): string {
+    return crypto.randomBytes(48).toString('base64url');
+  }
+
   hashRefreshToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
   hashPasswordResetToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  hashInvitationToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
@@ -45,6 +53,10 @@ export class TokenService {
 
   passwordResetTokenExpiresAt(): Date {
     return new Date(Date.now() + durationToMilliseconds('30m'));
+  }
+
+  invitationTokenExpiresAt(): Date {
+    return new Date(Date.now() + durationToMilliseconds('72h'));
   }
 
   accessCookieMaxAge(): number {

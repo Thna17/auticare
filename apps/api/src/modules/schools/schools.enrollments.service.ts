@@ -10,7 +10,10 @@ import type {
   UpdateSchoolEnrollmentRequest,
   SchoolEnrollmentMutationResponse,
 } from '@auticare/contracts';
+import crypto from 'node:crypto';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
+import { auditService } from '../audit/audit.service.js';
+import { invitationService } from '../auth/invitation.service.js';
 import { PasswordService } from '../auth/password.service.js';
 import { SchoolsRepository } from './schools.repository.js';
 
@@ -330,9 +333,8 @@ export class SchoolEnrollmentsService {
       throw new AppError('CONFLICT', 'An account with this guardian email already exists.', 409);
     }
 
-    // Generate a random temporary password (guardian will need to reset it)
-    const tempPassword = this.generateTempPassword();
-    const passwordHash = await this.passwordService.hash(tempPassword);
+    // Generate a secure random salt for initial passwordHash; password will be set via invitation acceptance
+    const passwordHash = await this.passwordService.hash(crypto.randomUUID());
 
     const result = await this.repository.createStudent({
       guardian: {
@@ -350,6 +352,29 @@ export class SchoolEnrollmentsService {
         address: input.address?.trim() ?? undefined,
       },
       schoolId,
+    });
+
+    // Send single-use account invitation to guardian
+    await invitationService.createInvitation({
+      email,
+      role: 'PARENT',
+      firstName: input.guardianFirstName.trim(),
+      parentId: result.parent.id,
+      schoolId,
+      createdById: actor.parentId,
+      actorRole: actor.role,
+    });
+
+    await auditService.record({
+      action: 'GUARDIAN_PROVISIONED_BY_SCHOOL',
+      actorId: actor.parentId,
+      actorRole: actor.role,
+      targetId: result.parent.id,
+      targetEmail: email,
+      metadata: {
+        schoolId,
+        childId: result.child.id,
+      },
     });
 
     return {
@@ -377,16 +402,6 @@ export class SchoolEnrollmentsService {
         endDate: result.enrollment.endDate?.toISOString() ?? null,
       },
     };
-  }
-
-  /** Generate a random temporary password for the guardian account. */
-  private generateTempPassword(): string {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    let password = '';
-    for (let i = 0; i < 16; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
   }
 
   /**

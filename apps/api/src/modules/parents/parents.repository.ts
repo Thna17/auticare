@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
+import { AppError } from '../../common/errors/app-error.js';
 
 /**
  * Data access for parent-facing activity reports. Every query is scoped by
@@ -20,7 +21,7 @@ export class ParentsRepository {
 
   /** One page of SUBMITTED reports for an owned child, newest first. */
   async listSubmittedReportsForChild(childId: string, page: Page) {
-    const where = { childId, status: 'SUBMITTED' };
+    const where: Prisma.ActivityReportWhereInput = { childId, status: 'SUBMITTED' };
     const [items, total] = await prisma.$transaction([
       prisma.activityReport.findMany({
         where,
@@ -49,9 +50,12 @@ export class ParentsRepository {
     return { items, total };
   }
 
-  /** School display name for the enrollment-request confirmation. */
+  /** School display name and location for the enrollment-request confirmation. */
   findSchoolName(schoolId: string) {
-    return prisma.school.findUnique({ where: { id: schoolId }, select: { name: true } });
+    return prisma.school.findUnique({
+      where: { id: schoolId },
+      select: { name: true, city: true, address: true },
+    });
   }
 
   /** Existing enrollment for this school+child pair, if any. */
@@ -72,8 +76,8 @@ export class ParentsRepository {
 
   /**
    * Creates the admission request and the school-facing notification in one
-   * transaction. The notification is linked to the request via
-   * `enrollmentId` (the only per-request pointer on the Notification model).
+   * transaction with Serializable isolation to prevent duplicate concurrent requests.
+   * The notification is linked to the request via `enrollmentId`.
    */
   createAdmissionRequestWithNotification(input: {
     parentId: string;
@@ -83,39 +87,58 @@ export class ParentsRepository {
     schoolName: string;
     message?: string;
   }) {
-    return prisma.$transaction(async (tx) => {
-      const request = await tx.admissionRequest.create({
-        data: {
-          parentId: input.parentId,
-          schoolId: input.schoolId,
-          childId: input.childId,
-          message: input.message ?? null,
-          status: 'REQUESTED',
-        },
-      });
-      await tx.notification.create({
-        data: {
-          parentId: input.parentId,
-          schoolId: input.schoolId,
-          type: 'ENROLLMENT_REQUEST',
-          status: 'UNREAD',
-          title: 'New enrollment request',
-          body: `${input.childName} requested enrollment at ${input.schoolName}.`,
-          enrollmentId: request.id,
-        },
-      });
-      return request;
-    });
+    return prisma.$transaction(
+      async (tx) => {
+        const openRequest = await tx.admissionRequest.findFirst({
+          where: {
+            schoolId: input.schoolId,
+            childId: input.childId,
+            parentId: input.parentId,
+            status: 'REQUESTED',
+          },
+        });
+        if (openRequest) {
+          throw new AppError(
+            'VALIDATION_ERROR',
+            'A request for this child at this school is already awaiting a decision.',
+            409,
+          );
+        }
+
+        const request = await tx.admissionRequest.create({
+          data: {
+            parentId: input.parentId,
+            schoolId: input.schoolId,
+            childId: input.childId,
+            message: input.message ?? null,
+            status: 'REQUESTED',
+          },
+        });
+        await tx.notification.create({
+          data: {
+            parentId: input.parentId,
+            schoolId: input.schoolId,
+            type: 'ENROLLMENT_REQUEST',
+            status: 'UNREAD',
+            title: 'New enrollment request',
+            body: `${input.childName} requested enrollment at ${input.schoolName}.`,
+            enrollmentId: request.id,
+          },
+        });
+        return request;
+      },
+      { isolationLevel: 'Serializable' },
+    );
   }
 
-  /** This parent's requests, newest first, with school names. The child
-   * names are resolved separately — AdmissionRequest has no Child relation. */
+  /** This parent's requests, newest first, with school and child relations loaded. */
   listAdmissionRequestsForParent(parentId: string) {
     return prisma.admissionRequest.findMany({
       where: { parentId },
       orderBy: { createdAt: 'desc' },
       include: {
-        school: { select: { name: true } },
+        school: { select: { id: true, name: true, city: true, address: true } },
+        child: { select: { id: true, firstName: true, lastName: true } },
       },
     });
   }
@@ -145,5 +168,60 @@ export class ParentsRepository {
       prisma.notification.count({ where }),
     ]);
     return { items, total };
+  }
+
+  /** Find notification by id to verify ownership before mutation. */
+  findNotificationById(id: string) {
+    return prisma.notification.findUnique({
+      where: { id },
+    });
+  }
+
+  /** Mark a single notification as read. */
+  markNotificationRead(id: string) {
+    return prisma.notification.update({
+      where: { id },
+      data: { status: 'READ' },
+    });
+  }
+
+  /** Mark all unread notifications for a parent as read. */
+  markAllNotificationsRead(parentId: string) {
+    return prisma.notification.updateMany({
+      where: { parentId, status: 'UNREAD' },
+      data: { status: 'READ' },
+    });
+  }
+
+  /** Look up accessibility and localization preferences for a parent account. */
+  findPreferences(parentId: string) {
+    return prisma.parentPreference.findUnique({
+      where: { parentId },
+    });
+  }
+
+  /** Upsert preferences for a parent account. */
+  upsertPreferences(
+    parentId: string,
+    data: {
+      preferredLanguage?: string | undefined;
+      reducedMotion?: boolean | undefined;
+      highContrast?: boolean | undefined;
+    },
+  ) {
+    return prisma.parentPreference.upsert({
+      where: { parentId },
+      create: {
+        parentId,
+        preferredLanguage: data.preferredLanguage ?? 'en',
+        reducedMotion: data.reducedMotion ?? false,
+        highContrast: data.highContrast ?? false,
+      },
+      update: {
+        ...(data.preferredLanguage !== undefined && { preferredLanguage: data.preferredLanguage }),
+        ...(data.reducedMotion !== undefined && { reducedMotion: data.reducedMotion }),
+        ...(data.highContrast !== undefined && { highContrast: data.highContrast }),
+      },
+    });
   }
 }

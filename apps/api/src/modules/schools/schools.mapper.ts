@@ -38,6 +38,7 @@ const roundRating = (average: number | null): number | null =>
 export const toSchoolResponse = (
   school: School,
   rating: SchoolRating = emptyRating,
+  isFavorite?: boolean,
 ): SchoolResponse => ({
   id: school.id,
   name: school.name,
@@ -55,6 +56,7 @@ export const toSchoolResponse = (
   reviewCount: rating.count,
   createdAt: school.createdAt.toISOString(),
   updatedAt: school.updatedAt.toISOString(),
+  ...(isFavorite !== undefined ? { isFavorite } : {}),
 });
 
 export const toSchoolDetailResponse = (
@@ -121,5 +123,6 @@ export const toNotificationResponse = (notification: Notification): Notification
   body: notification.body,
   enrollmentId: notification.enrollmentId ?? null,
   reportId: notification.reportId ?? null,
+  appointmentId: notification.appointmentId ?? null,
   createdAt: notification.createdAt.toISOString(),
 });

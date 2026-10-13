@@ -7,6 +7,7 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
 import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import { NotificationsStateService } from '../../core/notifications/notifications-state.service';
 import { ParentNotificationsApi } from './data-access/parent-notifications.api';
 
 /** Plain-language label and tone per notification type. */
@@ -41,9 +42,19 @@ type ReadFilter = 'ALL' | 'UNREAD';
           <h2>Your notifications</h2>
           <p class="sub">Updates from your child’s school, appointments and screenings.</p>
         </div>
-        @if (unreadTotal() !== null && unreadTotal()! > 0) {
-          <span class="unread-pill">{{ unreadTotal() }} unread</span>
-        }
+        <div class="head-actions">
+          @if (unreadTotal() !== null && unreadTotal()! > 0) {
+            <span class="unread-pill">{{ unreadTotal() }} unread</span>
+            <button
+              type="button"
+              class="mark-all-btn"
+              [disabled]="markingAll()"
+              (click)="markAllRead()"
+            >
+              {{ markingAll() ? 'Marking…' : '✓ Mark all read' }}
+            </button>
+          }
+        </div>
       </header>
 
       <div class="filters" role="group" aria-label="Filter notifications">
@@ -94,9 +105,52 @@ type ReadFilter = 'ALL' | 'UNREAD';
                 <p class="when">{{ item.createdAt | date: 'medium' }}</p>
               </div>
 
-              @if (item.reportId) {
-                <a class="row-link" routerLink="/progress">View report</a>
-              }
+              <div class="row-actions">
+                @if (item.appointmentId) {
+                  <a
+                    class="row-link"
+                    routerLink="/appointments"
+                    [queryParams]="{ id: item.appointmentId }"
+                    >View appointment</a
+                  >
+                } @else if (item.type === 'SCREENING' && item.reportId) {
+                  <a class="row-link" [routerLink]="'/screening/result/' + item.reportId"
+                    >View screening result</a
+                  >
+                } @else if (item.reportId) {
+                  <a
+                    class="row-link"
+                    routerLink="/progress"
+                    [queryParams]="{ reportId: item.reportId }"
+                    >View report</a
+                  >
+                } @else if (item.enrollmentId) {
+                  <a class="row-link" routerLink="/schools">View enrollment</a>
+                } @else if (item.type === 'APPOINTMENT') {
+                  <a class="row-link" routerLink="/appointments">View appointments</a>
+                } @else if (item.type === 'SCHOOL_REPORT' || item.type === 'REPORT_REQUEST') {
+                  <a class="row-link" routerLink="/progress">View reports</a>
+                } @else if (item.type === 'ADMISSION' || item.type === 'ENROLLMENT_REQUEST') {
+                  <a class="row-link" routerLink="/schools">View schools</a>
+                } @else if (item.type === 'SCREENING') {
+                  <a class="row-link" routerLink="/screening">View screenings</a>
+                } @else if (item.type === 'ACTIVITY') {
+                  <a class="row-link" routerLink="/activities">View activities</a>
+                } @else if (isCrisisNotification(item)) {
+                  <a class="row-link" routerLink="/crisis">Crisis resources</a>
+                }
+
+                @if (item.status === 'UNREAD') {
+                  <button
+                    type="button"
+                    class="mark-read-btn"
+                    [disabled]="actingId() === item.id"
+                    (click)="markRead(item)"
+                  >
+                    {{ actingId() === item.id ? 'Marking…' : 'Mark as read' }}
+                  </button>
+                }
+              </div>
             </li>
           }
         </ul>
@@ -146,6 +200,34 @@ type ReadFilter = 'ALL' | 'UNREAD';
         border: 1px solid var(--ac-color-border-info);
         font-weight: var(--ac-font-weight-bold);
         color: var(--ac-color-text-dark);
+      }
+
+      .head-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .mark-all-btn {
+        min-height: 36px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid var(--ac-color-border-grey);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-alt);
+        font-weight: var(--ac-font-weight-bold);
+        font-size: var(--ac-type-meta);
+        cursor: pointer;
+      }
+
+      .mark-all-btn:hover:not(:disabled) {
+        background: var(--ac-color-surface-info);
+      }
+
+      .mark-all-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
 
       .filters {
@@ -210,7 +292,7 @@ type ReadFilter = 'ALL' | 'UNREAD';
         justify-content: space-between;
         gap: 16px;
         padding: 16px 18px;
-        border: 1px solid #dbe5e8;
+        border: 1px solid var(--ac-color-slate-border-light);
         border-radius: 12px;
         background: var(--ac-color-surface);
       }
@@ -232,18 +314,18 @@ type ReadFilter = 'ALL' | 'UNREAD';
         border-radius: 999px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
-        background: #eef3f6;
+        background: var(--ac-color-slate-surface-clean);
         color: var(--ac-color-text-body);
       }
 
       .type-badge[data-tone='positive'] {
-        background: #e8f7ee;
-        color: #0b6b3a;
+        background: var(--ac-color-green-tint-soft);
+        color: var(--ac-color-forest-green);
       }
 
       .type-badge[data-tone='caution'] {
-        background: #fff4e5;
-        color: #8a5a00;
+        background: var(--ac-color-amber-tint-50);
+        color: var(--ac-color-amber-800);
       }
 
       .type-badge[data-tone='info'] {
@@ -270,16 +352,51 @@ type ReadFilter = 'ALL' | 'UNREAD';
         font-size: var(--ac-type-meta);
       }
 
-      .row-link {
+      .row-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
         flex: 0 0 auto;
+      }
+
+      .row-link {
         color: var(--ac-color-text-dark);
         font-weight: var(--ac-font-weight-bold);
         text-decoration: underline;
       }
 
+      .mark-read-btn {
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 6px;
+        border: 1px solid var(--ac-color-border-grey);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-dark);
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-medium);
+        cursor: pointer;
+      }
+
+      .mark-read-btn:hover:not(:disabled) {
+        background: var(--ac-color-surface-info);
+        border-color: var(--ac-color-border-info);
+      }
+
+      .mark-read-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
       @media (max-width: 640px) {
         .row {
           flex-direction: column;
+        }
+
+        .row-actions {
+          align-items: flex-start;
+          flex-direction: row;
+          margin-top: 8px;
         }
       }
     `,
@@ -288,6 +405,7 @@ type ReadFilter = 'ALL' | 'UNREAD';
 })
 export class ParentNotificationsPage implements OnInit {
   private readonly api = inject(ParentNotificationsApi);
+  private readonly notificationsState = inject(NotificationsStateService);
 
   protected readonly notifications = signal<readonly NotificationResponse[]>([]);
   protected readonly loading = signal(true);
@@ -307,6 +425,8 @@ export class ParentNotificationsPage implements OnInit {
    * reported "3 unread" when there were thirty.
    */
   protected readonly unreadTotal = signal<number | null>(null);
+  protected readonly actingId = signal<string | null>(null);
+  protected readonly markingAll = signal(false);
 
   ngOnInit(): void {
     this.load();
@@ -333,7 +453,10 @@ export class ParentNotificationsPage implements OnInit {
       next: ({ notifications, pagination }) => {
         this.notifications.set(notifications);
         this.pagination.set(pagination);
-        if (unreadOnly) this.unreadTotal.set(pagination.total);
+        if (unreadOnly) {
+          this.unreadTotal.set(pagination.total);
+          this.notificationsState.setUnreadCount(pagination.total);
+        }
         this.loading.set(false);
       },
       error: () => {
@@ -351,12 +474,58 @@ export class ParentNotificationsPage implements OnInit {
    */
   private loadUnreadTotal(): void {
     this.api.list(1, false).subscribe({
-      next: ({ pagination }) => this.unreadTotal.set(pagination.total),
+      next: ({ pagination }) => {
+        this.unreadTotal.set(pagination.total);
+        this.notificationsState.setUnreadCount(pagination.total);
+      },
       error: () => this.unreadTotal.set(null),
+    });
+  }
+
+  protected markRead(item: NotificationResponse): void {
+    this.actingId.set(item.id);
+    this.api.markRead(item.id).subscribe({
+      next: () => {
+        this.actingId.set(null);
+        this.notifications.update((items) =>
+          items.map((n) => (n.id === item.id ? { ...n, status: 'READ' as const } : n)),
+        );
+        this.unreadTotal.update((total) => (total !== null ? Math.max(0, total - 1) : null));
+        this.notificationsState.decrementUnread(1);
+        if (this.filter() === 'UNREAD') {
+          this.notifications.update((items) => items.filter((n) => n.id !== item.id));
+        }
+      },
+      error: () => {
+        this.actingId.set(null);
+      },
+    });
+  }
+
+  protected markAllRead(): void {
+    this.markingAll.set(true);
+    this.api.markAllRead().subscribe({
+      next: () => {
+        this.markingAll.set(false);
+        this.notifications.update((items) => items.map((n) => ({ ...n, status: 'READ' as const })));
+        this.unreadTotal.set(0);
+        this.notificationsState.clearUnread();
+        if (this.filter() === 'UNREAD') {
+          this.notifications.set([]);
+        }
+      },
+      error: () => {
+        this.markingAll.set(false);
+      },
     });
   }
 
   protected presentation(type: NotificationType): { label: string; tone: string } {
     return PRESENTATION[type] ?? { label: 'Update', tone: 'neutral' };
+  }
+
+  protected isCrisisNotification(item: NotificationResponse): boolean {
+    const text = `${item.title} ${item.body}`.toLowerCase();
+    return text.includes('crisis') || text.includes('emergency') || text.includes('hotline');
   }
 }

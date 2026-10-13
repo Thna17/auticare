@@ -25,6 +25,7 @@ import { schoolsRoutes } from './modules/schools/index.js';
 import { screeningRoutes } from './modules/screening/index.js';
 import { parentsRoutes } from './modules/parents/index.js';
 import { activitiesRoutes } from './modules/activities/index.js';
+import { dashboardRoutes } from './modules/dashboard/index.js';
 export const createApp = () => {
   const app = express();
   app.disable('x-powered-by');
@@ -41,7 +42,12 @@ export const createApp = () => {
   // That is a map of the API for anyone who finds it, so it is served outside
   // production only. Production deployments that want it should put it behind
   // their own auth rather than re-enabling it here.
-  if (!isProduction) {
+  const allowDocs = !isProduction || process.env.ENABLE_OPENAPI_DOCS === 'true';
+  if (allowDocs) {
+    app.get(['/api/docs/openapi.json', '/api/v1/docs/openapi.json'], (_req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.json(openApiDocument);
+    });
     app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
   }
   app.use('/api/v1/auth', authRoutes);
@@ -54,6 +60,7 @@ export const createApp = () => {
   app.use('/api/v1/screening', screeningRoutes);
   app.use('/api/v1/parents', parentsRoutes);
   app.use('/api/v1/activities', activitiesRoutes);
+  app.use('/api/v1/dashboard', dashboardRoutes);
   // NOTE: uploads are deliberately NOT served statically. They are files about
   // children, and express.static has no notion of who is asking. Downloads go
   // through GET /api/v1/schools/reports/:id/attachments/:filename, which

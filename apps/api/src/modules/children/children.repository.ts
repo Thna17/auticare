@@ -2,17 +2,26 @@ import type { Child } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
 
 export class ChildrenRepository {
-  listByParent(parentId: string): Promise<Child[]> {
+  listByParent(parentId: string, includeArchived = false): Promise<Child[]> {
     return prisma.child.findMany({
-      where: { parentId, archivedAt: null },
+      where: {
+        parentId,
+        ...(includeArchived ? {} : { archivedAt: null }),
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  listAllActive(): Promise<Child[]> {
+  listAllActive(pagination?: { page: number; limit: number }): Promise<Child[]> {
     return prisma.child.findMany({
       where: { archivedAt: null },
       orderBy: { createdAt: 'desc' },
+      ...(pagination
+        ? {
+            skip: (pagination.page - 1) * pagination.limit,
+            take: pagination.limit,
+          }
+        : {}),
     });
   }
 
@@ -23,7 +32,9 @@ export class ChildrenRepository {
   create(input: {
     parentId: string;
     firstName: string;
+    lastName?: string;
     dateOfBirth: Date;
+    address?: string;
     notes?: string;
   }): Promise<Child> {
     return prisma.child.create({
@@ -31,6 +42,8 @@ export class ChildrenRepository {
         parentId: input.parentId,
         firstName: input.firstName,
         dateOfBirth: input.dateOfBirth,
+        ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
+        ...(input.address !== undefined ? { address: input.address } : {}),
         ...(input.notes !== undefined ? { notes: input.notes } : {}),
       },
     });
@@ -38,12 +51,22 @@ export class ChildrenRepository {
 
   update(
     childId: string,
-    input: { firstName?: string; dateOfBirth?: Date; notes?: string | null },
+    input: {
+      firstName?: string;
+      lastName?: string | null;
+      dateOfBirth?: Date;
+      address?: string | null;
+      notes?: string | null;
+    },
   ): Promise<Child> {
     return prisma.child.update({ where: { id: childId }, data: input });
   }
 
   archive(childId: string): Promise<Child> {
     return prisma.child.update({ where: { id: childId }, data: { archivedAt: new Date() } });
+  }
+
+  restore(childId: string): Promise<Child> {
+    return prisma.child.update({ where: { id: childId }, data: { archivedAt: null } });
   }
 }

@@ -1,1 +1,5 @@
-export { createChildRequestSchema, updateChildRequestSchema } from '@auticare/contracts';
+export {
+  createChildRequestSchema,
+  listChildrenQuerySchema,
+  updateChildRequestSchema,
+} from '@auticare/contracts';

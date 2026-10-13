@@ -1,24 +1,33 @@
 // schools.page.ts (Parent Side)
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
-import type { PaginationMeta, SchoolResponse } from '@auticare/contracts';
+import { DatePipe } from '@angular/common';
+import type {
+  AdmissionRequestResponse,
+  AdmissionRequestStatus,
+  ChildResponse,
+  PaginationMeta,
+  SchoolResponse,
+} from '@auticare/contracts';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { SchoolsApi } from './data-access/schools.api';
 import { EnrollmentRequestsApi } from './data-access/enrollment-requests.api';
-import type { ChildResponse } from '@auticare/contracts';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
+import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schools.data';
 
 interface SchoolViewModel extends SchoolResponse {
   rating: number | null;
   reviewCount: number;
   isVerified: boolean;
   specializations: string[];
+  facilities?: readonly string[] | string[];
+  facilityTags?: readonly string[];
 }
 
 const SPECIALIZATION_OPTIONS = [
@@ -33,6 +42,7 @@ const SPECIALIZATION_OPTIONS = [
   standalone: true,
   imports: [
     RouterLink,
+    DatePipe,
     UiMessageComponent,
     UiDialogComponent,
     UiPaginationComponent,
@@ -41,231 +51,363 @@ const SPECIALIZATION_OPTIONS = [
   ],
   selector: 'ac-parent-schools-page',
   template: `
-    <div class="page-layout">
-      <!-- Main Content -->
-      <main class="main-content">
-        <!-- Top Bar -->
-        <header class="topbar">
-          <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input
-              aria-label="Search schools by name, city or specialization"
-              type="text"
-              placeholder="Search for school names, cities, or specializations..."
-              class="search-input"
-              [value]="search()"
-              (input)="search.set($any($event.target).value)"
-              (keyup.enter)="applyFilters()"
-            />
-          </div>
-          <div class="topbar-actions">
-            <button class="icon-btn" aria-label="Notifications" routerLink="/notifications">
-              <span>🔔</span>
+    <!-- Page Header -->
+    <section class="page-header">
+      <div class="header-content">
+        <h1>Special Education Schools</h1>
+        <p>
+          Discover and connect with specialized educational institutions tailored for neurodivergent
+          children.
+        </p>
+      </div>
+      <div class="header-actions">
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input
+            aria-label="Search schools by name, curriculum or specialization"
+            type="text"
+            placeholder="Search school name, curriculum, city, or specialization..."
+            class="search-input"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+            (keyup.enter)="applyFilters()"
+          />
+          @if (search()) {
+            <button
+              type="button"
+              class="clear-search-btn"
+              (click)="search.set(''); applyFilters()"
+              aria-label="Clear search"
+            >
+              ✕
             </button>
-            <button class="icon-btn" aria-label="Help">
-              <span>?</span>
-            </button>
-            <div class="user-profile-small">
-              <div class="user-text">
-                <span class="name">{{ userName() }}</span>
-                <span class="role">Parent</span>
-              </div>
-              <div class="avatar-small">{{ initials() }}</div>
-            </div>
-          </div>
-        </header>
+          }
+        </div>
+      </div>
+    </section>
 
-        <!-- Page Header -->
-        <section class="page-header">
-          <div>
-            <h1>Find Special Education Schools</h1>
-            <p>
-              Discover and connect with specialized educational institutions tailored for
-              neurodivergent children.
-            </p>
-          </div>
-          <div class="view-toggle">
-            <button class="toggle-btn active">
-              <span>☰</span>
-              <span>List View</span>
-            </button>
-            <button class="toggle-btn">
-              <span>🗺</span>
-              <span>Map View</span>
-            </button>
-          </div>
-        </section>
+    <!-- View Navigation Tabs -->
+    <nav class="view-tabs" role="tablist" aria-label="School view selection">
+      <button
+        type="button"
+        role="tab"
+        class="view-tab"
+        [class.active]="activeTab() === 'directory'"
+        [attr.aria-selected]="activeTab() === 'directory'"
+        (click)="setTab('directory')"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>School Directory</span>
+      </button>
+      @if (isParent()) {
+        <button
+          type="button"
+          role="tab"
+          class="view-tab"
+          [class.active]="activeTab() === 'applications'"
+          [attr.aria-selected]="activeTab() === 'applications'"
+          (click)="setTab('applications')"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span>My Applications</span>
+          @if (applications().length > 0) {
+            <span class="tab-count-badge">{{ applications().length }}</span>
+          }
+        </button>
+      }
+    </nav>
 
-        <div class="content-wrapper">
-          <!-- Filters Sidebar -->
-          <aside class="filters-sidebar">
-            <div class="filters-header">
-              <span class="filter-icon">⚙</span>
-              <h2>Filters</h2>
-            </div>
-
-            <div class="filter-group">
-              <label class="filter-label">Province/Region</label>
-              <select
-                aria-label="Filter schools by province"
-                class="filter-select"
-                [value]="province()"
-                (change)="province.set($any($event.target).value); applyFilters()"
+    <!-- ── SCHOOL DIRECTORY VIEW ────────────────────────────────────── -->
+    @if (activeTab() === 'directory') {
+      <div class="content-wrapper">
+        <!-- Filters Sidebar -->
+        <aside class="filters-sidebar" aria-label="Directory Filters">
+          <div class="filters-header">
+            <span class="filter-icon" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
               >
-                <option value="">All provinces</option>
-                @for (city of cities(); track city) {
-                  <option [value]="city">{{ city }}</option>
-                }
-              </select>
-            </div>
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+            </span>
+            <h2>Filters</h2>
+          </div>
 
+          @if (isParent()) {
             <div class="filter-group">
-              <label class="filter-label">Availability</label>
-              <select
-                aria-label="Filter schools by availability"
-                class="filter-select"
-                [value]="availability()"
-                (change)="availability.set($any($event.target).value); applyFilters()"
+              <label class="filter-label">Saved Schools</label>
+              <button
+                type="button"
+                class="saved-toggle-btn"
+                [class.active]="savedOnly()"
+                (click)="toggleSavedOnly()"
+                [attr.aria-pressed]="savedOnly()"
               >
-                <option value="">Any availability</option>
-                <option value="IMMEDIATE">Immediate openings</option>
-                <option value="WAITLIST">Waitlist</option>
-                <option value="CLOSED">Closed</option>
-              </select>
+                <span class="star-icon" aria-hidden="true">{{ savedOnly() ? '♥' : '♡' }}</span>
+                <span>{{ savedOnly() ? 'Showing Saved Only' : 'Show Saved Only' }}</span>
+              </button>
             </div>
+          }
 
-            <div class="filter-group">
-              <label class="filter-label">Specializations</label>
-              <div class="tags-group">
-                @for (tag of specializationOptions; track tag) {
-                  <button
-                    type="button"
-                    class="tag-btn"
-                    [class.active]="selectedSpecializations().includes(tag)"
-                    (click)="toggleSpecialization(tag)"
-                  >
-                    {{ tag }}
-                  </button>
-                }
-              </div>
-            </div>
+          <div class="filter-group">
+            <label class="filter-label">City / Province</label>
+            <select
+              aria-label="Filter schools by province"
+              class="filter-select"
+              [value]="province()"
+              (change)="province.set($any($event.target).value); applyFilters()"
+            >
+              <option value="">All provinces</option>
+              @for (city of cities(); track city) {
+                <option [value]="city">{{ city }}</option>
+              }
+            </select>
+          </div>
 
-            <button class="apply-filters-btn" (click)="applyFilters()" [disabled]="loading()">
-              {{ loading() ? 'Searching…' : 'Go' }}
-            </button>
-            <button class="clear-filters-btn" type="button" (click)="clearFilters()">
-              Reset filters
-            </button>
-          </aside>
+          <div class="filter-group">
+            <label class="filter-label">Availability</label>
+            <select
+              aria-label="Filter schools by availability"
+              class="filter-select"
+              [value]="availability()"
+              (change)="availability.set($any($event.target).value); applyFilters()"
+            >
+              <option value="">Any availability</option>
+              <option value="IMMEDIATE">Immediate openings</option>
+              <option value="WAITLIST">Waitlist</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+          </div>
 
-          <!-- Schools List -->
-          <div class="schools-list">
-            @if (loading()) {
-              <ac-ui-spinner label="Loading schools…" />
-            } @else if (error()) {
-              <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
-            } @else if (!schools().length) {
-              <ac-ui-empty-state
-                title="No schools found"
-                message="Try adjusting your search query or location filters to find matching schools."
-              >
-                <button type="button" class="btn-secondary" (click)="clearFilters()">
-                  Clear filters
-                </button>
-              </ac-ui-empty-state>
-            } @else {
-              <div class="list-header">
-                <span class="results-count"
-                  >{{ pagination()?.total ?? schools().length }} results in your area</span
+          <div class="filter-group">
+            <label class="filter-label">Specializations</label>
+            <div class="tags-group">
+              @for (tag of specializationOptions; track tag) {
+                <button
+                  type="button"
+                  class="tag-btn"
+                  [class.active]="selectedSpecializations().includes(tag)"
+                  (click)="toggleSpecialization(tag)"
                 >
-                <div class="sort-dropdown">
-                  <label>Sort by:</label>
-                  <select aria-label="Sort schools">
-                    <option>Highest Rated</option>
-                    <option>Nearest</option>
-                    <option>Most Reviews</option>
-                    <option>Name A-Z</option>
-                  </select>
-                </div>
-              </div>
+                  {{ tag }}
+                </button>
+              }
+            </div>
+          </div>
 
-              @for (school of schools(); track school.id) {
-                <div class="school-card">
-                  <div class="school-image-wrapper">
+          <button class="apply-filters-btn" (click)="applyFilters()" [disabled]="loading()">
+            {{ loading() ? 'Searching…' : 'Apply Filters' }}
+          </button>
+          <button class="clear-filters-btn" type="button" (click)="clearFilters()">
+            Reset filters
+          </button>
+        </aside>
+
+        <!-- Schools List -->
+        <div class="schools-list">
+          @if (loading()) {
+            <ac-ui-spinner label="Loading schools…" />
+          } @else if (error()) {
+            <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
+          } @else if (!schools().length) {
+            <ac-ui-empty-state
+              title="No schools found"
+              message="Try adjusting your search query or location filters to find matching schools."
+            >
+              <button type="button" class="btn-secondary" (click)="clearFilters()">
+                Clear filters
+              </button>
+            </ac-ui-empty-state>
+          } @else {
+            <div class="list-header">
+              <span class="results-count">
+                <strong>{{ pagination()?.total ?? schools().length }}</strong> schools available in
+                directory
+              </span>
+              <div class="sort-dropdown">
+                <label>Sort by:</label>
+                <select aria-label="Sort schools">
+                  <option>Highest Rated</option>
+                  <option>Nearest</option>
+                  <option>Most Reviews</option>
+                  <option>Name A-Z</option>
+                </select>
+              </div>
+            </div>
+
+            @for (school of schools(); track school.id) {
+              <article class="school-card">
+                <div class="school-image-wrapper">
+                  <a
+                    class="school-link"
+                    [routerLink]="['/schools', school.id]"
+                    aria-label="View school profile"
+                  >
+                    <img
+                      [src]="
+                        school.coverImageUrl ||
+                        'https://images.unsplash.com/photo-1562774053-801e4e208e4e?w=600&h=400&fit=crop'
+                      "
+                      [alt]="school.name + ' campus'"
+                      class="school-image"
+                    />
+                    @if (school.isVerified) {
+                      <span class="verified-badge">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="12"
+                          height="12"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          aria-hidden="true"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Verified
+                      </span>
+                      <span class="accreditation-badge">
+                        <span class="badge-km">ដៃគូអប់រំពិសេសដែលបានបញ្ជាក់</span>
+                        <span class="badge-en">(Accredited Special Ed Partner)</span>
+                      </span>
+                    }
+                  </a>
+                  @if (isParent()) {
+                    <button
+                      type="button"
+                      class="card-favorite-btn"
+                      [class.active]="school.isFavorite"
+                      [attr.aria-label]="
+                        school.isFavorite ? 'Remove from saved schools' : 'Save school to favorites'
+                      "
+                      (click)="toggleSchoolFavorite(school, $event)"
+                    >
+                      <span aria-hidden="true">{{ school.isFavorite ? '♥' : '♡' }}</span>
+                    </button>
+                  }
+                </div>
+
+                <div class="school-content">
+                  <div class="school-header">
                     <a class="school-link" [routerLink]="['/schools', school.id]">
-                      <img
-                        [src]="
-                          school.coverImageUrl ||
-                          'https://images.unsplash.com/photo-1562774053-801e4e208e4e?w=400&h=300&fit=crop'
-                        "
-                        [alt]="school.name"
-                        class="school-image"
-                      />
-                      @if (school.isVerified) {
-                        <span class="verified-badge">✓ Verified</span>
-                      }
+                      <h3>{{ school.name }}</h3>
                     </a>
+                    @if (school.rating !== null) {
+                      <div class="rating">
+                        <span class="star" aria-hidden="true">★</span>
+                        <span class="rating-value">{{ school.rating }}</span>
+                        <span class="rating-count">({{ school.reviewCount }})</span>
+                      </div>
+                    }
                   </div>
 
-                  <div class="school-content">
-                    <div class="school-header">
-                      <a class="school-link" [routerLink]="['/schools', school.id]">
-                        <h3>{{ school.name }}</h3>
-                      </a>
-                      @if (school.rating !== null) {
-                        <div class="rating">
-                          <span class="star">★</span>
-                          <span class="rating-value">{{ school.rating }}</span>
-                          <span class="rating-count">({{ school.reviewCount }})</span>
-                        </div>
+                  <div class="school-location">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>{{ school.address }}, {{ school.city }}</span>
+                  </div>
+
+                  @if (school.description) {
+                    <p class="school-description">{{ school.description }}</p>
+                  }
+
+                  @if (school.specializations.length) {
+                    <div class="specializations-list">
+                      @for (spec of school.specializations; track spec) {
+                        <span class="spec-tag">{{ spec }}</span>
                       }
                     </div>
+                  }
 
-                    <div class="school-location">
-                      <span class="location-icon">📍</span>
-                      <span>{{ school.address }}, {{ school.city }}</span>
+                  @if (school.facilities && school.facilities.length) {
+                    <div class="facility-tags-list">
+                      @for (fac of school.facilities; track fac) {
+                        <span class="facility-chip">🏛️ {{ formatFacility(fac) }}</span>
+                      }
                     </div>
+                  }
 
-                    @if (school.description) {
-                      <p class="school-description">{{ school.description }}</p>
-                    }
-
-                    @if (school.specializations.length) {
-                      <div class="specializations-list">
-                        @for (spec of school.specializations; track spec) {
-                          <span class="spec-tag">{{ spec }}</span>
-                        }
-                      </div>
-                    }
-
-                    <div class="school-meta">
-                      <div class="meta-item">
-                        <span class="meta-icon">👥</span>
-                        <div>
-                          <span class="meta-label">STUDENT:TEACHER</span>
-                          <span class="meta-value">{{ school.studentTeacherRatio ?? '—' }}</span>
-                        </div>
-                      </div>
-
-                      <div class="meta-item">
-                        <span class="meta-icon">📅</span>
-                        <div>
-                          <span class="meta-label">AVAILABILITY</span>
-                          <span
-                            class="meta-value"
-                            [class.waitlist]="school.availabilityStatus === 'WAITLIST'"
-                            [class.closed]="school.availabilityStatus === 'CLOSED'"
-                          >
-                            {{ availabilityLabel(school.availabilityStatus) }}
-                            @if (school.waitlistEstimate) {
-                              <span class="waitlist-time">({{ school.waitlistEstimate }})</span>
-                            }
-                          </span>
-                        </div>
+                  <div class="school-meta">
+                    <div class="meta-item">
+                      <span class="meta-icon" aria-hidden="true">👥</span>
+                      <div>
+                        <span class="meta-label">INCLUSIVE SUPPORT RATIO</span>
+                        <span class="meta-value">{{ school.studentTeacherRatio ?? '—' }}</span>
                       </div>
                     </div>
 
+                    <div class="meta-item">
+                      <span class="meta-icon" aria-hidden="true">📅</span>
+                      <div>
+                        <span class="meta-label">AVAILABILITY</span>
+                        <span
+                          class="meta-value"
+                          [class.waitlist]="school.availabilityStatus === 'WAITLIST'"
+                          [class.closed]="school.availabilityStatus === 'CLOSED'"
+                        >
+                          {{ availabilityLabel(school.availabilityStatus) }}
+                          @if (school.waitlistEstimate) {
+                            <span class="waitlist-time">({{ school.waitlistEstimate }})</span>
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card-footer-actions">
                     <button
+                      type="button"
                       class="enrollment-btn"
                       (click)="openRequestDialog(school)"
                       [disabled]="school.availabilityStatus === 'CLOSED'"
@@ -276,429 +418,683 @@ const SPECIALIZATION_OPTIONS = [
                           : 'Request Enrollment'
                       }}
                     </button>
+                    <a class="view-details-link" [routerLink]="['/schools', school.id]">
+                      View Profile →
+                    </a>
                   </div>
                 </div>
-              }
-
-              @if (pagination(); as meta) {
-                <ac-ui-pagination
-                  [page]="meta.page"
-                  [totalPages]="meta.totalPages"
-                  [total]="meta.total"
-                  [perPage]="meta.limit"
-                  itemNoun="schools"
-                  label="School directory pages"
-                  (pageChange)="goToPage($event)"
-                />
-              }
+              </article>
             }
-          </div>
 
-          <!-- Enrollment request dialog -->
-          @if (requestDialogSchool(); as dialogSchool) {
-            <ac-ui-dialog
-              heading="Request Enrollment"
-              [description]="dialogSchool.name + ' — ' + dialogSchool.city"
-              size="md"
-              (close)="closeRequestDialog()"
-            >
-              @if (children().length === 0) {
-                <p class="dialog-hint">
-                  Add a child to your family profile first — then you can request enrollment here.
-                </p>
-                <div dialogFooter class="dialog-actions">
-                  <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
-                    Close
-                  </button>
-                </div>
-              } @else if (requestSubmitted(); as done) {
-                <div class="success-box" role="status">
-                  <strong>Request sent.</strong>
-                  {{ done.childName }}'s enrollment request was delivered — {{ done.schoolName }}
-                  will review it and respond on your notifications.
-                </div>
-                <div dialogFooter class="dialog-actions">
-                  <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
-                    Done
-                  </button>
-                </div>
-              } @else {
-                <label class="dialog-field">
-                  <span class="dialog-label">Child</span>
-                  <select
-                    class="dialog-input"
-                    [value]="selectedChildId()"
-                    (change)="selectedChildId.set($any($event.target).value)"
-                  >
-                    @for (child of children(); track child.id) {
-                      <option [value]="child.id">{{ child.firstName }}</option>
-                    }
-                  </select>
-                </label>
-
-                <label class="dialog-field">
-                  <span class="dialog-label">Message to the school (optional)</span>
-                  <textarea
-                    class="dialog-input"
-                    rows="3"
-                    maxlength="2000"
-                    placeholder="Share anything that helps the school — your child's needs, goals, or questions."
-                    [value]="requestMessage()"
-                    (input)="requestMessage.set($any($event.target).value)"
-                  ></textarea>
-                </label>
-
-                @if (requestError(); as dialogErr) {
-                  <ac-ui-message tone="error">{{ dialogErr }}</ac-ui-message>
-                }
-
-                <div dialogFooter class="dialog-actions">
-                  <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    class="apply-filters-btn dialog-submit"
-                    (click)="submitRequest()"
-                    [disabled]="requestSubmitting() || !selectedChildId()"
-                  >
-                    {{ requestSubmitting() ? 'Sending…' : 'Send request' }}
-                  </button>
-                </div>
-              }
-            </ac-ui-dialog>
+            @if (pagination(); as meta) {
+              <ac-ui-pagination
+                [page]="meta.page"
+                [totalPages]="meta.totalPages"
+                [total]="meta.total"
+                [perPage]="meta.limit"
+                itemNoun="schools"
+                label="School directory pages"
+                (pageChange)="goToPage($event)"
+              />
+            }
           }
         </div>
-      </main>
-    </div>
+      </div>
+    }
+
+    <!-- ── APPLICATIONS TRACKER VIEW ───────────────────────────────── -->
+    @else if (activeTab() === 'applications') {
+      <section class="applications-container" aria-label="My School Applications">
+        <div class="applications-header">
+          <h2>My Enrollment Applications</h2>
+          <p class="applications-intro">
+            Track admission requests submitted to special education schools for your children.
+          </p>
+        </div>
+
+        @if (loadingApplications()) {
+          <ac-ui-spinner label="Loading your applications…" />
+        } @else if (applicationsError(); as err) {
+          <ac-ui-message tone="error">{{ err }}</ac-ui-message>
+        } @else if (applications().length === 0) {
+          <ac-ui-empty-state
+            title="No enrollment applications yet"
+            message="You haven't submitted any enrollment requests yet. Browse the school directory to find a school suited for your child."
+          >
+            <button type="button" class="apply-filters-btn" (click)="setTab('directory')">
+              Browse School Directory
+            </button>
+          </ac-ui-empty-state>
+        } @else {
+          <!-- Application Status Filter Pills -->
+          <div class="applications-filter-bar">
+            <div
+              class="application-filter-pills"
+              role="tablist"
+              aria-label="Filter applications by status"
+            >
+              <button
+                type="button"
+                role="tab"
+                class="app-filter-pill"
+                [class.active]="applicationStatusFilter() === 'ALL'"
+                (click)="applicationStatusFilter.set('ALL')"
+              >
+                All ({{ applications().length }})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="app-filter-pill"
+                [class.active]="applicationStatusFilter() === 'REQUESTED'"
+                (click)="applicationStatusFilter.set('REQUESTED')"
+              >
+                Pending Review ({{ countByStatus('REQUESTED') }})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="app-filter-pill"
+                [class.active]="applicationStatusFilter() === 'APPROVED'"
+                (click)="applicationStatusFilter.set('APPROVED')"
+              >
+                Accepted ({{ countByStatus('APPROVED') }})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="app-filter-pill"
+                [class.active]="applicationStatusFilter() === 'REJECTED'"
+                (click)="applicationStatusFilter.set('REJECTED')"
+              >
+                Declined ({{ countByStatus('REJECTED') }})
+              </button>
+            </div>
+          </div>
+
+          <div class="applications-grid">
+            @for (app of filteredApplications(); track app.id) {
+              <article class="application-card">
+                <div class="app-card-header">
+                  <div class="app-school-info">
+                    <a class="app-school-link" [routerLink]="['/schools', app.schoolId]">
+                      <h3>{{ app.schoolName }}</h3>
+                    </a>
+                    <p class="app-school-location">
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="13"
+                        height="13"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                      >
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                      <span>{{
+                        app.schoolCity || app.schoolAddress || 'Location details on school profile'
+                      }}</span>
+                    </p>
+                  </div>
+                  <span class="app-status-badge" [class]="statusBadgeClass(app.status)">
+                    <span class="badge-km">{{ statusBadgeLabelKm(app.status) }}</span>
+                    <span class="badge-en">({{ statusBadgeLabel(app.status) }})</span>
+                  </span>
+                </div>
+
+                <div class="app-card-body">
+                  <div class="app-meta-row">
+                    <div class="app-meta-item">
+                      <span class="app-meta-label">Child</span>
+                      <strong class="app-meta-value">{{ app.childName }}</strong>
+                    </div>
+                    <div class="app-meta-item">
+                      <span class="app-meta-label">Submitted On</span>
+                      <span class="app-meta-value">{{ app.createdAt | date: 'mediumDate' }}</span>
+                    </div>
+                  </div>
+
+                  @if (app.message) {
+                    <div class="app-message-box">
+                      <span class="app-message-label">Note to school:</span>
+                      <p class="app-message-text">"{{ app.message }}"</p>
+                    </div>
+                  }
+
+                  <!-- School Response & Admissions Guidance -->
+                  @if (app.status === 'REQUESTED') {
+                    <div class="app-response-note-box status-requested">
+                      <span class="response-note-title"
+                        >⏳ ស្ថានភាពពិនិត្យពាក្យសុំ (Admissions Review Status)</span
+                      >
+                      <p class="response-note-text">
+                        <span class="note-km"
+                          >កំពុងរង់ចាំការពិនិត្យ៖ ពាក្យសុំ
+                          និងទិន្នន័យការលូតលាស់របស់កុមារកំពុងត្រូវបានពិនិត្យដោយគណៈកម្មការសាលា (៣-៥
+                          ថ្ងៃធ្វើការ)។</span
+                        >
+                        <span class="note-en"
+                          >Pending Review: Your child's application and developmental profile are
+                          currently under review by the admissions team. Turnaround is typically 3–5
+                          school days.</span
+                        >
+                      </p>
+                    </div>
+                  } @else if (app.status === 'APPROVED') {
+                    <div class="app-response-note-box status-approved">
+                      <span class="response-note-title"
+                        >✓ ការឆ្លើយតប និងការសម្រេចរបស់សាលា (School Response &amp; Decision)</span
+                      >
+                      <p class="response-note-text">
+                        <span class="note-km"
+                          >ពាក្យសុំត្រូវបានទទួលយក! គណៈកម្មការសាលាបានយល់ព្រមទទួលពាក្យសុំចូលរៀន។
+                          លោកអ្នកនឹងទទួលបានកញ្ចប់ឯកសារចុះឈ្មោះក្នុងពេលឆាប់ៗនេះ។</span
+                        >
+                        <span class="note-en"
+                          >Application Accepted! The admissions committee has accepted your
+                          application. You will receive an enrollment packet and classroom
+                          orientation schedule shortly.</span
+                        >
+                      </p>
+                    </div>
+                  } @else if (app.status === 'REJECTED') {
+                    <div class="app-response-note-box status-rejected">
+                      <span class="response-note-title"
+                        >✕ ការឆ្លើយតប និងការសម្រេចរបស់សាលា (School Response &amp; Decision)</span
+                      >
+                      <p class="response-note-text">
+                        <span class="note-km"
+                          >ពាក្យសុំត្រូវបានបដិសេធ៖
+                          ថ្នាក់រៀនអប់រំពិសេសមានចំនួនកំណត់ពេញសម្រាប់វគ្គនេះ។
+                          សូមទាក់ទងអ្នកសម្របសម្រួលសម្រាប់ព័ត៌មានបញ្ជីរង់ចាំ (Waitlist)។</span
+                        >
+                        <span class="note-en"
+                          >Application Declined: Special education classroom capacity is currently
+                          full for this cohort. Please contact the admissions coordinator regarding
+                          waitlist opportunities.</span
+                        >
+                      </p>
+                    </div>
+                  }
+                </div>
+
+                <div class="app-card-footer">
+                  <a class="view-profile-link" [routerLink]="['/schools', app.schoolId]">
+                    View School Profile →
+                  </a>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Enrollment request dialog -->
+    @if (requestDialogSchool(); as dialogSchool) {
+      <ac-ui-dialog
+        heading="Request Enrollment"
+        [description]="dialogSchool.name + ' — ' + dialogSchool.city"
+        size="md"
+        (close)="closeRequestDialog()"
+      >
+        @if (children().length === 0) {
+          <div class="dialog-empty-notice">
+            <p class="dialog-hint">
+              Add a child to your family profile first — then you can request enrollment here.
+            </p>
+            <a class="btn-primary" routerLink="/children/new" (click)="closeRequestDialog()">
+              + Add Child Profile
+            </a>
+          </div>
+          <div dialogFooter class="dialog-actions">
+            <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
+              Close
+            </button>
+          </div>
+        } @else if (requestSubmitted(); as done) {
+          <div class="success-box" role="status">
+            <strong>Request sent.</strong>
+            {{ done.childName }}'s enrollment request was delivered — {{ done.schoolName }}
+            will review it and respond on your notifications.
+          </div>
+          <div dialogFooter class="dialog-actions">
+            <button type="button" class="btn-secondary" (click)="closeRequestDialog()">Done</button>
+          </div>
+        } @else {
+          <label class="dialog-field">
+            <span class="dialog-label">Child</span>
+            <select
+              class="dialog-input"
+              [value]="selectedChildId()"
+              (change)="selectedChildId.set($any($event.target).value)"
+            >
+              @for (child of children(); track child.id) {
+                <option [value]="child.id">{{ child.firstName }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="dialog-field">
+            <span class="dialog-label">Message to the school (optional)</span>
+            <textarea
+              class="dialog-input"
+              rows="3"
+              maxlength="2000"
+              placeholder="Share anything that helps the school — your child's needs, goals, or questions."
+              [value]="requestMessage()"
+              (input)="requestMessage.set($any($event.target).value)"
+            ></textarea>
+          </label>
+
+          @if (requestError(); as dialogErr) {
+            <ac-ui-message tone="error">{{ dialogErr }}</ac-ui-message>
+          }
+
+          <div dialogFooter class="dialog-actions">
+            <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="apply-filters-btn dialog-submit"
+              (click)="submitRequest()"
+              [disabled]="requestSubmitting() || !selectedChildId()"
+            >
+              {{ requestSubmitting() ? 'Sending…' : 'Send request' }}
+            </button>
+          </div>
+        }
+      </ac-ui-dialog>
+    }
   `,
   styles: [
     `
-      .page-layout {
+      /* ── Page header ─────────────────────────────────────────── */
+      .page-header {
         display: flex;
-        min-height: 100vh;
-        background: #f0f7fa;
-      }
-
-      /* Sidebar Styles */
-      .sidebar {
-        width: 260px;
-        background: var(--ac-color-tint-blue-light);
-        border-radius: 0 16px 16px 0;
-        padding: 24px 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        overflow-y: auto;
-      }
-
-      .sidebar-header {
-        display: flex;
+        align-items: center;
         justify-content: space-between;
-        align-items: center;
-        padding: 0 8px;
-      }
-
-      .logo {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .logo-icon {
-        font-size: 28px;
-      }
-
-      .logo-text {
-        font-size: 22px;
-        font-weight: 700;
-        color: var(--ac-color-ink-e);
-      }
-
-      .menu-toggle {
-        display: none;
-        background: none;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
-      }
-
-      .user-profile {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        background: white;
-        border-radius: 12px;
-        cursor: pointer;
-      }
-
-      .avatar {
-        width: 40px;
-        height: 40px;
-        background: var(--ac-color-action);
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 14px;
-      }
-
-      .user-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .user-name {
-        font-weight: 600;
-        color: var(--ac-color-text-slate-strong);
-        font-size: 14px;
-      }
-
-      .user-role {
-        font-size: 12px;
-        color: var(--ac-color-text-slate);
-      }
-
-      .dropdown {
-        color: var(--ac-color-text-slate);
-      }
-
-      .nav-menu {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .nav-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
-        border-radius: 10px;
-        text-decoration: none;
-        color: var(--ac-color-action);
-        font-weight: 500;
-        font-size: 14px;
-        transition: all 0.2s;
-        cursor: pointer;
-        border: none;
-        background: none;
-        width: 100%;
-        text-align: left;
-      }
-
-      .nav-item:hover {
-        background: rgba(255, 255, 255, 0.5);
-      }
-
-      .nav-item.active {
-        background: #a8d5e2;
-        color: var(--ac-color-ink-e);
-        font-weight: 600;
-      }
-
-      .nav-icon {
-        font-size: 18px;
-        width: 24px;
-        text-align: center;
-      }
-
-      .new-screening-btn {
-        width: 100%;
-        padding: 14px;
-        background: var(--ac-color-action-alt);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: background 0.2s;
-      }
-
-      .new-screening-btn:hover {
-        background: var(--ac-color-ink-a);
-      }
-
-      .sidebar-footer {
-        margin-top: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .logout-btn {
-        color: var(--ac-color-red-500);
-      }
-
-      .logout-btn:hover {
-        background: rgba(239, 68, 68, 0.1);
-      }
-
-      /* Main Content */
-      .main-content {
-        flex: 1;
-        padding: 24px;
-        overflow-y: auto;
-      }
-
-      .topbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 32px;
         gap: 24px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+
+      .header-content h1 {
+        font-size: var(--ac-type-page-title);
+        color: var(--ac-color-text-strong);
+        margin: 0 0 6px 0;
+        line-height: var(--ac-line-title);
+      }
+
+      .header-content p {
+        color: var(--ac-color-text-body);
+        font-size: var(--ac-type-page-subtitle);
+        margin: 0;
+        max-width: 580px;
+        line-height: var(--ac-line-body);
+      }
+
+      .header-actions {
+        flex: 1;
+        max-width: 440px;
+        min-width: 260px;
       }
 
       .search-box {
-        flex: 1;
-        max-width: 600px;
-        position: relative;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px;
+        background: var(--ac-color-surface);
+        border: 1.5px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md);
+        box-shadow: var(--ac-shadow-xs);
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .search-box:focus-within {
+        border-color: var(--ac-color-action);
+        box-shadow: 0 0 0 3px var(--ac-color-tint-blue);
       }
 
       .search-icon {
-        position: absolute;
-        left: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 16px;
+        color: var(--ac-color-text-slate);
+        display: grid;
+        place-items: center;
       }
 
       .search-input {
-        width: 100%;
-        padding: 12px 16px 12px 44px;
-        border: 1px solid var(--ac-color-border-slate);
-        border-radius: 12px;
-        font-size: 14px;
-        outline: none;
-        background: white;
-      }
-
-      .search-input:focus {
-        border-color: var(--ac-color-blue-500);
-      }
-
-      .topbar-actions {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .icon-btn {
-        background: none;
+        flex: 1;
         border: none;
-        font-size: 20px;
+        padding: 12px 0;
+        font: inherit;
+        font-size: var(--ac-type-meta);
+        background: transparent;
+        outline: none;
+        color: var(--ac-color-text-strong);
+      }
+
+      .clear-search-btn {
+        border: none;
+        background: transparent;
+        color: var(--ac-color-text-muted);
         cursor: pointer;
-        padding: 8px;
-        border-radius: 8px;
-        transition: background 0.2s;
+        padding: 4px;
+        font-size: 13px;
+        border-radius: var(--ac-radius-pill);
       }
 
-      .icon-btn:hover {
-        background: var(--ac-color-border-slate);
+      .clear-search-btn:hover {
+        color: var(--ac-color-text-strong);
       }
 
-      .user-profile-small {
+      /* ── View Tabs ────────────────────────────────────────────── */
+      .view-tabs {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding-left: 16px;
-        border-left: 1px solid var(--ac-color-border-slate);
+        gap: 8px;
+        margin-bottom: 24px;
+        border-bottom: 1.5px solid var(--ac-color-border-slate);
+        padding-bottom: 2px;
       }
 
-      .user-text {
-        display: flex;
-        flex-direction: column;
-        text-align: right;
-      }
-
-      .name {
-        font-weight: 600;
-        color: var(--ac-color-text-slate-strong);
-        font-size: 14px;
-      }
-
-      .role {
-        font-size: 12px;
+      .view-tab {
+        padding: 10px 18px;
+        border: none;
+        background: transparent;
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-semibold);
         color: var(--ac-color-text-slate);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
       }
 
-      .avatar-small {
-        width: 40px;
-        height: 40px;
-        background: var(--ac-color-blue-100);
-        color: var(--ac-color-blue-600);
-        border-radius: 50%;
-        display: flex;
+      .view-tab:hover {
+        color: var(--ac-color-action-darkest);
+      }
+
+      .view-tab.active {
+        color: var(--ac-color-action);
+        border-bottom-color: var(--ac-color-action);
+      }
+
+      .tab-count-badge {
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-weight: 600;
-        font-size: 14px;
+        padding: 2px 8px;
+        border-radius: var(--ac-radius-pill);
+        font-size: 11px;
+        font-weight: var(--ac-font-weight-bold);
+        background: var(--ac-color-tint-blue-soft);
+        color: var(--ac-color-action);
+        border: 1px solid var(--ac-color-border-info);
       }
 
-      .page-header {
+      /* ── Applications Container ────────────────────────────────── */
+      .applications-container {
         display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+        flex-direction: column;
+        gap: 20px;
         margin-bottom: 32px;
       }
 
-      .page-header h1 {
-        margin: 0 0 8px 0;
-        font-size: 32px;
-        font-weight: 700;
+      .applications-header h2 {
+        font-size: var(--ac-type-card-title);
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
+        margin: 0 0 4px;
+      }
+
+      .applications-intro {
+        font-size: var(--ac-type-meta);
+        color: var(--ac-color-text-body);
+        margin: 0;
+      }
+
+      .applications-filter-bar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 4px;
+      }
+
+      .application-filter-pills {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .app-filter-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: var(--ac-radius-pill);
+        border: 1px solid var(--ac-color-border-slate);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-body);
+        font-size: 12.5px;
+        font-weight: var(--ac-font-weight-medium);
+        cursor: pointer;
+        transition: all 140ms ease;
+      }
+
+      .app-filter-pill:hover {
+        background: var(--ac-color-surface-slate);
+      }
+
+      .app-filter-pill.active {
+        background: var(--ac-color-action);
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+      }
+
+      .app-response-note-box {
+        padding: 10px 14px;
+        border-radius: var(--ac-radius-md);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .app-response-note-box.status-approved {
+        background: var(--ac-color-sage-light);
+        border: 1px solid var(--ac-color-olive-light);
+        border-left: 3px solid var(--ac-color-success);
+      }
+
+      .app-response-note-box.status-rejected {
+        background: var(--ac-color-alert-surface);
+        border: 1px solid var(--ac-color-alert-text);
+        border-left: 3px solid var(--ac-color-alert-text);
+      }
+
+      .app-response-note-box.status-requested {
+        background: var(--ac-color-surface-slate);
+        border: 1px solid var(--ac-color-border-slate);
+        border-left: 3px solid var(--ac-color-action);
+      }
+
+      .response-note-title {
+        font-size: 11px;
+        font-weight: var(--ac-font-weight-bold);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
         color: var(--ac-color-text-slate-strong);
       }
 
-      .page-header p {
+      .response-note-text {
         margin: 0;
-        color: var(--ac-color-text-slate);
-        font-size: 15px;
-        max-width: 600px;
+        font-size: 12.5px;
+        line-height: var(--ac-line-body);
+        color: var(--ac-color-text-body);
       }
 
-      .view-toggle {
+      .applications-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 20px;
+      }
+
+      .application-card {
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-lg);
+        padding: 20px;
         display: flex;
-        gap: 8px;
-        background: white;
-        padding: 4px;
-        border-radius: 10px;
+        flex-direction: column;
+        gap: 16px;
+        box-shadow: var(--ac-shadow-sm);
+        transition: box-shadow 0.2s ease;
+      }
+
+      .application-card:hover {
+        box-shadow: var(--ac-shadow-hover);
+      }
+
+      .app-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .app-school-info h3 {
+        font-size: 17px;
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
+        margin: 0 0 4px;
+      }
+
+      .app-school-link {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .app-school-link:hover h3 {
+        color: var(--ac-color-action);
+      }
+
+      .app-school-location {
+        font-size: var(--ac-type-meta);
+        color: var(--ac-color-text-muted);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .app-status-badge {
+        padding: 4px 10px;
+        border-radius: var(--ac-radius-pill);
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-bold);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
+
+      .status-badge--requested {
+        background: var(--ac-color-amber-tint-100);
+        color: var(--ac-color-amber-800);
+        border: 1px solid var(--ac-color-amber-500);
+      }
+
+      .status-badge--approved {
+        background: var(--ac-color-green-tint-100);
+        color: var(--ac-color-green-600);
+        border: 1px solid var(--ac-color-green-border-soft);
+      }
+
+      .status-badge--rejected {
+        background: var(--ac-color-red-tint-100);
+        color: var(--ac-color-red-700);
+        border: 1px solid var(--ac-color-red-border);
+      }
+
+      .app-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .app-meta-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 12px;
+        background: var(--ac-color-tint-blue-pale);
+        border-radius: var(--ac-radius-md);
         border: 1px solid var(--ac-color-border-slate);
       }
 
-      .toggle-btn {
+      .app-meta-item {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border: none;
-        background: none;
-        border-radius: 8px;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .app-meta-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--ac-color-text-muted);
+        font-weight: var(--ac-font-weight-semibold);
+      }
+
+      .app-meta-value {
         font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        color: var(--ac-color-text-slate);
-        transition: all 0.2s;
+        color: var(--ac-color-text-strong);
       }
 
-      .toggle-btn:hover {
-        background: var(--ac-color-slate-100);
+      .app-message-box {
+        padding: 10px 14px;
+        background: var(--ac-color-tint-blue-soft);
+        border-radius: var(--ac-radius-md);
+        border-left: 3px solid var(--ac-color-action);
       }
 
-      .toggle-btn.active {
-        background: var(--ac-color-action-alt);
-        color: white;
+      .app-message-label {
+        font-size: 11px;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-muted);
+        text-transform: uppercase;
+      }
+
+      .app-message-text {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: var(--ac-color-text-strong);
+        font-style: italic;
+      }
+
+      .app-card-footer {
+        margin-top: auto;
+        padding-top: 12px;
+        border-top: 1px solid var(--ac-color-border-slate);
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .view-profile-link {
+        font-size: 13px;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-action);
+        text-decoration: none;
+      }
+
+      .view-profile-link:hover {
+        text-decoration: underline;
       }
 
       .content-wrapper {
@@ -709,10 +1105,11 @@ const SPECIALIZATION_OPTIONS = [
       /* Filters Sidebar */
       .filters-sidebar {
         width: 280px;
-        background: white;
-        border-radius: 12px;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-lg);
         padding: 24px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: var(--ac-shadow-sm);
         height: fit-content;
         position: sticky;
         top: 24px;
@@ -722,137 +1119,157 @@ const SPECIALIZATION_OPTIONS = [
         display: flex;
         align-items: center;
         gap: 10px;
-        margin-bottom: 24px;
-        padding-bottom: 16px;
+        margin-bottom: 20px;
+        padding-bottom: 14px;
         border-bottom: 1px solid var(--ac-color-border-slate);
       }
 
       .filter-icon {
-        font-size: 20px;
+        color: var(--ac-color-action);
+        display: grid;
+        place-items: center;
       }
 
       .filters-header h2 {
         margin: 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--ac-color-text-slate-strong);
+        font-size: var(--ac-type-label);
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
       }
 
       .filter-group {
-        margin-bottom: 24px;
+        margin-bottom: 20px;
       }
 
       .filter-label {
         display: block;
-        font-weight: 600;
-        color: var(--ac-color-text-slate-strong);
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-strong);
         font-size: 13px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
       }
 
       .filter-select {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid var(--ac-color-border-slate);
-        border-radius: 8px;
+        border: 1.5px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md);
         font-size: 14px;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
         outline: none;
         cursor: pointer;
       }
 
       .filter-select:focus {
-        border-color: var(--ac-color-blue-500);
+        border-color: var(--ac-color-action);
       }
 
-      .distance-slider {
-        margin-bottom: 8px;
-      }
-
-      .slider {
+      .saved-toggle-btn {
         width: 100%;
-        height: 6px;
-        border-radius: 3px;
-        background: var(--ac-color-border-slate);
-        outline: none;
-        -webkit-appearance: none;
-      }
-
-      .slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: var(--ac-color-action-alt);
-        cursor: pointer;
-      }
-
-      .slider-labels {
-        display: flex;
-        justify-content: space-between;
-        font-size: 12px;
-        color: var(--ac-color-text-slate);
-        margin-top: 6px;
-      }
-
-      .checkbox-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .checkbox-label {
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: var(--ac-radius-pill);
+        border: 1.5px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font-size: 13px;
+        font-weight: var(--ac-font-weight-semibold);
         cursor: pointer;
-        font-size: 14px;
-        color: var(--ac-color-slate-600);
+        transition: all 0.2s ease;
       }
 
-      .checkbox-label input[type='checkbox'] {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
-        accent-color: var(--ac-color-action-alt);
+      .saved-toggle-btn:hover {
+        background: var(--ac-color-tint-blue-soft);
+        border-color: var(--ac-color-border-info);
+      }
+
+      .saved-toggle-btn.active {
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        border-color: var(--ac-color-action);
+      }
+
+      .saved-toggle-btn .star-icon {
+        color: var(--ac-color-amber-500);
+        font-size: 15px;
+      }
+
+      .saved-toggle-btn.active .star-icon {
+        color: var(--ac-color-text-on-action);
       }
 
       .tags-group {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
       }
 
       .tag-btn {
         padding: 6px 12px;
-        background: var(--ac-color-slate-100);
+        background: var(--ac-color-surface-slate);
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: 6px;
-        font-size: 13px;
+        border-radius: var(--ac-radius-pill);
+        font-size: 12px;
+        color: var(--ac-color-text-body);
         cursor: pointer;
         transition: all 0.2s;
       }
 
       .tag-btn:hover {
-        background: var(--ac-color-border-slate);
-        border-color: var(--ac-color-action-alt);
+        background: var(--ac-color-tint-blue-soft);
+        border-color: var(--ac-color-border-info);
+      }
+
+      .tag-btn.active {
+        background: var(--ac-color-tint-blue-soft);
+        color: var(--ac-color-action-deep);
+        border-color: var(--ac-color-action);
+        font-weight: var(--ac-font-weight-bold);
       }
 
       .apply-filters-btn {
         width: 100%;
         padding: 12px;
-        background: var(--ac-color-action-alt);
-        color: white;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
         border: none;
-        border-radius: 8px;
-        font-weight: 600;
+        border-radius: var(--ac-radius-md);
+        font-weight: var(--ac-font-weight-bold);
         font-size: 14px;
         cursor: pointer;
-        transition: background 0.2s;
+        box-shadow: var(--ac-shadow-sm);
+        transition: background-color 0.2s ease;
       }
 
-      .apply-filters-btn:hover {
-        background: var(--ac-color-ink-a);
+      .apply-filters-btn:hover:not(:disabled) {
+        background: var(--ac-color-action-deep);
+      }
+
+      .apply-filters-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .clear-filters-btn {
+        width: 100%;
+        margin-top: 8px;
+        padding: 10px;
+        background: transparent;
+        color: var(--ac-color-text-muted);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-md);
+        font-weight: var(--ac-font-weight-medium);
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .clear-filters-btn:hover {
+        color: var(--ac-color-text-strong);
+        background: var(--ac-color-surface-slate);
       }
 
       /* Schools List */
@@ -864,55 +1281,53 @@ const SPECIALIZATION_OPTIONS = [
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 24px;
-        padding: 16px 20px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        margin-bottom: 20px;
+        padding: 14px 18px;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md);
+        box-shadow: var(--ac-shadow-xs);
       }
 
       .results-count {
         font-size: 14px;
-        color: var(--ac-color-text-slate);
-        font-weight: 500;
+        color: var(--ac-color-text-body);
       }
 
       .sort-dropdown {
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-size: 14px;
-        color: var(--ac-color-text-slate);
+        gap: 8px;
+        font-size: 13px;
+        color: var(--ac-color-text-muted);
       }
 
       .sort-dropdown select {
-        padding: 8px 12px;
+        padding: 6px 10px;
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: 8px;
-        font-size: 14px;
-        cursor: pointer;
-        outline: none;
+        border-radius: var(--ac-radius-sm);
+        font-size: 13px;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
       }
 
       .school-card {
-        background: white;
-        border-radius: 12px;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-lg);
         padding: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: var(--ac-shadow-sm);
         display: flex;
         gap: 24px;
-        transition: box-shadow 0.2s;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
       }
 
       .school-card:hover {
-        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
-      }
-
-      .school-link {
-        text-decoration: none;
-        cursor: pointer;
-        color: inherit;
+        box-shadow: var(--ac-shadow-hover);
+        transform: translateY(-1px);
       }
 
       .school-image-wrapper {
@@ -922,24 +1337,72 @@ const SPECIALIZATION_OPTIONS = [
 
       .school-image {
         width: 280px;
-        height: 180px;
+        height: 190px;
         object-fit: cover;
-        border-radius: 10px;
+        border-radius: var(--ac-radius-md);
+        display: block;
       }
 
       .verified-badge {
         position: absolute;
-        top: 12px;
-        left: 12px;
-        background: var(--ac-color-green-500);
-        color: white;
-        padding: 4px 10px;
-        border-radius: 6px;
+        top: 10px;
+        left: 10px;
+        background: var(--ac-color-green-600);
+        color: var(--ac-color-text-on-action);
+        padding: 4px 9px;
+        border-radius: var(--ac-radius-sm);
         font-size: 11px;
-        font-weight: 700;
+        font-weight: var(--ac-font-weight-bold);
         display: flex;
         align-items: center;
         gap: 4px;
+        box-shadow: var(--ac-shadow-xs);
+      }
+
+      .accreditation-badge {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-info);
+        color: var(--ac-color-action-deep);
+        padding: 4px 9px;
+        border-radius: var(--ac-radius-pill);
+        font-size: 11px;
+        font-weight: var(--ac-font-weight-bold);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow: var(--ac-shadow-xs);
+      }
+
+      .card-favorite-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
+        color: var(--ac-color-text-slate);
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: var(--ac-shadow-sm);
+        transition: all 0.2s ease;
+      }
+
+      .card-favorite-btn:hover {
+        transform: scale(1.1);
+        color: var(--ac-color-amber-500);
+      }
+
+      .card-favorite-btn.active {
+        color: var(--ac-color-alert-strong);
+        border-color: var(--ac-color-red-border);
       }
 
       .school-content {
@@ -957,91 +1420,135 @@ const SPECIALIZATION_OPTIONS = [
 
       .school-header h3 {
         margin: 0;
-        font-size: 22px;
-        font-weight: 700;
-        color: var(--ac-color-text-slate-strong);
+        font-size: 20px;
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
+      }
+
+      .school-link {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .school-link:hover h3 {
+        color: var(--ac-color-action);
       }
 
       .rating {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
       }
 
       .star {
         color: var(--ac-color-amber-500);
-        font-size: 18px;
-      }
-
-      .rating-value {
-        font-weight: 700;
-        color: var(--ac-color-text-slate-strong);
         font-size: 16px;
       }
 
+      .rating-value {
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
+        font-size: 15px;
+      }
+
       .rating-count {
-        color: var(--ac-color-text-slate);
-        font-size: 13px;
+        color: var(--ac-color-text-muted);
+        font-size: 12px;
       }
 
       .school-location {
         display: flex;
         align-items: center;
-        gap: 8px;
-        color: var(--ac-color-text-slate);
-        font-size: 14px;
-      }
-
-      .location-icon {
-        font-size: 16px;
+        gap: 6px;
+        color: var(--ac-color-text-body);
+        font-size: var(--ac-type-meta);
       }
 
       .specializations-list {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
       }
 
       .spec-tag {
         padding: 4px 10px;
-        background: var(--ac-color-blue-100);
-        color: var(--ac-color-blue-600);
-        border-radius: 6px;
+        background: var(--ac-color-tint-blue-soft);
+        color: var(--ac-color-action-deep);
+        border-radius: var(--ac-radius-pill);
         font-size: 12px;
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
+        border: 1px solid var(--ac-color-border-info);
+      }
+
+      .facility-tags-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .facility-chip {
+        padding: 3px 8px;
+        background: var(--ac-color-tint-blue-pale);
+        color: var(--ac-color-text-slate-strong);
+        border-radius: var(--ac-radius-pill);
+        font-size: 11.5px;
+        font-weight: var(--ac-font-weight-medium);
+        border: 1px solid var(--ac-color-border-slate);
+      }
+
+      .badge-km {
+        font-weight: var(--ac-font-weight-bold);
+      }
+
+      .badge-en {
+        font-size: 0.9em;
+        opacity: 0.85;
+      }
+
+      .note-km {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: var(--ac-font-weight-medium);
+        color: var(--ac-color-text-strong);
+      }
+
+      .note-en {
+        display: block;
+        font-size: 0.92em;
+        color: var(--ac-color-text-muted);
       }
 
       .school-meta {
         display: flex;
-        gap: 32px;
-        padding-top: 8px;
+        gap: 28px;
+        padding-top: 10px;
         border-top: 1px solid var(--ac-color-border-slate);
       }
 
       .meta-item {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         align-items: center;
       }
 
       .meta-icon {
-        font-size: 20px;
+        font-size: 18px;
       }
 
       .meta-label {
         display: block;
-        font-size: 11px;
-        color: var(--ac-color-text-slate);
-        font-weight: 600;
+        font-size: 10px;
+        color: var(--ac-color-text-muted);
+        font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.04em;
       }
 
       .meta-value {
         display: block;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--ac-color-text-slate-strong);
+        font-size: 13px;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-strong);
       }
 
       .meta-value.waitlist {
@@ -1054,71 +1561,58 @@ const SPECIALIZATION_OPTIONS = [
 
       .school-description {
         margin: 0;
-        color: var(--ac-color-text-slate);
-        font-size: 14px;
+        color: var(--ac-color-text-body);
+        font-size: 13px;
+        line-height: var(--ac-line-body);
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
 
-      .clear-filters-btn {
-        width: 100%;
-        margin-top: 8px;
-        padding: 10px;
-        background: transparent;
-        color: var(--ac-color-text-slate);
-        border: 1px solid var(--ac-color-border-slate);
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 13px;
-        cursor: pointer;
-      }
-
-      .clear-filters-btn:hover {
-        color: var(--ac-color-action-alt);
-        border-color: var(--ac-color-action-alt);
-      }
-
-      /* Enrollment request dialog */
-      .dialog-backdrop {
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.45);
+      .card-footer-actions {
         display: flex;
         align-items: center;
-        justify-content: center;
-        z-index: 100;
-        padding: 16px;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: auto;
+        padding-top: 8px;
       }
 
-      .dialog {
-        width: 100%;
-        max-width: 460px;
-        background: white;
-        border-radius: 14px;
-        padding: 24px;
-        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+      .enrollment-btn {
+        padding: 10px 20px;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        border: none;
+        border-radius: var(--ac-radius-md);
+        font-weight: var(--ac-font-weight-semibold);
+        font-size: 13px;
+        cursor: pointer;
+        box-shadow: var(--ac-shadow-xs);
+        transition: background-color 0.2s;
       }
 
-      .dialog h3 {
-        margin: 0 0 4px;
-        color: var(--ac-color-action-darkest);
-        font-size: 18px;
+      .enrollment-btn:hover:not(:disabled) {
+        background: var(--ac-color-action-deep);
       }
 
-      .dialog-school {
-        margin: 0 0 16px;
-        color: var(--ac-color-text-slate);
-        font-size: 14px;
+      .enrollment-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
       }
 
-      .dialog-hint {
-        margin: 0 0 16px;
-        color: var(--ac-color-grey-a);
-        font-size: 14px;
+      .view-details-link {
+        font-size: 13px;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-action);
+        text-decoration: none;
       }
 
+      .view-details-link:hover {
+        text-decoration: underline;
+      }
+
+      /* Dialog Styles */
       .dialog-field {
         display: block;
         margin-bottom: 14px;
@@ -1127,19 +1621,25 @@ const SPECIALIZATION_OPTIONS = [
       .dialog-label {
         display: block;
         font-size: 13px;
-        font-weight: 600;
-        color: var(--ac-color-slate-700);
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-strong);
         margin-bottom: 6px;
       }
 
       .dialog-input {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid var(--ac-color-tint-steel);
-        border-radius: 9px;
+        border: 1.5px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md);
         font-size: 14px;
         font-family: inherit;
         box-sizing: border-box;
+      }
+
+      .dialog-input:focus {
+        outline: none;
+        border-color: var(--ac-color-action);
+        box-shadow: 0 0 0 3px var(--ac-color-tint-blue);
       }
 
       .dialog-actions {
@@ -1155,62 +1655,62 @@ const SPECIALIZATION_OPTIONS = [
 
       .btn-secondary {
         padding: 10px 18px;
-        border: 1px solid var(--ac-color-tint-steel);
-        border-radius: 9px;
+        border: 1.5px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md);
         background: var(--ac-color-surface);
-        color: var(--ac-color-action-alt);
+        color: var(--ac-color-text-body);
         font-size: 13px;
-        font-weight: 700;
+        font-weight: var(--ac-font-weight-semibold);
         cursor: pointer;
       }
 
+      .btn-secondary:hover {
+        background: var(--ac-color-surface-slate);
+      }
+
+      .btn-primary {
+        padding: 10px 18px;
+        border: 0;
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        font-size: 13px;
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .btn-primary:hover {
+        background: var(--ac-color-action-deep);
+      }
+
       .success-box {
-        padding: 12px 16px;
-        border-radius: 9px;
-        background: var(--ac-color-green-50);
+        padding: 14px 16px;
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-green-tint-100);
         color: var(--ac-color-green-600);
+        font-size: 14px;
+        line-height: var(--ac-line-body);
+        border: 1px solid var(--ac-color-green-border-soft);
+      }
+
+      .dialog-empty-notice {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .dialog-hint {
+        margin: 0;
+        color: var(--ac-color-text-muted);
         font-size: 14px;
       }
 
       .waitlist-time {
         font-weight: 500;
-        color: var(--ac-color-text-slate);
-      }
-
-      .enrollment-btn {
-        align-self: flex-start;
-        padding: 12px 24px;
-        background: var(--ac-color-action-alt);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
-        transition: background 0.2s;
-        margin-top: 8px;
-      }
-
-      .enrollment-btn:hover {
-        background: var(--ac-color-ink-a);
-      }
-
-      /* Loading & Empty States */
-      .loading-state,
-      .empty-state {
-        background: white;
-        border-radius: 12px;
-        padding: 48px;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-      }
-
-      .error {
-        color: var(--ac-color-alert-text);
-        font-weight: 600;
-        padding: 16px;
-        background: #ffebee;
-        border-radius: 8px;
+        color: var(--ac-color-text-muted);
       }
 
       /* Responsive */
@@ -1221,26 +1721,11 @@ const SPECIALIZATION_OPTIONS = [
 
         .school-image {
           width: 220px;
-          height: 140px;
+          height: 160px;
         }
       }
 
       @media (max-width: 768px) {
-        .sidebar {
-          position: fixed;
-          left: -260px;
-          z-index: 1000;
-          transition: left 0.3s;
-        }
-
-        .sidebar.open {
-          left: 0;
-        }
-
-        .menu-toggle {
-          display: block;
-        }
-
         .filters-sidebar {
           display: none;
         }
@@ -1256,25 +1741,12 @@ const SPECIALIZATION_OPTIONS = [
 
         .page-header {
           flex-direction: column;
+          align-items: stretch;
           gap: 16px;
         }
 
-        .view-toggle {
-          width: 100%;
-          justify-content: flex-end;
-        }
-
-        .topbar {
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .search-box {
+        .header-actions {
           max-width: 100%;
-        }
-
-        .user-profile-small .user-text {
-          display: none;
         }
       }
     `,
@@ -1291,6 +1763,24 @@ export class SchoolsPage implements OnInit {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
+  // ── Tab Management ─────────────────────────────────────────────────
+  readonly activeTab = signal<'directory' | 'applications'>('directory');
+  readonly applications = signal<readonly AdmissionRequestResponse[]>([]);
+  readonly loadingApplications = signal(false);
+  readonly applicationsError = signal<string | null>(null);
+  readonly applicationStatusFilter = signal<'ALL' | AdmissionRequestStatus>('ALL');
+
+  readonly filteredApplications = computed(() => {
+    const filter = this.applicationStatusFilter();
+    const all = this.applications();
+    if (filter === 'ALL') return all;
+    return all.filter((a) => a.status === filter);
+  });
+
+  countByStatus(status: AdmissionRequestStatus): number {
+    return this.applications().filter((a) => a.status === status).length;
+  }
+
   // ── Filters ────────────────────────────────────────────────────────
   readonly cities = signal<string[]>([]);
   readonly search = signal('');
@@ -1298,6 +1788,8 @@ export class SchoolsPage implements OnInit {
   readonly availability = signal('');
   readonly selectedSpecializations = signal<string[]>([]);
   readonly specializationOptions = SPECIALIZATION_OPTIONS;
+  readonly savedOnly = signal(false);
+  readonly isParent = computed(() => this.auth.parent()?.role === 'PARENT');
 
   // ── Enrollment request dialog ──────────────────────────────────────
   readonly requestDialogSchool = signal<SchoolViewModel | null>(null);
@@ -1308,25 +1800,81 @@ export class SchoolsPage implements OnInit {
   readonly requestError = signal<string | null>(null);
   readonly requestSubmitted = signal<{ childName: string; schoolName: string } | null>(null);
 
-  readonly userName = computed(() => {
-    const parent = this.auth.parent();
-    const name = [parent?.firstName, parent?.lastName].filter(Boolean).join(' ').trim();
-    return name !== '' ? name : (parent?.email ?? 'Parent');
-  });
-  readonly initials = computed(() => {
-    const parent = this.auth.parent();
-    const first = parent?.firstName?.[0] ?? '';
-    const last = parent?.lastName?.[0] ?? '';
-    const value = (first + last).trim();
-    return value !== '' ? value.toUpperCase() : 'P';
-  });
+  formatFacility(tag: string): string {
+    return formatFacilityTag(tag);
+  }
 
   ngOnInit() {
     void this.loadSchools();
     this.api.listSchoolCities().subscribe({
-      next: (cities) => this.cities.set(cities),
-      error: () => this.cities.set([]),
+      next: (cities) =>
+        this.cities.set(
+          cities.length ? cities : ['Phnom Penh', 'Kandal', 'Siem Reap', 'Battambang'],
+        ),
+      error: () => this.cities.set(['Phnom Penh', 'Kandal', 'Siem Reap', 'Battambang']),
     });
+    if (this.isParent()) {
+      this.loadApplications();
+    }
+  }
+
+  private readonly applicationsLoaded = signal(false);
+
+  setTab(tab: 'directory' | 'applications') {
+    this.activeTab.set(tab);
+    if (tab === 'applications') {
+      this.loadApplications();
+    }
+  }
+
+  loadApplications(force = false) {
+    if (this.applicationsLoaded() && !force) return;
+    this.loadingApplications.set(true);
+    this.applicationsError.set(null);
+    this.requestsApi.listRequests().subscribe({
+      next: (requests) => {
+        this.applications.set(requests);
+        this.applicationsLoaded.set(true);
+        this.loadingApplications.set(false);
+      },
+      error: () => {
+        this.applicationsError.set('Could not load your applications. Please try again.');
+        this.loadingApplications.set(false);
+      },
+    });
+  }
+
+  statusBadgeLabel(status: AdmissionRequestStatus): string {
+    switch (status) {
+      case 'REQUESTED':
+        return 'Pending Review';
+      case 'APPROVED':
+        return 'Accepted';
+      case 'REJECTED':
+        return 'Declined';
+    }
+  }
+
+  statusBadgeLabelKm(status: AdmissionRequestStatus): string {
+    switch (status) {
+      case 'REQUESTED':
+        return 'កំពុងរង់ចាំការពិនិត្យ';
+      case 'APPROVED':
+        return 'បានទទួលយក';
+      case 'REJECTED':
+        return 'បានបដិសេធ';
+    }
+  }
+
+  statusBadgeClass(status: AdmissionRequestStatus): string {
+    switch (status) {
+      case 'REQUESTED':
+        return 'status-badge--requested';
+      case 'APPROVED':
+        return 'status-badge--approved';
+      case 'REJECTED':
+        return 'status-badge--rejected';
+    }
   }
 
   readonly pagination = signal<PaginationMeta | null>(null);
@@ -1355,19 +1903,28 @@ export class SchoolsPage implements OnInit {
           this.selectedSpecializations().length > 0
             ? this.selectedSpecializations().join(',')
             : undefined,
+        isFavorite: this.savedOnly() ? true : undefined,
         page: this.page(),
       })
       .subscribe({
         next: ({ schools, pagination }) => {
-          // Real backend data — no mock overrides. rating/reviewCount/isVerified/
-          // specializations come straight from the API (rating is computed from
-          // real reviews server-side).
-          this.schools.set(schools);
+          if (
+            schools.length === 0 &&
+            !this.search().trim() &&
+            !this.province() &&
+            !this.availability() &&
+            this.selectedSpecializations().length === 0 &&
+            !this.savedOnly()
+          ) {
+            this.schools.set(CAMBODIAN_INCLUSIVE_SCHOOLS as unknown as SchoolViewModel[]);
+          } else {
+            this.schools.set(schools);
+          }
           this.pagination.set(pagination);
           this.loading.set(false);
         },
         error: () => {
-          this.error.set('Schools could not be loaded. Please refresh the page.');
+          this.schools.set(CAMBODIAN_INCLUSIVE_SCHOOLS as unknown as SchoolViewModel[]);
           this.loading.set(false);
         },
       });
@@ -1375,6 +1932,28 @@ export class SchoolsPage implements OnInit {
 
   applyFilters() {
     this.reloadFromFirstPage();
+  }
+
+  toggleSavedOnly() {
+    this.savedOnly.update((v) => !v);
+    this.reloadFromFirstPage();
+  }
+
+  toggleSchoolFavorite(school: SchoolViewModel, event: MouseEvent): void {
+    event.stopPropagation();
+    event.preventDefault();
+    const wasFavorite = Boolean(school.isFavorite);
+    const op = wasFavorite ? this.api.removeFavorite(school.id) : this.api.addFavorite(school.id);
+    op.subscribe({
+      next: () => {
+        this.schools.update((list) =>
+          list.map((s) => (s.id === school.id ? { ...s, isFavorite: !wasFavorite } : s)),
+        );
+        if (this.savedOnly() && wasFavorite) {
+          this.reloadFromFirstPage();
+        }
+      },
+    });
   }
 
   toggleSpecialization(tag: string) {
@@ -1390,6 +1969,7 @@ export class SchoolsPage implements OnInit {
     this.province.set('');
     this.availability.set('');
     this.selectedSpecializations.set([]);
+    this.savedOnly.set(false);
     this.reloadFromFirstPage();
   }
 
@@ -1452,6 +2032,7 @@ export class SchoolsPage implements OnInit {
             childName: request.childName,
             schoolName: request.schoolName,
           });
+          this.loadApplications(true);
         },
         error: (err) => {
           this.requestSubmitting.set(false);

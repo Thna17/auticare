@@ -54,6 +54,9 @@ afterAll(async () => {
     await prisma.schoolChildEnrollment.deleteMany({ where: { childId } });
   }
   if (parentId || schoolUserId) {
+    await prisma.notification.deleteMany({
+      where: { parentId: { in: [parentId, schoolUserId].filter(Boolean) } },
+    });
     await prisma.parent.deleteMany({
       where: { id: { in: [parentId, schoolUserId].filter(Boolean) } },
     });
@@ -139,7 +142,7 @@ describe('school activity reports', () => {
   // submitted, and the parent's progress page — which lists SUBMITTED only —
   // never showed the report. The copy is gone; this is the guard that the
   // surviving one keeps the status it is given.
-  it('stores the submitted status it is asked for', async () => {
+  it('stores the submitted status it is asked for and notifies the parent', async () => {
     const schoolAgent = request.agent(app);
     await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
 
@@ -159,9 +162,23 @@ describe('school activity reports', () => {
     // not the same as the row holding it.
     const readBack = await schoolAgent.get(`/api/v1/schools/reports/${created.body.data.id}`);
     expect(readBack.body.data.status).toBe('SUBMITTED');
+
+    // Verify parent notification creation
+    const notification = await prisma.notification.findFirst({
+      where: {
+        parentId,
+        reportId: created.body.data.id,
+        type: 'SCHOOL_REPORT',
+      },
+    });
+    expect(notification).not.toBeNull();
+    expect(notification?.status).toBe('UNREAD');
+    expect(notification?.schoolId).toBe(schoolId);
+    expect(notification?.title).toBe('New School Report for Report Child');
+    expect(notification?.body).toContain('posted a developmental observation report: Status check');
   });
 
-  it('still defaults to DRAFT when no status is asked for', async () => {
+  it('still defaults to DRAFT when no status is asked for and sends no notification', async () => {
     const schoolAgent = request.agent(app);
     await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
 
@@ -174,6 +191,53 @@ describe('school activity reports', () => {
 
     expect(created.status).toBe(201);
     expect(created.body.data.status).toBe('DRAFT');
+
+    const draftNotification = await prisma.notification.findFirst({
+      where: { reportId: created.body.data.id },
+    });
+    expect(draftNotification).toBeNull();
+  });
+
+  it('creates an unread parent notification when a draft report is updated to SUBMITTED', async () => {
+    const schoolAgent = request.agent(app);
+    await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
+
+    const draft = await schoolAgent.post('/api/v1/schools/reports').send({
+      childId,
+      activityCategory: 'Speech & Language',
+      activityName: 'Vocabulary Practice',
+      summary: 'Practiced two-word phrases.',
+      teacherObservation: 'Good vocalization.',
+      status: 'DRAFT',
+    });
+    expect(draft.status).toBe(201);
+    expect(draft.body.data.status).toBe('DRAFT');
+
+    const beforeNotif = await prisma.notification.findFirst({
+      where: { reportId: draft.body.data.id },
+    });
+    expect(beforeNotif).toBeNull();
+
+    const updated = await schoolAgent.patch(`/api/v1/schools/reports/${draft.body.data.id}`).send({
+      status: 'SUBMITTED',
+    });
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.status).toBe('SUBMITTED');
+
+    const notification = await prisma.notification.findFirst({
+      where: {
+        parentId,
+        reportId: draft.body.data.id,
+        type: 'SCHOOL_REPORT',
+      },
+    });
+    expect(notification).not.toBeNull();
+    expect(notification?.status).toBe('UNREAD');
+    expect(notification?.schoolId).toBe(schoolId);
+    expect(notification?.title).toBe('New School Report for Report Child');
+    expect(notification?.body).toContain(
+      'posted a developmental observation report: Vocabulary Practice',
+    );
   });
 
   // Delete was the one thing the removed /activity-reports routes still offered
@@ -229,5 +293,39 @@ describe('school activity reports', () => {
 
     await prisma.activityReport.delete({ where: { id: foreign.id } });
     await prisma.school.delete({ where: { id: otherSchool.id } });
+  });
+
+  it('filters reports using the search query parameter across title, category, or child name', async () => {
+    const schoolAgent = request.agent(app);
+    await schoolAgent.post('/api/v1/auth/login').send({ email: schoolEmail, password });
+
+    const createdReport = await schoolAgent.post('/api/v1/schools/reports').send({
+      childId,
+      activityCategory: 'Art & Expression',
+      activityName: 'Finger Painting Mastery',
+      teacherObservation: 'Explored textures and primary colors.',
+    });
+    expect(createdReport.status).toBe(201);
+
+    // Search by title match
+    const titleMatch = await schoolAgent.get('/api/v1/schools/reports?search=Finger');
+    expect(titleMatch.status).toBe(200);
+    expect(
+      titleMatch.body.data.reports.some((r: { id: string }) => r.id === createdReport.body.data.id),
+    ).toBe(true);
+
+    // Search by category match
+    const catMatch = await schoolAgent.get('/api/v1/schools/reports?search=Expression');
+    expect(catMatch.status).toBe(200);
+    expect(
+      catMatch.body.data.reports.some((r: { id: string }) => r.id === createdReport.body.data.id),
+    ).toBe(true);
+
+    // Search with non-matching query
+    const noMatch = await schoolAgent.get('/api/v1/schools/reports?search=NonExistentQueryXYZ');
+    expect(noMatch.status).toBe(200);
+    expect(
+      noMatch.body.data.reports.some((r: { id: string }) => r.id === createdReport.body.data.id),
+    ).toBe(false);
   });
 });

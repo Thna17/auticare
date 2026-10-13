@@ -237,15 +237,15 @@ import { availabilityLabel, availabilityTone } from '../school-display.util';
         font-weight: var(--ac-font-weight-bold);
       }
       .avail.open {
-        background: #e2efe3;
+        background: var(--ac-color-green-tint-pale);
         color: var(--ac-color-green-700);
       }
       .avail.wait {
-        background: #f6ecd4;
-        color: #8a6414;
+        background: var(--ac-color-amber-tint-cream);
+        color: var(--ac-color-amber-800-alt);
       }
       .avail.closed {
-        background: #eef1f2;
+        background: var(--ac-color-slate-surface-mist);
         color: var(--ac-color-text-muted);
       }
       .edit-btn {

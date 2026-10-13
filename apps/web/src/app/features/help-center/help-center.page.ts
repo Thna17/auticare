@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import type { OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { helpCenterCategories } from './help-center.data';
 
 type FaqItem = {
@@ -19,8 +21,48 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
 
 @Component({
   standalone: true,
+  imports: [RouterLink],
   template: `
     <section class="help">
+      <!-- Emergency & Crisis Support Quick Banner -->
+      <section
+        id="emergency"
+        class="emergency-banner"
+        role="region"
+        aria-label="Crisis and Emergency Resources"
+      >
+        <div class="emergency-header">
+          <span class="emergency-icon" aria-hidden="true">🆘</span>
+          <div class="emergency-title-group">
+            <h2>Crisis &amp; Mental Health Emergency Support</h2>
+            <p>
+              Immediate 24/7 confidential help for mental health crises, sensory overload, and
+              pediatric emergencies.
+            </p>
+          </div>
+        </div>
+        <div class="emergency-hotlines">
+          <div class="hotline-pill">
+            <span class="hotline-name">988 Suicide &amp; Crisis Lifeline</span>
+            <a href="tel:988" class="hotline-link">Call or Text 988</a>
+          </div>
+          <div class="hotline-pill">
+            <span class="hotline-name">Crisis Text Line</span>
+            <a href="sms:741741?&body=HOME" class="hotline-link">Text HOME to 741741</a>
+          </div>
+          <div class="hotline-pill">
+            <span class="hotline-name">Autism Response Team</span>
+            <a href="tel:18882884762" class="hotline-link">Call 1-888-288-4762</a>
+          </div>
+        </div>
+        <div class="emergency-footer">
+          <a routerLink="/crisis" class="full-hub-link">
+            <span>View Complete Crisis &amp; Sensory De-escalation Protocol Hub</span>
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </section>
+
       <header class="head">
         <h1>Help Center</h1>
         <p class="subtitle">
@@ -328,6 +370,91 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
         outline-offset: 2px;
       }
 
+      /* Emergency Banner */
+      .emergency-banner {
+        border: 1px solid var(--ac-color-alert-strong);
+        border-radius: 14px;
+        background: var(--ac-color-surface);
+        padding: 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      }
+
+      .emergency-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .emergency-icon {
+        font-size: 24px;
+        flex-shrink: 0;
+      }
+
+      .emergency-title-group h2 {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--ac-color-alert-strong);
+        margin: 0 0 4px;
+      }
+
+      .emergency-title-group p {
+        font-size: 13.5px;
+        color: var(--ac-color-slate-600);
+        margin: 0;
+        line-height: 1.4;
+      }
+
+      .emergency-hotlines {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .hotline-pill {
+        background: var(--ac-color-surface-slate);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 10px;
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .hotline-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ac-color-slate-700);
+      }
+
+      .hotline-link {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--ac-color-alert-strong);
+        text-decoration: underline;
+      }
+
+      .emergency-footer {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .full-hub-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ac-color-action-alt);
+        text-decoration: none;
+      }
+
+      .full-hub-link:hover {
+        text-decoration: underline;
+      }
+
       @media (max-width: 560px) {
         .contact-card {
           flex-direction: column;
@@ -338,7 +465,15 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HelpCenterPage {
+export class HelpCenterPage implements OnInit {
+  ngOnInit() {
+    if (typeof window !== 'undefined' && window.location.hash === '#emergency') {
+      setTimeout(() => {
+        const el = document.getElementById('emergency');
+        el?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }
   readonly categories = helpCenterCategories;
 
   readonly query = signal('');

@@ -1,0 +1,49 @@
+# ------------------------------------------------------------------------------
+# Production Dockerfile for @auticare/web
+# Multi-stage build: builder -> lightweight Nginx Alpine container
+# ------------------------------------------------------------------------------
+
+FROM node:22-bookworm-slim AS builder
+
+WORKDIR /app
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
+
+# Copy monorepo manifests
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/contracts/package.json ./packages/contracts/
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+
+# Install dependencies (frozen lockfile)
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY packages/contracts ./packages/contracts
+COPY apps/web ./apps/web
+
+# Build contracts and compile Angular web app in production mode
+RUN pnpm --filter @auticare/contracts build
+RUN pnpm --filter @auticare/web build --configuration production
+
+# ------------------------------------------------------------------------------
+# Runtime stage: Nginx
+# ------------------------------------------------------------------------------
+FROM nginx:1.27-alpine AS runner
+
+# Remove default nginx html files
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy custom Nginx configuration
+COPY apps/web/nginx.conf /etc/nginx/nginx.conf
+
+# Copy compiled Angular browser artifacts
+COPY --from=builder /app/apps/web/dist/web/browser /usr/share/nginx/html
+
+EXPOSE 80
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1/nginx-health || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

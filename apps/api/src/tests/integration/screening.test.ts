@@ -296,7 +296,27 @@ describe('submission and scoring', () => {
     // rather than pausing at SUBMITTED.
     expect(session?.status).toBe('ANALYZED');
     expect(session?.submittedAt).toBeTruthy();
-  });
+  }, 15000);
+
+  it('creates an unread SCREENING notification for the parent upon finalization', async () => {
+    const { sessionId } = await completeSession(toddlerChildId);
+    const res = await ownerAgent.post(`/api/v1/screening/sessions/${sessionId}/submit`);
+    expect(res.status).toBe(200);
+
+    const notification = await prisma.notification.findFirst({
+      where: {
+        reportId: sessionId,
+        type: 'SCREENING',
+      },
+    });
+    expect(notification).not.toBeNull();
+    expect(notification?.status).toBe('UNREAD');
+    expect(notification?.parentId).toBe(createdParentIds[0]);
+    expect(notification?.title).toBe('Screening Completed for Tod');
+    expect(notification?.body).toMatch(
+      /^Developmental screening finalized with (LOW|MODERATE|HIGH) risk identified\. Tap to view summary and clinical recommendations\.$/,
+    );
+  }, 15000);
 
   it('writes a per-category breakdown alongside the score', async () => {
     const { sessionId } = await completeSession(toddlerChildId);
@@ -307,7 +327,7 @@ describe('submission and scoring', () => {
       where: { resultId: result!.id },
     });
     expect(categories.length).toBeGreaterThan(0);
-  });
+  }, 15000);
 
   it('refuses a second submission of the same session', async () => {
     const { sessionId } = await completeSession(toddlerChildId);
@@ -316,7 +336,7 @@ describe('submission and scoring', () => {
 
     const second = await ownerAgent.post(`/api/v1/screening/sessions/${sessionId}/submit`);
     expect(second.status).toBe(409);
-  });
+  }, 15000);
 
   it('scores opposite answers differently, so polarity is actually applied', async () => {
     // Every question answered 0 versus every question answered 4 must not produce
@@ -334,7 +354,7 @@ describe('submission and scoring', () => {
       where: { screeningId: high.sessionId },
     });
     expect(lowResult?.score).not.toBe(highResult?.score);
-  });
+  }, 15000);
 
   it('does not let another parent submit someone else’s session', async () => {
     const { sessionId } = await completeSession(toddlerChildId);

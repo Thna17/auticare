@@ -1,71 +1,194 @@
 import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { ChildResponse } from '@auticare/contracts';
+import type { ChildResponse, RiskLevel } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { ChildrenFacade } from './state/children.facade';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import { ScreeningApi } from '../screening/data-access/screening.api';
+import { ScreeningBadgeComponent } from '../screening/components/screening-badge.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, UiEmptyStateComponent, UiMessageComponent, UiSpinnerComponent],
+  imports: [
+    RouterLink,
+    UiEmptyStateComponent,
+    UiMessageComponent,
+    UiSpinnerComponent,
+    ScreeningBadgeComponent,
+  ],
   template: `
     <section class="page-header">
-      <div>
-        <p class="eyebrow">Family profiles</p>
-        <h1>Children</h1>
-        <p>Review each child profile, support notes, and care details in one calm place.</p>
+      <div class="header-intro">
+        <p class="eyebrow">Family Profiles & Care</p>
+        <div class="title-with-badge">
+          <h1>Children</h1>
+          @if (!facade.loading() && facade.children().length > 0) {
+            <span class="child-count-pill">{{ activeChildrenCount() }} registered</span>
+          }
+        </div>
+        <p class="subtitle">
+          Manage profiles, track developmental trajectories, and coordinate clinical care for each
+          child.
+        </p>
       </div>
-      @if (canCreateChildren()) {
-        <a class="create-child" routerLink="/children/new">Add child</a>
-      }
+      <div class="header-actions">
+        <button
+          type="button"
+          class="toggle-archived"
+          [class.active]="showArchived()"
+          (click)="toggleArchived()"
+        >
+          {{ showArchived() ? 'Hide archived profiles' : 'View archived profiles' }}
+        </button>
+        @if (canCreateChildren()) {
+          <a class="create-child-btn" routerLink="/children/new">
+            <span class="plus-icon" aria-hidden="true">+</span>
+            <span>Add Child</span>
+          </a>
+        }
+      </div>
     </section>
 
     @if (facade.loading()) {
-      <ac-ui-spinner label="Loading children…" />
+      <div class="state-center">
+        <ac-ui-spinner label="Loading children profiles…" />
+      </div>
     } @else if (facade.error()) {
       <ac-ui-message tone="error">{{ facade.error() }}</ac-ui-message>
     } @else if (facade.children().length === 0) {
-      <ac-ui-empty-state
-        title="No child profiles yet"
-        message="Create a profile when you are ready to track support plans."
-      >
-        @if (canCreateChildren()) {
-          <a class="empty-action" routerLink="/children/new">Create child profile</a>
-        }
-      </ac-ui-empty-state>
+      <div class="empty-wrapper">
+        <ac-ui-empty-state
+          icon="👶"
+          title="No child profiles yet"
+          message="Create your child's profile to track developmental milestones, screening assessments, and clinical support plans."
+        >
+          @if (canCreateChildren()) {
+            <a class="empty-action-btn" routerLink="/children/new">
+              <span aria-hidden="true">+</span> Create Child Profile
+            </a>
+          }
+        </ac-ui-empty-state>
+      </div>
     } @else {
       <section class="child-grid" aria-label="Child profiles">
         @for (child of facade.children(); track child.id) {
-          <article class="child-card">
-            <div class="avatar" aria-hidden="true">{{ initials(child) }}</div>
-            <div class="card-content">
-              <div>
-                <h2>{{ child.firstName }}</h2>
-                <p>{{ ageLabel(child.dateOfBirth) }} · Born {{ child.dateOfBirth }}</p>
+          <article class="child-card" [class.archived]="child.archivedAt">
+            <div class="card-header-row">
+              <div class="avatar" [style.background]="getAvatarGradient(child)" aria-hidden="true">
+                {{ initials(child) }}
               </div>
-              @if (child.notes) {
-                <p class="notes">{{ child.notes }}</p>
-              } @else {
-                <p class="notes muted">No support notes added yet.</p>
-              }
+              <div class="card-identity">
+                <div class="title-row">
+                  <h2>{{ fullName(child) }}</h2>
+                  @if (child.archivedAt) {
+                    <span class="archived-badge">Archived</span>
+                  }
+                </div>
+                <p class="age-text">
+                  <strong>{{ ageLabel(child.dateOfBirth) }}</strong>
+                  <span class="birth-dot">&bull;</span>
+                  <span>Born {{ child.dateOfBirth }}</span>
+                </p>
+              </div>
             </div>
-            <a class="profile-link" [routerLink]="['/children', child.id]">
-              <span>View profile</span>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M5 12h13M13 6l6 6-6 6"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2.4"
-                />
-              </svg>
-            </a>
+
+            <div class="card-body">
+              <div class="status-badge-row">
+                <ac-screening-badge [tone]="getScreeningTone(child.id)">
+                  {{ getScreeningBadgeLabel(child.id) }}
+                </ac-screening-badge>
+              </div>
+
+              <div class="notes-box">
+                @if (child.notes) {
+                  <p class="notes-text">{{ child.notes }}</p>
+                } @else {
+                  <p class="notes-text muted">No support notes recorded yet.</p>
+                }
+              </div>
+
+              <!-- Quick Clinical Navigation Shortcuts -->
+              <div class="quick-shortcuts">
+                <a
+                  class="shortcut-chip"
+                  routerLink="/screening"
+                  [queryParams]="{ childId: child.id }"
+                  title="Screening assessment"
+                >
+                  <span class="shortcut-icon" aria-hidden="true">📋</span>
+                  <span>Screening</span>
+                </a>
+                <a
+                  class="shortcut-chip"
+                  routerLink="/progress"
+                  [queryParams]="{ childId: child.id }"
+                  title="Developmental progress"
+                >
+                  <span class="shortcut-icon" aria-hidden="true">📈</span>
+                  <span>Progress</span>
+                </a>
+                <a
+                  class="shortcut-chip"
+                  routerLink="/activities"
+                  [queryParams]="{ childId: child.id }"
+                  title="Developmental activities"
+                >
+                  <span class="shortcut-icon" aria-hidden="true">🎯</span>
+                  <span>Activities</span>
+                </a>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              @if (child.archivedAt) {
+                <button
+                  type="button"
+                  class="restore-btn"
+                  [disabled]="restoringId() === child.id"
+                  (click)="restore(child.id)"
+                >
+                  {{ restoringId() === child.id ? 'Restoring…' : 'Restore' }}
+                </button>
+              }
+              <a class="profile-link" [routerLink]="['/children', child.id]">
+                <span>View Full Profile</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M5 12h13M13 6l6 6-6 6"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.4"
+                  />
+                </svg>
+              </a>
+            </div>
           </article>
+        }
+        @if (canCreateChildren()) {
+          <a
+            class="add-child-dashed-card"
+            routerLink="/children/new"
+            aria-label="Add Another Child"
+          >
+            <div class="dashed-card-icon" aria-hidden="true">+</div>
+            <strong class="dashed-card-title">Add Another Child</strong>
+            <p class="dashed-card-desc">
+              Create another profile to track developmental milestones and care plans.
+            </p>
+          </a>
         }
       </section>
     }
@@ -79,169 +202,447 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
       .page-header {
         display: flex;
         justify-content: space-between;
+        align-items: flex-start;
         gap: 24px;
-        margin-bottom: 28px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
       }
 
-      .page-header div {
-        max-width: 720px;
-      }
-
-      .create-child,
-      .empty-action {
-        align-self: center;
-        border-radius: 12px;
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-        min-height: 46px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 18px;
-        text-decoration: none;
-        font-weight: var(--ac-font-weight-bold);
-      }
-
-      .create-child:hover,
-      .empty-action:hover {
-        background: var(--ac-color-ink-j);
-      }
-
-      .empty-action {
-        margin-top: 16px;
+      .header-intro {
+        max-width: 680px;
       }
 
       .eyebrow {
-        margin: 0 0 8px;
-        color: var(--ac-color-olive);
-        font-size: var(--ac-type-label);
-        font-weight: var(--ac-font-weight-bold);
+        margin: 0 0 6px;
+        color: var(--ac-color-action-mid);
+        font-size: var(--ac-type-meta);
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0;
+        letter-spacing: 0.05em;
       }
 
-      h1,
-      h2,
-      p {
-        margin: 0;
+      .title-with-badge {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
       }
 
       h1 {
+        margin: 0;
         color: var(--ac-color-text-strong);
         font-size: var(--ac-type-page-title);
-        line-height: 1.25;
-        letter-spacing: 0;
+        line-height: var(--ac-line-tight);
+        font-weight: 700;
       }
 
-      .page-header p:last-child {
-        margin-top: 10px;
+      .child-count-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface-info);
+        border: 1px solid var(--ac-color-border-info);
+        color: var(--ac-color-action-deep);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .subtitle {
+        margin: 10px 0 0;
         color: var(--ac-color-text-body);
         font-size: var(--ac-type-page-subtitle);
-        line-height: 1.55;
+        line-height: var(--ac-line-body);
       }
 
-      .status,
-      .error {
-        border-radius: 12px;
-        padding: 16px;
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .toggle-archived {
+        border: 1px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-slate);
+        border-radius: var(--ac-radius-md);
+        min-height: 44px;
+        padding: 0 16px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        transition: all var(--ac-motion-fast);
+      }
+
+      .toggle-archived:hover {
+        background: var(--ac-color-tint-blue-wash);
+        border-color: var(--ac-color-border-info);
+        color: var(--ac-color-action-deep);
+      }
+
+      .toggle-archived.active {
         background: var(--ac-color-surface-info);
-        color: var(--ac-color-ink-c);
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
       }
 
-      .error {
-        background: var(--ac-color-alert-surface);
-        color: var(--ac-color-alert-strong);
+      .create-child-btn,
+      .empty-action-btn {
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 20px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: var(--ac-shadow-sm);
+        transition: all var(--ac-motion-fast);
+      }
+
+      .create-child-btn:hover,
+      .empty-action-btn:hover {
+        background: var(--ac-color-action-deep);
+        box-shadow: var(--ac-shadow-hover);
+        transform: translateY(-1px);
+      }
+
+      .plus-icon {
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .state-center {
+        display: flex;
+        justify-content: center;
+        padding: 64px 0;
+      }
+
+      .empty-wrapper {
+        margin-top: 16px;
+      }
+
+      .empty-action-btn {
+        margin-top: 20px;
       }
 
       .child-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 18px;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 22px;
       }
 
       .child-card {
-        min-height: 260px;
         border: 1px solid var(--ac-color-border);
-        border-radius: 8px;
+        border-radius: var(--ac-radius-lg);
         background: var(--ac-color-surface);
-        box-shadow: 0 8px 30px rgb(41 74 90 / 0.06);
+        box-shadow: var(--ac-shadow-sm);
         padding: 22px;
-        display: grid;
+        display: flex;
+        flex-direction: column;
         gap: 18px;
+        transition:
+          transform var(--ac-motion-fast),
+          box-shadow var(--ac-motion-fast),
+          border-color var(--ac-motion-fast);
+      }
+
+      .child-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--ac-shadow-hover);
+        border-color: var(--ac-color-border-info);
+      }
+
+      .child-card.archived {
+        opacity: 0.8;
+        background: var(--ac-color-slate-50);
+      }
+
+      .add-child-dashed-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: var(--ac-space-8) var(--ac-space-6);
+        border: 2px dashed var(--ac-color-border-grey);
+        border-radius: var(--ac-radius-lg);
+        background: var(--ac-color-tint-blue-wash);
+        color: var(--ac-color-text-strong);
+        text-decoration: none;
+        min-height: 280px;
+        transition:
+          background var(--ac-motion-fast),
+          border-color var(--ac-motion-fast),
+          transform var(--ac-motion-fast),
+          box-shadow var(--ac-motion-fast);
+      }
+
+      .add-child-dashed-card:hover {
+        background: var(--ac-color-surface-info);
+        border-color: var(--ac-color-action);
+        transform: translateY(-2px);
+        box-shadow: var(--ac-shadow-hover);
+      }
+
+      .dashed-card-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-info);
+        color: var(--ac-color-action);
+        display: grid;
+        place-items: center;
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: var(--ac-space-3);
+        box-shadow: var(--ac-shadow-xs);
+      }
+
+      .dashed-card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ac-color-action-deep);
+        margin-bottom: var(--ac-space-1);
+      }
+
+      .dashed-card-desc {
+        font-size: 13px;
+        color: var(--ac-color-text-muted);
+        max-width: 240px;
+        line-height: 1.4;
+        margin: 0;
+      }
+
+      .card-header-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
       }
 
       .avatar {
-        width: 58px;
-        height: 58px;
-        border-radius: 18px;
-        background: var(--ac-color-olive-light);
-        color: var(--ac-color-olive-dark);
+        width: 60px;
+        height: 60px;
+        border-radius: var(--ac-radius-md);
+        color: var(--ac-color-text-on-action);
         display: grid;
         place-items: center;
-        font-size: 22px;
-        font-weight: var(--ac-font-weight-bold);
+        font-size: 20px;
+        font-weight: 700;
+        flex: 0 0 auto;
+        box-shadow: var(--ac-shadow-xs);
       }
 
-      .card-content {
-        display: grid;
-        gap: 14px;
+      .card-identity {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
       h2 {
+        margin: 0;
         color: var(--ac-color-text-strong);
-        font-size: 24px;
+        font-size: 18px;
         line-height: 1.3;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
-      .card-content p {
-        color: var(--ac-color-text-body);
+      .archived-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-slate-200);
+        color: var(--ac-color-text-slate);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .age-text {
+        margin: 4px 0 0;
+        color: var(--ac-color-text-muted);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .age-text strong {
+        color: var(--ac-color-text-strong);
+        font-weight: 600;
+      }
+
+      .birth-dot {
+        font-size: 10px;
+        color: var(--ac-color-border-grey);
+      }
+
+      .card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        flex: 1;
+      }
+
+      .status-badge-row {
+        display: flex;
+        align-items: center;
+      }
+
+      .notes-box {
+        min-height: 58px;
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface-info);
+        border: 1px solid var(--ac-color-border-subtle);
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+      }
+
+      .notes-text {
+        margin: 0;
+        font-size: 13px;
         line-height: 1.5;
+        color: var(--ac-color-text-body);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
 
-      .notes {
-        min-height: 72px;
-        border-radius: 8px;
+      .notes-text.muted {
+        color: var(--ac-color-text-muted);
+        font-style: italic;
+      }
+
+      .quick-shortcuts {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .shortcut-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        border-radius: var(--ac-radius-sm);
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
+        color: var(--ac-color-text-slate);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all var(--ac-motion-fast);
+      }
+
+      .shortcut-chip:hover {
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
         background: var(--ac-color-tint-blue-wash);
-        padding: 14px;
       }
 
-      .muted {
-        color: var(--ac-color-grey-c);
+      .shortcut-icon {
+        font-size: 12px;
+      }
+
+      .card-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: auto;
+        padding-top: 14px;
+        border-top: 1px solid var(--ac-color-border);
       }
 
       .profile-link {
-        align-self: end;
-        min-height: 46px;
-        border-radius: 999px;
+        margin-left: auto;
+        min-height: 38px;
+        border-radius: var(--ac-radius-sm);
         color: var(--ac-color-action-deep);
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        gap: 10px;
+        gap: 8px;
         text-decoration: none;
-        font-weight: var(--ac-font-weight-bold);
+        font-size: 13px;
+        font-weight: 700;
+        padding: 0 4px;
+        transition: gap var(--ac-motion-fast);
       }
 
       .profile-link svg {
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
+        transition: transform var(--ac-motion-fast);
       }
 
       .profile-link:hover {
-        text-decoration: underline;
+        gap: 12px;
+      }
+
+      .profile-link:hover svg {
+        transform: translateX(3px);
+      }
+
+      .restore-btn {
+        border: 1px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action);
+        border-radius: var(--ac-radius-pill);
+        padding: 5px 14px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all var(--ac-motion-fast);
+      }
+
+      .restore-btn:hover:not(:disabled) {
+        background: var(--ac-color-surface-info);
+        border-color: var(--ac-color-action);
       }
 
       @media (max-width: 640px) {
         .page-header {
           flex-direction: column;
+          align-items: stretch;
         }
 
-        .create-child {
-          align-self: stretch;
+        .header-actions {
+          flex-direction: column;
+          align-items: stretch;
         }
 
-        h1 {
-          font-size: 32px;
+        .toggle-archived,
+        .create-child-btn {
+          width: 100%;
+        }
+
+        .child-grid {
+          grid-template-columns: 1fr;
         }
       }
     `,
@@ -251,24 +652,116 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
 export class ChildrenListPage implements OnInit {
   readonly facade = inject(ChildrenFacade);
   private readonly auth = inject(AuthService);
+  private readonly screeningApi = inject(ScreeningApi);
+
   readonly canCreateChildren = computed(() => this.auth.parent()?.role === 'PARENT');
+  readonly showArchived = signal(false);
+  readonly restoringId = signal<string | null>(null);
+  readonly screeningRiskMap = signal<Record<string, RiskLevel | null>>({});
+
+  readonly activeChildrenCount = computed(
+    () => this.facade.children().filter((c) => !c.archivedAt).length,
+  );
+
+  constructor() {
+    effect(() => {
+      const children = this.facade.children();
+      const currentMap = untracked(() => this.screeningRiskMap());
+      for (const child of children) {
+        if (!(child.id in currentMap)) {
+          this.loadScreeningStatus(child.id);
+        }
+      }
+    });
+  }
 
   ngOnInit() {
     this.facade.load();
   }
 
+  private loadScreeningStatus(childId: string) {
+    this.screeningApi.listSessions(childId).subscribe({
+      next: (sessions) => {
+        const completed = sessions.find((s) => s.result !== null);
+        const risk = completed?.result?.riskLevel ?? null;
+        this.screeningRiskMap.update((map) => ({ ...map, [childId]: risk }));
+      },
+      error: () => {
+        this.screeningRiskMap.update((map) => ({ ...map, [childId]: null }));
+      },
+    });
+  }
+
+  getScreeningTone(childId: string): 'positive' | 'caution' | 'alert' | 'neutral' {
+    const risk = this.screeningRiskMap()[childId];
+    if (risk === 'LOW') return 'positive';
+    if (risk === 'MODERATE') return 'caution';
+    if (risk === 'HIGH') return 'alert';
+    return 'neutral';
+  }
+
+  getScreeningBadgeLabel(childId: string): string {
+    const risk = this.screeningRiskMap()[childId];
+    if (risk === 'LOW') return 'Screened: Low Risk';
+    if (risk === 'MODERATE') return 'Screened: Moderate Risk';
+    if (risk === 'HIGH') return 'Screened: High Risk';
+    return 'Screening Recommended';
+  }
+
+  toggleArchived() {
+    const next = !this.showArchived();
+    this.showArchived.set(next);
+    this.facade.load(next);
+  }
+
+  restore(childId: string) {
+    this.restoringId.set(childId);
+    this.facade.restore(childId).subscribe({
+      next: () => this.restoringId.set(null),
+      error: () => this.restoringId.set(null),
+    });
+  }
+
+  fullName(child: ChildResponse): string {
+    return [child.firstName, child.lastName].filter(Boolean).join(' ');
+  }
+
   initials(child: ChildResponse): string {
+    const parts = [child.firstName, child.lastName].filter(Boolean) as string[];
+    const [first, second] = parts;
+    if (first && second) {
+      return (first.charAt(0) + second.charAt(0)).toUpperCase();
+    }
     return child.firstName.slice(0, 2).toUpperCase();
+  }
+
+  getAvatarGradient(child: ChildResponse): string {
+    const gradients = [
+      'linear-gradient(135deg, var(--ac-color-teal-slate), var(--ac-color-sky-soft))',
+      'linear-gradient(135deg, var(--ac-color-olive-mid), var(--ac-color-olive-light))',
+      'linear-gradient(135deg, var(--ac-color-status-purple), var(--ac-color-tint-blue-mist))',
+      'linear-gradient(135deg, var(--ac-color-accent-amber), var(--ac-color-tint-blue))',
+    ];
+    const key = child.id || child.firstName;
+    const index = key.charCodeAt(0) % gradients.length;
+    return gradients[index];
   }
 
   ageLabel(dateOfBirth: string): string {
     const birthDate = new Date(`${dateOfBirth}T00:00:00`);
     const today = new Date();
     let years = today.getFullYear() - birthDate.getFullYear();
-    const monthDelta = today.getMonth() - birthDate.getMonth();
-    if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) {
-      years -= 1;
+    let months = today.getMonth() - birthDate.getMonth();
+    if (today.getDate() < birthDate.getDate()) {
+      months -= 1;
     }
-    return years === 1 ? '1 year old' : `${Math.max(years, 0)} years old`;
+    if (months < 0) {
+      years -= 1;
+      months += 12;
+    }
+    if (years <= 0 && months <= 0) return 'Newborn';
+    if (years <= 0) return `${months} ${months === 1 ? 'month' : 'months'} old`;
+    if (months === 0) return years === 1 ? '1 year old' : `${years} years old`;
+    return `${years} ${years === 1 ? 'yr' : 'yrs'} ${months} ${months === 1 ? 'mo' : 'mos'} old`;
   }
 }

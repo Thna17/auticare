@@ -1,27 +1,17 @@
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
 import multer from 'multer';
 import type { Request, Response } from 'express';
 import { ok } from '../../common/http/response.js';
-import { AppError } from '../../common/errors/app-error.js';
+import { AppError, forbidden } from '../../common/errors/app-error.js';
+import { defaultUploadsService } from './uploads.service.js';
+import { SchoolsRepository } from '../schools/schools.repository.js';
+import path from 'path';
 
-// Shared upload directory — files land under <cwd>/uploads/activity-reports/
-// with UUID filenames. They are NOT served statically: downloads go through the
-// authorised route GET /api/v1/schools/reports/:id/attachments/:filename.
 export const uploadDir = path.join(process.cwd(), 'uploads', 'activity-reports');
 
 /**
  * The only extensions we will ever write, keyed by the MIME type we accepted.
- *
- * The stored extension is derived from this map, never from
- * `file.originalname`. `originalname` is client-controlled, so taking the
- * extension from it allowed a file to be stored as e.g. `<uuid>.html` while
- * claiming `image/jpeg`; the old static route then served it as text/html from
- * the API origin — stored XSS. The download route resolves its Content-Type
- * through this map too, rather than trusting anything client-supplied.
  */
-const EXTENSION_BY_MIME: Readonly<Record<string, string>> = {
+export const EXTENSION_BY_MIME: Readonly<Record<string, string>> = {
   'image/jpeg': '.jpg',
   'image/jpg': '.jpg',
   'image/png': '.png',
@@ -60,55 +50,39 @@ export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const MAX_FILES = 10;
 export const MAX_PHOTOS = 5;
 
-const makeMulter = (allowedMimes: string[], errorMessage: string) =>
+const PHOTO_MIMES = ['image/jpeg', 'image/jpg', 'image/png'];
+const FILE_MIMES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+  'text/csv',
+];
+
+const makeMemoryMulter = (allowedMimes: string[], errorMessage: string) =>
   multer({
-    storage: multer.diskStorage({
-      destination: (_req, _file, cb) => {
-        fs.mkdirSync(uploadDir, { recursive: true });
-        cb(null, uploadDir);
-      },
-      filename: (_req, file, cb) => {
-        // Extension comes from the accepted MIME type, never from
-        // file.originalname. fileFilter has already rejected anything whose
-        // declared type is outside the allowlist.
-        const ext = EXTENSION_BY_MIME[file.mimetype];
-        if (ext === undefined) {
-          cb(new AppError('VALIDATION_ERROR', 'Unsupported file type.', 400), '');
-          return;
-        }
-        cb(null, `${crypto.randomUUID()}${ext}`);
-      },
-    }),
+    storage: multer.memoryStorage(),
     limits: { fileSize: MAX_FILE_BYTES },
     fileFilter: (_req, file, cb) => {
-      if (allowedMimes.includes(file.mimetype)) cb(null, true);
-      // multer hands whatever we pass to cb straight to next(), so an AppError
-      // reaches the error handler's 400 branch. A plain Error landed in the
-      // unhandled-error branch and surfaced as a 500 for ordinary bad input.
-      else cb(new AppError('VALIDATION_ERROR', errorMessage, 400));
+      if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new AppError('VALIDATION_ERROR', errorMessage, 400));
+      }
     },
   });
 
 // Photos: JPG/PNG only (report thumbnails / gallery).
-const photosUpload = makeMulter(
-  ['image/jpeg', 'image/jpg', 'image/png'],
-  'Only JPG and PNG images are allowed.',
-);
+const photosUpload = makeMemoryMulter(PHOTO_MIMES, 'Only JPG and PNG images are allowed.');
 
 // Activity files: images plus common document types (PDF, Word, text, CSV).
-const filesUpload = makeMulter(
-  [
-    'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'image/webp',
-    'image/gif',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'text/plain',
-    'text/csv',
-  ],
+const filesUpload = makeMemoryMulter(
+  FILE_MIMES,
   'Only images, PDF, Word, text, or CSV files are allowed.',
 );
 
@@ -118,20 +92,12 @@ export const uploadMiddleware = filesUpload.array('files', 10);
 /** Multipart middleware for POST /upload/activity-photos (field `photos`, max 5). */
 export const uploadPhotosMiddleware = photosUpload.array('photos', 5);
 
-/**
- * Shared helper: multer (diskStorage) has already written each file into
- * <cwd>/uploads/activity-reports/ with a UUID filename — we just surface the
- * public URLs back to the client.
- */
-const respondWithUploadedUrls = (files: Express.Multer.File[], res: Response) => {
-  const urls = files.map((file) => `/uploads/activity-reports/${file.filename}`);
-  ok(res, { urls });
-};
+const schoolsRepo = new SchoolsRepository();
 
 /**
  * POST /api/v1/schools/upload/activity-files
  * Accepts multipart/form-data (field `files`, up to 10 images or documents:
- * PDF, Word, text, CSV; 10MB each). Returns `{ urls: string[] }`.
+ * PDF, Word, text, CSV; 10MB each). Validates magic bytes and associates with school staff.
  */
 export const uploadActivityFiles = async (req: Request, res: Response) => {
   if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
@@ -140,13 +106,24 @@ export const uploadActivityFiles = async (req: Request, res: Response) => {
   if (req.files.length > MAX_FILES) {
     throw new AppError('VALIDATION_ERROR', `Maximum ${MAX_FILES} files allowed.`, 400);
   }
-  respondWithUploadedUrls(req.files, res);
+
+  const staff = await schoolsRepo.findStaffForParent(req.auth!.parentId);
+  if (!staff) throw forbidden();
+
+  const result = await defaultUploadsService.processSchoolUploads({
+    files: req.files,
+    schoolId: staff.schoolId,
+    reporterId: req.auth!.parentId,
+    allowedMimes: FILE_MIMES,
+  });
+
+  ok(res, result);
 };
 
 /**
  * POST /api/v1/schools/upload/activity-photos
  * Accepts multipart/form-data (field `photos`, up to 5 JPG/PNG images).
- * Same storage location and response shape as the files endpoint.
+ * Validates magic bytes and associates with school staff.
  */
 export const uploadActivityPhotos = async (req: Request, res: Response) => {
   if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
@@ -155,5 +132,16 @@ export const uploadActivityPhotos = async (req: Request, res: Response) => {
   if (req.files.length > MAX_PHOTOS) {
     throw new AppError('VALIDATION_ERROR', `Maximum ${MAX_PHOTOS} photos allowed.`, 400);
   }
-  respondWithUploadedUrls(req.files, res);
+
+  const staff = await schoolsRepo.findStaffForParent(req.auth!.parentId);
+  if (!staff) throw forbidden();
+
+  const result = await defaultUploadsService.processSchoolUploads({
+    files: req.files,
+    schoolId: staff.schoolId,
+    reporterId: req.auth!.parentId,
+    allowedMimes: PHOTO_MIMES,
+  });
+
+  ok(res, result);
 };

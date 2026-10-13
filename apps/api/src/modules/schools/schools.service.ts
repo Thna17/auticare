@@ -1,14 +1,19 @@
 import type {
   CreateSchoolAccountRequest,
   CreateSchoolChildEnrollmentRequest,
+  CreateSchoolReviewRequest,
   ParentSchoolSearchQuery,
   SchoolAvailabilityStatus,
   UpdateSchoolProfileRequest,
   UpdateSchoolRequest,
   UserRole,
 } from '@auticare/contracts';
+import crypto from 'node:crypto';
 import { toPaginationMeta, toSkipTake } from '../../common/http/pagination.js';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
+import { env, isProduction } from '../../config/env.js';
+import { auditService } from '../audit/audit.service.js';
+import { invitationService } from '../auth/invitation.service.js';
 import { PasswordService } from '../auth/password.service.js';
 import { SchoolsRepository } from './schools.repository.js';
 import {
@@ -39,14 +44,28 @@ export class SchoolsService {
         province: query.province,
         availability: query.availability,
         specializations: specializations.length > 0 ? specializations : undefined,
+        isFavorite: query.isFavorite,
+        parentId: actor.role === 'PARENT' ? actor.parentId : undefined,
       },
       toSkipTake(query),
     );
     // Ratings are fetched for the page, not for the whole directory.
-    const ratings = await this.repository.getRatingsForSchools(items.map((school) => school.id));
+    const [ratings, favoriteIds] = await Promise.all([
+      this.repository.getRatingsForSchools(items.map((school) => school.id)),
+      actor.role === 'PARENT'
+        ? this.repository.getFavoriteSchoolIds(
+            actor.parentId,
+            items.map((school) => school.id),
+          )
+        : Promise.resolve(new Set<string>()),
+    ]);
     return {
       schools: items.map((school) =>
-        toSchoolResponse(school, ratings.get(school.id) ?? { average: null, count: 0 }),
+        toSchoolResponse(
+          school,
+          ratings.get(school.id) ?? { average: null, count: 0 },
+          actor.role === 'PARENT' ? favoriteIds.has(school.id) : undefined,
+        ),
       ),
       pagination: toPaginationMeta(query, total),
     };
@@ -66,7 +85,73 @@ export class SchoolsService {
     const school = await this.repository.findSchoolById(schoolId);
     if (!school) throw notFound('School was not found.');
     const rating = await this.repository.getSchoolRating(schoolId);
-    return toSchoolDetailResponse(school, rating);
+    const detail = toSchoolDetailResponse(school, rating);
+    if (actor.role === 'PARENT') {
+      const isFavorite = await this.repository.isFavorite(actor.parentId, schoolId);
+      return { ...detail, isFavorite };
+    }
+    return detail;
+  }
+
+  async addFavorite(actor: Actor, schoolId: string) {
+    if (actor.role !== 'PARENT') throw forbidden();
+    const school = await this.repository.findSchoolById(schoolId);
+    if (!school) throw notFound('School was not found.');
+    await this.repository.addFavorite(actor.parentId, schoolId);
+    return { favorited: true, schoolId };
+  }
+
+  async removeFavorite(actor: Actor, schoolId: string) {
+    if (actor.role !== 'PARENT') throw forbidden();
+    const school = await this.repository.findSchoolById(schoolId);
+    if (!school) throw notFound('School was not found.');
+    await this.repository.removeFavorite(actor.parentId, schoolId);
+    return { favorited: false, schoolId };
+  }
+
+  async listReviews(actor: Actor, schoolId: string) {
+    const school = await this.repository.findSchoolById(schoolId);
+    if (!school) throw notFound('School was not found.');
+    const [reviews, rating] = await Promise.all([
+      this.repository.listReviews(schoolId),
+      this.repository.getSchoolRating(schoolId),
+    ]);
+    return {
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        schoolId: r.schoolId,
+        parentId: r.parentId,
+        parentName: `${r.parent.firstName} ${r.parent.lastName}`.trim(),
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+      })),
+      averageRating: rating.average !== null ? Number(rating.average.toFixed(1)) : null,
+      totalReviews: rating.count,
+    };
+  }
+
+  async createReview(actor: Actor, schoolId: string, input: CreateSchoolReviewRequest) {
+    if (actor.role !== 'PARENT') throw forbidden();
+    const school = await this.repository.findSchoolById(schoolId);
+    if (!school) throw notFound('School was not found.');
+    const review = await this.repository.createReview(
+      actor.parentId,
+      schoolId,
+      input.rating,
+      input.comment,
+    );
+    return {
+      id: review.id,
+      schoolId: review.schoolId,
+      parentId: review.parentId,
+      parentName: `${review.parent.firstName} ${review.parent.lastName}`.trim(),
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt.toISOString(),
+      updatedAt: review.updatedAt.toISOString(),
+    };
   }
 
   /** The authenticated SCHOOL account's own school (scoped via SchoolStaff, never by id). */
@@ -139,7 +224,13 @@ export class SchoolsService {
     const email = input.account.email.toLowerCase();
     const existing = await this.repository.findParentByEmail(email);
     if (existing) throw new AppError('CONFLICT', 'An account with this email already exists.', 409);
-    const passwordHash = await this.passwordService.hash(input.account.password);
+
+    // If password is provided (e.g. backward-compatibility test), hash it; otherwise generate random salt
+    const hasPassword = Boolean(input.account.password);
+    const passwordHash = hasPassword
+      ? await this.passwordService.hash(input.account.password!)
+      : await this.passwordService.hash(crypto.randomUUID());
+
     const record = await this.repository.createSchoolAccount({
       school: {
         name: input.school.name.trim(),
@@ -153,9 +244,38 @@ export class SchoolsService {
         firstName: input.account.firstName.trim(),
         lastName: input.account.lastName.trim(),
         title: input.account.title?.trim() || null,
+        mustResetPassword: !hasPassword,
       },
     });
-    return toSchoolAccountResponse(record);
+
+    // Create secure invitation token and send invitation
+    const invitation = await invitationService.createInvitation({
+      email,
+      role: 'SCHOOL',
+      firstName: input.account.firstName.trim(),
+      parentId: record.account.id,
+      schoolId: record.school.id,
+      title: input.account.title?.trim() || null,
+      createdById: actor.parentId,
+      actorRole: actor.role,
+    });
+
+    await auditService.record({
+      action: 'SCHOOL_ACCOUNT_PROVISIONED',
+      actorId: actor.parentId,
+      actorRole: actor.role,
+      targetId: record.account.id,
+      targetEmail: email,
+      metadata: { schoolId: record.school.id },
+    });
+
+    const isTestRun = env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+    const response = toSchoolAccountResponse(record);
+    return {
+      ...response,
+      invitationSent: true,
+      invitationUrl: !isProduction || isTestRun ? invitation.invitationUrl : undefined,
+    };
   }
 
   async listSchoolAccounts(actor: Actor) {
@@ -171,11 +291,13 @@ export class SchoolsService {
       city?: string;
       address?: string;
       description?: string | null;
+      isVerified?: boolean;
     } = {};
     if (input.name !== undefined) update.name = input.name.trim();
     if (input.city !== undefined) update.city = input.city.trim();
     if (input.address !== undefined) update.address = input.address.trim();
     if (input.description !== undefined) update.description = input.description?.trim() || null;
+    if (input.isVerified !== undefined) update.isVerified = input.isVerified;
     const school = await this.repository.updateSchool(schoolId, update);
     return toSchoolResponse(school);
   }

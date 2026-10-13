@@ -6,12 +6,17 @@ import {
   createAdmissionRequestSchema,
   listParentNotificationsQuerySchema,
   paginationQuerySchema,
+  updateParentPreferencesRequestSchema,
 } from '@auticare/contracts';
 import {
   createEnrollmentRequest,
+  getParentPreferences,
   listActivityReports,
   listEnrollmentRequests,
   listParentNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  updateParentPreferences,
 } from './parents.controller.js';
 
 export const parentsRoutes = Router();
@@ -39,6 +44,9 @@ parentsRoutes.post(
 // GET /api/v1/parents/enrollment-requests — the parent's own requests.
 parentsRoutes.get('/enrollment-requests', requireRole('PARENT'), listEnrollmentRequests);
 
+// GET /api/v1/parents/me/admission-requests — alias for parent admission requests.
+parentsRoutes.get('/me/admission-requests', requireRole('PARENT'), listEnrollmentRequests);
+
 // GET /api/v1/parents/notifications — the parent's own notifications, newest
 // first (includes enrollment decision outcomes).
 parentsRoutes.get(
@@ -46,4 +54,23 @@ parentsRoutes.get(
   requireRole('PARENT'),
   validateQuery(listParentNotificationsQuerySchema),
   listParentNotifications,
+);
+
+// PATCH /api/v1/parents/notifications/read-all
+// Mark all notifications for this parent as read.
+// Must be registered BEFORE the /:id param route.
+parentsRoutes.patch('/notifications/read-all', requireRole('PARENT'), markAllNotificationsRead);
+
+// PATCH /api/v1/parents/notifications/:id/read
+// Mark a specific notification as read.
+parentsRoutes.patch('/notifications/:id/read', requireRole('PARENT'), markNotificationRead);
+
+// GET /api/v1/parents/preferences — load parent preferences
+parentsRoutes.get('/preferences', getParentPreferences);
+
+// PATCH /api/v1/parents/preferences — update parent preferences
+parentsRoutes.patch(
+  '/preferences',
+  validateBody(updateParentPreferencesRequestSchema),
+  updateParentPreferences,
 );

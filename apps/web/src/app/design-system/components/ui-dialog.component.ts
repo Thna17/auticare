@@ -211,8 +211,10 @@ const FOCUSABLE_SELECTOR =
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
+        min-width: 44px;
+        min-height: 44px;
+        width: 44px;
+        height: 44px;
         border-radius: var(--ac-radius-sm);
         border: none;
         background: transparent;

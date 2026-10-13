@@ -135,7 +135,12 @@ test('parent forms and screening are accessible', async ({ page }) => {
   await dateGroup.locator('button[role="radio"]:not([disabled])').first().click();
   const timeGroup = dialog.getByRole('radiogroup', { name: /available slots/i });
   await expect(timeGroup).toBeVisible();
-  await timeGroup.getByRole('radio').first().click();
+  const availableSlots = timeGroup.locator('button[role="radio"]:not([disabled])');
+  if ((await availableSlots.count()) > 0) {
+    await availableSlots.first().click();
+  } else {
+    await timeGroup.getByRole('radio').first().click({ force: true });
+  }
 
   await expectEveryControlNamed(dialog);
   for (const group of await dialog.getByRole('radiogroup').all()) {

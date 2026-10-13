@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { ChildResponse, ScreeningSessionDetailResponse } from '@auticare/contracts';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ScreeningApi } from './data-access/screening.api';
@@ -37,6 +36,31 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
         <ac-ui-spinner label="Loading screening…" />
       } @else if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
+      } @else if (children().length === 0) {
+        <section class="screening-onboarding-card">
+          <div class="onboarding-icon" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              width="44"
+              height="44"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <line x1="19" y1="8" x2="19" y2="14" />
+              <line x1="22" y1="11" x2="16" y2="11" />
+            </svg>
+          </div>
+          <h2>Welcome to Developmental Screening</h2>
+          <p class="onboarding-copy">
+            Add your child's profile to begin a personalized developmental screening.
+          </p>
+          <a class="btn-primary" routerLink="/children/new"> Add Child Profile </a>
+        </section>
       } @else {
         <section class="select-child" role="group" aria-labelledby="select-child-label">
           <p id="select-child-label" class="section-label">SELECT CHILD</p>
@@ -306,6 +330,42 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
         background: var(--scr-divider);
       }
 
+      .screening-onboarding-card {
+        background: var(--scr-surface);
+        border: 1px solid var(--scr-banner-border);
+        border-radius: var(--scr-radius);
+        box-shadow: var(--scr-shadow-card);
+        padding: 48px 24px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      .onboarding-icon {
+        color: var(--scr-teal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: var(--scr-banner-bg);
+      }
+      .screening-onboarding-card h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--scr-text);
+      }
+      .onboarding-copy {
+        margin: 0;
+        font-size: 15px;
+        color: var(--scr-text-muted);
+        max-width: 440px;
+        line-height: 1.5;
+      }
+
       .btn-primary {
         min-height: 56px;
         border: 0;
@@ -316,6 +376,12 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
         font-size: 16px;
         cursor: pointer;
         box-shadow: var(--scr-shadow-btn);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        padding: 0 28px;
+        box-sizing: border-box;
       }
       .btn-primary:disabled {
         opacity: 0.55;
@@ -365,6 +431,7 @@ export class ScreeningPage implements OnInit {
   private readonly childrenApi = inject(ChildrenApi);
   private readonly screeningApi = inject(ScreeningApi);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly children = signal<readonly ChildResponse[]>([]);
   readonly selectedChildId = signal<string | null>(null);
@@ -379,17 +446,31 @@ export class ScreeningPage implements OnInit {
 
   ngOnInit() {
     this.loading.set(true);
+    const requestedChildId = this.route.snapshot.queryParamMap.get('childId');
     this.childrenApi.listChildren().subscribe({
       next: (children) => {
         this.children.set(children);
         this.loading.set(false);
-        const first = children[0];
-        if (first) this.onSelectChild(first.id);
+        const match = requestedChildId
+          ? children.find((c) => c.id === requestedChildId)
+          : undefined;
+        const target = match ?? children[0];
+        if (target) this.onSelectChild(target.id);
       },
       error: () => {
         this.error.set('Screening could not be loaded. Please refresh the page.');
         this.loading.set(false);
       },
+    });
+
+    this.route.queryParamMap.subscribe((params) => {
+      const childId = params.get('childId');
+      if (childId && childId !== this.selectedChildId()) {
+        const found = this.children().find((c) => c.id === childId);
+        if (found) {
+          this.onSelectChild(found.id);
+        }
+      }
     });
   }
 

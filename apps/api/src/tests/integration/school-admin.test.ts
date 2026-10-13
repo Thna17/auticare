@@ -141,5 +141,39 @@ describe('admin school account management', () => {
         (item: { account: { email: string } }) => item.account.email === newSchoolEmail,
       ),
     ).toBe(true);
-  });
+
+    // School verification status toggle (Admin only)
+    const schoolId = createResponse.body.data.school.id;
+
+    // Unauthorized roles cannot update school verification
+    const parentPatch = await parentAgent
+      .patch(`/api/v1/schools/${schoolId}`)
+      .send({ isVerified: true });
+    expect(parentPatch.status).toBe(403);
+
+    const schoolPatch = await schoolAgent
+      .patch(`/api/v1/schools/${schoolId}`)
+      .send({ isVerified: true });
+    expect(schoolPatch.status).toBe(403);
+
+    // Admin verifies school
+    const verifyResponse = await adminAgent
+      .patch(`/api/v1/schools/${schoolId}`)
+      .send({ isVerified: true });
+    expect(verifyResponse.status).toBe(200);
+    expect(verifyResponse.body.data.isVerified).toBe(true);
+
+    const verifiedInDb = await prisma.school.findUniqueOrThrow({ where: { id: schoolId } });
+    expect(verifiedInDb.isVerified).toBe(true);
+
+    // Admin un-verifies school
+    const unverifyResponse = await adminAgent
+      .patch(`/api/v1/schools/${schoolId}`)
+      .send({ isVerified: false });
+    expect(unverifyResponse.status).toBe(200);
+    expect(unverifyResponse.body.data.isVerified).toBe(false);
+
+    const unverifiedInDb = await prisma.school.findUniqueOrThrow({ where: { id: schoolId } });
+    expect(unverifiedInDb.isVerified).toBe(false);
+  }, 15000);
 });

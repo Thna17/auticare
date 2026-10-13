@@ -6,6 +6,7 @@ export const toParentResponse = (parent: Parent): ParentResponse => ({
   firstName: parent.firstName,
   lastName: parent.lastName,
   role: parent.role,
+  mustResetPassword: parent.mustResetPassword,
   phoneNumber: parent.phoneNumber,
   socialMediaAccount: parent.socialMediaAccount,
 });

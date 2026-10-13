@@ -1,5 +1,7 @@
 import type {
   AuthResponse,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   LoginRequest,
   PasswordResetRequest,
   PasswordResetResponse,
@@ -166,6 +168,29 @@ export class AuthService {
     });
 
     return { message: 'Your password has been reset. You can now log in.' };
+  }
+
+  async changePassword(
+    parentId: string,
+    input: ChangePasswordRequest,
+    currentRefreshToken?: string,
+  ): Promise<ChangePasswordResponse> {
+    const parent = await this.repository.findParentById(parentId);
+    if (!parent) throw unauthorized();
+
+    const valid = await this.passwordService.verify(parent.passwordHash, input.currentPassword);
+    if (!valid) {
+      throw new AppError('VALIDATION_ERROR', 'Current password does not match.', 400);
+    }
+
+    const passwordHash = await this.passwordService.hash(input.newPassword);
+    const currentTokenHash = currentRefreshToken
+      ? this.tokenService.hashRefreshToken(currentRefreshToken)
+      : undefined;
+
+    await this.repository.changePassword(parentId, passwordHash, currentTokenHash);
+
+    return { message: 'Password changed successfully.' };
   }
 
   async logout(refreshToken?: string): Promise<void> {

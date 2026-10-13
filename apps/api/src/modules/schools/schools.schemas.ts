@@ -5,4 +5,5 @@ export {
   createSchoolStudentRequestSchema,
   updateSchoolProfileRequestSchema,
   updateSchoolRequestSchema,
+  createSchoolReviewRequestSchema,
 } from '@auticare/contracts';

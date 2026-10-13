@@ -13,6 +13,7 @@
   --ac-color-attention: #c96e62;
   --ac-color-border: #dde5e4;
   --ac-color-overlay: rgb(0 30 43 / 0.45);
+  --ac-color-focus: #3b82f6;
 
   /* ──────────────────────────────────────────────────────────────────────
    * Palette extracted from the feature styles (see output/audit/AUDIT.md).
@@ -153,8 +154,136 @@
   --ac-color-grey-d: #5b666b;
   --ac-color-grey-pale: #c1d3dc;
   --ac-color-grey-pale-alt: #c1c7cc;
+
+  /* ──────────────────────────────────────────────────────────────────────
+   * Grandfathered palette tokens — fully mapped to eliminate all raw hex
+   * literals across the application.
+   * ────────────────────────────────────────────────────────────────────── */
+
+  /* Inks and dark slates */
+  --ac-color-ink-midnight: #0f2c3b;
+  --ac-color-ink-navy: #194b61;
+  --ac-color-ink-charcoal: #1c3644;
+  --ac-color-ink-deep-teal: #1e4a5a;
+  --ac-color-ink-deep-slate: #24404e;
+  --ac-color-ink-petroleum: #334e5c;
+  --ac-color-ink-dark-slate: #34434a;
+
+  /* Teals */
+  --ac-color-teal-deep: #115e59;
+  --ac-color-teal-dark: #245764;
+  --ac-color-teal-slate: #47758b;
+  --ac-color-teal-accent: #4ba3b8;
+
+  /* Blues and ice blues */
+  --ac-color-blue-700: #1d4ed8;
+  --ac-color-blue-800: #1e40af;
+  --ac-color-sky-light: #9bc6d8;
+  --ac-color-sky-soft: #9cc5d6;
+  --ac-color-sky-pale: #9ec9d8;
+  --ac-color-sky-ice: #a8d5e2;
+  --ac-color-ice-blue: #b6dceb;
+  --ac-color-ice-blue-border: #b9d6e5;
+  --ac-color-sky-tint: #c0e8fe;
+  --ac-color-sky-tint-light: #c5e7fb;
+  --ac-color-ice-blue-frost: #c8e1ed;
+  --ac-color-ice-blue-pale: #c9e5f1;
+  --ac-color-ice-blue-soft: #d5eaf3;
+  --ac-color-ice-blue-faint: #dceaf0;
+  --ac-color-blue-tint-wash: #e2f3ff;
+  --ac-color-blue-tint-ice: #e5f6ff;
+  --ac-color-blue-surface-pale: #e6f4f2;
+  --ac-color-blue-surface-soft: #e7f3f7;
+  --ac-color-blue-tint-clean: #eefaff;
+  --ac-color-blue-tint-sky: #f0f7fa;
+  --ac-color-blue-tint-subtle: #f0f9ff;
+  --ac-color-blue-tint-clear: #f2f9ff;
+  --ac-color-blue-tint-polar: #f4fbfd;
+  --ac-color-blue-tint-pure: #fbfdfe;
+
+  /* Greens, emeralds, and forest greens */
+  --ac-color-emerald-600: #059669;
+  --ac-color-emerald-800: #065f46;
+  --ac-color-forest-green: #0b6b3a;
+  --ac-color-green-700-alt: #15803d;
+  --ac-color-green-800: #166534;
+  --ac-color-green-dark: #1f3d22;
+  --ac-color-green-border-soft: #b7d8bd;
+  --ac-color-green-tint-200: #bfe3cd;
+  --ac-color-green-tint-100: #dcfce7;
+  --ac-color-green-tint-pale: #e2efe3;
+  --ac-color-green-tint-soft: #e8f7ee;
+  --ac-color-green-tint-50: #f0fdf4;
+
+  /* Olives and sages */
+  --ac-color-olive-deep: #4d5f3d;
+  --ac-color-olive-muted: #586947;
+  --ac-color-sage-accent: #7ea563;
+
+  /* Status accents: cyan, purple, pink */
+  --ac-color-status-cyan: #06b6d4;
+  --ac-color-status-purple: #8b5cf6;
+  --ac-color-status-pink: #ec4899;
+
+  /* Ambers and warm browns */
+  --ac-color-earth-brown: #4f412d;
+  --ac-color-amber-dark: #6b4a12;
+  --ac-color-amber-800: #8a5a00;
+  --ac-color-amber-800-alt: #8a6414;
+  --ac-color-amber-700: #a4691a;
+  --ac-color-amber-700-alt: #9a6a00;
+  --ac-color-amber-600: #d97706;
+  --ac-color-amber-tint-sand: #f6e6c8;
+  --ac-color-amber-tint-cream: #f6ecd4;
+  --ac-color-amber-tint-warm: #fdf3e2;
+  --ac-color-amber-tint-100: #fef3c7;
+  --ac-color-amber-tint-50: #fff4e5;
+
+  /* Reds and warm accents */
+  --ac-color-red-deep: #7d1f1f;
+  --ac-color-red-brick: #8b3d3d;
+  --ac-color-red-800: #991b1b;
+  --ac-color-red-terracotta: #6e2e26;
+  --ac-color-red-rose: #b04343;
+  --ac-color-red-coral: #c64c4c;
+  --ac-color-red-600-alt: #dc2626;
+  --ac-color-red-tint-muted: #f3d9d5;
+  --ac-color-red-tint-blush: #fbe9e9;
+  --ac-color-red-tint-soft: #fbeaea;
+  --ac-color-red-tint-200: #fecaca;
+  --ac-color-red-tint-100: #fee2e2;
+  --ac-color-red-tint-50: #ffebee;
+
+  /* Slates, greys, and muted borders/surfaces */
+  --ac-color-slate-text-contrast: #4c575c;
+  --ac-color-slate-text-secondary: #586369;
+  --ac-color-slate-border-strong: #63899b;
+  --ac-color-slate-text-dimmed: #68737a;
+  --ac-color-slate-text-subtle: #6a747b;
+  --ac-color-slate-text-darker: #6a7486;
+  --ac-color-slate-text-dim: #6b8494;
+  --ac-color-slate-body-text: #707b84;
+  --ac-color-slate-icon: #759bad;
+  --ac-color-slate-muted-alt: #7b8fa0;
+  --ac-color-slate-border-card: #8da0aa;
+  --ac-color-slate-border-dim-alt: #a8bcc7;
+  --ac-color-slate-line: #b7cbd4;
+  --ac-color-slate-tint-soft: #c3ccce;
+  --ac-color-slate-tint-line: #c9d0d5;
+  --ac-color-slate-line-subtle: #d6e0e2;
+  --ac-color-slate-border-light: #dbe5e8;
+  --ac-color-slate-line-light: #e3edf2;
+  --ac-color-slate-line-faint: #e6eef3;
+  --ac-color-slate-surface-light: #e8eff4;
+  --ac-color-slate-border-dim: #edf1f5;
+  --ac-color-slate-line-mist: #eef1f0;
+  --ac-color-slate-surface-mist: #eef1f2;
+  --ac-color-slate-border-mist: #eef2f6;
+  --ac-color-slate-surface-clean: #eef3f6;
+  --ac-color-slate-border-clean: #eef3f7;
   --ac-font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    'Kantumruy Pro', Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Khmer OS Battambang', 'Noto Sans Khmer', sans-serif;
   --ac-font-weight-regular: 400;
   --ac-font-weight-medium: 500;
   --ac-font-weight-semibold: 600;
@@ -169,22 +298,32 @@
   --ac-line-tight: 1.15;
   --ac-line-title: 1.25;
   --ac-line-body: 1.55;
-  --ac-space-1: 0.25rem;
-  --ac-space-2: 0.5rem;
-  --ac-space-3: 0.75rem;
-  --ac-space-4: 1rem;
-  --ac-space-5: 1.25rem;
-  --ac-space-6: 1.5rem;
-  --ac-space-8: 2rem;
-  --ac-radius-sm: 0.25rem;
-  --ac-radius-md: 0.5rem;
-  --ac-radius-lg: 0.75rem;
-  --ac-shadow-sm: 0 1px 2px rgb(38 50 56 / 0.08);
-  --ac-shadow-md: 0 18px 48px rgb(0 30 43 / 0.2);
-  --ac-shadow-lg: 0 24px 64px rgb(0 30 43 / 0.28);
+  --ac-space-1: 0.25rem; /* 4px */
+  --ac-space-2: 0.5rem; /* 8px */
+  --ac-space-3: 0.75rem; /* 12px */
+  --ac-space-4: 1rem; /* 16px */
+  --ac-space-5: 1.25rem; /* 20px */
+  --ac-space-6: 1.5rem; /* 24px */
+  --ac-space-8: 2rem; /* 32px */
+  --ac-space-10: 2.5rem; /* 40px */
+  --ac-space-12: 3rem; /* 48px */
+  --ac-radius-xs: 0.25rem; /* 4px */
+  --ac-radius-sm: 0.375rem; /* 6px */
+  --ac-radius-md: 0.75rem; /* 12px */
+  --ac-radius-lg: 1rem; /* 16px */
+  --ac-radius-xl: 1.5rem; /* 24px */
+  --ac-radius-pill: 999px;
+  --ac-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
+  --ac-shadow-sm: 0 2px 4px rgb(15 23 42 / 0.06), 0 1px 2px rgb(15 23 42 / 0.04);
+  --ac-shadow-md: 0 6px 16px -2px rgb(15 23 42 / 0.08), 0 2px 6px -1px rgb(15 23 42 / 0.04);
+  --ac-shadow-lg: 0 12px 32px -4px rgb(15 23 42 / 0.12), 0 4px 12px -2px rgb(15 23 42 / 0.06);
+  --ac-shadow-hover: 0 10px 24px -2px rgb(15 23 42 / 0.1), 0 4px 8px -2px rgb(15 23 42 / 0.05);
   --ac-border-subtle: 1px solid var(--ac-color-border);
-  --ac-motion-fast: 120ms ease;
-  --ac-motion-dialog: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --ac-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ac-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ac-motion-fast: 150ms var(--ac-ease-standard);
+  --ac-motion-normal: 250ms var(--ac-ease-standard);
+  --ac-motion-dialog: 220ms var(--ac-ease-spring);
   --ac-breakpoint-md: 48rem;
   --ac-z-header: 10;
 }

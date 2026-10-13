@@ -33,6 +33,7 @@ export class HospitalsRepository {
       firstName: string;
       lastName: string;
       title: string | null;
+      mustResetPassword?: boolean;
     };
   }): Promise<HospitalAccountRecord> {
     return prisma.$transaction(
@@ -45,6 +46,7 @@ export class HospitalsRepository {
             firstName: input.account.firstName,
             lastName: input.account.lastName,
             role: 'HOSPITAL',
+            mustResetPassword: input.account.mustResetPassword ?? false,
             preference: { create: {} },
           },
         });

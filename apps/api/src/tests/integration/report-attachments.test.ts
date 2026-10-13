@@ -104,6 +104,10 @@ beforeAll(async () => {
     data: { parentId: otherSchoolUser.id, schoolId: otherSchool.id, title: 'Teacher' },
   });
 
+  await prisma.schoolChildEnrollment.create({
+    data: { schoolId: school.id, childId: child.id, status: 'ACTIVE' },
+  });
+
   // A report owned by `school`, about `ownerParent`'s child, with one attachment.
   const report = await prisma.activityReport.create({
     data: {
@@ -143,6 +147,8 @@ afterAll(async () => {
     if (fs.existsSync(file)) fs.unlinkSync(file);
   }
   await prisma.activityReport.deleteMany({ where: { id: { in: createdReportIds } } });
+  await prisma.reportAttachmentUpload.deleteMany({ where: { schoolId: { in: createdSchoolIds } } });
+  await prisma.schoolChildEnrollment.deleteMany({ where: { schoolId: { in: createdSchoolIds } } });
   await prisma.schoolStaff.deleteMany({ where: { schoolId: { in: createdSchoolIds } } });
   await prisma.school.deleteMany({ where: { id: { in: createdSchoolIds } } });
   await prisma.child.deleteMany({ where: { id: { in: createdChildIds } } });
@@ -303,5 +309,179 @@ describe('upload filename handling', () => {
     expect(urls[0]).not.toContain('.html');
 
     writtenFiles.push(path.join(uploadDir, path.posix.basename(urls[0]!)));
+  });
+});
+
+describe('report attachment lifecycle and security', () => {
+  it('rejects spoofed MIME type when file magic bytes do not match', async () => {
+    // Declares image/jpeg but contents are shell script text
+    const res = await schoolAgent
+      .post('/api/v1/schools/upload/activity-photos')
+      .attach('photos', Buffer.from('#!/bin/sh\necho evil\n'), {
+        filename: 'fake-photo.jpg',
+        contentType: 'image/jpeg',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error.message).toMatch(
+      /File signature mismatch|Scripts are strictly forbidden/,
+    );
+  });
+
+  it('rejects executable ELF binary disguised as PDF', async () => {
+    // ELF header 7F 45 4C 46 claiming application/pdf
+    const res = await schoolAgent
+      .post('/api/v1/schools/upload/activity-files')
+      .attach('files', Buffer.from([0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01]), {
+        filename: 'payload.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error.message).toMatch(/Executable files are strictly forbidden/);
+  });
+
+  it("prevents one school from attaching another school's upload", async () => {
+    // School 2 uploads a legitimate PNG image
+    const validPng = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00]);
+    const uploadRes = await otherSchoolAgent
+      .post('/api/v1/schools/upload/activity-files')
+      .attach('files', validPng, {
+        filename: 'school2-chart.png',
+        contentType: 'image/png',
+      });
+
+    expect(uploadRes.status).toBe(200);
+    const hijackedUrl = uploadRes.body.data.urls[0] as string;
+    writtenFiles.push(path.join(uploadDir, path.posix.basename(hijackedUrl)));
+
+    // School 1 attempts to create a report referencing School 2's upload
+    const createRes = await schoolAgent.post('/api/v1/schools/reports').send({
+      childId: createdChildIds[0],
+      activityCategory: 'Cognitive/Developmental',
+      title: 'Hijacking attempt',
+      photoUrls: [hijackedUrl],
+    });
+
+    expect(createRes.status).toBe(403);
+    expect(createRes.body.error.message).toMatch(/belonging to another school/);
+  });
+
+  it('removes stored attachment file when a report is deleted', async () => {
+    // School 1 uploads a file
+    const validJpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+    const uploadRes = await schoolAgent
+      .post('/api/v1/schools/upload/activity-photos')
+      .attach('photos', validJpeg, {
+        filename: 'to-delete.jpg',
+        contentType: 'image/jpeg',
+      });
+
+    expect(uploadRes.status).toBe(200);
+    const photoUrl = uploadRes.body.data.urls[0] as string;
+    const filename = path.posix.basename(photoUrl);
+    const diskPath = path.join(uploadDir, filename);
+    expect(fs.existsSync(diskPath)).toBe(true);
+    writtenFiles.push(diskPath);
+
+    // Create report with this file
+    const reportRes = await schoolAgent.post('/api/v1/schools/reports').send({
+      childId: createdChildIds[0],
+      activityCategory: 'Motor Skills',
+      title: 'Report to delete',
+      photoUrls: [photoUrl],
+    });
+    expect(reportRes.status).toBe(201);
+    const tempReportId = reportRes.body.data.id as string;
+    createdReportIds.push(tempReportId);
+
+    // Delete the report
+    const delRes = await schoolAgent.delete(`/api/v1/schools/reports/${tempReportId}`);
+    expect(delRes.status).toBe(200);
+
+    // Verify file is removed from storage disk
+    expect(fs.existsSync(diskPath)).toBe(false);
+
+    // Verify upload tracking record is removed from DB
+    const tracking = await prisma.reportAttachmentUpload.findUnique({
+      where: { filename },
+    });
+    expect(tracking).toBeNull();
+  });
+
+  it('removes replaced attachment file when report attachments are updated', async () => {
+    // School 1 uploads 2 files
+    const validJpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+    const upload1 = await schoolAgent
+      .post('/api/v1/schools/upload/activity-photos')
+      .attach('photos', validJpeg, { filename: 'file1.jpg', contentType: 'image/jpeg' });
+    const upload2 = await schoolAgent
+      .post('/api/v1/schools/upload/activity-photos')
+      .attach('photos', validJpeg, { filename: 'file2.jpg', contentType: 'image/jpeg' });
+
+    const url1 = upload1.body.data.urls[0] as string;
+    const url2 = upload2.body.data.urls[0] as string;
+    const file1Name = path.posix.basename(url1);
+    const file2Name = path.posix.basename(url2);
+    const file1Path = path.join(uploadDir, file1Name);
+    const file2Path = path.join(uploadDir, file2Name);
+    writtenFiles.push(file1Path, file2Path);
+
+    // Create report with file1
+    const reportRes = await schoolAgent.post('/api/v1/schools/reports').send({
+      childId: createdChildIds[0],
+      activityCategory: 'Language/Communication',
+      title: 'Report to replace attachment',
+      photoUrls: [url1],
+    });
+    expect(reportRes.status).toBe(201);
+    const tempReportId = reportRes.body.data.id as string;
+    createdReportIds.push(tempReportId);
+
+    expect(fs.existsSync(file1Path)).toBe(true);
+
+    // Update report to replace file1 with file2
+    const updateRes = await schoolAgent.patch(`/api/v1/schools/reports/${tempReportId}`).send({
+      photoUrls: [url2],
+    });
+    expect(updateRes.status).toBe(200);
+
+    // file1 should be deleted from disk; file2 should remain
+    expect(fs.existsSync(file1Path)).toBe(false);
+    expect(fs.existsSync(file2Path)).toBe(true);
+  });
+
+  it('cleans up abandoned unlinked uploads after retention expiry', async () => {
+    const { defaultUploadsService } = await import('../../modules/uploads/uploads.service.js');
+
+    // Upload a file but do not attach it to any report
+    const validJpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+    const uploadRes = await schoolAgent
+      .post('/api/v1/schools/upload/activity-photos')
+      .attach('photos', validJpeg, {
+        filename: 'abandoned.jpg',
+        contentType: 'image/jpeg',
+      });
+    expect(uploadRes.status).toBe(200);
+    const photoUrl = uploadRes.body.data.urls[0] as string;
+    const filename = path.posix.basename(photoUrl);
+    const filePath = path.join(uploadDir, filename);
+    expect(fs.existsSync(filePath)).toBe(true);
+    writtenFiles.push(filePath);
+
+    // Artificially expire the upload record in database (expiresAt in past)
+    await prisma.reportAttachmentUpload.update({
+      where: { filename },
+      data: { expiresAt: new Date(Date.now() - 3600 * 1000) },
+    });
+
+    // Run cleanup job
+    const cleanupResult = await defaultUploadsService.cleanupAbandonedUploads();
+    expect(cleanupResult.deletedCount).toBeGreaterThanOrEqual(1);
+
+    // File should now be deleted from storage
+    expect(fs.existsSync(filePath)).toBe(false);
   });
 });

@@ -14,6 +14,18 @@ export type BookingStep = 'select' | 'submitting' | 'confirmed';
 export const visitReasons = ['Consultation', 'Follow-up', 'Test results', 'Other'] as const;
 export type VisitReason = (typeof visitReasons)[number];
 
+export type RescheduleState = {
+  readonly isOpen: boolean;
+  readonly appointment: AppointmentResponse | null;
+  readonly date: string | null;
+  readonly time: string | null;
+  readonly reason: string;
+  readonly slots: readonly { time: string; iso: string; available: boolean }[];
+  readonly slotsLoading: boolean;
+  readonly error: string | null;
+  readonly submitting: boolean;
+};
+
 type BookingState = {
   readonly isOpen: boolean;
   readonly step: BookingStep;
@@ -21,6 +33,8 @@ type BookingState = {
   readonly childId: string | null;
   readonly date: string | null;
   readonly time: string | null;
+  readonly slots: readonly { time: string; iso: string; available: boolean }[];
+  readonly slotsLoading: boolean;
   readonly visitReason: VisitReason | null;
   readonly notes: string;
   readonly error: string | null;
@@ -34,10 +48,24 @@ const initialBooking: BookingState = {
   childId: null,
   date: null,
   time: null,
+  slots: [],
+  slotsLoading: false,
   visitReason: null,
   notes: '',
   error: null,
   confirmed: null,
+};
+
+const initialReschedule: RescheduleState = {
+  isOpen: false,
+  appointment: null,
+  date: null,
+  time: null,
+  reason: '',
+  slots: [],
+  slotsLoading: false,
+  error: null,
+  submitting: false,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -151,6 +179,8 @@ export class AppointmentsFacade {
     this.categoryFilter.set(category);
   }
 
+  readonly reschedule = signal<RescheduleState>(initialReschedule);
+
   openBooking(doctor: DoctorResponse) {
     this.booking.set({ ...initialBooking, isOpen: true, doctor });
   }
@@ -164,7 +194,54 @@ export class AppointmentsFacade {
   }
 
   selectDate(date: string) {
-    this.booking.update((state) => ({ ...state, date, time: null, error: null }));
+    this.booking.update((state) => ({
+      ...state,
+      date,
+      time: null,
+      error: null,
+      slots: [],
+      slotsLoading: true,
+    }));
+
+    const doctor = this.booking().doctor;
+    if (doctor) {
+      if (doctor.availableDays) {
+        const availableDaysList = doctor.availableDays
+          .split(',')
+          .map((s) => Number(s.trim()))
+          .filter((n) => !Number.isNaN(n) && n >= 0 && n <= 6);
+        const [year, month, day] = date.split('-').map(Number);
+        const dayOfWeek = new Date(year, month - 1, day).getDay();
+        if (availableDaysList.length > 0 && !availableDaysList.includes(dayOfWeek)) {
+          // Off day for this specialist: do not call API or fabricate slots
+          this.booking.update((state) => ({
+            ...state,
+            slots: [],
+            slotsLoading: false,
+          }));
+          return;
+        }
+      }
+
+      this.api.getDoctorSlots(doctor.id, date).subscribe({
+        next: (res) => {
+          this.booking.update((state) => ({
+            ...state,
+            slots: res.slots ?? [],
+            slotsLoading: false,
+          }));
+        },
+        error: () => {
+          this.booking.update((state) => ({
+            ...state,
+            slotsLoading: false,
+            error: 'Could not load availability for this date.',
+          }));
+        },
+      });
+    } else {
+      this.booking.update((state) => ({ ...state, slotsLoading: false }));
+    }
   }
 
   selectTime(time: string) {
@@ -187,7 +264,16 @@ export class AppointmentsFacade {
       return;
     }
 
-    const scheduledAt = combineDateAndTime(state.date, state.time);
+    // Find the slot's ISO timestamp
+    const selectedSlot = state.slots.find((s) => s.time === state.time);
+    if (!selectedSlot) {
+      this.booking.update((s) => ({
+        ...s,
+        error: 'Please choose an available appointment slot.',
+      }));
+      return;
+    }
+    const scheduledAt = selectedSlot.iso;
     const reason = [state.visitReason, state.notes.trim()].filter(Boolean).join(' — ') || undefined;
     const request: CreateAppointmentRequest = {
       childId: state.childId,
@@ -203,14 +289,109 @@ export class AppointmentsFacade {
         this.appointments.update((appointments) => [appointment, ...appointments]);
         this.booking.update((s) => ({ ...s, step: 'confirmed', confirmed: appointment }));
       },
-      error: () => {
+      error: (err: { error?: { error?: { message?: string } } }) => {
         this.booking.update((s) => ({
           ...s,
           step: 'select',
-          error: 'Booking could not be confirmed. Please try again.',
+          error: err?.error?.error?.message ?? 'Booking could not be confirmed. Please try again.',
         }));
       },
     });
+  }
+
+  // ── Rescheduling Flow ──────────────────────────────────────────────────
+  openReschedule(appointment: AppointmentResponse) {
+    this.reschedule.set({
+      ...initialReschedule,
+      isOpen: true,
+      appointment,
+      reason: appointment.reason ?? '',
+    });
+  }
+
+  closeReschedule() {
+    this.reschedule.set(initialReschedule);
+  }
+
+  selectRescheduleDate(date: string) {
+    this.reschedule.update((s) => ({
+      ...s,
+      date,
+      time: null,
+      error: null,
+      slots: [],
+      slotsLoading: true,
+    }));
+
+    const appointment = this.reschedule().appointment;
+    if (appointment?.doctorId) {
+      this.api.getDoctorSlots(appointment.doctorId, date).subscribe({
+        next: (res) => {
+          this.reschedule.update((s) => ({
+            ...s,
+            slots: res.slots,
+            slotsLoading: false,
+          }));
+        },
+        error: () => {
+          this.reschedule.update((s) => ({
+            ...s,
+            slotsLoading: false,
+            error: 'Could not load availability for this date.',
+          }));
+        },
+      });
+    } else {
+      this.reschedule.update((s) => ({ ...s, slotsLoading: false }));
+    }
+  }
+
+  selectRescheduleTime(time: string) {
+    this.reschedule.update((s) => ({ ...s, time, error: null }));
+  }
+
+  setRescheduleReason(reason: string) {
+    this.reschedule.update((s) => ({ ...s, reason }));
+  }
+
+  confirmReschedule() {
+    const state = this.reschedule();
+    if (!state.appointment || !state.date || !state.time) {
+      this.reschedule.update((s) => ({
+        ...s,
+        error: 'Choose a date and time slot to reschedule.',
+      }));
+      return;
+    }
+
+    const selectedSlot = state.slots.find((s) => s.time === state.time);
+    const scheduledAt = selectedSlot
+      ? selectedSlot.iso
+      : combineDateAndTime(state.date, state.time);
+
+    this.reschedule.update((s) => ({ ...s, submitting: true, error: null }));
+    this.api
+      .rescheduleAppointment(state.appointment.id, {
+        scheduledAt,
+        reason: state.reason.trim() || undefined,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.appointments.update((rows) =>
+            rows.map((row) => (row.id === updated.id ? updated : row)),
+          );
+          this.closeReschedule();
+        },
+        error: (err: { error?: { error?: { message?: string } } }) => {
+          this.reschedule.update((s) => ({
+            ...s,
+            submitting: false,
+            error:
+              err?.error?.error?.message ??
+              'This appointment could not be rescheduled. Please try another slot.',
+          }));
+        },
+      });
   }
 }
 

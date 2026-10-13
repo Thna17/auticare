@@ -17,6 +17,14 @@ export interface PendingFile {
   uploadedUrl: string | null; // server path, e.g. /uploads/activity-reports/<uuid>.jpg
 }
 
+export interface DomainOption {
+  id: string;
+  name: string;
+  categoryValue: string;
+  icon: string;
+  description: string;
+}
+
 @Component({
   standalone: true,
   imports: [
@@ -31,23 +39,64 @@ export interface PendingFile {
       <ac-school-topbar />
 
       <!-- Breadcrumbs -->
-      <nav class="breadcrumbs">
-        <a class="breadcrumb-link" routerLink="/schools/enrollments">Students</a>
+      <nav class="breadcrumbs" aria-label="Breadcrumb navigation">
+        <a class="breadcrumb-link" routerLink="/schools/reports">Activity Reports</a>
         <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-item">{{ selectedChild()?.firstName ?? '...' }}</span>
+        <span class="breadcrumb-item">{{ selectedChild()?.firstName ?? 'Student' }}</span>
         <span class="breadcrumb-separator">/</span>
         <span class="breadcrumb-item active">{{
-          editMode() ? 'Edit Activity Report' : 'New Activity Report'
+          editMode() ? 'Edit Observation Report' : 'New Observation Report'
         }}</span>
       </nav>
 
       <!-- Page Header -->
       <header class="report-header">
-        <h1>{{ editMode() ? 'Edit Activity Report' : 'Create Activity Report' }}</h1>
+        <div class="report-header-titles">
+          <div class="header-badge-row">
+            <span class="header-badge">Clinical Observation</span>
+            <span class="header-badge-sub">{{
+              editMode() ? 'Editing Mode' : 'Authoring Mode'
+            }}</span>
+          </div>
+          <h1>
+            {{
+              editMode() ? 'Edit Activity & Observation Report' : 'Create Clinical Activity Report'
+            }}
+          </h1>
+          <p class="header-sub">
+            Document developmental observations, sensory milestones, and home recommendations.
+          </p>
+        </div>
         <div class="header-actions">
+          <div
+            class="status-indicator-badge"
+            [class.draft]="targetStatus() === 'DRAFT'"
+            [class.published]="targetStatus() === 'SUBMITTED'"
+          >
+            <span class="status-dot"></span>
+            <span>{{ targetStatus() === 'DRAFT' ? '📝 Draft Mode' : '🚀 Publish Ready' }}</span>
+          </div>
+          <div class="publish-mode-toggle" role="group" aria-label="Report publication mode">
+            <button
+              type="button"
+              class="mode-toggle-btn"
+              [class.active]="targetStatus() === 'DRAFT'"
+              (click)="targetStatus.set('DRAFT')"
+            >
+              📝 Draft
+            </button>
+            <button
+              type="button"
+              class="mode-toggle-btn"
+              [class.active]="targetStatus() === 'SUBMITTED'"
+              (click)="targetStatus.set('SUBMITTED')"
+            >
+              🚀 Publish
+            </button>
+          </div>
           <a class="btn-cancel" routerLink="/schools/reports">Cancel</a>
           <button type="button" class="btn-save-draft" (click)="saveDraft()" [disabled]="saving()">
-            {{ saving() ? 'Saving...' : 'Save Draft' }}
+            {{ saving() && targetStatus() === 'DRAFT' ? 'Saving…' : 'Save Draft' }}
           </button>
         </div>
       </header>
@@ -57,15 +106,15 @@ export interface PendingFile {
         <div class="profile-section-card">
           <div class="selector-row">
             <ac-ui-field
-              label="Select student"
+              label="Select enrolled student"
               [required]="true"
-              [error]="showError('childId') ? 'Select a student.' : null"
+              [error]="showError('childId') ? 'Select an enrolled student.' : null"
             >
               <select formControlName="childId" class="child-select" [disabled]="loadingStudents()">
                 @if (loadingStudents()) {
                   <option value="" disabled>Loading students…</option>
                 } @else {
-                  <option value="" disabled>Select a student</option>
+                  <option value="" disabled>Choose student from active roster</option>
                 }
                 @for (student of students(); track student.id) {
                   <option [value]="student.id">
@@ -74,6 +123,20 @@ export interface PendingFile {
                 }
               </select>
             </ac-ui-field>
+
+            <ac-ui-field
+              label="Activity session date"
+              [required]="true"
+              [error]="showError('activityDate') ? 'Select activity date.' : null"
+            >
+              <input
+                type="date"
+                formControlName="activityDate"
+                class="activity-date-input"
+                aria-label="Activity session date"
+              />
+            </ac-ui-field>
+
             @if (studentsError()) {
               <span class="selector-error">{{ studentsError() }}</span>
             }
@@ -94,13 +157,13 @@ export interface PendingFile {
               </div>
               <div class="student-meta-block">
                 <span class="student-name-title">{{ child.firstName }} {{ child.lastName }}</span>
-                <span class="student-id-subtitle">Student ID: #{{ child.id }}</span>
+                <span class="student-id-subtitle">Student ID: #{{ child.id.slice(0, 8) }}</span>
               </div>
 
               <div class="student-detail-group">
                 <div class="detail-item">
                   <span class="detail-label">AGE</span>
-                  <span class="detail-value">{{ child.age }}</span>
+                  <span class="detail-value">{{ child.age }} yrs</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">DATE OF BIRTH</span>
@@ -118,8 +181,39 @@ export interface PendingFile {
               </div>
             </div>
           } @else if (!loadingStudents()) {
-            <p class="no-student-hint">Select a student above to see their profile.</p>
+            <p class="no-student-hint">
+              Select a student above to review their active developmental profile.
+            </p>
           }
+        </div>
+
+        <!-- Developmental Domain Checkboxes Section -->
+        <div class="form-section domains-section">
+          <h2><span class="section-icon">🎯</span> Developmental Domains Observed</h2>
+          <p class="section-hint">
+            Select all therapeutic domains targeted or observed during this activity session:
+          </p>
+
+          <div class="domain-checkboxes-grid">
+            @for (domain of domainList; track domain.id) {
+              <button
+                type="button"
+                class="domain-check-card"
+                [class.checked]="isDomainSelected(domain.id)"
+                (click)="toggleDomain(domain)"
+                [attr.aria-pressed]="isDomainSelected(domain.id)"
+              >
+                <div class="domain-card-header">
+                  <span class="domain-check-icon">{{
+                    isDomainSelected(domain.id) ? '☑' : '☐'
+                  }}</span>
+                  <span class="domain-icon">{{ domain.icon }}</span>
+                  <span class="domain-title">{{ domain.name }}</span>
+                </div>
+                <p class="domain-desc">{{ domain.description }}</p>
+              </button>
+            }
+          </div>
         </div>
 
         <!-- Main Form Grid -->
@@ -131,27 +225,27 @@ export interface PendingFile {
               <h2><span class="section-icon">📝</span> 1. Activity Details</h2>
               <div class="row-2-col">
                 <ac-ui-field
-                  label="Activity category"
+                  label="Primary developmental category"
                   [required]="true"
                   [error]="showError('category') ? 'Select an activity category.' : null"
                 >
                   <select formControlName="category">
-                    <option value="" disabled selected>Select a category</option>
+                    <option value="" disabled selected>Select category</option>
                     @for (cat of categories; track cat) {
                       <option [value]="cat">{{ cat }}</option>
                     }
                   </select>
                 </ac-ui-field>
                 <ac-ui-field
-                  label="Duration (minutes)"
+                  label="Session duration (minutes)"
                   [required]="true"
-                  [error]="showError('duration') ? 'Enter a duration of at least 1 minute.' : null"
+                  [error]="showError('duration') ? 'Enter duration (min 1).' : null"
                 >
                   <input type="number" formControlName="duration" placeholder="e.g. 45" />
                 </ac-ui-field>
               </div>
               <ac-ui-field
-                label="Activity name"
+                label="Activity title / intervention name"
                 [required]="true"
                 [full]="true"
                 [error]="showError('activityName') ? 'Enter an activity name.' : null"
@@ -159,32 +253,128 @@ export interface PendingFile {
                 <input
                   type="text"
                   formControlName="activityName"
-                  placeholder="e.g. Cooperative Block Building"
+                  placeholder="e.g. Cooperative Block Building & Sensory Sand Play"
                 />
               </ac-ui-field>
             </div>
 
-            <!-- 3. Teacher Observations -->
+            <!-- 2. Teacher Observations with Prompt Guidance -->
             <div class="form-section">
-              <h2><span class="section-icon">👁️</span> 3. Teacher Observations</h2>
+              <div class="section-header-flex">
+                <h2><span class="section-icon">👁️</span> 2. Teacher & Clinical Observations</h2>
+                <span class="char-count"
+                  >{{ form.controls.teacherObservations.value.length }} / 4,000</span
+                >
+              </div>
+              <p class="section-hint">Click a prompt below to insert helpful starter notes:</p>
+              <div class="prompt-chips-row">
+                <button
+                  type="button"
+                  class="prompt-chip"
+                  (click)="insertPrompt('teacherObservations', '• Academic focus & milestone: ')"
+                >
+                  + Academic focus
+                </button>
+                <button
+                  type="button"
+                  class="prompt-chip"
+                  (click)="
+                    insertPrompt(
+                      'teacherObservations',
+                      '• ការសម្របសម្រួលញាណដឹង (Sensory accommodation used): '
+                    )
+                  "
+                >
+                  <span class="chip-km">+ ការសម្របសម្រួលញាណដឹង</span>
+                  <span class="chip-en">(+ Sensory accommodation)</span>
+                </button>
+                <button
+                  type="button"
+                  class="prompt-chip"
+                  (click)="
+                    insertPrompt(
+                      'teacherObservations',
+                      '• ភាពរីកចម្រើនក្នុងទំនាក់ទំនងសង្គម (Social breakthrough observed): '
+                    )
+                  "
+                >
+                  <span class="chip-km">+ ភាពរីកចម្រើនក្នុងទំនាក់ទំនងសង្គម</span>
+                  <span class="chip-en">(+ Social breakthrough)</span>
+                </button>
+                <button
+                  type="button"
+                  class="prompt-chip"
+                  (click)="
+                    insertPrompt(
+                      'teacherObservations',
+                      '• ភាពជោគជ័យក្នុងការប្រាស្រ័យទាក់ទង (Communication win & gestures): '
+                    )
+                  "
+                >
+                  <span class="chip-km">+ ភាពជោគជ័យក្នុងការប្រាស្រ័យទាក់ទង</span>
+                  <span class="chip-en">(+ Communication win)</span>
+                </button>
+                <button
+                  type="button"
+                  class="prompt-chip"
+                  (click)="insertPrompt('teacherObservations', '• Regulation trigger & response: ')"
+                >
+                  + Emotional trigger
+                </button>
+              </div>
+
               <ac-ui-field
-                label="Teacher observations"
+                label="Clinical observation notes"
                 [required]="true"
-                [error]="showError('teacherObservations') ? 'Enter teacher observations.' : null"
+                [error]="
+                  showError('teacherObservations') ? 'Enter detailed observation notes.' : null
+                "
               >
                 <textarea
                   formControlName="teacherObservations"
                   rows="6"
-                  placeholder="Describe how the student engaged with the activity, any notable breakthroughs, or challenges faced..."
+                  placeholder="Describe how the student engaged with the activity, notable breakthroughs, regulation strategies, or peer interactions..."
                 ></textarea>
               </ac-ui-field>
             </div>
 
-            <!-- 4. Parent Recommendations -->
+            <!-- 3. Parent Recommendations -->
             <div class="form-section">
-              <h2><span class="section-icon">💡</span> 4. Parent Recommendations</h2>
+              <div class="section-header-flex">
+                <h2><span class="section-icon">💡</span> 3. Home & Parent Recommendations</h2>
+                <span class="char-count"
+                  >{{ form.controls.parentRecommendations.value.length }} / 4,000</span
+                >
+              </div>
+              <p class="section-hint">
+                Provide actionable, encouraging steps for caregivers to practice at home:
+              </p>
+              <div class="prompt-chips-row">
+                <button
+                  type="button"
+                  class="prompt-chip"
+                  (click)="insertPrompt('parentRecommendations', '• Home practice activity: ')"
+                >
+                  + Home activity
+                </button>
+                <button
+                  type="button"
+                  class="prompt-chip"
+                  (click)="insertPrompt('parentRecommendations', '• Sensory soothing routine: ')"
+                >
+                  + Soothing routine
+                </button>
+                <button
+                  type="button"
+                  class="prompt-chip"
+                  (click)="insertPrompt('parentRecommendations', '• Positive reinforcement tip: ')"
+                >
+                  + Reinforcement tip
+                </button>
+              </div>
+
               <ac-ui-field
-                label="Recommendations for parents"
+                label="Recommendations for home practice"
                 [required]="true"
                 [error]="
                   showError('parentRecommendations') ? 'Enter recommendations for parents.' : null
@@ -192,8 +382,8 @@ export interface PendingFile {
               >
                 <textarea
                   formControlName="parentRecommendations"
-                  rows="6"
-                  placeholder="Actionable steps for parents to reinforce these skills at home..."
+                  rows="5"
+                  placeholder="Actionable steps for parents to reinforce these developmental skills in daily home routines..."
                 ></textarea>
               </ac-ui-field>
             </div>
@@ -201,18 +391,18 @@ export interface PendingFile {
 
           <!-- Right Column -->
           <div class="grid-right">
-            <!-- 2. Performance -->
+            <!-- 4. Performance Metrics -->
             <div class="form-section performance-section">
               <div class="section-header-flex">
-                <h2><span class="section-icon">📊</span> 2. Performance</h2>
-                <span class="scale-badge">0-10 SCALE</span>
+                <h2><span class="section-icon">📊</span> 4. Performance Scoring</h2>
+                <span class="scale-badge">0–10 SCALE</span>
               </div>
 
               <div class="metrics-list">
                 <div class="metric-item">
                   <div class="metric-header">
-                    <span class="metric-label">Participation</span>
-                    <span class="metric-value">{{ form.controls.participation.value }}</span>
+                    <span class="metric-label">Participation & Engagement</span>
+                    <span class="metric-value">{{ form.controls.participation.value }}/10</span>
                   </div>
                   <input
                     aria-label="Participation rating, 0 to 10"
@@ -227,8 +417,8 @@ export interface PendingFile {
 
                 <div class="metric-item">
                   <div class="metric-header">
-                    <span class="metric-label">Communication</span>
-                    <span class="metric-value">{{ form.controls.communication.value }}</span>
+                    <span class="metric-label">Communication & Speech</span>
+                    <span class="metric-value">{{ form.controls.communication.value }}/10</span>
                   </div>
                   <input
                     aria-label="Communication rating, 0 to 10"
@@ -243,8 +433,8 @@ export interface PendingFile {
 
                 <div class="metric-item">
                   <div class="metric-header">
-                    <span class="metric-label">Social Interaction</span>
-                    <span class="metric-value">{{ form.controls.socialInteraction.value }}</span>
+                    <span class="metric-label">Social & Peer Interaction</span>
+                    <span class="metric-value">{{ form.controls.socialInteraction.value }}/10</span>
                   </div>
                   <input
                     aria-label="Social interaction rating, 0 to 10"
@@ -259,8 +449,8 @@ export interface PendingFile {
 
                 <div class="metric-item">
                   <div class="metric-header">
-                    <span class="metric-label">Attention</span>
-                    <span class="metric-value">{{ form.controls.attention.value }}</span>
+                    <span class="metric-label">Attention & Focus</span>
+                    <span class="metric-value">{{ form.controls.attention.value }}/10</span>
                   </div>
                   <input
                     aria-label="Attention rating, 0 to 10"
@@ -276,7 +466,9 @@ export interface PendingFile {
                 <div class="metric-item">
                   <div class="metric-header">
                     <span class="metric-label">Emotional Regulation</span>
-                    <span class="metric-value">{{ form.controls.emotionalRegulation.value }}</span>
+                    <span class="metric-value"
+                      >{{ form.controls.emotionalRegulation.value }}/10</span
+                    >
                   </div>
                   <input
                     aria-label="Emotional regulation rating, 0 to 10"
@@ -291,8 +483,8 @@ export interface PendingFile {
 
                 <div class="metric-item">
                   <div class="metric-header">
-                    <span class="metric-label">Task Completion</span>
-                    <span class="metric-value">{{ form.controls.taskCompletion.value }}</span>
+                    <span class="metric-label">Task Completion & Persistence</span>
+                    <span class="metric-value">{{ form.controls.taskCompletion.value }}/10</span>
                   </div>
                   <input
                     aria-label="Task completion rating, 0 to 10"
@@ -307,9 +499,9 @@ export interface PendingFile {
               </div>
             </div>
 
-            <!-- 5. Attachments -->
+            <!-- 5. Supporting Attachments & Photos -->
             <div class="form-section photos-section">
-              <h2><span class="section-icon">📷</span> 5. Activity Photos</h2>
+              <h2><span class="section-icon">📷</span> 5. Activity Photos & Work Samples</h2>
 
               <label
                 class="upload-dragzone"
@@ -319,7 +511,7 @@ export interface PendingFile {
               >
                 <span class="upload-cloud-icon">📥</span>
                 <p class="upload-main-text">
-                  Drag & drop files or <span class="browse-btn">browse</span>
+                  Drag & drop files or <span class="browse-btn">browse files</span>
                 </p>
                 <p class="upload-sub-text">JPG, PNG, PDF, Word, text, CSV — up to 10MB each</p>
               </label>
@@ -366,6 +558,7 @@ export interface PendingFile {
                         class="remove-photo-btn"
                         (click)="removeFile(i)"
                         [disabled]="item.uploading"
+                        aria-label="Remove photo"
                       >
                         ✕
                       </button>
@@ -422,7 +615,29 @@ export interface PendingFile {
         <!-- Sticky Footer -->
         <footer class="sticky-footer">
           <div class="footer-content">
-            <span class="autosave-text">{{ footerStatus() }}</span>
+            <div class="footer-left">
+              <span class="autosave-text">{{ footerStatus() }}</span>
+              <!-- Draft vs Submit Toggle -->
+              <div class="publish-mode-toggle" role="group" aria-label="Report submission mode">
+                <button
+                  type="button"
+                  class="mode-toggle-btn"
+                  [class.active]="targetStatus() === 'DRAFT'"
+                  (click)="targetStatus.set('DRAFT')"
+                >
+                  📝 Draft Mode
+                </button>
+                <button
+                  type="button"
+                  class="mode-toggle-btn"
+                  [class.active]="targetStatus() === 'SUBMITTED'"
+                  (click)="targetStatus.set('SUBMITTED')"
+                >
+                  🚀 Publish to Parents
+                </button>
+              </div>
+            </div>
+
             <div class="footer-actions">
               <button
                 type="button"
@@ -430,17 +645,19 @@ export interface PendingFile {
                 (click)="saveDraft()"
                 [disabled]="saving()"
               >
-                {{ saving() ? 'Saving...' : 'Save Draft' }}
+                {{ saving() && targetStatus() === 'DRAFT' ? 'Saving…' : 'Save as Draft' }}
               </button>
               <button type="submit" class="btn-footer-submit" [disabled]="saving()">
                 {{
                   saving()
                     ? editMode()
-                      ? 'Updating...'
-                      : 'Submitting...'
-                    : editMode()
-                      ? 'Update Report'
-                      : 'Submit Report'
+                      ? 'Updating…'
+                      : 'Submitting…'
+                    : targetStatus() === 'DRAFT'
+                      ? 'Save Draft Report'
+                      : editMode()
+                        ? 'Update & Publish'
+                        : 'Submit Report'
                 }}
               </button>
             </div>
@@ -453,16 +670,6 @@ export interface PendingFile {
     `
       .create-report-container {
         padding-bottom: 120px;
-        font-family:
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          'Segoe UI',
-          Roboto,
-          Oxygen,
-          Ubuntu,
-          Cantarell,
-          sans-serif;
         color: var(--ac-color-text-strong);
       }
 
@@ -476,37 +683,67 @@ export interface PendingFile {
         margin-bottom: 16px;
       }
       .breadcrumb-link {
-        color: var(--ac-color-action);
+        color: var(--ac-color-action-alt);
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
       }
       .breadcrumb-link:hover {
         text-decoration: underline;
       }
       .breadcrumb-separator {
-        color: var(--ac-color-slate-300);
+        color: var(--ac-color-border-slate);
       }
       .breadcrumb-item.active {
-        color: var(--ac-color-slate-800);
-        font-weight: 600;
+        color: var(--ac-color-text-slate-strong);
+        font-weight: 700;
       }
 
       /* Header */
       .report-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         margin-bottom: 24px;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .header-badge-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .header-badge {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: var(--ac-color-tint-blue-wash);
+        color: var(--ac-color-action-alt);
+        padding: 2px 8px;
+        border-radius: 6px;
+        border: 1px solid var(--ac-color-border-info);
+      }
+      .header-badge-sub {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ac-color-text-slate);
       }
       .report-header h1 {
         margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        letter-spacing: -0.5px;
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--ac-color-text-slate-strong);
+        letter-spacing: -0.02em;
+      }
+      .header-sub {
+        margin: 4px 0 0;
+        color: var(--ac-color-text-slate);
+        font-size: 14px;
       }
       .header-actions {
         display: flex;
-        gap: 12px;
+        gap: 10px;
       }
       .btn-cancel {
         display: inline-flex;
@@ -514,14 +751,14 @@ export interface PendingFile {
         justify-content: center;
         padding: 10px 18px;
         background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-slate-300);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 10px;
-        color: var(--ac-color-slate-600);
+        color: var(--ac-color-text-slate);
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13.5px;
         text-decoration: none;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.15s;
       }
       .btn-cancel:hover {
         background: var(--ac-color-surface-slate);
@@ -529,61 +766,77 @@ export interface PendingFile {
       }
       .btn-save-draft {
         padding: 10px 18px;
-        background: var(--ac-color-ink-b);
-        border: none;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 10px;
-        color: var(--ac-color-text-on-action);
-        font-weight: 600;
-        font-size: 14px;
+        color: var(--ac-color-action-alt);
+        font-weight: 700;
+        font-size: 13.5px;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: background 0.15s;
       }
       .btn-save-draft:hover {
-        background: #0f2c3b;
+        background: var(--ac-color-tint-blue-wash);
       }
       .btn-save-draft:disabled {
-        background: var(--ac-color-slate-400);
+        opacity: 0.5;
         cursor: not-allowed;
+      }
+
+      .status-indicator-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .status-indicator-badge.draft {
+        background: var(--ac-color-amber-tint-100);
+        color: var(--ac-color-amber-600);
+        border: 1px solid var(--ac-color-amber-border-soft);
+      }
+      .status-indicator-badge.published {
+        background: var(--ac-color-green-100);
+        color: var(--ac-color-emerald-600);
+        border: 1px solid var(--ac-color-green-border-soft);
       }
 
       /* Profile section card */
       .profile-section-card {
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: 16px;
+        border-radius: 14px;
         padding: 20px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        box-shadow: var(--ac-shadow-sm);
       }
       .selector-row {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
+        flex-wrap: wrap;
         margin-bottom: 16px;
         padding-bottom: 16px;
         border-bottom: 1px solid var(--ac-color-slate-100);
       }
-      .selector-label {
-        font-weight: 600;
-        font-size: 14px;
-        color: var(--ac-color-slate-600);
-      }
-      .child-select {
+      .child-select,
+      .activity-date-input {
         padding: 8px 16px;
-        border: 1px solid var(--ac-color-slate-300);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
-        background: var(--ac-color-surface-slate);
+        background: var(--ac-color-surface);
         font-size: 14px;
         font-weight: 500;
         outline: none;
         cursor: pointer;
+        color: var(--ac-color-text-slate-strong);
       }
-      .child-select:disabled {
-        opacity: 0.6;
-        cursor: wait;
-      }
-      .child-select:focus {
-        border-color: var(--ac-color-action);
+      .child-select:focus,
+      .activity-date-input:focus {
+        border-color: var(--ac-color-action-alt);
       }
       .selector-error {
         font-size: 12px;
@@ -601,11 +854,11 @@ export interface PendingFile {
         display: grid;
         grid-template-columns: auto 1fr auto auto;
         align-items: center;
-        gap: 24px;
+        gap: 20px;
       }
       .student-avatar-container {
-        width: 64px;
-        height: 64px;
+        width: 56px;
+        height: 56px;
         background: var(--ac-color-tint-blue-mist);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
@@ -620,67 +873,122 @@ export interface PendingFile {
         object-fit: cover;
       }
       .student-avatar-large {
-        font-size: 24px;
-        font-weight: 700;
-        color: var(--ac-color-ink-b);
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--ac-color-action-alt);
       }
       .student-meta-block {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 3px;
       }
       .student-name-title {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 700;
         color: var(--ac-color-text-slate-strong);
       }
       .student-id-subtitle {
-        font-size: 13px;
+        font-size: 12px;
         color: var(--ac-color-text-slate);
         font-weight: 500;
       }
       .student-detail-group {
         display: flex;
-        gap: 32px;
+        gap: 28px;
         border-left: 1px solid var(--ac-color-border-slate);
-        padding-left: 32px;
+        padding-left: 28px;
       }
       .detail-item {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 3px;
       }
       .detail-label {
-        font-size: 11px;
+        font-size: 10.5px;
         font-weight: 700;
         color: var(--ac-color-text-slate);
-        letter-spacing: 0.5px;
+        letter-spacing: 0.05em;
       }
       .detail-value {
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 600;
-        color: var(--ac-color-slate-800);
-        display: flex;
-        align-items: center;
-        gap: 6px;
+        color: var(--ac-color-text-slate-strong);
       }
       .student-status-badge {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 6px 14px;
+        gap: 6px;
+        padding: 5px 12px;
         background: var(--ac-color-green-100);
         border-radius: 9999px;
-        color: #065f46;
-        font-size: 13px;
-        font-weight: 600;
-        margin-left: 24px;
+        color: var(--ac-color-emerald-800);
+        font-size: 12.5px;
+        font-weight: 700;
       }
       .status-dot {
-        width: 8px;
-        height: 8px;
-        background: var(--ac-color-green-500);
+        width: 7px;
+        height: 7px;
+        background: var(--ac-color-emerald-600);
         border-radius: 50%;
+      }
+
+      /* Domains Section Checkboxes */
+      .domains-section {
+        margin-bottom: 24px;
+      }
+      .section-hint {
+        margin: 0 0 14px 0;
+        font-size: 13px;
+        color: var(--ac-color-text-slate);
+      }
+      .domain-checkboxes-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .domain-check-card {
+        padding: 14px;
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 12px;
+        background: var(--ac-color-surface);
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: all 0.15s ease;
+      }
+      .domain-check-card:hover {
+        border-color: var(--ac-color-action-alt);
+        background: var(--ac-color-tint-blue-wash);
+      }
+      .domain-check-card.checked {
+        border-color: var(--ac-color-action-alt);
+        background: var(--ac-color-blue-tint-pure);
+        box-shadow: 0 0 0 1px var(--ac-color-action-alt);
+      }
+      .domain-card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .domain-check-icon {
+        font-size: 16px;
+        color: var(--ac-color-action-alt);
+      }
+      .domain-icon {
+        font-size: 16px;
+      }
+      .domain-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--ac-color-text-slate-strong);
+      }
+      .domain-desc {
+        margin: 0;
+        font-size: 12px;
+        color: var(--ac-color-text-slate);
+        line-height: 1.4;
       }
 
       /* Form Grid */
@@ -700,21 +1008,55 @@ export interface PendingFile {
       .form-section {
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: var(--ac-shadow-sm);
       }
       .form-section h2 {
-        margin: 0 0 20px 0;
-        font-size: 18px;
+        margin: 0 0 16px 0;
+        font-size: 16.5px;
         font-weight: 700;
-        color: var(--ac-color-slate-800);
+        color: var(--ac-color-text-slate-strong);
         display: flex;
         align-items: center;
         gap: 8px;
       }
       .section-icon {
-        font-size: 20px;
+        font-size: 18px;
+      }
+
+      /* Prompt guidance chips */
+      .prompt-chips-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .prompt-chip {
+        padding: 4px 10px;
+        background: var(--ac-color-tint-blue-mist);
+        border: 1px solid var(--ac-color-border-info);
+        border-radius: 999px;
+        color: var(--ac-color-action-alt);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .prompt-chip:hover {
+        background: var(--ac-color-tint-blue-wash);
+      }
+      .chip-km {
+        font-weight: 700;
+      }
+      .chip-en {
+        font-size: 0.9em;
+        opacity: 0.85;
+      }
+      .char-count {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ac-color-text-slate);
       }
 
       /* Fields layout */
@@ -724,33 +1066,22 @@ export interface PendingFile {
         gap: 16px;
         margin-bottom: 16px;
       }
-      .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .form-group label {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--ac-color-slate-600);
-      }
-      .form-section ac-ui-field input,
-      .form-section ac-ui-field select,
+      .form-section input[type='text'],
+      .form-section input[type='number'],
+      .form-section select,
       .form-section textarea {
-        padding: 12px 16px;
-        border: 1px solid var(--ac-color-slate-300);
-        border-radius: 10px;
-        font-size: 14px;
+        padding: 10px 14px;
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 8px;
+        font-size: 13.5px;
         outline: none;
-        transition: all 0.2s;
-        background: var(--ac-color-surface-slate);
-      }
-      .form-section ac-ui-field input:focus,
-      .form-section ac-ui-field select:focus,
-      .form-section textarea:focus {
-        border-color: var(--ac-color-action);
         background: var(--ac-color-surface);
-        box-shadow: 0 0 0 3px rgb(61 99 117 / 0.15);
+        color: var(--ac-color-text-slate-strong);
+      }
+      .form-section input:focus,
+      .form-section select:focus,
+      .form-section textarea:focus {
+        border-color: var(--ac-color-action-alt);
       }
       .form-section textarea {
         width: 100%;
@@ -764,7 +1095,7 @@ export interface PendingFile {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 14px;
       }
       .section-header-flex h2 {
         margin-bottom: 0;
@@ -772,21 +1103,20 @@ export interface PendingFile {
       .scale-badge {
         font-size: 11px;
         font-weight: 700;
-        color: var(--ac-color-text-slate-strong);
+        color: var(--ac-color-text-slate);
         background: var(--ac-color-slate-100);
-        padding: 4px 8px;
+        padding: 3px 8px;
         border-radius: 6px;
-        letter-spacing: 0.5px;
       }
       .metrics-list {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 18px;
       }
       .metric-item {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
       }
       .metric-header {
         display: flex;
@@ -794,14 +1124,14 @@ export interface PendingFile {
         align-items: center;
       }
       .metric-label {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
-        color: var(--ac-color-slate-700);
+        color: var(--ac-color-text-slate-strong);
       }
       .metric-value {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--ac-color-ink-b);
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--ac-color-action-alt);
       }
       .custom-slider {
         -webkit-appearance: none;
@@ -810,7 +1140,7 @@ export interface PendingFile {
         border-radius: 3px;
         background: var(--ac-color-border-slate);
         outline: none;
-        margin: 8px 0;
+        margin: 4px 0;
       }
       .custom-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
@@ -818,40 +1148,28 @@ export interface PendingFile {
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: var(--ac-color-ink-b);
+        background: var(--ac-color-action-alt);
         cursor: pointer;
         transition: transform 0.1s;
       }
       .custom-slider::-webkit-slider-thumb:hover {
-        transform: scale(1.2);
-      }
-      .custom-slider::-moz-range-thumb {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: var(--ac-color-ink-b);
-        cursor: pointer;
-        border: none;
-        transition: transform 0.1s;
-      }
-      .custom-slider::-moz-range-thumb:hover {
-        transform: scale(1.2);
+        transform: scale(1.15);
       }
 
       /* Attachment upload */
       .upload-dragzone {
-        border: 2px dashed var(--ac-color-slate-300);
+        border: 2px dashed var(--ac-color-border-slate);
         border-radius: 12px;
-        padding: 24px;
+        padding: 20px;
         text-align: center;
         cursor: pointer;
         transition: all 0.2s;
         background: var(--ac-color-surface-slate);
-        margin-bottom: 16px;
+        margin-bottom: 14px;
       }
       .upload-dragzone:hover {
-        border-color: var(--ac-color-ink-b);
-        background: var(--ac-color-tint-blue-mist);
+        border-color: var(--ac-color-action-alt);
+        background: var(--ac-color-tint-blue-wash);
       }
       .visually-hidden-file {
         position: absolute;
@@ -865,18 +1183,18 @@ export interface PendingFile {
         border: 0;
       }
       .upload-cloud-icon {
-        font-size: 32px;
-        margin-bottom: 8px;
+        font-size: 28px;
+        margin-bottom: 6px;
         display: block;
       }
       .upload-main-text {
-        font-size: 14px;
+        font-size: 13.5px;
         font-weight: 600;
-        color: var(--ac-color-slate-700);
-        margin: 0 0 4px 0;
+        color: var(--ac-color-text-slate-strong);
+        margin: 0 0 3px 0;
       }
       .browse-btn {
-        color: var(--ac-color-action);
+        color: var(--ac-color-action-alt);
         text-decoration: underline;
       }
       .upload-sub-text {
@@ -885,7 +1203,7 @@ export interface PendingFile {
         margin: 0;
       }
       .upload-error {
-        margin: 0 0 12px 0;
+        margin: 0 0 10px 0;
         font-size: 12px;
         color: var(--ac-color-alert-slate);
         font-weight: 600;
@@ -893,7 +1211,7 @@ export interface PendingFile {
       .photo-previews-row {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
+        gap: 10px;
       }
       .preview-box {
         aspect-ratio: 1;
@@ -916,15 +1234,15 @@ export interface PendingFile {
         flex-direction: column;
         align-items: center;
         gap: 4px;
-        padding: 8px;
+        padding: 6px;
         text-align: center;
       }
       .preview-doc-icon {
-        font-size: 22px;
+        font-size: 20px;
       }
       .preview-doc-name {
         font-size: 9px;
-        color: var(--ac-color-slate-600);
+        color: var(--ac-color-text-slate);
         word-break: break-all;
         max-height: 2.6em;
         overflow: hidden;
@@ -932,16 +1250,17 @@ export interface PendingFile {
       .preview-overlay {
         position: absolute;
         inset: 0;
-        background: rgb(255 255 255 / 0.7);
+        background: var(--ac-color-surface);
+        opacity: 0.85;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       .spinner {
-        width: 22px;
-        height: 22px;
-        border: 3px solid var(--ac-color-slate-300);
-        border-top-color: var(--ac-color-ink-b);
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--ac-color-border-slate);
+        border-top-color: var(--ac-color-action-alt);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
       }
@@ -954,12 +1273,12 @@ export interface PendingFile {
         position: absolute;
         left: 4px;
         bottom: 4px;
-        width: 20px;
-        height: 20px;
-        background: var(--ac-color-green-500);
-        color: white;
+        width: 18px;
+        height: 18px;
+        background: var(--ac-color-emerald-600);
+        color: var(--ac-color-text-on-action);
         border-radius: 50%;
-        font-size: 11px;
+        font-size: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -968,21 +1287,17 @@ export interface PendingFile {
         position: absolute;
         top: 4px;
         right: 4px;
-        width: 24px;
-        height: 24px;
-        background: var(--ac-color-red-500);
-        color: white;
+        width: 28px;
+        height: 28px;
+        background: var(--ac-color-alert-strong);
+        color: var(--ac-color-text-on-action);
         border: none;
         border-radius: 50%;
-        font-size: 12px;
+        font-size: 13px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-      }
-      .remove-photo-btn:disabled {
-        opacity: 0.5;
-        cursor: wait;
       }
       .preview-box-empty {
         aspect-ratio: 1;
@@ -992,38 +1307,48 @@ export interface PendingFile {
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--ac-color-slate-300);
+        color: var(--ac-color-border-slate);
       }
       .preview-icon {
-        font-size: 24px;
+        font-size: 22px;
+      }
+      .existing-attachment {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        background: var(--ac-color-surface-slate);
+        border-radius: 6px;
+        font-size: 12px;
+        margin-top: 8px;
       }
 
-      /* Alert message styles */
+      /* Alert messages */
       .alert-message {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 16px 20px;
-        border-radius: 12px;
+        gap: 10px;
+        padding: 14px 18px;
+        border-radius: 10px;
         font-weight: 600;
-        font-size: 14px;
-        margin-top: 24px;
+        font-size: 13.5px;
+        margin-top: 20px;
       }
       .alert-message.error {
         background: var(--ac-color-red-50);
-        color: #991b1b;
-        border: 1px solid #fee2e2;
+        color: var(--ac-color-alert-strong);
+        border: 1px solid var(--ac-color-red-border);
       }
       .alert-message.success {
-        background: #f0fdf4;
-        color: #166534;
-        border: 1px solid #dcfce7;
+        background: var(--ac-color-green-50);
+        color: var(--ac-color-emerald-800);
+        border: 1px solid var(--ac-color-green-border-soft);
       }
       .alert-icon {
-        font-size: 18px;
+        font-size: 16px;
       }
 
-      /* Sticky footer styling */
+      /* Sticky footer */
       .sticky-footer {
         position: fixed;
         bottom: 0;
@@ -1031,64 +1356,95 @@ export interface PendingFile {
         right: 0;
         background: var(--ac-color-surface);
         border-top: 1px solid var(--ac-color-border-slate);
-        padding: 16px 56px;
-        box-shadow: 0 -4px 10px rgb(0 0 0 / 0.05);
+        padding: 14px 48px;
+        box-shadow: var(--ac-shadow-lg);
         z-index: 10;
       }
       .footer-content {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 16px;
+      }
+      .footer-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
       }
       .autosave-text {
-        font-size: 12px;
+        font-size: 12.5px;
         font-weight: 500;
         color: var(--ac-color-text-slate);
       }
+      .publish-mode-toggle {
+        display: inline-flex;
+        background: var(--ac-color-slate-100);
+        padding: 3px;
+        border-radius: 8px;
+        border: 1px solid var(--ac-color-border-slate);
+      }
+      .mode-toggle-btn {
+        padding: 6px 12px;
+        border: none;
+        background: none;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ac-color-text-slate);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .mode-toggle-btn.active {
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-alt);
+        box-shadow: var(--ac-shadow-xs);
+      }
       .footer-actions {
         display: flex;
-        gap: 16px;
+        gap: 12px;
       }
       .btn-footer-save {
-        padding: 12px 24px;
+        padding: 10px 20px;
         background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-slate-300);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 10px;
-        color: var(--ac-color-slate-600);
+        color: var(--ac-color-text-slate-strong);
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13.5px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.15s;
       }
       .btn-footer-save:hover {
         background: var(--ac-color-surface-slate);
-        border-color: var(--ac-color-slate-400);
       }
       .btn-footer-save:disabled {
         opacity: 0.5;
         cursor: not-allowed;
       }
       .btn-footer-submit {
-        padding: 12px 28px;
-        background: var(--ac-color-ink-b);
+        padding: 10px 24px;
+        background: var(--ac-color-action-alt);
         border: none;
         border-radius: 10px;
         color: var(--ac-color-text-on-action);
-        font-weight: 600;
-        font-size: 14px;
+        font-weight: 700;
+        font-size: 13.5px;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: background 0.15s;
       }
       .btn-footer-submit:hover {
-        background: #0f2c3b;
+        background: var(--ac-color-ink-a);
       }
       .btn-footer-submit:disabled {
-        background: var(--ac-color-slate-400);
+        opacity: 0.5;
         cursor: not-allowed;
       }
 
       @media (max-width: 960px) {
         .report-grid {
+          grid-template-columns: 1fr;
+        }
+        .domain-checkboxes-grid {
           grid-template-columns: 1fr;
         }
         .student-profile-info {
@@ -1101,15 +1457,20 @@ export interface PendingFile {
         }
         .student-status-badge {
           grid-column: 1 / span 2;
-          margin-left: 0;
-          width: fit-content;
         }
       }
 
       @media (max-width: 860px) {
         .sticky-footer {
           left: 0;
-          padding: 16px 20px;
+          padding: 14px 20px;
+        }
+        .footer-content {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .footer-left {
+          justify-content: space-between;
         }
       }
     `,
@@ -1136,6 +1497,56 @@ export class CreateSchoolReportPage implements OnInit {
   readonly pendingFiles = signal<PendingFile[]>([]);
   readonly uploadError = signal<string | null>(null);
 
+  /** Submission Mode toggle: 'DRAFT' vs 'SUBMITTED' */
+  readonly targetStatus = signal<'DRAFT' | 'SUBMITTED'>('SUBMITTED');
+
+  readonly domainList: DomainOption[] = [
+    {
+      id: 'social',
+      name: 'Social Interaction & Play',
+      categoryValue: 'Social/Emotional',
+      icon: '🤝',
+      description: 'Peer engagement, turn-taking, joint attention, empathy',
+    },
+    {
+      id: 'sensory',
+      name: 'Sensory Processing & Regulation',
+      categoryValue: 'Sensory/Motor',
+      icon: '🌈',
+      description: 'Tactile, auditory, vestibular coping, sensory soothing',
+    },
+    {
+      id: 'communication',
+      name: 'Communication & Speech',
+      categoryValue: 'Language/Communication',
+      icon: '💬',
+      description: 'Verbal/non-verbal communication, gestures, vocabulary',
+    },
+    {
+      id: 'motor',
+      name: 'Motor & Physical Skills',
+      categoryValue: 'Sensory/Motor',
+      icon: '🏃',
+      description: 'Fine motor precision, gross motor coordination',
+    },
+    {
+      id: 'cognitive',
+      name: 'Cognitive & Academic Focus',
+      categoryValue: 'Cognitive/Developmental',
+      icon: '🧩',
+      description: 'Problem solving, task persistence, sequential memory & academic skills',
+    },
+    {
+      id: 'adaptive',
+      name: 'Adaptive & Daily Routine',
+      categoryValue: 'Adaptive/Self-Care',
+      icon: '🌱',
+      description: 'Transitions, self-care routines, emotional flexibility',
+    },
+  ];
+
+  readonly selectedDomainIds = signal<string[]>(['social', 'communication']);
+
   readonly categories = [
     'Cognitive/Developmental',
     'Sensory/Motor',
@@ -1146,7 +1557,8 @@ export class CreateSchoolReportPage implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     childId: ['', [Validators.required]],
-    category: ['', [Validators.required]],
+    activityDate: [new Date().toISOString().slice(0, 10), [Validators.required]],
+    category: ['Social/Emotional', [Validators.required]],
     duration: [45, [Validators.required, Validators.min(1)]],
     activityName: ['', [Validators.required, Validators.maxLength(160)]],
     teacherObservations: ['', [Validators.required, Validators.maxLength(4000)]],
@@ -1164,10 +1576,11 @@ export class CreateSchoolReportPage implements OnInit {
     return control.invalid && (control.touched || control.dirty);
   }
 
+  readonly selectedChildId = signal('');
   readonly selectedChild = computed(() => {
-    const childId = this.form.controls.childId.value;
+    const childId = this.selectedChildId() || this.form.controls.childId.value;
     const list = this.students();
-    return list.find((s) => s.id === childId) || null;
+    return list.find((s) => s.id === childId || s.childId === childId) || null;
   });
 
   readonly footerStatus = computed(() => {
@@ -1176,10 +1589,35 @@ export class CreateSchoolReportPage implements OnInit {
     const uploaded = files.filter((f) => f.uploadedUrl).length;
     if (uploading > 0) return `Uploading ${uploading} file${uploading === 1 ? '' : 's'}…`;
     if (uploaded > 0) return `${uploaded} file${uploaded === 1 ? '' : 's'} attached`;
-    return 'Form ready';
+    return 'Ready to save';
   });
 
+  isDomainSelected(id: string): boolean {
+    return this.selectedDomainIds().includes(id);
+  }
+
+  toggleDomain(domain: DomainOption) {
+    this.selectedDomainIds.update((current) => {
+      const exists = current.includes(domain.id);
+      const next = exists ? current.filter((x) => x !== domain.id) : [...current, domain.id];
+      // Automatically keep primary category aligned with active selection
+      if (!exists && domain.categoryValue) {
+        this.form.controls.category.setValue(domain.categoryValue);
+      }
+      return next;
+    });
+  }
+
+  insertPrompt(controlName: 'teacherObservations' | 'parentRecommendations', promptText: string) {
+    const ctrl = this.form.controls[controlName];
+    const current = ctrl.value.trim();
+    const updated = current ? `${current}\n${promptText}` : promptText;
+    ctrl.setValue(updated);
+    ctrl.markAsDirty();
+  }
+
   ngOnInit() {
+    this.form.controls.childId.valueChanges.subscribe((id) => this.selectedChildId.set(id));
     this.loadStudents();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -1193,6 +1631,9 @@ export class CreateSchoolReportPage implements OnInit {
               : {};
           this.form.patchValue({
             childId: report.childId,
+            activityDate: report.activityDate
+              ? report.activityDate.slice(0, 10)
+              : new Date().toISOString().slice(0, 10),
             category: report.activityCategory,
             duration: report.duration ?? 45,
             activityName: report.title,
@@ -1205,6 +1646,7 @@ export class CreateSchoolReportPage implements OnInit {
             emotionalRegulation: this.metricValue(metrics, 'emotionalRegulation'),
             taskCompletion: this.metricValue(metrics, 'taskCompletion'),
           });
+          this.targetStatus.set(report.status === 'DRAFT' ? 'DRAFT' : 'SUBMITTED');
           this.existingPhotoUrls.set(report.photoUrls ?? []);
         },
         error: (err) => {
@@ -1225,11 +1667,6 @@ export class CreateSchoolReportPage implements OnInit {
     this.existingPhotoUrls.update((urls) => urls.filter((_, i) => i !== index));
   }
 
-  /**
-   * Display URL for an already-saved attachment. existingPhotoUrls deliberately
-   * holds the STORED paths, because they are posted straight back in photoUrls
-   * on save — only the rendered href is the authorised, report-scoped route.
-   */
   protected attachmentHref(storedUrl: string): string {
     const id = this.reportId();
     return id === null ? storedUrl : attachmentUrl(id, storedUrl);
@@ -1245,7 +1682,6 @@ export class CreateSchoolReportPage implements OnInit {
     }
   }
 
-  /** GET /schools/enrolled-students — ACTIVE enrollments with age pre-computed. */
   private loadStudents() {
     this.loadingStudents.set(true);
     this.studentsError.set(null);
@@ -1279,11 +1715,6 @@ export class CreateSchoolReportPage implements OnInit {
     void this.addFiles(Array.from(event.dataTransfer.files));
   }
 
-  /**
-   * Accept files, show previews, and immediately upload each batch to
-   * POST /schools/upload/activity-files. The returned URLs are stored on the
-   * pending item, so Save/Submit already has everything it needs.
-   */
   private async addFiles(files: File[]) {
     this.uploadError.set(null);
 
@@ -1319,7 +1750,6 @@ export class CreateSchoolReportPage implements OnInit {
 
     const isImage = (file: File) => file.type.startsWith('image/');
 
-    // Reserve UI slots with previews right away, then upload.
     const items: PendingFile[] = valid.map((file) => ({
       file,
       previewUrl: isImage(file) ? URL.createObjectURL(file) : null,
@@ -1345,7 +1775,6 @@ export class CreateSchoolReportPage implements OnInit {
         );
       },
       error: (err) => {
-        // Drop the failed batch from the UI; the user can retry.
         this.pendingFiles.update((current) => current.filter((entry) => !items.includes(entry)));
         for (const item of items) {
           if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
@@ -1363,11 +1792,12 @@ export class CreateSchoolReportPage implements OnInit {
   }
 
   saveDraft() {
+    this.targetStatus.set('DRAFT');
     this.submitWithStatus('DRAFT');
   }
 
   submit() {
-    this.submitWithStatus('SUBMITTED');
+    this.submitWithStatus(this.targetStatus());
   }
 
   private submitWithStatus(status: 'DRAFT' | 'SUBMITTED') {
@@ -1401,17 +1831,19 @@ export class CreateSchoolReportPage implements OnInit {
       emotionalRegulation: value.emotionalRegulation,
       taskCompletion: value.taskCompletion,
     };
-    // editMode() is computed from reportId(), but TypeScript cannot see through
-    // the computed — branching on the id directly narrows it for real.
+
     const reportId = this.reportId();
+    const chosenDate =
+      value.activityDate?.trim() ||
+      this.editingReport()?.activityDate.slice(0, 10) ||
+      new Date().toISOString().slice(0, 10);
+
     const request = reportId
       ? this.api.updateActivityReport(reportId, {
           activityCategory: value.category,
           title: value.activityName,
           summary: `${value.activityName} — ${value.category}`,
-          activityDate:
-            this.editingReport()?.activityDate.slice(0, 10) ??
-            new Date().toISOString().slice(0, 10),
+          activityDate: chosenDate,
           duration: value.duration,
           performanceMetrics: metrics,
           teacherObservation: value.teacherObservations,
@@ -1423,6 +1855,7 @@ export class CreateSchoolReportPage implements OnInit {
           childId: value.childId,
           activityCategory: value.category,
           activityName: value.activityName,
+          activityDate: chosenDate,
           duration: value.duration,
           performanceMetrics: metrics,
           teacherObservation: value.teacherObservations,

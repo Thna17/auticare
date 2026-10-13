@@ -17,6 +17,19 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction) =>
   }
 };
 
+export const optionalAuth = (req: Request, _res: Response, next: NextFunction) => {
+  const token = req.cookies.auticare_access;
+  if (token && typeof token === 'string') {
+    try {
+      const payload = tokenService.verifyAccessToken(token);
+      req.auth = { parentId: payload.sub, role: payload.role };
+    } catch {
+      // Ignore invalid token for optional auth
+    }
+  }
+  next();
+};
+
 export const requireRole =
   (...roles: readonly UserRole[]) =>
   (req: Request, _res: Response, next: NextFunction) => {

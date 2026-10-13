@@ -13,5 +13,9 @@ export const HOSPITAL_MANAGEMENT_ROUTES: Routes = [
     path: 'doctors',
     loadComponent: () => import('./hospital-doctors.page').then((m) => m.HospitalDoctorsPage),
   },
+  {
+    path: 'profile',
+    loadComponent: () => import('./hospital-profile.page').then((m) => m.HospitalProfilePage),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
 ];
