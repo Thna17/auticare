@@ -8,6 +8,8 @@
     "module": "es2022",
     "moduleResolution": "bundler",
     "ignoreDeprecations": "5.0",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "paths": {
       "@auticare/contracts": ["packages/contracts/dist/index.d.ts"]
     }
