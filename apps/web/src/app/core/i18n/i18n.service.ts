@@ -97,7 +97,9 @@ export class I18nService {
     let result = current;
     if (params) {
       for (const [pKey, pVal] of Object.entries(params)) {
-        result = result.replaceAll(`{{${pKey}}}`, String(pVal));
+        result = result
+          .replaceAll(`{{${pKey}}}`, String(pVal))
+          .replaceAll(`{${pKey}}`, String(pVal));
       }
     }
     return result;

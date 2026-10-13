@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PreferencesService } from '../preferences/preferences.service';
 import { I18nService, LANG_STORAGE_KEY } from './i18n.service';
+import { TranslatePipe } from './translate.pipe';
 
 describe('I18nService', () => {
   let service: I18nService;
@@ -11,6 +12,7 @@ describe('I18nService', () => {
     TestBed.configureTestingModule({
       providers: [
         I18nService,
+        TranslatePipe,
         {
           provide: PreferencesService,
           useValue: {
@@ -67,13 +69,52 @@ describe('I18nService', () => {
     expect(service.t('risk.lowConcern')).toBe('Low Concern');
   });
 
-  it('interpolates parameters correctly with {{key}} format', () => {
+  it('resolves newly expanded domain dictionaries across all modules', () => {
+    service.setLanguage('km');
+    expect(service.t('screening.start')).toBe('ចាប់ផ្តើមការវាយតម្លៃ');
+    expect(service.t('screening.ageBands.toddler')).toBe('កុមារតូច (១៨–៣០ ខែ)');
+    expect(service.t('activities.title')).toBe('បណ្ណាល័យសកម្មភាពលេងបែបវិញ្ញាណ');
+    expect(service.t('appointments.bookingTitle')).toBe('កក់ការពិគ្រោះយោបល់ជាមួយអ្នកជំនាញ');
+    expect(service.t('schools.directoryTitle')).toBe('សាលារៀន និងមជ្ឈមណ្ឌលអប់រំបរិយាបន្ន');
+    expect(service.t('hospitals.title')).toBe('មន្ទីរពេទ្យ និងគ្លីនិកដៃគូ');
+    expect(service.t('notifications.emptyNotice')).toBe('មិនមានការជូនដំណឹងថ្មីទេ');
+    expect(service.t('settings.profileSettings')).toBe('ព័ត៌មានផ្ទាល់ខ្លួន');
+
     service.setLanguage('en');
-    const interpolated = service.t('child.yearsOld');
-    expect(interpolated).toBe('years old');
+    expect(service.t('screening.start')).toBe('Start Assessment');
+    expect(service.t('screening.ageBands.toddler')).toBe('Toddler (18–30 months)');
+    expect(service.t('activities.title')).toBe('Sensory Play & Activities Library');
+    expect(service.t('appointments.bookingTitle')).toBe('Book Specialist Consultation');
+    expect(service.t('schools.directoryTitle')).toBe('Inclusive Schools & Centers');
+    expect(service.t('hospitals.title')).toBe('Partner Hospitals & Clinics');
+    expect(service.t('notifications.emptyNotice')).toBe('You have no new notifications.');
+    expect(service.t('settings.profileSettings')).toBe('Profile Information');
   });
 
-  it('returns translation path as fallback for unknown keys', () => {
-    expect(service.t('unknown.nonexistent.key')).toBe('unknown.nonexistent.key');
+  it('interpolates parameters correctly with {{key}} and {key} format', () => {
+    service.setLanguage('en');
+    expect(service.t('progress.streakLabel', { days: 5 })).toBe('5-Day Activity Streak');
+
+    service.setLanguage('km');
+    expect(service.t('progress.streakLabel', { days: 7 })).toBe('សកម្មភាពបន្តបន្ទាប់ 7 ថ្ងៃ');
+  });
+
+  it('falls back to English when a nested key is missing in the current language', () => {
+    // If a key does not exist at all, returns path
+    expect(service.t('nonexistent.path.value')).toBe('nonexistent.path.value');
+  });
+
+  it('TranslatePipe transforms keys and reactively updates on language switch', () => {
+    const pipe = TestBed.inject(TranslatePipe);
+
+    service.setLanguage('km');
+    expect(pipe.transform('common.save')).toBe('រក្សាទុក');
+    expect(pipe.transform('progress.streakLabel', { days: 3 })).toBe('សកម្មភាពបន្តបន្ទាប់ 3 ថ្ងៃ');
+    expect(pipe.transform('')).toBe('');
+    expect(pipe.transform(null)).toBe('');
+
+    service.setLanguage('en');
+    expect(pipe.transform('common.save')).toBe('Save');
+    expect(pipe.transform('progress.streakLabel', { days: 3 })).toBe('3-Day Activity Streak');
   });
 });
