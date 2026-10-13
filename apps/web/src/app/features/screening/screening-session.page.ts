@@ -45,11 +45,21 @@ import { I18nService } from '../../core/i18n/i18n.service';
         <header class="sticky-progress-header" aria-label="Screening progress">
           <div class="header-inner">
             <div class="meta-row">
-              <div class="category-indicator">
-                <span class="category-icon" aria-hidden="true">{{
-                  categoryIcon(question.category)
-                }}</span>
-                <span class="category-name">{{ formatCategory(question.category) }}</span>
+              <div class="meta-left">
+                <button
+                  type="button"
+                  class="top-nav-btn"
+                  (click)="openExit()"
+                  [attr.aria-label]="isKm() ? 'ត្រឡប់ទៅទំព័រវាយតម្លៃ' : 'Back to Screening'"
+                >
+                  &larr; {{ isKm() ? 'ត្រឡប់ទៅទំព័រវាយតម្លៃ' : 'Back to Screening' }}
+                </button>
+                <div class="category-indicator">
+                  <span class="category-icon" aria-hidden="true">{{
+                    categoryIcon(question.category)
+                  }}</span>
+                  <span class="category-name">{{ formatCategory(question.category) }}</span>
+                </div>
               </div>
               <div class="progress-details">
                 <span class="step-count">
@@ -145,7 +155,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
               <span class="legend-text">
                 @if (isKm()) {
                   ឆ្លើយរហ័ស៖ ចុច <kbd>1</kbd> សម្រាប់ <strong>មិនដែល</strong>, <kbd>2</kbd> សម្រាប់
-                  <strong>កម្រ</strong>, <kbd>3</kbd> សម្រាប់ <strong>ជួនកាល</strong>,
+                  <strong>កម្រ</strong>, <kbd>3</kbd> សម្រាប់ <strong>ម្តងម្កាល</strong>,
                   <kbd>4</kbd> សម្រាប់ <strong>ញឹកញាប់</strong>, <kbd>5</kbd> សម្រាប់
                   <strong>ជានិច្ច</strong>
                 } @else {
@@ -186,7 +196,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
                       : 'Finalizing Analysis…'
                     : isKm()
                       ? 'បញ្ចប់ការវាយតម្លៃ'
-                      : 'Complete Screening'
+                      : 'Submit Assessment'
                 }}
               } @else {
                 {{ isKm() ? 'សំណួរបន្ទាប់' : 'Next Question' }} &rarr;
@@ -284,6 +294,37 @@ import { I18nService } from '../../core/i18n/i18n.service';
         justify-content: space-between;
         gap: 16px;
         flex-wrap: wrap;
+      }
+
+      .meta-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .top-nav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: transparent;
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-pill);
+        padding: 4px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ac-color-text-slate);
+        cursor: pointer;
+        transition:
+          color var(--ac-motion-fast),
+          background var(--ac-motion-fast),
+          border-color var(--ac-motion-fast);
+      }
+
+      .top-nav-btn:hover {
+        background: var(--ac-color-surface-hover);
+        color: var(--ac-color-action-deep);
+        border-color: var(--ac-color-action);
       }
 
       .category-indicator {
@@ -781,22 +822,112 @@ export class ScreeningSessionPage implements OnInit, OnDestroy {
   getKhmerQuestion(text?: string | null): string {
     if (!text) return '';
     const map: Record<string, string> = {
+      // Toddler & Common Screening Questions
+      'Does your child make eye contact when you speak to them?':
+        'តើកូនរបស់អ្នកសម្លឹងមើលភ្នែកនៅពេលអ្នកនិយាយជាមួយពួកគេដែរឬទេ?',
       'Does your child make consistent eye contact when interacting?':
         'តើកូនរបស់អ្នករក្សាការសម្លឹងមើលភ្នែកជាប់លាប់នៅពេលមានទំនាក់ទំនងជាមួយអ្នកដែរឬទេ?',
-      'Does your child respond when their name is called across the room?':
-        'តើកូនរបស់អ្នកឆ្លើយតបនៅពេលគេហៅឈ្មោះរបស់គេពីចម្ងាយដែរឬទេ?',
-      'Does your child point to objects they want or want to show you?':
-        'តើកូនរបស់អ្នកចង្អុលបង្ហាញវត្ថុដែលគេចង់បាន ឬចង់បង្ហាញដល់អ្នកដែរឬទេ?',
       'Does your child smile back when you smile at them?':
         'តើកូនរបស់អ្នកញញឹមតបវិញនៅពេលអ្នកញញឹមដាក់គេដែរឬទេ?',
+      'Does your child show interest in playing with other children?':
+        'តើកូនរបស់អ្នកបង្ហាញការចាប់អារម្មណ៍ក្នុងការលេងជាមួយកុមារដទៃដែរឬទេ?',
+      'Does your child seem to enjoy being held or cuddled?':
+        'តើកូនរបស់អ្នកចូលចិត្តឱ្យគេឱប ឬបីត្រកងដែរឬទេ?',
+      'Does your child respond when you call their name?':
+        'តើកូនរបស់អ្នកឆ្លើយតបនៅពេលអ្នកហៅឈ្មោះរបស់គេដែរឬទេ?',
+      'Does your child respond when their name is called across the room?':
+        'តើកូនរបស់អ្នកឆ្លើយតបនៅពេលគេហៅឈ្មោះរបស់គេពីចម្ងាយដែរឬទេ?',
+      'Does your child use gestures (like pointing or waving) to communicate?':
+        'តើកូនរបស់អ្នកប្រើកាយវិការ (ដូចជាចង្អុល ឬបក់ដៃ) ដើម្បីប្រាស្រ័យទាក់ទងដែរឬទេ?',
+      "Does your child try to show you an object they're interested in?":
+        'តើកូនរបស់អ្នកព្យាយាមបង្ហាញវត្ថុដែលគេចាប់អារម្មណ៍ដល់អ្នកដែរឬទេ?',
+      'Does your child point to objects they want or want to show you?':
+        'តើកូនរបស់អ្នកចង្អុលបង្ហាញវត្ថុដែលគេចង់បាន ឬចង់បង្ហាញដល់អ្នកដែរឬទេ?',
+      'Does your child use words or phrases to ask for things they want?':
+        'តើកូនរបស់អ្នកប្រើពាក្យ ឬឃ្លាដើម្បីសុំរបស់ដែលគេចង់បានដែរឬទេ?',
+      'Does your child imitate sounds, words, or actions that you make?':
+        'តើកូនរបស់អ្នកធ្វើត្រាប់តាមសំឡេង ពាក្យ ឬសកម្មភាពរបស់អ្នកដែរឬទេ?',
       'Does your child imitate actions like clapping or waving goodbye?':
         'តើកូនរបស់អ្នកធ្វើតាមសកម្មភាពដូចជាការទះដៃ ឬបក់ដៃលាដែរឬទេ?',
+      'Does your child engage in pretend play (e.g. feeding a doll, talking on a toy phone)?':
+        'តើកូនរបស់អ្នកចូលរួមក្នុងការលេងបែបស្រមើស្រមៃ (ឧទាហរណ៍៖ បញ្ចុកបាយតុក្កតា និយាយទូរស័ព្ទជ័រ) ដែរឬទេ?',
+      "Does your child play with toys in the way they're meant to be used, rather than lining them up or spinning them?":
+        'តើកូនរបស់អ្នកលេងប្រដាប់ក្មេងលេងតាមរបៀបដែលគេត្រូវលេង ជាជាងតម្រៀបជាជួរ ឬបង្វិលវាដែរឬទេ?',
+      'Does your child show curiosity about new toys or objects?':
+        'តើកូនរបស់អ្នកបង្ហាញការចង់ដឹងចង់ឃើញអំពីប្រដាប់ក្មេងលេង ឬវត្ថុថ្មីៗដែរឬទេ?',
+      'Does your child copy activities they see you doing (like sweeping or stirring)?':
+        'តើកូនរបស់អ្នកធ្វើតាមសកម្មភាពដែលគេឃើញអ្នកធ្វើ (ដូចជាបោសផ្ទះ ឬកូរម្ហូប) ដែរឬទេ?',
+      'Does your child react strongly (covering ears, crying) to loud or unexpected sounds?':
+        'តើកូនរបស់អ្នកមានប្រតិកម្មខ្លាំង (ខ្ទប់ត្រចៀក យំ) ចំពោះសំឡេងខ្លាំង ឬសំឡេងដែលមិនបានរំពឹងទុកដែរឬទេ?',
       'Does your child show unusual sensitivity to loud sounds or bright lights?':
         'តើកូនរបស់អ្នកបង្ហាញភាពប្រែប្រួលញាណខុសពីធម្មតាចំពោះសំឡេងខ្លាំង ឬពន្លឺចាំងដែរឬទេ?',
+      'Does your child seem unusually sensitive to certain textures, tastes, or smells?':
+        'តើកូនរបស់អ្នកហាក់ដូចជាមានភាពរសើបខុសពីធម្មតាចំពោះផ្ទៃប៉ះ រសជាតិ ឬក្លិនជាក់លាក់ដែរឬទេ?',
+      'Does your child seek out spinning, rocking, or other repetitive movement?':
+        'តើកូនរបស់អ្នកចូលចិត្តចលនាបង្វិល យោលខ្លួន ឬចលនាដដែលៗផ្សេងទៀតដែរឬទេ?',
       'Does your child engage in repetitive movements like hand flapping or rocking?':
         'តើកូនរបស់អ្នកមានចលនាដដែលៗដូចជាបក់ដៃ ឬយោលខ្លួនដែរឬទេ?',
+      'Does your child get unusually upset by small changes in routine?':
+        'តើកូនរបស់អ្នកពិបាកចិត្តខុសពីធម្មតាចំពោះការផ្លាស់ប្តូរបន្តិចបន្តួចក្នុងទម្លាប់ប្រចាំថ្ងៃដែរឬទេ?',
       'Does your child become very upset by minor changes in routines?':
         'តើកូនរបស់អ្នកពិបាកចិត្តខ្លាំងចំពោះការផ្លាស់ប្តូរបន្តិចបន្តួចក្នុងទម្លាប់ប្រចាំថ្ងៃដែរឬទេ?',
+      'Does your child make repetitive hand or finger movements (flapping, wiggling near the eyes)?':
+        'តើកូនរបស់អ្នកធ្វើចលនាដៃ ឬម្រាមដៃដដែលៗ (បក់ដៃ គ្រវីជិតភ្នែក) ដែរឬទេ?',
+      'Does your child walk on their toes frequently?': 'តើកូនរបស់អ្នកដើរដោយចុងជើងញឹកញាប់ដែរឬទេ?',
+      'Does your child repeat words or phrases without an apparent communicative purpose (echoing)?':
+        'តើកូនរបស់អ្នកនិយាយពាក្យ ឬឃ្លាដដែលៗដោយគ្មានបំណងប្រាស្រ័យទាក់ទងច្បាស់លាស់ (និយាយបន្ទរ) ដែរឬទេ?',
+      'Does your child insist on things being done in exactly the same way each time?':
+        'តើកូនរបស់អ្នកទាមទារឱ្យធ្វើអ្វីៗតាមរបៀបដូចគ្នាបេះបិទរាល់ពេលដែរឬទេ?',
+
+      // Preschool Screening Questions
+      'Does your child seek out other children to play with?':
+        'តើកូនរបស់អ្នកស្វែងរកកុមារដទៃដើម្បីលេងជាមួយដែរឬទេ?',
+      'Does your child join in group games or activities with peers?':
+        'តើកូនរបស់អ្នកចូលរួមលេងហ្គេមជាក្រុម ឬសកម្មភាពជាមួយមិត្តភក្តិដែរឬទេ?',
+      'Does your child notice when someone else is upset or hurt?':
+        'តើកូនរបស់អ្នកកត់សម្គាល់ឃើញនៅពេលអ្នកដទៃពិបាកចិត្ត ឬមានរបួសដែរឬទេ?',
+      'Does your child make friends easily at school or in group settings?':
+        'តើកូនរបស់អ្នកងាយស្រួលរាប់អានមិត្តភក្តិនៅសាលា ឬក្នុងក្រុមដែរឬទេ?',
+      'Does your child enjoy sharing something exciting with you (a drawing, a toy, a discovery)?':
+        'តើកូនរបស់អ្នកចូលចិត្តចែករំលែកអ្វីដែលគួរឱ្យរំភើបជាមួយអ្នក (គំនូរ ប្រដាប់ក្មេងលេង ឬការរកឃើញថ្មី) ដែរឬទេ?',
+      'Does your child hold a back-and-forth conversation about a topic?':
+        'តើកូនរបស់អ្នកអាចសន្ទនាឆ្លើយឆ្លងគ្នាអំពីប្រធានបទណាមួយបានដែរឬទេ?',
+      "Does your child ask questions to learn more about something they're curious about?":
+        'តើកូនរបស់អ្នកសួរសំណួរដើម្បីស្វែងយល់បន្ថែមអំពីអ្វីដែលគេចង់ដឹងដែរឬទេ?',
+      "Does your child understand jokes or teasing in the way they're intended?":
+        'តើកូនរបស់អ្នកយល់ពីរឿងកំប្លែង ឬការលេងសើចតាមន័យពិតរបស់វាដែរឬទេ?',
+      "Does your child use facial expressions that match what they're saying or feeling?":
+        'តើកូនរបស់អ្នកប្រើទឹកមុខដែលស៊ីគ្នានឹងអ្វីដែលគេកំពុងនិយាយ ឬមានអារម្មណ៍ដែរឬទេ?',
+      'Does your child struggle to explain their own feelings in words?':
+        'តើកូនរបស់អ្នកពិបាកក្នុងការពន្យល់អារម្មណ៍របស់ខ្លួនជាពាក្យសម្តីដែរឬទេ?',
+      'Does your child engage in imaginative or make-believe play with other children?':
+        'តើកូនរបស់អ្នកចូលរួមក្នុងការលេងបែបស្រមើស្រមៃជាមួយកុមារដទៃដែរឬទេ?',
+      'Does your child act out different characters or roles during play?':
+        'តើកូនរបស់អ្នកសម្តែងជាតួអង្គ ឬតួនាទីផ្សេងៗក្នុងពេលលេងដែរឬទេ?',
+      'Does your child prefer playing the same game or activity in exactly the same way each time?':
+        'តើកូនរបស់អ្នកចូលចិត្តលេងល្បែង ឬសកម្មភាពដដែលតាមរបៀបដដែលៗរាល់ពេលដែរឬទេ?',
+      'Does your child show interest in a very narrow topic to the exclusion of most others?':
+        'តើកូនរបស់អ្នកបង្ហាញការចាប់អារម្មណ៍ខ្លាំងលើប្រធានបទតូចចង្អៀតមួយ ដោយមិនខ្វល់ពីអ្វីផ្សេងទៀតដែរឬទេ?',
+      'Does your child build or create things in a flexible, varied way, or does it stay very repetitive?':
+        'តើកូនរបស់អ្នកសង់ ឬបង្កើតរបស់របរតាមរបៀបបត់បែន និងចម្រុះ ឬនៅតែធ្វើដដែលៗ?',
+      'Does your child cover their ears or become distressed around loud environments (parties, assemblies)?':
+        'តើកូនរបស់អ្នកខ្ទប់ត្រចៀក ឬមានអារម្មណ៍តានតឹងនៅកន្លែងដែលមានសំឡេងខ្លាំង (ពិធីជប់លៀង ការជួបជុំ) ដែរឬទេ?',
+      "Does your child avoid certain clothing, food textures, or physical sensations that don't bother other children their age?":
+        'តើកូនរបស់អ្នកគេចវេះពីសម្លៀកបំពាក់ អាហារ ឬការប៉ះពាល់ដែលមិនរំខានដល់កុមារដទៃក្នុងវ័យរបស់គេដែរឬទេ?',
+      'Does your child seek out intense sensory input (spinning, crashing into things, seeking pressure)?':
+        'តើកូនរបស់អ្នកស្វែងរកការរំញោចញាណដឹងខ្លាំង (បង្វិល បុករបស់របរ ស្វែងរកសម្ពាធ) ដែរឬទេ?',
+      'Does your child get overwhelmed in busy or crowded places?':
+        'តើកូនរបស់អ្នកមានអារម្មណ៍ថប់បារម្ភ ឬតានតឹងនៅកន្លែងដែលមានមនុស្សច្រើន ឬអ៊ូអរដែរឬទេ?',
+      'Does your child become very upset by minor changes to a plan or routine?':
+        'តើកូនរបស់អ្នកពិបាកចិត្តខ្លាំងចំពោះការផ្លាស់ប្តូរបន្តិចបន្តួចក្នុងគម្រោង ឬទម្លាប់ប្រចាំថ្ងៃដែរឬទេ?',
+      'Does your child insist on doing things in a particular order or sequence?':
+        'តើកូនរបស់អ្នកទាមទារឱ្យធ្វើអ្វីៗតាមលំដាប់លំដោយជាក់លាក់ដែរឬទេ?',
+      'Does your child have difficulty moving from one activity to the next without distress?':
+        'តើកូនរបស់អ្នកពិបាកក្នុងការផ្លាស់ប្តូរពីសកម្មភាពមួយទៅសកម្មភាពមួយទៀតដោយមិនតានតឹងដែរឬទេ?',
+      'Does your child show unusual or repetitive body movements (hand-flapping, rocking, spinning)?':
+        'តើកូនរបស់អ្នកបង្ហាញចលនារាងកាយមិនធម្មតា ឬដដែលៗ (បក់ដៃ យោលខ្លួន បង្វិល) ដែរឬទេ?',
+      'Does your child adapt reasonably well when plans change unexpectedly?':
+        'តើកូនរបស់អ្នកអាចសម្របខ្លួនបានល្អសមរម្យនៅពេលដែលគម្រោងផ្លាស់ប្តូរដោយមិនបានរំពឹងទុកដែរឬទេ?',
     };
     if (map[text]) return map[text];
     const lower = text.toLowerCase();
@@ -806,8 +937,8 @@ export class ScreeningSessionPage implements OnInit, OnDestroy {
     if (lower.includes('name') && lower.includes('call')) {
       return 'តើកូនរបស់អ្នកឆ្លើយតបនៅពេលគេហៅឈ្មោះរបស់គេពីចម្ងាយដែរឬទេ?';
     }
-    if (lower.includes('point')) {
-      return 'តើកូនរបស់អ្នកចង្អុលបង្ហាញវត្ថុដែលគេចង់បាន ឬចង់បង្ហាញដល់អ្នកដែរឬទេ?';
+    if (lower.includes('point') || lower.includes('gesture')) {
+      return 'តើកូនរបស់អ្នកប្រើកាយវិការ ឬចង្អុលបង្ហាញវត្ថុដែរឬទេ?';
     }
     if (lower.includes('smile')) {
       return 'តើកូនរបស់អ្នកញញឹមតបវិញនៅពេលអ្នកញញឹមដាក់គេដែរឬទេ?';
@@ -817,6 +948,18 @@ export class ScreeningSessionPage implements OnInit, OnDestroy {
     }
     if (lower.includes('routine') || lower.includes('change')) {
       return 'តើកូនរបស់អ្នកពិបាកចិត្តខ្លាំងចំពោះការផ្លាស់ប្តូរទម្លាប់ប្រចាំថ្ងៃដែរឬទេ?';
+    }
+    if (lower.includes('friend') || lower.includes('peer') || lower.includes('play with other')) {
+      return 'តើកូនរបស់អ្នកចូលចិត្តលេងជាមួយកុមារដទៃដែរឬទេ?';
+    }
+    if (lower.includes('pretend') || lower.includes('role') || lower.includes('imagin')) {
+      return 'តើកូនរបស់អ្នកចូលរួមក្នុងការលេងបែបស្រមើស្រមៃដែរឬទេ?';
+    }
+    if (lower.includes('repetitive') || lower.includes('flapping') || lower.includes('rocking')) {
+      return 'តើកូនរបស់អ្នកមានចលនាដដែលៗដូចជាបក់ដៃ ឬយោលខ្លួនដែរឬទេ?';
+    }
+    if (lower.includes('conversation') || lower.includes('word') || lower.includes('speech')) {
+      return 'តើកូនរបស់អ្នកប្រើពាក្យសម្តី ឬការសន្ទនាដើម្បីប្រាស្រ័យទាក់ទងដែរឬទេ?';
     }
     return text;
   }
@@ -830,11 +973,17 @@ export class ScreeningSessionPage implements OnInit, OnDestroy {
     if (lower.includes('social') || lower.includes('interact')) {
       return this.isKm() ? 'ទំនាក់ទំនងសង្គម' : 'Social Interaction';
     }
+    if (lower.includes('sensor') && lower.includes('flexib')) {
+      return this.isKm() ? 'ភាពបត់បែននៃញាណដឹង' : 'Sensory Flexibility';
+    }
     if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
       return this.isKm() ? 'ការឆ្លើយតបញាណដឹង' : 'Sensory Response';
     }
     if (lower.includes('communicat') || lower.includes('speech')) {
       return this.isKm() ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication';
+    }
+    if (lower.includes('play') || lower.includes('imagin')) {
+      return this.isKm() ? 'ការលេង និងការស្រមើស្រមៃ' : 'Play & Imagination';
     }
     if (
       lower.includes('routine') ||
@@ -842,7 +991,7 @@ export class ScreeningSessionPage implements OnInit, OnDestroy {
       lower.includes('repetit') ||
       lower.includes('behavior')
     ) {
-      return this.isKm() ? 'ទម្លាប់ប្រចាំថ្ងៃ' : 'Flexibility & Routine';
+      return this.isKm() ? 'ភាពបត់បែន និងទម្លាប់ប្រចាំថ្ងៃ' : 'Flexibility & Routine';
     }
     if (lower.includes('motor') || lower.includes('physic')) {
       return this.isKm() ? 'ចលនាសាច់ដុំ' : 'Motor Skills';

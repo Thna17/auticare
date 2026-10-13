@@ -16,13 +16,13 @@ export type AnswerScaleOption = {
  * Maps:
  * - មិនដែល (Never) = 0 -> Shortcut [1]
  * - កម្រ (Rarely) = 1 -> Shortcut [2]
- * - ជួនកាល (Sometimes) = 2 -> Shortcut [3]
+ * - ម្តងម្កាល (Sometimes) = 2 -> Shortcut [3]
  * - ញឹកញាប់ (Often) = 3 -> Shortcut [4]
  * - ជានិច្ច (Always) = 4 -> Shortcut [5]
  */
 export const defaultAnswerScale: readonly AnswerScaleOption[] = [
   {
-    label: 'មិនដែល (Never - 1)',
+    label: 'Never',
     labelKm: 'មិនដែល',
     labelEn: 'Never',
     value: 0,
@@ -31,7 +31,7 @@ export const defaultAnswerScale: readonly AnswerScaleOption[] = [
     descriptionKm: 'កម្រកើតឡើង ឬមិនត្រូវបានសង្កេតឃើញទាល់តែសោះ',
   },
   {
-    label: 'កម្រ (Rarely - 2)',
+    label: 'Rarely',
     labelKm: 'កម្រ',
     labelEn: 'Rarely',
     value: 1,
@@ -40,8 +40,8 @@ export const defaultAnswerScale: readonly AnswerScaleOption[] = [
     descriptionKm: 'កើតឡើងម្តងម្កាល ក្នុងករណីដាច់ដោយឡែក',
   },
   {
-    label: 'ជួនកាល (Sometimes - 3)',
-    labelKm: 'ជួនកាល',
+    label: 'Sometimes',
+    labelKm: 'ម្តងម្កាល',
     labelEn: 'Sometimes',
     value: 2,
     shortcut: '3',
@@ -49,7 +49,7 @@ export const defaultAnswerScale: readonly AnswerScaleOption[] = [
     descriptionKm: 'សង្កេតឃើញម្តងម្កាល ឬត្រូវការការរំលឹកស្រាលៗ',
   },
   {
-    label: 'ញឹកញាប់ (Often - 4)',
+    label: 'Often',
     labelKm: 'ញឹកញាប់',
     labelEn: 'Often',
     value: 3,
@@ -58,7 +58,7 @@ export const defaultAnswerScale: readonly AnswerScaleOption[] = [
     descriptionKm: 'សង្កេតឃើញជាប្រចាំក្នុងបរិបទប្រចាំថ្ងៃផ្សេងៗ',
   },
   {
-    label: 'ជានិច្ច (Always - 5)',
+    label: 'Always',
     labelKm: 'ជានិច្ច',
     labelEn: 'Always',
     value: 4,
@@ -283,7 +283,10 @@ export class ScreeningAnswerScaleComponent {
   readonly options = input<readonly AnswerScaleOption[]>(defaultAnswerScale);
   readonly value = input<number | null>(null);
   readonly disabled = input(false);
-  readonly ariaLabel = input('Screening Answer Scale');
+  readonly ariaLabelInput = input<string | undefined>(undefined, { alias: 'ariaLabel' });
+  readonly ariaLabel = computed(
+    () => this.ariaLabelInput() ?? (this.isKm() ? 'ជម្រើសកម្រិតចម្លើយ' : 'Screening Answer Scale'),
+  );
   readonly valueChange = output<number>();
 
   readonly isKm = computed(() => this.i18n.currentLang() === 'km');

@@ -35,9 +35,9 @@ const concernLabels: Record<RiskLevel, string> = {
   HIGH: 'Elevated Concern',
 };
 const concernLabelsKm: Record<RiskLevel, string> = {
-  LOW: 'ការព្រួយបារម្ភទាប',
-  MODERATE: 'ការព្រួយបារម្ភមធ្យម',
-  HIGH: 'ការព្រួយបារម្ភកម្រិតខ្ពស់',
+  LOW: 'ការបារម្ភកម្រិតទាប',
+  MODERATE: 'ការបារម្ភកម្រិតមធ្យម',
+  HIGH: 'ការបារម្ភកម្រិតខ្ពស់',
 };
 const riskShort: Record<RiskLevel, string> = { LOW: 'Low', MODERATE: 'Moderate', HIGH: 'High' };
 const riskShortKm: Record<RiskLevel, string> = { LOW: 'ទាប', MODERATE: 'មធ្យម', HIGH: 'ខ្ពស់' };
@@ -96,7 +96,7 @@ const EN_NEXT_STEPS_BY_RISK: Record<RiskLevel, { lead: string; cards: readonly A
     lead: 'Several areas suggest it would help to seek a professional evaluation soon. A specialist can give you a clearer picture.',
     cards: [
       {
-        title: 'Book an appointment',
+        title: 'Book a Pediatrician Consultation',
         subtitle: 'We recommend a professional evaluation soon',
         path: '/appointments',
         icon: 'calendar',
@@ -162,7 +162,7 @@ const KM_NEXT_STEPS_BY_RISK: Record<RiskLevel, { lead: string; cards: readonly A
     lead: 'ផ្នែកជាច្រើនបង្ហាញថាគួរស្វែងរកការវាយតម្លៃពីអ្នកជំនាញក្នុងពេលឆាប់ៗ។ វេជ្ជបណ្ឌិតឯកទេសអាចផ្តល់ការវាយតម្លៃលម្អិត និងច្បាស់លាស់។',
     cards: [
       {
-        title: 'កក់ការណាត់ជួប',
+        title: 'កក់ការពិគ្រោះយោបល់ជាមួយវេជ្ជបណ្ឌិតកុមារ',
         subtitle: 'យើងណែនាំឱ្យមានការវាយតម្លៃវិជ្ជាជីវៈក្នុងពេលឆាប់ៗ',
         path: '/appointments',
         icon: 'calendar',
@@ -404,8 +404,8 @@ const formatAge = (dateOfBirth: string, isKm = false): string => {
             [queryParams]="child() ? { childId: child()!.id } : null"
             [title]="
               isKm()
-                ? 'កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា'
-                : 'Book a Specialist Consultation'
+                ? 'កក់ការពិគ្រោះយោបល់ជាមួយវេជ្ជបណ្ឌិតកុមារ'
+                : 'Book a Pediatrician Consultation'
             "
           >
             <span class="toolbar-icon" aria-hidden="true">🩺</span>
@@ -413,8 +413,8 @@ const formatAge = (dateOfBirth: string, isKm = false): string => {
               <strong class="action-title-primary">
                 {{
                   isKm()
-                    ? 'កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា'
-                    : 'Book a Specialist Consultation'
+                    ? 'កក់ការពិគ្រោះយោបល់ជាមួយវេជ្ជបណ្ឌិតកុមារ'
+                    : 'Book a Pediatrician Consultation'
                 }}
               </strong>
               <span class="action-desc">
@@ -448,15 +448,13 @@ const formatAge = (dateOfBirth: string, isKm = false): string => {
             type="button"
             class="toolbar-card btn-summary-report"
             (click)="printResult()"
-            [title]="isKm() ? 'ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ' : 'Download Summary Report'"
-            [attr.aria-label]="
-              isKm() ? 'ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ' : 'Download Summary Report'
-            "
+            [title]="isKm() ? 'បោះពុម្ព ឬរក្សាទុកជារបាយការណ៍ PDF' : 'Print / Save PDF'"
+            [attr.aria-label]="isKm() ? 'បោះពុម្ព ឬរក្សាទុកជារបាយការណ៍ PDF' : 'Print / Save PDF'"
           >
             <span class="toolbar-icon" aria-hidden="true">📄</span>
             <div class="toolbar-details">
               <strong class="action-title-primary">
-                {{ isKm() ? 'ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ' : 'Download Summary Report' }}
+                {{ isKm() ? 'បោះពុម្ព ឬរក្សាទុកជារបាយការណ៍ PDF' : 'Print / Save PDF' }}
               </strong>
               <span class="action-desc">
                 {{ isKm() ? 'នាំចេញឯកសារ PDF សម្រាប់ពិគ្រោះយោបល់' : 'Export Clinical PDF Summary' }}
@@ -521,7 +519,7 @@ const formatAge = (dateOfBirth: string, isKm = false): string => {
                         categoryIcon(cat.category)
                       }}</span>
                       <span class="cat-name">
-                        {{ isKm() ? formatDomainKm(cat.category) : cat.category }}
+                        {{ isKm() ? formatDomainKm(cat.category) : formatDomainEn(cat.category) }}
                       </span>
                     </div>
                     <span class="cat-level" [class]="cat.riskLevel.toLowerCase()">
@@ -535,7 +533,10 @@ const formatAge = (dateOfBirth: string, isKm = false): string => {
                     [attr.aria-valuenow]="cat.riskPercentage"
                     aria-valuemin="0"
                     aria-valuemax="100"
-                    [attr.aria-label]="cat.category + ' risk'"
+                    [attr.aria-label]="
+                      (isKm() ? formatDomainKm(cat.category) : formatDomainEn(cat.category)) +
+                      (isKm() ? ' ហានិភ័យ' : ' risk')
+                    "
                   >
                     <span
                       class="bar-fill"
@@ -1673,20 +1674,26 @@ export class ScreeningResultPage implements OnInit {
       if (lower.includes('social communication')) {
         return 'សង្កេតមើលការចូលរួមរួមគ្នា ការឆ្លើយតបដោយពាក្យសម្តី និងកាយវិការ ការសម្លឹងភ្នែក និងការប្រាស្រ័យទាក់ទងគ្នា។';
       }
+      if (lower.includes('social') || lower.includes('interact')) {
+        return 'សង្កេតមើលការសម្លឹងភ្នែក ការយកចិត្តទុកដាក់រួម ការញញឹមដោយឯកឯង និងការឆ្លើយតបជាមួយអ្នកមើលថែ។';
+      }
       if (lower.includes('communicat') || lower.includes('speech')) {
         return 'សង្កេតមើលការបញ្ចេញសំឡេង ការប្រើប្រាស់ពាក្យ ការប្រាស្រ័យទាក់ទងដោយកាយវិការ និងការយល់ដឹងភាសា។';
       }
-      if (lower.includes('social') || lower.includes('interact')) {
-        return 'សង្កេតមើលការសម្លឹងភ្នែក ការយកចិត្តទុកដាក់រួម ការញញឹមដោយឯកឯង និងការឆ្លើយតបជាមួយអ្នកមើលថែ។';
+      if (lower.includes('sensor') && lower.includes('flexib')) {
+        return 'វាយតម្លៃការឆ្លើយតបញាណដឹង ភាពបត់បែនក្នុងការសម្របខ្លួន និងការសម្របសម្រួលជាមួយបរិស្ថាន។';
       }
       if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
         return 'តាមដានប្រតិកម្មប៉ះពាល់ ការប្រកាន់ចំពោះសំឡេង និងការសម្របសម្រួលញាណដឹងជាមួយបរិស្ថាន។';
       }
+      if (lower.includes('play') || lower.includes('imagin')) {
+        return 'សង្កេតមើលការលេងបែបស្រមើស្រមៃ ការប្រើប្រាស់ប្រដាប់ក្មេងលេងប្រកបដោយភាពច្នៃប្រឌិត និងការធ្វើត្រាប់តាម។';
+      }
       if (
         lower.includes('routine') ||
+        lower.includes('flexib') ||
         lower.includes('repetit') ||
-        lower.includes('behavior') ||
-        lower.includes('play')
+        lower.includes('behavior')
       ) {
         return 'វាយតម្លៃភាពងាយស្រួលជាមួយកាលវិភាគប្រចាំថ្ងៃ ការផ្លាស់ប្តូរសកម្មភាព និងទម្លាប់លេងដដែលៗ។';
       }
@@ -1698,20 +1705,26 @@ export class ScreeningResultPage implements OnInit {
     if (lower.includes('social communication')) {
       return 'Observes shared engagement, verbal and non-verbal reciprocity, eye contact, and interactive communication.';
     }
+    if (lower.includes('social') || lower.includes('interact')) {
+      return 'Observes eye contact, shared attention, spontaneous smiling, and interactive reciprocity with caregivers.';
+    }
     if (lower.includes('communicat') || lower.includes('speech')) {
       return 'Observes vocalization, word usage, gesture communication, and receptive language understanding.';
     }
-    if (lower.includes('social') || lower.includes('interact')) {
-      return 'Observes eye contact, shared attention, spontaneous smiling, and interactive reciprocity with caregivers.';
+    if (lower.includes('sensor') && lower.includes('flexib')) {
+      return 'Evaluates sensory responsiveness, adaptive flexibility, and sensory integration across environments.';
     }
     if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
       return 'Monitors tactile textures, acoustic sound sensitivities, and environmental sensory integration.';
     }
+    if (lower.includes('play') || lower.includes('imagin')) {
+      return 'Observes pretend play, creative toy usage, and spontaneous social imitation.';
+    }
     if (
       lower.includes('routine') ||
+      lower.includes('flexib') ||
       lower.includes('repetit') ||
-      lower.includes('behavior') ||
-      lower.includes('play')
+      lower.includes('behavior')
     ) {
       return 'Evaluates comfort with daily schedules, transitions, predictability, and repetitive play patterns.';
     }
@@ -1733,25 +1746,64 @@ export class ScreeningResultPage implements OnInit {
     if (lower.includes('social') || lower.includes('interact')) {
       return 'ទំនាក់ទំនងសង្គម';
     }
+    if (lower.includes('communicat') || lower.includes('speech')) {
+      return 'ការប្រាស្រ័យទាក់ទង';
+    }
+    if (lower.includes('sensor') && lower.includes('flexib')) {
+      return 'ភាពបត់បែននៃញាណដឹង';
+    }
     if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
       return 'ការឆ្លើយតបញាណដឹង';
     }
-    if (lower.includes('communicat') || lower.includes('speech')) {
-      return 'ការប្រាស្រ័យទាក់ទង';
+    if (lower.includes('play') || lower.includes('imagin')) {
+      return 'ការលេង និងការស្រមើស្រមៃ';
     }
     if (
       lower.includes('routine') ||
       lower.includes('flexib') ||
       lower.includes('repetit') ||
-      lower.includes('behavior') ||
-      lower.includes('play')
+      lower.includes('behavior')
     ) {
-      return 'ទម្លាប់ប្រចាំថ្ងៃ';
+      return 'ភាពបត់បែន និងទម្លាប់ប្រចាំថ្ងៃ';
     }
     if (lower.includes('motor') || lower.includes('physic')) {
       return 'ចលនាសាច់ដុំ';
     }
     return 'ការលូតលាស់';
+  }
+
+  formatDomainEn(category: string): string {
+    const lower = category.toLowerCase();
+    if (lower.includes('social') && lower.includes('communicat')) {
+      return 'Social Communication';
+    }
+    if (lower.includes('social') || lower.includes('interact')) {
+      return 'Social Interaction';
+    }
+    if (lower.includes('communicat') || lower.includes('speech')) {
+      return 'Communication';
+    }
+    if (lower.includes('sensor') && lower.includes('flexib')) {
+      return 'Sensory Flexibility';
+    }
+    if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
+      return 'Sensory Response';
+    }
+    if (lower.includes('play') || lower.includes('imagin')) {
+      return 'Play & Imagination';
+    }
+    if (
+      lower.includes('routine') ||
+      lower.includes('flexib') ||
+      lower.includes('repetit') ||
+      lower.includes('behavior')
+    ) {
+      return 'Flexibility & Routine';
+    }
+    if (lower.includes('motor') || lower.includes('physic')) {
+      return 'Motor & Repetitive Behaviors';
+    }
+    return category;
   }
 
   ngOnInit() {

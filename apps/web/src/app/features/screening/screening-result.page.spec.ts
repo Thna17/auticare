@@ -103,9 +103,9 @@ describe('ScreeningResultPage', () => {
     // Prominent action toolbar
     const toolbar = compiled.querySelector('.prominent-action-toolbar');
     expect(toolbar).toBeTruthy();
-    expect(toolbar?.textContent).toContain('កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា');
+    expect(toolbar?.textContent).toContain('កក់ការពិគ្រោះយោបល់ជាមួយវេជ្ជបណ្ឌិតកុមារ');
     expect(toolbar?.textContent).toContain('ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់');
-    expect(toolbar?.textContent).toContain('ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ');
+    expect(toolbar?.textContent).toContain('បោះពុម្ព ឬរក្សាទុកជារបាយការណ៍ PDF');
 
     // Domain explanation
     expect(compiled.textContent).toContain('សង្កេតមើលការចូលរួមរួមគ្នា');
@@ -198,7 +198,7 @@ describe('ScreeningResultPage', () => {
     // Concern pill
     const concernPill = compiled.querySelector('.concern-pill');
     expect(concernPill).toBeTruthy();
-    expect(concernPill?.textContent).toContain('ការព្រួយបារម្ភមធ្យម');
+    expect(concernPill?.textContent).toContain('ការបារម្ភកម្រិតមធ្យម');
 
     // Empathetic summary card
     const summaryCard = compiled.querySelector('.empathetic-summary-card');
@@ -232,9 +232,9 @@ describe('ScreeningResultPage', () => {
 
     // Action plan buttons
     const toolbar = compiled.querySelector('.prominent-action-toolbar');
-    expect(toolbar?.textContent).toContain('កក់ការពិគ្រោះយោបល់នៅមន្ទីរពេទ្យកុមារជាតិ ឬគន្ធបុប្ផា');
+    expect(toolbar?.textContent).toContain('កក់ការពិគ្រោះយោបល់ជាមួយវេជ្ជបណ្ឌិតកុមារ');
     expect(toolbar?.textContent).toContain('ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់');
-    expect(toolbar?.textContent).toContain('ទាញយកឯកសារសង្ខេបសម្រាប់គ្រូពេទ្យ');
+    expect(toolbar?.textContent).toContain('បោះពុម្ព ឬរក្សាទុកជារបាយការណ៍ PDF');
   });
 
   it('renders screening result cleanly in English when language is en', () => {
@@ -273,11 +273,81 @@ describe('ScreeningResultPage', () => {
     expect(disclaimer?.textContent).toContain('Clinical Non-Diagnostic Reassurance');
 
     const toolbar = compiled.querySelector('.prominent-action-toolbar');
-    expect(toolbar?.textContent).toContain('Book a Specialist Consultation');
+    expect(toolbar?.textContent).toContain('Book a Pediatrician Consultation');
     expect(toolbar?.textContent).toContain('Explore Recommended Activities');
-    expect(toolbar?.textContent).toContain('Download Summary Report');
+    expect(toolbar?.textContent).toContain('Print / Save PDF');
 
     const printBtn = compiled.querySelector('.btn-print');
     expect(printBtn?.textContent).toContain('Print / Save PDF');
+  });
+
+  it('cleanly decouples risk and concern badges for LOW concern, and translates domain analysis for Communication, Social Interaction, and Sensory Flexibility', () => {
+    const lowSession: ScreeningSessionResultResponse = {
+      ...mockSession,
+      result: {
+        id: 'result_low',
+        score: 4,
+        riskLevel: 'LOW',
+        riskPercentage: 10,
+        recommendation: 'Continue supportive play.',
+        disclaimer: 'This screening tool is not a medical diagnosis.',
+        analysisVersion: 'v3',
+        analyzedAt: '2026-03-01T10:00:00.000Z',
+        categoryBreakdown: [
+          { category: 'Communication', riskLevel: 'LOW', riskPercentage: 8 },
+          { category: 'Social Interaction', riskLevel: 'LOW', riskPercentage: 12 },
+          { category: 'Sensory Flexibility', riskLevel: 'LOW', riskPercentage: 10 },
+        ],
+      },
+    };
+
+    // Test in Khmer mode first
+    const fixtureKm = TestBed.createComponent(ScreeningResultPage);
+    fixtureKm.detectChanges();
+
+    httpTesting.expectOne('/api/v1/screening/sessions/session_123').flush({ data: lowSession });
+    httpTesting.expectOne('/api/v1/children/child_456').flush({
+      data: { id: 'child_456', firstName: 'Bopha', lastName: 'Chan', dateOfBirth: '2024-01-01' },
+    });
+    fixtureKm.detectChanges();
+
+    const compiledKm = fixtureKm.nativeElement as HTMLElement;
+    expect(compiledKm.textContent).toContain('ហានិភ័យទាប');
+    const concernPillKm = compiledKm.querySelector('.concern-pill');
+    expect(concernPillKm?.textContent?.trim()).toBe('ការបារម្ភកម្រិតទាប');
+
+    // Domain breakdown in Khmer
+    expect(compiledKm.textContent).toContain('ការប្រាស្រ័យទាក់ទង');
+    expect(compiledKm.textContent).toContain('ទំនាក់ទំនងសង្គម');
+    expect(compiledKm.textContent).toContain('ភាពបត់បែននៃញាណដឹង');
+    expect(compiledKm.textContent).toContain('សង្កេតមើលការបញ្ចេញសំឡេង');
+    expect(compiledKm.textContent).toContain('សង្កេតមើលការសម្លឹងភ្នែក');
+    expect(compiledKm.textContent).toContain('វាយតម្លៃការឆ្លើយតបញាណដឹង');
+
+    // Switch to English
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+
+    const fixtureEn = TestBed.createComponent(ScreeningResultPage);
+    fixtureEn.detectChanges();
+
+    httpTesting.expectOne('/api/v1/screening/sessions/session_123').flush({ data: lowSession });
+    httpTesting.expectOne('/api/v1/children/child_456').flush({
+      data: { id: 'child_456', firstName: 'Bopha', lastName: 'Chan', dateOfBirth: '2024-01-01' },
+    });
+    fixtureEn.detectChanges();
+
+    const compiledEn = fixtureEn.nativeElement as HTMLElement;
+    expect(compiledEn.textContent).toContain('Low Risk');
+    const concernPillEn = compiledEn.querySelector('.concern-pill');
+    expect(concernPillEn?.textContent?.trim()).toBe('Low Concern');
+
+    // Domain breakdown in English
+    expect(compiledEn.textContent).toContain('Communication');
+    expect(compiledEn.textContent).toContain('Social Interaction');
+    expect(compiledEn.textContent).toContain('Sensory Flexibility');
+    expect(compiledEn.textContent).toContain('Observes vocalization');
+    expect(compiledEn.textContent).toContain('Observes eye contact');
+    expect(compiledEn.textContent).toContain('Evaluates sensory responsiveness');
   });
 });

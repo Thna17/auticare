@@ -86,18 +86,21 @@ describe('ScreeningSessionPage', () => {
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('ត្រឡប់ទៅទំព័រវាយតម្លៃ');
     expect(element.textContent).toContain('សំណួរទី 1 ក្នុងចំណោម 2');
     expect(element.textContent).toContain('បញ្ចប់បាន 50%');
     expect(element.textContent).toContain('ទំនាក់ទំនងសង្គម');
     expect(element.textContent).toContain('តើកូនរបស់អ្នករក្សាការសម្លឹងមើលភ្នែកជាប់លាប់');
     expect(element.textContent).toContain('ការណែនាំសង្កេត៖');
+    expect(element.textContent).toContain('សំណួរមុន');
+    expect(element.textContent).toContain('សំណួរបន្ទាប់');
 
     const answerButtons = element.querySelectorAll<HTMLButtonElement>('.answer-btn');
     expect(answerButtons.length).toBe(5);
     const labels = Array.from(answerButtons).map((btn) => btn.textContent?.trim());
     expect(labels.some((l) => l?.includes('មិនដែល'))).toBe(true);
     expect(labels.some((l) => l?.includes('កម្រ'))).toBe(true);
-    expect(labels.some((l) => l?.includes('ជួនកាល'))).toBe(true);
+    expect(labels.some((l) => l?.includes('ម្តងម្កាល'))).toBe(true);
     expect(labels.some((l) => l?.includes('ញឹកញាប់'))).toBe(true);
     expect(labels.some((l) => l?.includes('ជានិច្ច'))).toBe(true);
     expect(element.textContent).toContain('រក្សាទុក និងបន្តពេលក្រោយ');
@@ -119,11 +122,14 @@ describe('ScreeningSessionPage', () => {
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('Back to Screening');
     expect(element.textContent).toContain('Question 1 of 2');
     expect(element.textContent).toContain('50% Completed');
     expect(element.textContent).toContain('Social Interaction');
     expect(element.textContent).toContain('Does your child make consistent eye contact');
     expect(element.textContent).toContain('Observational guidance:');
+    expect(element.textContent).toContain('Previous Question');
+    expect(element.textContent).toContain('Next Question');
 
     const answerButtons = element.querySelectorAll<HTMLButtonElement>('.answer-btn');
     expect(answerButtons.length).toBe(5);
@@ -169,6 +175,7 @@ describe('ScreeningSessionPage', () => {
       expect(component.currentIndex()).toBe(1);
       expect(fixture.nativeElement.textContent).toContain('សំណួរទី 2 ក្នុងចំណោម 2');
       expect(fixture.nativeElement.textContent).toContain('ការប្រាស្រ័យទាក់ទង');
+      expect(fixture.nativeElement.textContent).toContain('បញ្ចប់ការវាយតម្លៃ');
     } finally {
       vi.useRealTimers();
     }
