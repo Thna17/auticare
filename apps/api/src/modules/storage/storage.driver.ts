@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { Readable } from 'stream';
 import { env } from '../../config/env.js';
@@ -18,10 +19,18 @@ export interface StorageDriver {
 }
 
 export class LocalStorageDriver implements StorageDriver {
-  constructor(
-    private readonly baseDir: string = path.join(process.cwd(), 'uploads', 'activity-reports'),
-  ) {
-    fs.mkdirSync(this.baseDir, { recursive: true });
+  private readonly baseDir: string;
+
+  constructor(baseDir?: string) {
+    const targetDir = baseDir ?? path.join(process.cwd(), 'uploads', 'activity-reports');
+    try {
+      fs.mkdirSync(targetDir, { recursive: true });
+      this.baseDir = targetDir;
+    } catch {
+      const fallbackDir = path.join(os.tmpdir(), 'auticare-uploads', 'activity-reports');
+      fs.mkdirSync(fallbackDir, { recursive: true });
+      this.baseDir = fallbackDir;
+    }
   }
 
   private resolveSafePath(key: string): string {

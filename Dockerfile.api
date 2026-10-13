@@ -71,11 +71,11 @@ COPY --chown=node:node --from=builder /app/apps/api/dist /app/dist
 # Copy workspace manifest for pnpm --filter compatibility
 COPY --chown=node:node pnpm-workspace.yaml /app/pnpm-workspace.yaml
 
-# Generate Prisma Client in the runtime container and fix node_modules permissions
-RUN cd /app && pnpm exec prisma generate && chown -R node:node /app/node_modules
+# Generate Prisma Client in the runtime container
+RUN cd /app && pnpm exec prisma generate
 
-# Create uploads storage directory with non-root ownership
-RUN mkdir -p /app/storage/uploads && chown -R node:node /app/storage
+# Create upload directories and ensure node user owns all of /app
+RUN mkdir -p /app/uploads/activity-reports /app/storage/uploads && chown -R node:node /app
 
 USER node
 
