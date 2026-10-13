@@ -9,74 +9,60 @@ export interface CambodianSchoolItem extends SchoolResponse {
   readonly facilities?: readonly string[];
 }
 
-export const CAMBODIAN_FACILITY_MAP: Record<string, { km: string; en: string; bilingual: string }> =
-  {
-    'sensory room': {
-      km: 'បន្ទប់ញាណដឹង',
-      en: 'Sensory Room',
-      bilingual: 'បន្ទប់ញាណដឹង (Sensory Room)',
-    },
-    'speech therapy': {
-      km: 'ការព្យាបាលការនិយាយ',
-      en: 'Speech Therapy',
-      bilingual: 'ការព្យាបាលការនិយាយ (Speech Therapy)',
-    },
-    'life skills': {
-      km: 'ជំនាញជីវិត',
-      en: 'Life Skills',
-      bilingual: 'ជំនាញជីវិត (Life Skills)',
-    },
-    'special education': {
-      km: 'ការអប់រំពិសេស',
-      en: 'Special Education',
-      bilingual: 'ការអប់រំពិសេស (Special Education)',
-    },
-    'calming room': {
-      km: 'បន្ទប់ស្ងប់អារម្មណ៍',
-      en: 'Calming Room',
-      bilingual: 'បន្ទប់ស្ងប់អារម្មណ៍ (Calming Room)',
-    },
-    'therapy gym': {
-      km: 'កន្លែងហាត់ប្រាណកុមារ',
-      en: 'Therapy Gym',
-      bilingual: 'កន្លែងហាត់ប្រាណកុមារ (Therapy Gym)',
-    },
-    'special classrooms': {
-      km: 'ថ្នាក់អប់រំពិសេស',
-      en: 'Special Classrooms',
-      bilingual: 'ថ្នាក់អប់រំពិសេស (Special Classrooms)',
-    },
-    'outdoor play area': {
-      km: 'សួនលេងក្រៅផ្ទះ',
-      en: 'Outdoor Play Area',
-      bilingual: 'សួនលេងក្រៅផ្ទះ (Outdoor Play Area)',
-    },
-    'speech therapy room': {
-      km: 'បន្ទប់ព្យាបាលការនិយាយ',
-      en: 'Speech Therapy Room',
-      bilingual: 'បន្ទប់ព្យាបាលការនិយាយ (Speech Therapy Room)',
-    },
-    'occupational therapy room': {
-      km: 'បន្ទប់ព្យាបាលចលករ',
-      en: 'Occupational Therapy Room',
-      bilingual: 'បន្ទប់ព្យាបាលចលករ (Occupational Therapy Room)',
-    },
-    'educational garden': {
-      km: 'សួនកសិកម្មបង្រៀន',
-      en: 'Educational Garden',
-      bilingual: 'សួនកសិកម្មបង្រៀន (Educational Garden)',
-    },
-    'iep center': {
-      km: 'មជ្ឈមណ្ឌល IEP',
-      en: 'IEP Planning Suite',
-      bilingual: 'មជ្ឈមណ្ឌល IEP (IEP Planning Suite)',
-    },
-    'assessment suite': {
-      km: 'បន្ទប់វាយតម្លៃការលូតលាស់',
-      en: 'Developmental Assessment Suite',
-      bilingual: 'បន្ទប់វាយតម្លៃការលូតលាស់ (Assessment Suite)',
-    },
-  };
+export const CAMBODIAN_FACILITY_MAP: Record<string, { km: string; en: string }> = {
+  'sensory room': {
+    km: 'បន្ទប់ញាណដឹង',
+    en: 'Sensory Room',
+  },
+  'speech therapy': {
+    km: 'ការព្យាបាលការនិយាយ',
+    en: 'Speech Therapy',
+  },
+  'life skills': {
+    km: 'ជំនាញជីវិត',
+    en: 'Life Skills',
+  },
+  'special education': {
+    km: 'ការអប់រំពិសេស',
+    en: 'Special Education',
+  },
+  'calming room': {
+    km: 'បន្ទប់ស្ងប់អារម្មណ៍',
+    en: 'Calming Room',
+  },
+  'therapy gym': {
+    km: 'កន្លែងហាត់ប្រាណកុមារ',
+    en: 'Therapy Gym',
+  },
+  'special classrooms': {
+    km: 'ថ្នាក់អប់រំពិសេស',
+    en: 'Special Classrooms',
+  },
+  'outdoor play area': {
+    km: 'សួនលេងក្រៅផ្ទះ',
+    en: 'Outdoor Play Area',
+  },
+  'speech therapy room': {
+    km: 'បន្ទប់ព្យាបាលការនិយាយ',
+    en: 'Speech Therapy Room',
+  },
+  'occupational therapy room': {
+    km: 'បន្ទប់ព្យាបាលចលករ',
+    en: 'Occupational Therapy Room',
+  },
+  'educational garden': {
+    km: 'សួនកសិកម្មបង្រៀន',
+    en: 'Educational Garden',
+  },
+  'iep center': {
+    km: 'មជ្ឈមណ្ឌល IEP',
+    en: 'IEP Planning Suite',
+  },
+  'assessment suite': {
+    km: 'បន្ទប់វាយតម្លៃការលូតលាស់',
+    en: 'Developmental Assessment Suite',
+  },
+};
 
 export function formatFacilityTag(tag: string, lang = 'km'): string {
   const normalized = tag.toLowerCase().trim();

@@ -182,12 +182,24 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
             }
             @if (saved()) {
-              <ac-ui-message tone="success">Your profile has been updated.</ac-ui-message>
+              <ac-ui-message tone="success">{{
+                currentLang() === 'km'
+                  ? 'ព័ត៌មានគណនីរបស់អ្នកត្រូវបានធ្វើបច្ចុប្បន្នភាព។'
+                  : 'Your profile has been updated.'
+              }}</ac-ui-message>
             }
 
             <div class="form-actions">
               <button type="submit" class="save-btn" [disabled]="saving() || form.pristine">
-                {{ saving() ? 'Saving…' : 'Save changes' }}
+                {{
+                  saving()
+                    ? currentLang() === 'km'
+                      ? 'កំពុងរក្សាទុក…'
+                      : 'Saving…'
+                    : currentLang() === 'km'
+                      ? 'រក្សាទុកការផ្លាស់ប្តូរ'
+                      : 'Save changes'
+                }}
               </button>
               <button
                 type="button"
@@ -195,7 +207,7 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                 [disabled]="saving() || form.pristine"
                 (click)="resetForm()"
               >
-                Discard
+                {{ currentLang() === 'km' ? 'បោះបង់' : 'Discard' }}
               </button>
             </div>
           </form>

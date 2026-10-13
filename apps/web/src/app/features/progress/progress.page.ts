@@ -1294,22 +1294,36 @@ const METRIC_DEFS: MetricDef[] = [
               </ac-ui-empty-state>
             } @else {
               <ac-ui-empty-state
-                title="No activity reports yet"
-                message="Reports will appear here once your child's school shares them. In the meantime, you can explore developmental milestones, clinical screening history, and home activities."
+                [title]="
+                  currentLang() === 'km'
+                    ? 'មិនទាន់មានរបាយការណ៍សកម្មភាពនៅឡើយទេ'
+                    : 'No activity reports yet'
+                "
+                [message]="
+                  currentLang() === 'km'
+                    ? 'របាយការណ៍នឹងបង្ហាញនៅទីនេះនៅពេលដែលសាលារបស់កូនអ្នកចែករំលែក។ ក្នុងពេលជាមួយគ្នានេះ អ្នកអាចរុករកគោលដៅលូតលាស់ ប្រវត្តិនៃការវាយតម្លៃ និងសកម្មភាពនៅផ្ទះបាន។'
+                    : 'Reports will appear here once your child’s school shares them. In the meantime, you can explore developmental milestones, clinical screening history, and home activities.'
+                "
               >
                 <div class="empty-state-actions">
                   <button type="button" class="btn-primary" (click)="setTab('milestones')">
-                    Explore Milestones
+                    {{ currentLang() === 'km' ? 'រុករកគោលដៅលូតលាស់' : 'Explore Milestones' }}
                   </button>
                   <button type="button" class="btn-secondary" (click)="setTab('trajectory')">
-                    View Developmental Trajectory
+                    {{
+                      currentLang() === 'km'
+                        ? 'មើលគន្លងការលូតលាស់'
+                        : 'View Developmental Trajectory'
+                    }}
                   </button>
                   <a
                     class="btn-secondary"
                     [routerLink]="['/screening']"
                     [queryParams]="{ childId: selectedChildId() }"
                   >
-                    Start Screening Assessment
+                    {{
+                      currentLang() === 'km' ? 'ចាប់ផ្តើមការវាយតម្លៃ' : 'Start Screening Assessment'
+                    }}
                   </a>
                 </div>
               </ac-ui-empty-state>

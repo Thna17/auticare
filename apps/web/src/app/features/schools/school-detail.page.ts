@@ -1290,7 +1290,7 @@ import { formatCityBilingual } from '../hospitals/cambodia-hospitals.data';
                   <option value="Therapy Services (OT/Speech)">
                     {{
                       currentLang() === 'km'
-                        ? 'សេវាព្យាបាល (OT/ការនិយាយ)'
+                        ? 'សេវាព្យាបាល (OT និង SLP)'
                         : 'Therapy Services (OT/Speech)'
                     }}
                   </option>

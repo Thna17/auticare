@@ -78,14 +78,14 @@ export type MilestoneFeedItem = {
         </div>
         <div class="hero-actions">
           <button type="button" class="primary-button edit-btn" (click)="scrollToEdit()">
-            Edit Details
+            {{ currentLang() === 'km' ? 'កែប្រែព័ត៌មាន' : 'Edit Details' }}
           </button>
           <button type="button" class="secondary-button" (click)="resetForm()">
-            Discard changes
+            {{ currentLang() === 'km' ? 'បោះបង់ការផ្លាស់ប្តូរ' : 'Discard changes' }}
           </button>
           @if (!profile.archivedAt) {
             <button type="button" class="danger-button" (click)="showArchiveConfirm.set(true)">
-              Archive profile
+              {{ currentLang() === 'km' ? 'ទុកក្នុងបណ្ណសារ' : 'Archive profile' }}
             </button>
           } @else {
             <button
@@ -94,7 +94,15 @@ export type MilestoneFeedItem = {
               [disabled]="restoring()"
               (click)="restore()"
             >
-              {{ restoring() ? 'Restoring…' : 'Restore profile' }}
+              {{
+                restoring()
+                  ? currentLang() === 'km'
+                    ? 'កំពុងស្តារឡើងវិញ…'
+                    : 'Restoring…'
+                  : currentLang() === 'km'
+                    ? 'ស្តារប្រវត្តិរូបឡើងវិញ'
+                    : 'Restore profile'
+              }}
             </button>
           }
         </div>
@@ -491,15 +499,21 @@ export type MilestoneFeedItem = {
 
       @if (showArchiveConfirm()) {
         <ac-ui-dialog
-          heading="Archive child profile?"
-          description="Are you sure you want to archive this child profile? You can restore it later if needed."
+          [heading]="
+            currentLang() === 'km' ? 'ទុកប្រវត្តិរូបកុមារក្នុងបណ្ណសារ?' : 'Archive child profile?'
+          "
+          [description]="
+            currentLang() === 'km'
+              ? 'តើអ្នកប្រាកដជាចង់ទុកប្រវត្តិរូបកុមារនេះក្នុងបណ្ណសារមែនទេ? អ្នកអាចស្តារវាឡើងវិញនៅពេលក្រោយបាន។'
+              : 'Are you sure you want to archive this child profile? You can restore it later if needed.'
+          "
           dialogRole="alertdialog"
           size="sm"
           (close)="showArchiveConfirm.set(false)"
         >
           <div dialogFooter class="modal-actions">
             <button type="button" class="secondary-button" (click)="showArchiveConfirm.set(false)">
-              Keep active
+              {{ currentLang() === 'km' ? 'រក្សាទុកសកម្ម' : 'Keep active' }}
             </button>
             <button
               type="button"
@@ -507,7 +521,15 @@ export type MilestoneFeedItem = {
               [disabled]="archiving()"
               (click)="confirmArchive()"
             >
-              {{ archiving() ? 'Archiving…' : 'Archive profile' }}
+              {{
+                archiving()
+                  ? currentLang() === 'km'
+                    ? 'កំពុងទុកក្នុងបណ្ណសារ…'
+                    : 'Archiving…'
+                  : currentLang() === 'km'
+                    ? 'ទុកក្នុងបណ្ណសារ'
+                    : 'Archive profile'
+              }}
             </button>
           </div>
         </ac-ui-dialog>

@@ -8,6 +8,7 @@ import { SchoolTopbarComponent } from '../../school-component/components/school-
 import { attachmentUrl } from '../../core/config/attachment-url';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 /** A file that has been accepted but not yet uploaded to the server. */
 export interface PendingFile {
@@ -281,12 +282,15 @@ export interface DomainOption {
                   (click)="
                     insertPrompt(
                       'teacherObservations',
-                      '• ការសម្របសម្រួលញាណដឹង (Sensory accommodation used): '
+                      currentLang() === 'km'
+                        ? '• ការសម្របសម្រួលញាណដឹង៖ '
+                        : '• Sensory accommodation used: '
                     )
                   "
                 >
-                  <span class="chip-km">+ ការសម្របសម្រួលញាណដឹង</span>
-                  <span class="chip-en">(+ Sensory accommodation)</span>
+                  {{
+                    currentLang() === 'km' ? '+ ការសម្របសម្រួលញាណដឹង' : '+ Sensory accommodation'
+                  }}
                 </button>
                 <button
                   type="button"
@@ -294,12 +298,17 @@ export interface DomainOption {
                   (click)="
                     insertPrompt(
                       'teacherObservations',
-                      '• ភាពរីកចម្រើនក្នុងទំនាក់ទំនងសង្គម (Social breakthrough observed): '
+                      currentLang() === 'km'
+                        ? '• ភាពរីកចម្រើនក្នុងទំនាក់ទំនងសង្គម៖ '
+                        : '• Social breakthrough observed: '
                     )
                   "
                 >
-                  <span class="chip-km">+ ភាពរីកចម្រើនក្នុងទំនាក់ទំនងសង្គម</span>
-                  <span class="chip-en">(+ Social breakthrough)</span>
+                  {{
+                    currentLang() === 'km'
+                      ? '+ ភាពរីកចម្រើនក្នុងទំនាក់ទំនងសង្គម'
+                      : '+ Social breakthrough'
+                  }}
                 </button>
                 <button
                   type="button"
@@ -307,12 +316,17 @@ export interface DomainOption {
                   (click)="
                     insertPrompt(
                       'teacherObservations',
-                      '• ភាពជោគជ័យក្នុងការប្រាស្រ័យទាក់ទង (Communication win & gestures): '
+                      currentLang() === 'km'
+                        ? '• ភាពជោគជ័យក្នុងការប្រាស្រ័យទាក់ទង៖ '
+                        : '• Communication win & gestures: '
                     )
                   "
                 >
-                  <span class="chip-km">+ ភាពជោគជ័យក្នុងការប្រាស្រ័យទាក់ទង</span>
-                  <span class="chip-en">(+ Communication win)</span>
+                  {{
+                    currentLang() === 'km'
+                      ? '+ ភាពជោគជ័យក្នុងការប្រាស្រ័យទាក់ទង'
+                      : '+ Communication win'
+                  }}
                 </button>
                 <button
                   type="button"
@@ -1482,6 +1496,8 @@ export class CreateSchoolReportPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  protected readonly i18n = inject(I18nService);
+  readonly currentLang = this.i18n.currentLang;
 
   readonly reportId = signal<string | null>(null);
   readonly editMode = computed(() => this.reportId() !== null);

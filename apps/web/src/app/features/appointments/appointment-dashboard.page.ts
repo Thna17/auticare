@@ -351,7 +351,7 @@ type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
           >
             @if (adminSearchQuery()) {
               <button type="button" class="admin-clear-btn" (click)="adminSearchQuery.set('')">
-                Clear filter
+                {{ currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear filter' }}
               </button>
             } @else if (!isAdmin()) {
               <a class="schedule-cta" routerLink="/appointments/new">Schedule appointment</a>

@@ -44,64 +44,52 @@ export const CAMBODIA_PROVINCES: readonly CambodianProvince[] = [
 export interface SpecialtyDefinition {
   readonly en: string;
   readonly km: string;
-  readonly bilingual: string;
 }
 
 export const CAMBODIAN_SPECIALTY_MAP: Record<string, SpecialtyDefinition> = {
   'developmental pediatrician': {
     en: 'Developmental Pediatrician',
     km: 'វេជ្ជបណ្ឌិតឯកទេសកុមារ',
-    bilingual: 'Developmental Pediatrician (វេជ្ជបណ្ឌិតឯកទេសកុមារ)',
   },
   'developmental pediatrics': {
     en: 'Developmental Pediatrician',
     km: 'វេជ្ជបណ្ឌិតឯកទេសកុមារ',
-    bilingual: 'Developmental Pediatrician (វេជ្ជបណ្ឌិតឯកទេសកុមារ)',
   },
   pediatrician: {
     en: 'Developmental Pediatrician',
     km: 'វេជ្ជបណ្ឌិតឯកទេសកុមារ',
-    bilingual: 'Developmental Pediatrician (វេជ្ជបណ្ឌិតឯកទេសកុមារ)',
   },
   'speech-language pathologist': {
     en: 'Speech-Language Pathologist',
     km: 'អ្នកព្យាបាលការនិយាយ និងភាសា',
-    bilingual: 'Speech-Language Pathologist (អ្នកព្យាបាលការនិយាយ និងភាសា)',
   },
   'speech therapy': {
     en: 'Speech-Language Pathologist',
     km: 'អ្នកព្យាបាលការនិយាយ និងភាសា',
-    bilingual: 'Speech-Language Pathologist (អ្នកព្យាបាលការនិយាយ និងភាសា)',
   },
   'speech therapist': {
     en: 'Speech-Language Pathologist',
     km: 'អ្នកព្យាបាលការនិយាយ និងភាសា',
-    bilingual: 'Speech-Language Pathologist (អ្នកព្យាបាលការនិយាយ និងភាសា)',
   },
   'occupational therapist': {
     en: 'Occupational Therapist',
     km: 'អ្នកព្យាបាលចលករ និងញាណដឹង',
-    bilingual: 'Occupational Therapist (អ្នកព្យាបាលចលករ និងញាណដឹង)',
   },
   'occupational therapy': {
     en: 'Occupational Therapist',
     km: 'អ្នកព្យាបាលចលករ និងញាណដឹង',
-    bilingual: 'Occupational Therapist (អ្នកព្យាបាលចលករ និងញាណដឹង)',
   },
   'child neurologist': {
     en: 'Child Neurologist',
     km: 'វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ',
-    bilingual: 'Child Neurologist (វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ)',
   },
   'pediatric neurologist': {
     en: 'Child Neurologist',
     km: 'វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ',
-    bilingual: 'Child Neurologist (វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ)',
   },
   'child neurology': {
     en: 'Child Neurologist',
     km: 'វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ',
-    bilingual: 'Child Neurologist (វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ)',
   },
 };
 

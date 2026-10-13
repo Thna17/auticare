@@ -52,8 +52,9 @@ describe('CrisisResourcesPage', () => {
     expect(urgentBanner?.querySelector('a[href="tel:117"]')).toBeTruthy();
 
     const text = el.textContent ?? '';
-    expect(text).toContain('TPO Cambodia');
-    expect(text).toContain('Child Helpline');
+    expect(text).toContain('TPO');
+    expect(text).toContain('អង្គការចិត្តសង្គមអន្តរវប្បធម៌');
+    expect(text).toContain('ខ្សែទូរស័ព្ទជំនួយកុមារកម្ពុជា');
     expect(text).toContain('1280');
     expect(text).toContain('មន្ទីរពេទ្យកុមារជាតិ');
     expect(text).toContain('គន្ធបុប្ផា');

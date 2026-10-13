@@ -28,7 +28,7 @@ interface CrisisHotline {
 const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
   {
     name: 'TPO Cambodia (Mental Health Crisis Support)',
-    nameKm: 'អង្គការចិត្តសង្គមអន្តរវប្បធម៌ (TPO Cambodia)',
+    nameKm: 'អង្គការចិត្តសង្គមអន្តរវប្បធម៌ (TPO)',
     phone: '023 63 66 991 / 017 222 372',
     hours: '24/7 Mental Health & Psychological Distress Counseling',
     hoursKm: 'ប្រឹក្សាវិបត្តិផ្លូវចិត្ត និងបញ្ហាអារម្មណ៍ ២៤/៧',
@@ -43,7 +43,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
   },
   {
     name: 'Child Helpline Cambodia',
-    nameKm: 'ខ្សែទូរស័ព្ទជំនួយកុមារកម្ពុជា (Child Helpline)',
+    nameKm: 'ខ្សែទូរស័ព្ទជំនួយកុមារកម្ពុជា',
     phone: '1280 (Toll-Free)',
     text: 'Dial 1280',
     hours: '24/7 Free Across Smart, Cellcard & Metfone',
@@ -104,7 +104,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
   },
   {
     name: 'Hands of Hope Community',
-    nameKm: 'សហគមន៍ដៃនៃក្តីសង្ឃឹម (Hands of Hope)',
+    nameKm: 'សហគមន៍ដៃនៃក្តីសង្ឃឹម',
     phone: '012 906 186 / 024 985 111',
     hours: 'Mon-Sat 8:00 AM - 5:00 PM',
     hoursKm: 'ច័ន្ទ-សៅរ៍ ៨:០០ ព្រឹក - ៥:០០ ល្ងាច',
@@ -361,7 +361,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
             <h2>
               {{
                 currentLang() === 'km'
-                  ? 'វិធីសាស្ត្រសម្រួលអារម្មណ៍នៅពេលកុមាររំញោចខ្លាំង (Meltdown)'
+                  ? 'វិធីសាស្ត្រសម្រួលអារម្មណ៍នៅពេលកុមាររំញោចខ្លាំង'
                   : 'Autism Sensory Meltdown De-escalation Protocol'
               }}
             </h2>
@@ -369,7 +369,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
           <p class="protocol-intro">
             {{
               currentLang() === 'km'
-                ? 'ការផ្ទុះអារម្មណ៍ (Meltdown) គឺជាប្រតិកម្មដោយស្វ័យប្រវត្តិនៃប្រព័ន្ធប្រសាទចំពោះការលើសទម្ងន់ញាណដឹង ឬអារម្មណ៍ — មិនមែនជាការរឹងរូសឡើយ។ សូមអនុវត្តតាមជំហានខាងក្រោម៖'
+                ? 'ការផ្ទុះអារម្មណ៍ខ្លាំង គឺជាប្រតិកម្មដោយស្វ័យប្រវត្តិនៃប្រព័ន្ធប្រសាទចំពោះការលើសទម្ងន់ញាណដឹង ឬអារម្មណ៍ — មិនមែនជាការរឹងរូសឡើយ។ សូមអនុវត្តតាមជំហានខាងក្រោម៖'
                 : 'A meltdown is an involuntary neurological reaction to sensory, emotional, or cognitive overload — not willful behavioral defiance. Follow these evidence-based de-escalation steps:'
             }}
           </p>

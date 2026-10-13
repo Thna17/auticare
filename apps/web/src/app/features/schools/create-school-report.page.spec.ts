@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL } from '../../core/config/api.config';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { SchoolsApi } from './data-access/schools.api';
 import { CreateSchoolReportPage } from './create-school-report.page';
 
@@ -54,6 +55,7 @@ describe('CreateSchoolReportPage', () => {
         provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '/api/v1' },
         provideRouter([]),
+        I18nService,
         { provide: SchoolsApi, useValue: mockSchoolsApi },
       ],
     }).compileComponents();
@@ -183,32 +185,43 @@ describe('CreateSchoolReportPage', () => {
     expect(component.targetStatus()).toBe('SUBMITTED');
   });
 
-  it('renders bilingual observation prompt chips in template and inserts notes', () => {
+  it('renders decoupled observation prompt chips in template and inserts notes bilingually', () => {
     const root = fixture.nativeElement as HTMLElement;
     const chips = root.querySelectorAll('.prompt-chip');
     expect(chips.length).toBeGreaterThanOrEqual(4);
 
+    // Initial Khmer mode
     const sensoryChip = Array.from(chips).find((c) =>
       c.textContent?.includes('ការសម្របសម្រួលញាណដឹង'),
     );
     expect(sensoryChip).toBeDefined();
-    expect(sensoryChip?.textContent).toContain('Sensory accommodation');
 
     const socialChip = Array.from(chips).find((c) =>
       c.textContent?.includes('ភាពរីកចម្រើនក្នុងទំនាក់ទំនងសង្គម'),
     );
     expect(socialChip).toBeDefined();
-    expect(socialChip?.textContent).toContain('Social breakthrough');
 
     const commChip = Array.from(chips).find((c) =>
       c.textContent?.includes('ភាពជោគជ័យក្នុងការប្រាស្រ័យទាក់ទង'),
     );
     expect(commChip).toBeDefined();
-    expect(commChip?.textContent).toContain('Communication win');
 
     (sensoryChip as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(component.form.controls.teacherObservations.value).toContain('ការសម្របសម្រួលញាណដឹង');
+
+    // Switch to English mode
+    TestBed.inject(I18nService).setLanguage('en');
+    fixture.detectChanges();
+
+    const enChips = root.querySelectorAll('.prompt-chip');
+    const enSensoryChip = Array.from(enChips).find((c) =>
+      c.textContent?.includes('Sensory accommodation'),
+    );
+    expect(enSensoryChip).toBeDefined();
+
+    (enSensoryChip as HTMLButtonElement).click();
+    fixture.detectChanges();
     expect(component.form.controls.teacherObservations.value).toContain('Sensory accommodation');
   });
 });
