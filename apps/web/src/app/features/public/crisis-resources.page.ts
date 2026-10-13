@@ -167,15 +167,9 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
             class="topbar-lang-toggle"
             (click)="toggleLanguage()"
             [attr.aria-label]="
-              currentLang() === 'km'
-                ? 'Switch language to English (ប្តូរទៅភាសាអង់គ្លេស)'
-                : 'Switch language to Khmer (ប្តូរទៅភាសាខ្មែរ)'
+              currentLang() === 'km' ? 'ប្តូរទៅភាសាអង់គ្លេស' : 'Switch language to Khmer'
             "
-            [title]="
-              currentLang() === 'km'
-                ? 'ប្តូរទៅភាសាអង់គ្លេស (Switch to English)'
-                : 'ប្តូរទៅភាសាខ្មែរ (Switch to Khmer)'
-            "
+            [title]="currentLang() === 'km' ? 'ប្តូរទៅភាសាអង់គ្លេស' : 'Switch language to Khmer'"
           >
             <span class="lang-flag" aria-hidden="true">{{
               currentLang() === 'km' ? '🇰🇭' : '🇬🇧'

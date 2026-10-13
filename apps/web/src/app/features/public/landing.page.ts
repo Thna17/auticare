@@ -1,33 +1,34 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 interface ProgressionStep {
-  id: string;
-  stepNumber: string;
-  badge: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  highlights: string[];
-  ctaLabel: string;
-  ctaLink: string;
+  readonly id: string;
+  readonly stepNumber: string;
+  readonly badge: string;
+  readonly title: string;
+  readonly subtitle: string;
+  readonly description: string;
+  readonly highlights: readonly string[];
+  readonly ctaLabel: string;
+  readonly ctaLink: string;
 }
 
 interface Testimonial {
-  quote: string;
-  author: string;
-  role: string;
-  avatarInitials: string;
+  readonly quote: string;
+  readonly author: string;
+  readonly role: string;
+  readonly avatarInitials: string;
 }
 
 interface TrustBadge {
-  title: string;
-  description: string;
-  icon: string;
+  readonly title: string;
+  readonly description: string;
+  readonly icon: string;
 }
 
-const PROGRESSION_STEPS: ProgressionStep[] = [
+const EN_PROGRESSION_STEPS: readonly ProgressionStep[] = [
   {
     id: 'screening',
     stepNumber: '01',
@@ -94,7 +95,74 @@ const PROGRESSION_STEPS: ProgressionStep[] = [
   },
 ];
 
-const TESTIMONIALS: Testimonial[] = [
+const KM_PROGRESSION_STEPS: readonly ProgressionStep[] = [
+  {
+    id: 'screening',
+    stepNumber: '01',
+    badge: 'ការវាយតម្លៃគ្លីនិក',
+    title: 'ការវាយតម្លៃការលូតលាស់ផ្អែកលើភស្តុតាង',
+    subtitle: 'កម្រងសំណួរស្របតាមស្តង់ដារ M-CHAT ប្រកបដោយភាពច្បាស់លាស់ និងទន់ភ្លន់',
+    description:
+      'ឆ្លើយកម្រងសំណួរតាមដានការប្រាស្រ័យទាក់ទង ទំនាក់ទំនងសង្គម និងវិញ្ញាណ។ ទទួលបានលទ្ធផលកម្រិតហានិភ័យតាមផ្នែកនីមួយៗ។',
+    highlights: [
+      'កម្រងសំណួរគ្មានការរំខាន និងងាយស្រួលឆ្លើយ',
+      'បែងចែកលទ្ធផលតាមផ្នែកសង្គម ទំនាក់ទំនង និងវិញ្ញាណ',
+      'ទាញយករបាយការណ៍សង្ខេបដើម្បីបង្ហាញវេជ្ជបណ្ឌិតកុមារ',
+    ],
+    ctaLabel: 'ស្វែងយល់ពីការវាយតម្លៃ',
+    ctaLink: '/screening',
+  },
+  {
+    id: 'care-plan',
+    stepNumber: '02',
+    badge: 'ការថែទាំ និងសកម្មភាព',
+    title: 'សកម្មភាពលេងបែបវិញ្ញាណ និងការវិវត្តប្រចាំថ្ងៃ',
+    subtitle: 'ទម្លាប់លេងដែលរៀបចំឡើងយ៉ាងពិសេសសម្រាប់តម្រូវការជាក់ស្តែងរបស់កុមារ',
+    description:
+      'បង្វែរលទ្ធផលវាយតម្លៃទៅជាភាពរីកចម្រើនប្រចាំថ្ងៃ។ ទទួលបានគំនិតលេងសម្រួលវិញ្ញាណ និងលំហាត់ប្រាស្រ័យទាក់ទងជាច្រើន។',
+    highlights: [
+      'ចម្រាញ់តាមកម្រិតវិញ្ញាណ ចលនាសាច់ដុំ និងជីវិតប្រចាំថ្ងៃ',
+      'ណែនាំសកម្មភាពអាទិភាពស្របតាមតម្រូវការរបស់កុមារ',
+      'កំណត់ត្រាសង្កេត និងការតាមដានការបញ្ចប់សកម្មភាព',
+    ],
+    ctaLabel: 'មើលបណ្ណាល័យសកម្មភាព',
+    ctaLink: '/activities',
+  },
+  {
+    id: 'specialists',
+    stepNumber: '03',
+    badge: 'បណ្តាញវេជ្ជសាស្ត្រ',
+    title: 'ស្វែងរក និងកក់ការពិគ្រោះជាមួយវេជ្ជបណ្ឌិតឯកទេស',
+    subtitle: 'តភ្ជាប់ជាមួយវេជ្ជបណ្ឌិតឯកទេសកុមារ និងអ្នកព្យាបាល',
+    description:
+      'ស្វែងរកវេជ្ជបណ្ឌិតឯកទេសការលូតលាស់កុមារ អ្នកព្យាបាលការនិយាយ និងអ្នកព្យាបាលមុខងារ។ ស្នើសុំការពិគ្រោះយោបល់ជាមួយប្រវត្តិកុមារដែលបានរៀបចំរួចជាស្រេច។',
+    highlights: [
+      'មន្ទីរពេទ្យដៃគូ និងអ្នកជំនាញដែលមានអាជ្ញាប័ណ្ណ',
+      'ពិនិត្យកាលវិភាគទំនេរ និងតាមដានការណាត់ជួបជាក់ស្តែង',
+      'ភ្ជាប់កំណត់ត្រាការលូតលាស់ទៅកាន់ការស្នើសុំពិគ្រោះ',
+    ],
+    ctaLabel: 'ស្វែងរកវេជ្ជបណ្ឌិតជំនាញ',
+    ctaLink: '/hospitals',
+  },
+  {
+    id: 'schools',
+    stepNumber: '04',
+    badge: 'ការគាំទ្រការអប់រំ',
+    title: 'ការសហការ និងរបាយការណ៍អប់រំបរិយាបន្ន',
+    subtitle: 'ភ្ជាប់ទំនាក់ទំនងរវាងទម្លាប់នៅផ្ទះ និងការគាំទ្រក្នុងថ្នាក់រៀន',
+    description:
+      'ស្វែងរកសាលាដែលមានកម្មវិធីគាំទ្រអូទីសឹម សមាមាត្រសិស្សនិងគ្រូច្បាស់លាស់ និងបន្ទប់សម្រួលវិញ្ញាណ។ ផ្លាស់ប្តូររបាយការណ៍សង្កេតជាមួយគ្រូបង្រៀន។',
+    highlights: [
+      'បញ្ជីសាលាពិសេសដែលមានព័ត៌មានលម្អិត និងបរិក្ខារ',
+      'របាយការណ៍សង្កេត និងកំណត់ត្រាការវិវត្តពីគ្រូបង្រៀន',
+      'តាមដានការស្នើសុំចុះឈ្មោះចូលរៀនយ៉ាងងាយស្រួល',
+    ],
+    ctaLabel: 'ស្វែងរកសាលារៀនបរិយាបន្ន',
+    ctaLink: '/schools',
+  },
+];
+
+const EN_TESTIMONIALS: readonly Testimonial[] = [
   {
     quote:
       'AutiCare changed how we communicate with our developmental pediatrician. Having structured observations and screening history in one place gave our family clarity instead of anxiety.',
@@ -118,7 +186,31 @@ const TESTIMONIALS: Testimonial[] = [
   },
 ];
 
-const TRUST_BADGES: TrustBadge[] = [
+const KM_TESTIMONIALS: readonly Testimonial[] = [
+  {
+    quote:
+      'AutiCare បានផ្លាស់ប្តូររបៀបដែលយើងប្រាស្រ័យទាក់ទងជាមួយវេជ្ជបណ្ឌិតកុមារ។ ការមានកំណត់ត្រាសង្កេត និងប្រវត្តិនៃការវាយតម្លៃនៅកន្លែងតែមួយ បានផ្តល់ភាពច្បាស់លាស់ដល់គ្រួសារយើង។',
+    author: 'Elena Rostova',
+    role: 'មាតាបិតាកុមារអាយុ ៤ ឆ្នាំមានអូទីសឹម',
+    avatarInitials: 'ER',
+  },
+  {
+    quote:
+      'ភាពស៊ីសង្វាក់គ្នានៃកំណត់ត្រាសង្កេតរវាងផ្ទះ និងសាលារៀន ជួយសន្សំពេលវេលាច្រើនសប្តាហ៍ក្នុងគ្លីនិករបស់យើង។ គ្រួសារមកដល់ដោយមានព័ត៌មានគ្រប់គ្រាន់ ស្ងប់ស្ងាត់ និងត្រៀមខ្លួនជាស្រេច។',
+    author: 'Dr. Marcus Chen',
+    role: 'វេជ្ជបណ្ឌិតឯកទេសការលូតលាស់កុមារ',
+    avatarInitials: 'MC',
+  },
+  {
+    quote:
+      'ការអាចដាក់ស្នើ និងពិនិត្យរបាយការណ៍សង្កេតក្នុងថ្នាក់រៀនជាមួយឪពុកម្តាយដោយផ្ទាល់ បានភ្ជាប់ទំនាក់ទំនងរវាងទម្លាប់នៅផ្ទះ និងការរៀបចំក្នុងថ្នាក់រៀន។',
+    author: 'Sarah Jenkins, M.Ed.',
+    role: 'អ្នកសម្របសម្រួលការអប់រំបរិយាបន្ន',
+    avatarInitials: 'SJ',
+  },
+];
+
+const EN_TRUST_BADGES: readonly TrustBadge[] = [
   {
     title: 'Evidence-Based Framework',
     description:
@@ -145,7 +237,31 @@ const TRUST_BADGES: TrustBadge[] = [
   },
 ];
 
-const tools = [
+const KM_TRUST_BADGES: readonly TrustBadge[] = [
+  {
+    title: 'ស្តង់ដារផ្អែកលើភស្តុតាង',
+    description: 'ការវាយតម្លៃស្របតាមគោលការណ៍ M-CHAT និងការអភិវឌ្ឍកុមារអន្តរជាតិ។',
+    icon: 'shield',
+  },
+  {
+    title: 'ឯកជនភាព និងសុវត្ថិភាពទិន្នន័យ',
+    description:
+      'ទិន្នន័យរបស់កុមារ និងគ្រួសារត្រូវបានការពារយ៉ាងតឹងរ៉ឹងដោយគ្មានការចែករំលែកពាណិជ្ជកម្ម។',
+    icon: 'lock',
+  },
+  {
+    title: 'កិច្ចសហការគ្រួសារ និងអ្នកជំនាញ',
+    description: 'ភ្ជាប់ទំនាក់ទំនងរវាងឪពុកម្តាយ វេជ្ជបណ្ឌិត និងគ្រូបង្រៀនលើវេទិកាតែមួយ។',
+    icon: 'users',
+  },
+  {
+    title: 'ការរចនាសម្រួលដល់វិញ្ញាណ',
+    description: 'ចំណុចប្រទាក់ទន់ភ្លន់ គ្មានការរំខាន និងងាយស្រួលប្រើប្រាស់។',
+    icon: 'heart',
+  },
+];
+
+const EN_TOOLS = [
   {
     title: 'Early risk screening',
     description:
@@ -172,7 +288,30 @@ const tools = [
   },
 ] as const;
 
-const steps = [
+const KM_TOOLS = [
+  {
+    title: 'ការវាយតម្លៃហានិភ័យដំបូង',
+    description: 'ស្វែងយល់ពីចំណុចខ្លាំង និងតម្រូវការគាំទ្ររបស់កុមារតាមរយៈកម្រងសំណួរ។',
+    icon: 'checklist',
+  },
+  {
+    title: 'ស្វែងរកអ្នកជំនាញ',
+    description: 'រុករកមន្ទីរពេទ្យ គ្លីនិក និងអ្នកព្យាបាលឯកទេសនៅកម្ពុជា។',
+    icon: 'map',
+  },
+  {
+    title: 'សកម្មភាពប្រចាំថ្ងៃ',
+    description: 'គំនិតលេងបែបវិញ្ញាណ និងការបង្កើតទម្លាប់ល្អសម្រាប់កុមារ។',
+    icon: 'activity',
+  },
+  {
+    title: 'តាមដានការរីកចម្រើន',
+    description: 'កត់ត្រាវឌ្ឍនភាព និងចំណុចសំខាន់ៗនៃការលូតលាស់។',
+    icon: 'trend',
+  },
+] as const;
+
+const EN_STEPS = [
   {
     title: "Create your child's profile",
     description: 'Add the context that helps AutiCare tailor screening and support planning.',
@@ -191,13 +330,38 @@ const steps = [
   },
 ] as const;
 
-const activityHighlights = [
+const KM_STEPS = [
+  {
+    title: 'បង្កើតប្រវត្តិរូបកុមារ',
+    description: 'បញ្ចូលព័ត៌មានដែលជួយ AutiCare រៀបចំផែនការវាយតម្លៃ និងការគាំទ្រសមស្រប។',
+  },
+  {
+    title: 'បំពេញការវាយតម្លៃដំបូង',
+    description: 'តាមដានចំណុចខ្លាំង ទម្លាប់ប្រចាំថ្ងៃ និងផ្នែកដែលកុមារត្រូវការជំនួយបន្ថែម។',
+  },
+  {
+    title: 'ទទួលបានការណែនាំជាក់ស្តែង',
+    description: 'ពិនិត្យសកម្មភាពដែលបានណែនាំ ជម្រើសសាលារៀន និងជំហានថែទាំបន្ទាប់។',
+  },
+  {
+    title: 'សហការជាមួយអ្នកជំនាញ',
+    description: 'ភ្ជាប់កំណត់ត្រាគ្រួសារ របាយការណ៍សាលា និងការណាត់ជួបជាមួយវេជ្ជបណ្ឌិត។',
+  },
+] as const;
+
+const EN_ACTIVITY_HIGHLIGHTS = [
   'Sensory-friendly play ideas',
   'Communication practice prompts',
   'Routine-building activities',
 ] as const;
 
-const autismNotes = [
+const KM_ACTIVITY_HIGHLIGHTS = [
+  'គំនិតលេងសម្រួលដល់វិញ្ញាណ',
+  'លំហាត់អនុវត្តការប្រាស្រ័យទាក់ទង',
+  'សកម្មភាពបង្កើតទម្លាប់ប្រចាំថ្ងៃ',
+] as const;
+
+const EN_AUTISM_NOTES = [
   {
     title: 'Support needs are individual',
     description:
@@ -215,6 +379,24 @@ const autismNotes = [
   },
 ] as const;
 
+const KM_AUTISM_NOTES = [
+  {
+    title: 'តម្រូវការគាំទ្ររបស់កុមារម្នាក់ៗមានភាពខុសប្លែកគ្នា',
+    description:
+      'AutiCare រៀបចំការសង្កេតជុំវិញកុមារផ្ទាល់ មិនមែនជាទម្រង់តែមួយសម្រាប់ទាំងអស់គ្នានោះទេ។',
+  },
+  {
+    title: 'ការវាយតម្លៃគឺជាចំណុចចាប់ផ្តើម',
+    description:
+      'គ្រួសារអាចប្រើប្រាស់កំណត់ត្រាជាប្រព័ន្ធដើម្បីរៀបចំការសន្ទនាកាន់តែប្រសើរជាមួយអ្នកជំនាញ។',
+  },
+  {
+    title: 'ការរីកចម្រើនកើតចេញពីកិច្ចសហការជាក្រុម',
+    description:
+      'ឪពុកម្តាយ សាលារៀន មន្ទីរពេទ្យ និងអ្នកផ្តល់សេវាទាំងអស់ត្រូវការព័ត៌មានរួមគ្នាដែលច្បាស់លាស់។',
+  },
+] as const;
+
 @Component({
   standalone: true,
   imports: [RouterLink],
@@ -227,18 +409,49 @@ const autismNotes = [
         </a>
 
         <nav class="desktop-nav" aria-label="Main navigation">
-          <a href="#home" aria-current="page" (click)="scrollToSection('home', $event)">Home</a>
-          <a href="#progression" (click)="scrollToSection('progression', $event)">Features</a>
-          <a href="#how-it-works" (click)="scrollToSection('how-it-works', $event)">How it works</a>
-          <a href="#support" (click)="scrollToSection('support', $event)">Find support</a>
-          <a href="#activities" (click)="scrollToSection('activities', $event)">Activities</a>
-          <a href="#testimonials" (click)="scrollToSection('testimonials', $event)">Testimonials</a>
-          <a href="#about-autism" (click)="scrollToSection('about-autism', $event)">About autism</a>
+          <a href="#home" aria-current="page" (click)="scrollToSection('home', $event)">{{
+            currentLang() === 'km' ? 'ទំព័រដើម' : 'Home'
+          }}</a>
+          <a href="#progression" (click)="scrollToSection('progression', $event)">{{
+            currentLang() === 'km' ? 'លក្ខណៈពិសេស' : 'Features'
+          }}</a>
+          <a href="#how-it-works" (click)="scrollToSection('how-it-works', $event)">{{
+            currentLang() === 'km' ? 'ដំណើរការ' : 'How it works'
+          }}</a>
+          <a href="#support" (click)="scrollToSection('support', $event)">{{
+            currentLang() === 'km' ? 'ស្វែងរកជំនួយ' : 'Find support'
+          }}</a>
+          <a href="#activities" (click)="scrollToSection('activities', $event)">{{
+            currentLang() === 'km' ? 'សកម្មភាពលេង' : 'Activities'
+          }}</a>
+          <a href="#testimonials" (click)="scrollToSection('testimonials', $event)">{{
+            currentLang() === 'km' ? 'មតិអ្នកប្រើប្រាស់' : 'Testimonials'
+          }}</a>
+          <a href="#about-autism" (click)="scrollToSection('about-autism', $event)">{{
+            currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism'
+          }}</a>
         </nav>
 
         <div class="header-actions">
+          <button
+            type="button"
+            class="topbar-lang-toggle"
+            (click)="toggleLanguage()"
+            [attr.aria-label]="
+              currentLang() === 'km' ? 'ប្តូរទៅភាសាអង់គ្លេស' : 'Switch language to Khmer'
+            "
+            [title]="currentLang() === 'km' ? 'ប្តូរទៅភាសាអង់គ្លេស' : 'Switch language to Khmer'"
+          >
+            <span class="lang-flag" aria-hidden="true">{{
+              currentLang() === 'km' ? '🇰🇭' : '🇬🇧'
+            }}</span>
+            <span class="lang-text">{{ currentLang() === 'km' ? 'ភាសាខ្មែរ' : 'English' }}</span>
+          </button>
+
           @if (isAuthenticated()) {
-            <a class="dashboard-link" [routerLink]="dashboardPath()">Go to Dashboard</a>
+            <a class="dashboard-link" [routerLink]="dashboardPath()">{{
+              currentLang() === 'km' ? 'ទៅកាន់ផ្ទាំងគ្រប់គ្រង' : 'Go to Dashboard'
+            }}</a>
             <span
               class="user-avatar"
               [attr.aria-label]="userDisplayName()"
@@ -247,8 +460,12 @@ const autismNotes = [
               {{ userInitials() }}
             </span>
           } @else {
-            <a class="login-link" routerLink="/login">Login</a>
-            <a class="signup-link" routerLink="/register">Signup</a>
+            <a class="login-link" routerLink="/login">{{
+              currentLang() === 'km' ? 'ចូលប្រើ' : 'Login'
+            }}</a>
+            <a class="signup-link" routerLink="/register">{{
+              currentLang() === 'km' ? 'ចុះឈ្មោះ' : 'Signup'
+            }}</a>
           }
         </div>
       </header>
@@ -258,35 +475,56 @@ const autismNotes = [
         <div class="hero-copy">
           <div class="hero-trust-badge-pill">
             <span class="live-dot" aria-hidden="true"></span>
-            <span>Neuro-inclusive Developmental Support Platform</span>
+            <span>{{
+              currentLang() === 'km'
+                ? 'វេទិកាគាំទ្រការលូតលាស់ប្រព័ន្ធប្រសាទ និងអូទីសឹម'
+                : 'Neuro-inclusive Developmental Support Platform'
+            }}</span>
           </div>
 
-          <h1>Support for every step of your child's journey</h1>
+          <h1>
+            {{
+              currentLang() === 'km'
+                ? 'ការគាំទ្រសម្រាប់គ្រប់ជំហាននៃការលូតលាស់របស់កុមារ'
+                : "Support for every step of your child's journey"
+            }}
+          </h1>
           <p class="hero-subtitle">
-            Help parents, schools, and care providers understand each child with structured
-            screening, personalized activities, and coordinated support records.
+            {{
+              currentLang() === 'km'
+                ? 'ជួយឪពុកម្តាយ សាលារៀន និងអ្នកផ្តល់សេវាថែទាំ យល់ដឹងពីកុមារម្នាក់ៗ តាមរយៈការវាយតម្លៃ ការលេងបែបវិញ្ញាណ និងកំណត់ត្រាគាំទ្ររួមគ្នា។'
+                : 'Help parents, schools, and care providers understand each child with structured screening, personalized activities, and coordinated support records.'
+            }}
           </p>
 
           <aside class="medical-note">
             <span class="info-icon" aria-hidden="true">i</span>
             <p>
-              <strong>Important note:</strong> AutiCare screening is not a medical diagnosis. Always
-              consult a licensed pediatrician for clinical evaluations.
+              <strong>{{ currentLang() === 'km' ? 'ចំណាំសំខាន់៖' : 'Important note:' }}</strong>
+              {{
+                currentLang() === 'km'
+                  ? 'ការវាយតម្លៃលើ AutiCare មិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រឡើយ។ សូមពិគ្រោះជាមួយវេជ្ជបណ្ឌិតកុមារដែលមានអាជ្ញាប័ណ្ណសម្រាប់ការវាយតម្លៃគ្លីនិក។'
+                  : 'AutiCare screening is not a medical diagnosis. Always consult a licensed pediatrician for clinical evaluations.'
+              }}
             </p>
           </aside>
 
           <div class="hero-actions">
             @if (isAuthenticated()) {
-              <a class="primary-action" [routerLink]="dashboardPath()">Go to Dashboard</a>
+              <a class="primary-action" [routerLink]="dashboardPath()">{{
+                currentLang() === 'km' ? 'ទៅកាន់ផ្ទាំងគ្រប់គ្រង' : 'Go to Dashboard'
+              }}</a>
             } @else {
-              <a class="primary-action" routerLink="/register">Get started</a>
+              <a class="primary-action" routerLink="/register">{{
+                currentLang() === 'km' ? 'ចាប់ផ្តើមប្រើប្រាស់' : 'Get started'
+              }}</a>
             }
             <a
               class="secondary-action"
               href="#how-it-works"
               (click)="scrollToSection('how-it-works', $event)"
             >
-              Learn how it works
+              {{ currentLang() === 'km' ? 'របៀបដែលកម្មវិធីដំណើរការ' : 'Learn how it works' }}
             </a>
           </div>
 
@@ -308,7 +546,9 @@ const autismNotes = [
                   stroke-linecap="round"
                 />
               </svg>
-              <span>Evidence-Based Screening</span>
+              <span>{{
+                currentLang() === 'km' ? 'ការវាយតម្លៃផ្អែកលើភស្តុតាង' : 'Evidence-Based Screening'
+              }}</span>
             </div>
             <div class="trust-pill">
               <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
@@ -319,7 +559,9 @@ const autismNotes = [
                   stroke-width="1.8"
                 />
               </svg>
-              <span>Multidisciplinary Network</span>
+              <span>{{
+                currentLang() === 'km' ? 'បណ្តាញអ្នកជំនាញចម្រុះ' : 'Multidisciplinary Network'
+              }}</span>
             </div>
             <div class="trust-pill">
               <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
@@ -340,7 +582,9 @@ const autismNotes = [
                   stroke-width="1.8"
                 />
               </svg>
-              <span>100% Private Family Data</span>
+              <span>{{
+                currentLang() === 'km' ? 'ឯកជនភាពគ្រួសារ 100%' : '100% Private Family Data'
+              }}</span>
             </div>
           </div>
         </div>
@@ -362,17 +606,28 @@ const autismNotes = [
       <!-- Interactive Feature Progression: Screening -> Care Plan -> Hospital Specialists -> School Collaboration -->
       <section id="progression" class="progression-section" aria-labelledby="progression-title">
         <div class="section-heading">
-          <p class="section-kicker">Unified Care Journey</p>
-          <h2 id="progression-title">How AutiCare Guides Your Care Continuum</h2>
+          <p class="section-kicker">
+            {{ currentLang() === 'km' ? 'ដំណើរការថែទាំរួមគ្នា' : 'Unified Care Journey' }}
+          </p>
+          <h2 id="progression-title">
+            {{
+              currentLang() === 'km'
+                ? 'របៀបដែល AutiCare ណែនាំដំណើរការថែទាំរបស់អ្នក'
+                : 'How AutiCare Guides Your Care Continuum'
+            }}
+          </h2>
           <p>
-            From early heuristic observations to clinical evaluations and classroom adaptations,
-            experience seamless progression at every milestone.
+            {{
+              currentLang() === 'km'
+                ? 'ចាប់ពីការសង្កេតដំបូង រហូតដល់ការវាយតម្លៃគ្លីនិក និងការសម្របសម្រួលក្នុងថ្នាក់រៀន ទទួលបានការវិវត្តយ៉ាងរលូននៅគ្រប់ដំណាក់កាល។'
+                : 'From early heuristic observations to clinical evaluations and classroom adaptations, experience seamless progression at every milestone.'
+            }}
           </p>
         </div>
 
         <!-- Interactive Stepper Tabs -->
         <div class="stepper-tabs" role="tablist" aria-label="Care progression steps">
-          @for (step of progressionSteps; track step.id; let i = $index) {
+          @for (step of progressionSteps(); track step.id; let i = $index) {
             <button
               type="button"
               role="tab"
@@ -393,7 +648,11 @@ const autismNotes = [
             <div class="progression-card-content">
               <div class="step-meta">
                 <span class="step-badge">{{ active.badge }}</span>
-                <span class="step-order">Step {{ active.stepNumber }} of 04</span>
+                <span class="step-order">{{
+                  currentLang() === 'km'
+                    ? 'ជំហាន ' + active.stepNumber + ' នៃ ០៤'
+                    : 'Step ' + active.stepNumber + ' of 04'
+                }}</span>
               </div>
               <h3>{{ active.title }}</h3>
               <p class="step-subtitle">{{ active.subtitle }}</p>
@@ -438,31 +697,67 @@ const autismNotes = [
                 <div class="visual-body">
                   @if (active.id === 'screening') {
                     <div class="mock-score-card">
-                      <span class="mock-label">Developmental Screening</span>
+                      <span class="mock-label">{{
+                        currentLang() === 'km' ? 'ការវាយតម្លៃការលូតលាស់' : 'Developmental Screening'
+                      }}</span>
                       <div class="mock-risk-meter">
                         <div class="mock-risk-bar"></div>
                       </div>
-                      <span class="mock-status">Low Heuristic Risk · 85% Completed</span>
+                      <span class="mock-status">{{
+                        currentLang() === 'km'
+                          ? 'កម្រិតហានិភ័យទាប · បញ្ចប់ ៨៥%'
+                          : 'Low Heuristic Risk · 85% Completed'
+                      }}</span>
                     </div>
                   } @else if (active.id === 'care-plan') {
                     <div class="mock-activity-card">
-                      <span class="mock-tag">Sensory Play</span>
-                      <h4>Texture Discovery & Calming Corner</h4>
-                      <span class="mock-time">15 mins · Gentle Sensory</span>
+                      <span class="mock-tag">{{
+                        currentLang() === 'km' ? 'ការលេងបែបវិញ្ញាណ' : 'Sensory Play'
+                      }}</span>
+                      <h4>
+                        {{
+                          currentLang() === 'km'
+                            ? 'ការស្វែងយល់ពីវត្ថុធាតុ និងជ្រុងស្ងប់ស្ងាត់'
+                            : 'Texture Discovery & Calming Corner'
+                        }}
+                      </h4>
+                      <span class="mock-time">{{
+                        currentLang() === 'km'
+                          ? '១៥ នាទី · វិញ្ញាណទន់ភ្លន់'
+                          : '15 mins · Gentle Sensory'
+                      }}</span>
                     </div>
                   } @else if (active.id === 'specialists') {
                     <div class="mock-doctor-card">
                       <div class="mock-avatar">MC</div>
                       <div class="mock-doc-info">
                         <strong>Dr. Marcus Chen</strong>
-                        <span>Developmental Pediatrics</span>
+                        <span>{{
+                          currentLang() === 'km'
+                            ? 'វេជ្ជសាស្ត្រការលូតលាស់កុមារ'
+                            : 'Developmental Pediatrics'
+                        }}</span>
                       </div>
                     </div>
                   } @else {
                     <div class="mock-school-card">
-                      <span class="mock-badge">Verified Inclusive School</span>
-                      <h4>Sunrise Special Learning Academy</h4>
-                      <span>1:4 Student-to-Teacher Ratio</span>
+                      <span class="mock-badge">{{
+                        currentLang() === 'km'
+                          ? 'សាលាបរិយាបន្នដែលបានផ្ទៀងផ្ទាត់'
+                          : 'Verified Inclusive School'
+                      }}</span>
+                      <h4>
+                        {{
+                          currentLang() === 'km'
+                            ? 'សាលារៀនពិសេសពន្លឺថ្ងៃ'
+                            : 'Sunrise Special Learning Academy'
+                        }}
+                      </h4>
+                      <span>{{
+                        currentLang() === 'km'
+                          ? 'សមាមាត្រសិស្សនិងគ្រូ ១:៤'
+                          : '1:4 Student-to-Teacher Ratio'
+                      }}</span>
                     </div>
                   }
                 </div>
@@ -475,14 +770,24 @@ const autismNotes = [
       <!-- Tools Section -->
       <section id="support" class="tools-section" aria-labelledby="tools-title">
         <div class="section-heading">
-          <h2 id="tools-title">Comprehensive tools for development</h2>
+          <h2 id="tools-title">
+            {{
+              currentLang() === 'km'
+                ? 'ឧបករណ៍ទូលំទូលាយសម្រាប់ការលូតលាស់'
+                : 'Comprehensive tools for development'
+            }}
+          </h2>
           <p>
-            AutiCare keeps core support tasks organized without overwhelming families or care teams.
+            {{
+              currentLang() === 'km'
+                ? 'AutiCare រៀបចំការងារគាំទ្រសំខាន់ៗឱ្យមានរបៀបរៀបរយ ដោយមិនបង្កសម្ពាធដល់គ្រួសារ ឬក្រុមថែទាំ។'
+                : 'AutiCare keeps core support tasks organized without overwhelming families or care teams.'
+            }}
           </p>
         </div>
 
         <div class="tool-grid">
-          @for (tool of tools; track tool.title) {
+          @for (tool of tools(); track tool.title) {
             <article class="tool-card">
               <span class="tool-icon" [class]="tool.icon" aria-hidden="true"></span>
               <h3>{{ tool.title }}</h3>
@@ -495,10 +800,14 @@ const autismNotes = [
       <!-- How It Works Section -->
       <section id="how-it-works" class="process-section" aria-labelledby="process-title">
         <div class="process-copy">
-          <h2 id="process-title">How AutiCare supports you</h2>
+          <h2 id="process-title">
+            {{
+              currentLang() === 'km' ? 'របៀបដែល AutiCare គាំទ្រអ្នក' : 'How AutiCare supports you'
+            }}
+          </h2>
 
           <ol class="step-list">
-            @for (step of steps; track step.title; let index = $index) {
+            @for (step of steps(); track step.title; let index = $index) {
               <li>
                 <span>{{ index + 1 }}</span>
                 <div>
@@ -519,8 +828,10 @@ const autismNotes = [
             </header>
             <div class="preview-body">
               <section class="preview-panel large">
-                <p>Child profile</p>
-                <strong>Support overview</strong>
+                <p>{{ currentLang() === 'km' ? 'ព័ត៌មានកុមារ' : 'Child profile' }}</p>
+                <strong>{{
+                  currentLang() === 'km' ? 'ទិដ្ឋភាពទូទៅនៃការគាំទ្រ' : 'Support overview'
+                }}</strong>
                 <div class="preview-bars" aria-hidden="true">
                   <span></span>
                   <span></span>
@@ -528,12 +839,14 @@ const autismNotes = [
                 </div>
               </section>
               <section class="preview-panel">
-                <p>School report</p>
-                <strong>Ready</strong>
+                <p>{{ currentLang() === 'km' ? 'របាយការណ៍សាលា' : 'School report' }}</p>
+                <strong>{{ currentLang() === 'km' ? 'រួចរាល់' : 'Ready' }}</strong>
               </section>
               <section class="preview-panel blue">
-                <p>Next action</p>
-                <strong>Speech activity</strong>
+                <p>{{ currentLang() === 'km' ? 'សកម្មភាពបន្ទាប់' : 'Next action' }}</p>
+                <strong>{{
+                  currentLang() === 'km' ? 'សកម្មភាពហាត់និយាយ' : 'Speech activity'
+                }}</strong>
               </section>
             </div>
           </div>
@@ -543,16 +856,25 @@ const autismNotes = [
       <!-- Activities Section -->
       <section id="activities" class="activities-section" aria-labelledby="activities-title">
         <div>
-          <p class="section-kicker">Activities</p>
-          <h2 id="activities-title">Turn support goals into practical routines</h2>
+          <p class="section-kicker">{{ currentLang() === 'km' ? 'សកម្មភាព' : 'Activities' }}</p>
+          <h2 id="activities-title">
+            {{
+              currentLang() === 'km'
+                ? 'បង្វែរគោលដៅគាំទ្រទៅជាទម្លាប់ប្រចាំថ្ងៃជាក់ស្តែង'
+                : 'Turn support goals into practical routines'
+            }}
+          </h2>
           <p>
-            Activity planning in AutiCare is built for real family life: simple prompts, repeatable
-            routines, and enough structure for parents and professionals to review what is working.
+            {{
+              currentLang() === 'km'
+                ? 'ការរៀបចំផែនការសកម្មភាពក្នុង AutiCare ត្រូវបានបង្កើតឡើងសម្រាប់ជីវិតគ្រួសារជាក់ស្តែង៖ ការណែនាំសាមញ្ញ ទម្លាប់ដែលអាចអនុវត្តឡើងវិញបាន និងរចនាសម្ព័ន្ធគ្រប់គ្រាន់សម្រាប់ឪពុកម្តាយ និងអ្នកជំនាញពិនិត្យមើលលទ្ធផល។'
+                : 'Activity planning in AutiCare is built for real family life: simple prompts, repeatable routines, and enough structure for parents and professionals to review what is working.'
+            }}
           </p>
         </div>
 
         <div class="activity-list">
-          @for (activity of activityHighlights; track activity) {
+          @for (activity of activityHighlights(); track activity) {
             <article>
               <span aria-hidden="true"></span>
               <p>{{ activity }}</p>
@@ -564,10 +886,22 @@ const autismNotes = [
       <!-- Testimonials Carousel Section -->
       <section id="testimonials" class="testimonials-section" aria-labelledby="testimonials-title">
         <div class="section-heading">
-          <p class="section-kicker">Voices of Our Community</p>
-          <h2 id="testimonials-title">Trusted by Families, Clinicians & Educators</h2>
+          <p class="section-kicker">
+            {{ currentLang() === 'km' ? 'សំឡេងពីសហគមន៍របស់យើង' : 'Voices of Our Community' }}
+          </p>
+          <h2 id="testimonials-title">
+            {{
+              currentLang() === 'km'
+                ? 'ទទួលបានការទុកចិត្តពីគ្រួសារ វេជ្ជបណ្ឌិត និងអ្នកអប់រំ'
+                : 'Trusted by Families, Clinicians & Educators'
+            }}
+          </h2>
           <p>
-            Real stories from the parents and professionals who build brighter futures together.
+            {{
+              currentLang() === 'km'
+                ? 'រឿងរ៉ាវពិតពីឪពុកម្តាយ និងអ្នកជំនាញដែលរួមគ្នាកសាងអនាគតដ៏ភ្លឺស្វាង។'
+                : 'Real stories from the parents and professionals who build brighter futures together.'
+            }}
           </p>
         </div>
 
@@ -591,7 +925,7 @@ const autismNotes = [
             <button
               type="button"
               class="carousel-btn prev"
-              aria-label="Previous testimonial"
+              [attr.aria-label]="currentLang() === 'km' ? 'មតិមុន' : 'Previous testimonial'"
               (click)="prevTestimonial()"
             >
               <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
@@ -606,12 +940,16 @@ const autismNotes = [
             </button>
 
             <div class="carousel-dots" role="tablist" aria-label="Testimonial slides">
-              @for (item of testimonials; track item.author; let idx = $index) {
+              @for (item of testimonials(); track item.author; let idx = $index) {
                 <button
                   type="button"
                   class="carousel-dot"
                   [class.active]="activeTestimonial() === idx"
-                  [attr.aria-label]="'Go to testimonial ' + (idx + 1)"
+                  [attr.aria-label]="
+                    currentLang() === 'km'
+                      ? 'ទៅកាន់មតិទី ' + (idx + 1)
+                      : 'Go to testimonial ' + (idx + 1)
+                  "
                   (click)="setTestimonial(idx)"
                 ></button>
               }
@@ -620,7 +958,7 @@ const autismNotes = [
             <button
               type="button"
               class="carousel-btn next"
-              aria-label="Next testimonial"
+              [attr.aria-label]="currentLang() === 'km' ? 'មតិបន្ទាប់' : 'Next testimonial'"
               (click)="nextTestimonial()"
             >
               <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
@@ -640,12 +978,24 @@ const autismNotes = [
       <!-- Clinical Accreditation & Trust Badges Section -->
       <section class="trust-badges-section" aria-labelledby="trust-title">
         <div class="section-heading">
-          <h2 id="trust-title">Built with Clinical Integrity & Safety First</h2>
-          <p>Every feature in AutiCare is engineered to respect privacy and empower families.</p>
+          <h2 id="trust-title">
+            {{
+              currentLang() === 'km'
+                ? 'បង្កើតឡើងដោយសុចរិតភាពគ្លីនិក និងសុវត្ថិភាពជាចម្បង'
+                : 'Built with Clinical Integrity & Safety First'
+            }}
+          </h2>
+          <p>
+            {{
+              currentLang() === 'km'
+                ? 'គ្រប់មុខងារទាំងអស់ក្នុង AutiCare ត្រូវបានរៀបចំឡើងដើម្បីគោរពឯកជនភាព និងផ្តល់អំណាចដល់គ្រួសារ។'
+                : 'Every feature in AutiCare is engineered to respect privacy and empower families.'
+            }}
+          </p>
         </div>
 
         <div class="trust-cards-grid">
-          @for (badge of trustBadges; track badge.title) {
+          @for (badge of trustBadges(); track badge.title) {
             <article class="trust-card">
               <div class="trust-card-icon" aria-hidden="true">
                 @if (badge.icon === 'shield') {
@@ -713,16 +1063,27 @@ const autismNotes = [
       <!-- About Autism Section -->
       <section id="about-autism" class="autism-section" aria-labelledby="autism-title">
         <div class="section-heading">
-          <p class="section-kicker">About autism</p>
-          <h2 id="autism-title">Designed around clarity, dignity, and coordination</h2>
+          <p class="section-kicker">
+            {{ currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism' }}
+          </p>
+          <h2 id="autism-title">
+            {{
+              currentLang() === 'km'
+                ? 'រចនាឡើងជុំវិញភាពច្បាស់លាស់ សេចក្តីថ្លៃថ្នូរ និងការសម្របសម្រួល'
+                : 'Designed around clarity, dignity, and coordination'
+            }}
+          </h2>
           <p>
-            Autism support is strongest when families can understand needs, record context, and
-            bring better information to qualified professionals.
+            {{
+              currentLang() === 'km'
+                ? 'ការគាំទ្រអូទីសឹមមានប្រសិទ្ធភាពបំផុតនៅពេលដែលគ្រួសារយល់ដឹងពីតម្រូវការ កត់ត្រាបរិបទ និងនាំយកព័ត៌មានកាន់តែប្រសើរទៅកាន់អ្នកជំនាញដែលមានគុណវុឌ្ឍិ។'
+                : 'Autism support is strongest when families can understand needs, record context, and bring better information to qualified professionals.'
+            }}
           </p>
         </div>
 
         <div class="autism-grid">
-          @for (note of autismNotes; track note.title) {
+          @for (note of autismNotes(); track note.title) {
             <article>
               <h3>{{ note.title }}</h3>
               <p>{{ note.description }}</p>
@@ -733,15 +1094,28 @@ const autismNotes = [
 
       <!-- Final Call to Action -->
       <section id="start" class="cta-section" aria-labelledby="cta-title">
-        <h2 id="cta-title">Ready to start the journey?</h2>
+        <h2 id="cta-title">
+          {{
+            currentLang() === 'km'
+              ? 'តើអ្នកត្រៀមខ្លួនចាប់ផ្តើមដំណើរហើយឬនៅ?'
+              : 'Ready to start the journey?'
+          }}
+        </h2>
         <p>
-          Create a family account and begin organizing screening, activities, and support resources
-          in one calm workspace.
+          {{
+            currentLang() === 'km'
+              ? 'បង្កើតគណនីគ្រួសារ ហើយចាប់ផ្តើមរៀបចំការវាយតម្លៃ សកម្មភាព និងធនធានគាំទ្រក្នុងកន្លែងតែមួយប្រកបដោយភាពស្ងប់ស្ងាត់។'
+              : 'Create a family account and begin organizing screening, activities, and support resources in one calm workspace.'
+          }}
         </p>
         @if (isAuthenticated()) {
-          <a [routerLink]="dashboardPath()">Go to Dashboard</a>
+          <a [routerLink]="dashboardPath()">{{
+            currentLang() === 'km' ? 'ទៅកាន់ផ្ទាំងគ្រប់គ្រង' : 'Go to Dashboard'
+          }}</a>
         } @else {
-          <a routerLink="/register">Create account</a>
+          <a routerLink="/register">{{
+            currentLang() === 'km' ? 'បង្កើតគណនី' : 'Create account'
+          }}</a>
         }
       </section>
 
@@ -760,36 +1134,56 @@ const autismNotes = [
             <span>AutiCare</span>
           </a>
           <p>
-            Empowering neurodiverse families through accessible support tools and coordinated care.
+            {{
+              currentLang() === 'km'
+                ? 'ពង្រឹងសមត្ថភាពគ្រួសារកុមារអូទីសឹម តាមរយៈឧបករណ៍គាំទ្រដែលអាចប្រើប្រាស់បាន និងការថែទាំរួមគ្នា។'
+                : 'Empowering neurodiverse families through accessible support tools and coordinated care.'
+            }}
           </p>
         </section>
 
         <nav aria-label="Resources">
-          <h2>Resources</h2>
-          <a routerLink="/crisis">Emergency resources</a>
+          <h2>{{ currentLang() === 'km' ? 'ធនធាន' : 'Resources' }}</h2>
+          <a routerLink="/crisis">{{
+            currentLang() === 'km' ? 'ធនធានសង្គ្រោះបន្ទាន់' : 'Emergency resources'
+          }}</a>
           <a href="#about-autism" (click)="scrollToSection('about-autism', $event)">
-            About autism
+            {{ currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism' }}
           </a>
-          <a routerLink="/support">Support groups</a>
+          <a routerLink="/support">{{
+            currentLang() === 'km' ? 'ក្រុមគាំទ្រ' : 'Support groups'
+          }}</a>
         </nav>
 
         <nav aria-label="Legal">
-          <h2>Legal</h2>
-          <a routerLink="/privacy">Privacy</a>
-          <a routerLink="/terms">Terms</a>
-          <a routerLink="/support">Medical disclaimer</a>
+          <h2>{{ currentLang() === 'km' ? 'ច្បាប់ និងលក្ខខណ្ឌ' : 'Legal' }}</h2>
+          <a routerLink="/privacy">{{ currentLang() === 'km' ? 'ឯកជនភាព' : 'Privacy' }}</a>
+          <a routerLink="/terms">{{ currentLang() === 'km' ? 'លក្ខខណ្ឌប្រើប្រាស់' : 'Terms' }}</a>
+          <a routerLink="/support">{{
+            currentLang() === 'km' ? 'ការមិនទទួលខុសត្រូវផ្នែកវេជ្ជសាស្ត្រ' : 'Medical disclaimer'
+          }}</a>
         </nav>
 
         <section>
-          <h2>Contact</h2>
-          <a routerLink="/support">Contact</a>
+          <h2>{{ currentLang() === 'km' ? 'ទំនាក់ទំនង' : 'Contact' }}</h2>
+          <a routerLink="/support">{{ currentLang() === 'km' ? 'ទំនាក់ទំនង' : 'Contact' }}</a>
           <p class="disclaimer">
-            Medical disclaimer: AutiCare provides screening tools and educational resources. We do
-            not provide clinical diagnosis or treatment plans.
+            {{
+              currentLang() === 'km'
+                ? 'ការមិនទទួលខុសត្រូវផ្នែកវេជ្ជសាស្ត្រ៖ AutiCare ផ្តល់ឧបករណ៍វាយតម្លៃ និងធនធានអប់រំ។ យើងមិនផ្តល់ការធ្វើរោគវិនិច្ឆ័យគ្លីនិក ឬផែនការព្យាបាលវេជ្ជសាស្ត្រឡើយ។'
+                : 'Medical disclaimer: AutiCare provides screening tools and educational resources. We do not provide clinical diagnosis or treatment plans.'
+            }}
           </p>
         </section>
 
-        <p class="copyright">(c) {{ currentYear }} AutiCare. All rights reserved.</p>
+        <p class="copyright">
+          (c) {{ currentYear }}
+          {{
+            currentLang() === 'km'
+              ? 'AutiCare។ រក្សាសិទ្ធិគ្រប់យ៉ាង។'
+              : 'AutiCare. All rights reserved.'
+          }}
+        </p>
       </footer>
     </main>
   `,
@@ -874,6 +1268,44 @@ const autismNotes = [
         display: flex;
         align-items: center;
         gap: 16px;
+      }
+
+      .topbar-lang-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        height: 38px;
+        border: 1px solid var(--ac-color-border-grey);
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 160ms ease;
+      }
+
+      .topbar-lang-toggle:hover {
+        background: var(--ac-color-surface-info);
+        border-color: var(--ac-color-action);
+      }
+
+      .topbar-lang-toggle:focus-visible {
+        outline: 2px solid var(--ac-color-focus);
+        outline-offset: 2px;
+      }
+
+      .topbar-lang-toggle .lang-flag {
+        font-size: 15px;
+        line-height: 1;
+      }
+
+      .topbar-lang-toggle .lang-text {
+        font-size: 13px;
+        line-height: 1;
+        font-weight: 600;
       }
 
       .signup-link,
@@ -1976,14 +2408,27 @@ const autismNotes = [
 })
 export class LandingPage {
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(I18nService);
 
-  readonly tools = tools;
-  readonly steps = steps;
-  readonly activityHighlights = activityHighlights;
-  readonly autismNotes = autismNotes;
-  readonly progressionSteps = PROGRESSION_STEPS;
-  readonly testimonials = TESTIMONIALS;
-  readonly trustBadges = TRUST_BADGES;
+  readonly currentLang = computed(() => this.i18n.currentLang());
+
+  readonly tools = computed(() => (this.currentLang() === 'km' ? KM_TOOLS : EN_TOOLS));
+  readonly steps = computed(() => (this.currentLang() === 'km' ? KM_STEPS : EN_STEPS));
+  readonly activityHighlights = computed(() =>
+    this.currentLang() === 'km' ? KM_ACTIVITY_HIGHLIGHTS : EN_ACTIVITY_HIGHLIGHTS,
+  );
+  readonly autismNotes = computed(() =>
+    this.currentLang() === 'km' ? KM_AUTISM_NOTES : EN_AUTISM_NOTES,
+  );
+  readonly progressionSteps = computed(() =>
+    this.currentLang() === 'km' ? KM_PROGRESSION_STEPS : EN_PROGRESSION_STEPS,
+  );
+  readonly testimonials = computed(() =>
+    this.currentLang() === 'km' ? KM_TESTIMONIALS : EN_TESTIMONIALS,
+  );
+  readonly trustBadges = computed(() =>
+    this.currentLang() === 'km' ? KM_TRUST_BADGES : EN_TRUST_BADGES,
+  );
 
   readonly activeProgressionStep = signal(0);
   readonly activeTestimonial = signal(0);
@@ -1992,13 +2437,15 @@ export class LandingPage {
   readonly isAuthenticated = computed(() => this.auth.isAuthenticated());
   readonly currentParent = computed(() => this.auth.parent());
 
-  readonly currentProgressionStep = computed(
-    () => this.progressionSteps[this.activeProgressionStep()] ?? this.progressionSteps[0],
-  );
+  readonly currentProgressionStep = computed(() => {
+    const list = this.progressionSteps();
+    return list[this.activeProgressionStep()] ?? list[0];
+  });
 
-  readonly currentTestimonial = computed(
-    () => this.testimonials[this.activeTestimonial()] ?? this.testimonials[0],
-  );
+  readonly currentTestimonial = computed(() => {
+    const list = this.testimonials();
+    return list[this.activeTestimonial()] ?? list[0];
+  });
 
   readonly dashboardPath = computed(() => {
     const role = this.currentParent()?.role;
@@ -2021,16 +2468,22 @@ export class LandingPage {
     return `${first}${last}`.toUpperCase() || 'U';
   });
 
+  toggleLanguage(): void {
+    this.i18n.toggleLanguage();
+  }
+
   selectProgressionStep(index: number) {
     this.activeProgressionStep.set(index);
   }
 
   nextTestimonial() {
-    this.activeTestimonial.update((curr) => (curr + 1) % this.testimonials.length);
+    const count = this.testimonials().length;
+    this.activeTestimonial.update((curr) => (curr + 1) % count);
   }
 
   prevTestimonial() {
-    this.activeTestimonial.update((curr) => (curr === 0 ? this.testimonials.length - 1 : curr - 1));
+    const count = this.testimonials().length;
+    this.activeTestimonial.update((curr) => (curr === 0 ? count - 1 : curr - 1));
   }
 
   setTestimonial(index: number) {
