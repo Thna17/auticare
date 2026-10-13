@@ -18,6 +18,8 @@ import type { FontSizeScale } from '../../core/preferences/preferences.service';
 import { PreferencesService } from '../../core/preferences/preferences.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 
+import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
+
 export type RoleSettingsContext = {
   eyebrow: string;
   ctaLabel: string;
@@ -88,6 +90,7 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
     ReactiveFormsModule,
     UiFieldComponent,
     UiMessageComponent,
+    UiDialogComponent,
     AccessibleFormDirective,
   ],
   template: `
@@ -208,15 +211,23 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               </svg>
             </div>
             <div>
-              <h2 id="password-title">Change password</h2>
-              <p>Update your account password. New password must be at least 12 characters long.</p>
+              <h2 id="password-title">
+                {{ currentLang() === 'km' ? 'ប្តូរពាក្យសម្ងាត់' : 'Change password' }}
+              </h2>
+              <p>
+                {{
+                  currentLang() === 'km'
+                    ? 'ធ្វើបច្ចុប្បន្នភាពពាក្យសម្ងាត់គណនីរបស់អ្នក។ ពាក្យសម្ងាត់ថ្មីត្រូវតែមានយ៉ាងតិច 12 តួអក្សរ។'
+                    : 'Update your account password. New password must be at least 12 characters long.'
+                }}
+              </p>
             </div>
           </header>
 
           <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" acAccessibleForm novalidate>
             <div class="field-grid">
               <ac-ui-field
-                label="Current password"
+                [label]="currentLang() === 'km' ? 'ពាក្យសម្ងាត់បច្ចុប្បន្ន' : 'Current password'"
                 [required]="true"
                 [full]="true"
                 [error]="
@@ -234,7 +245,13 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                     class="visibility-toggle"
                     (click)="showCurrentPass.set(!showCurrentPass())"
                     [attr.aria-label]="
-                      showCurrentPass() ? 'Hide current password' : 'Show current password'
+                      showCurrentPass()
+                        ? currentLang() === 'km'
+                          ? 'លាក់ពាក្យសម្ងាត់បច្ចុប្បន្ន'
+                          : 'Hide current password'
+                        : currentLang() === 'km'
+                          ? 'បង្ហាញពាក្យសម្ងាត់បច្ចុប្បន្ន'
+                          : 'Show current password'
                     "
                   >
                     @if (showCurrentPass()) {
@@ -255,9 +272,9 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               </ac-ui-field>
 
               <ac-ui-field
-                label="New password"
+                [label]="currentLang() === 'km' ? 'ពាក្យសម្ងាត់ថ្មី' : 'New password'"
                 [required]="true"
-                hint="Minimum 12 characters"
+                [hint]="currentLang() === 'km' ? 'យ៉ាងតិច 12 តួអក្សរ' : 'Minimum 12 characters'"
                 [error]="showPasswordError('newPassword') ? getPasswordError('newPassword') : null"
               >
                 <div class="password-input-wrap">
@@ -270,7 +287,15 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                     type="button"
                     class="visibility-toggle"
                     (click)="showNewPass.set(!showNewPass())"
-                    [attr.aria-label]="showNewPass() ? 'Hide new password' : 'Show new password'"
+                    [attr.aria-label]="
+                      showNewPass()
+                        ? currentLang() === 'km'
+                          ? 'លាក់ពាក្យសម្ងាត់ថ្មី'
+                          : 'Hide new password'
+                        : currentLang() === 'km'
+                          ? 'បង្ហាញពាក្យសម្ងាត់ថ្មី'
+                          : 'Show new password'
+                    "
                   >
                     @if (showNewPass()) {
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -290,7 +315,9 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               </ac-ui-field>
 
               <ac-ui-field
-                label="Confirm new password"
+                [label]="
+                  currentLang() === 'km' ? 'ផ្ទៀងផ្ទាត់ពាក្យសម្ងាត់ថ្មី' : 'Confirm new password'
+                "
                 [required]="true"
                 [error]="
                   showPasswordError('confirmPassword') ? getPasswordError('confirmPassword') : null
@@ -307,7 +334,13 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                     class="visibility-toggle"
                     (click)="showConfirmPass.set(!showConfirmPass())"
                     [attr.aria-label]="
-                      showConfirmPass() ? 'Hide confirmed password' : 'Show confirmed password'
+                      showConfirmPass()
+                        ? currentLang() === 'km'
+                          ? 'លាក់ពាក្យសម្ងាត់ផ្ទៀងផ្ទាត់'
+                          : 'Hide confirmed password'
+                        : currentLang() === 'km'
+                          ? 'បង្ហាញពាក្យសម្ងាត់ផ្ទៀងផ្ទាត់'
+                          : 'Show confirmed password'
                     "
                   >
                     @if (showConfirmPass()) {
@@ -332,9 +365,11 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
             }
             @if (passwordSaved()) {
-              <ac-ui-message tone="success"
-                >Your password has been changed successfully.</ac-ui-message
-              >
+              <ac-ui-message tone="success">{{
+                currentLang() === 'km'
+                  ? 'ពាក្យសម្ងាត់របស់អ្នកត្រូវបានផ្លាស់ប្តូរដោយជោគជ័យ។'
+                  : 'Your password has been changed successfully.'
+              }}</ac-ui-message>
             }
 
             <div class="form-actions">
@@ -343,7 +378,15 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                 class="save-btn"
                 [disabled]="passwordSaving() || passwordForm.pristine"
               >
-                {{ passwordSaving() ? 'Updating…' : 'Update password' }}
+                {{
+                  passwordSaving()
+                    ? currentLang() === 'km'
+                      ? 'កំពុងធ្វើបច្ចុប្បន្នភាព…'
+                      : 'Updating…'
+                    : currentLang() === 'km'
+                      ? 'ធ្វើបច្ចុប្បន្នភាពពាក្យសម្ងាត់'
+                      : 'Update password'
+                }}
               </button>
               <button
                 type="button"
@@ -351,7 +394,7 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                 [disabled]="passwordSaving() || passwordForm.pristine"
                 (click)="resetPasswordForm()"
               >
-                Clear
+                {{ currentLang() === 'km' ? 'សម្អាត' : 'Clear' }}
               </button>
             </div>
           </form>
@@ -367,9 +410,15 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               </svg>
             </div>
             <div>
-              <h2 id="notifications-title">Notification preferences</h2>
+              <h2 id="notifications-title">
+                {{ currentLang() === 'km' ? 'ចំណូលចិត្តការជូនដំណឹង' : 'Notification preferences' }}
+              </h2>
               <p>
-                Control which alerts and communications you receive across your email and dashboard.
+                {{
+                  currentLang() === 'km'
+                    ? 'គ្រប់គ្រងការជូនដំណឹង និងទំនាក់ទំនងដែលអ្នកទទួលបានតាមអ៊ីមែល និងផ្ទាំងគ្រប់គ្រង។'
+                    : 'Control which alerts and communications you receive across your email and dashboard.'
+                }}
               </p>
             </div>
           </header>
@@ -386,11 +435,14 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                   </svg>
                 </div>
                 <div class="toggle-info">
-                  <span class="toggle-title">Appointment alerts</span>
-                  <span class="toggle-desc"
-                    >Notifications for upcoming clinical visits, specialist confirmations, and
-                    schedule updates.</span
-                  >
+                  <span class="toggle-title">{{
+                    currentLang() === 'km' ? 'ការជូនដំណឹងណាត់ជួប' : 'Appointment alerts'
+                  }}</span>
+                  <span class="toggle-desc">{{
+                    currentLang() === 'km'
+                      ? 'ការជូនដំណឹងសម្រាប់ការជួបពិគ្រោះព្យាបាលខាងមុខ ការបញ្ជាក់ពីអ្នកឯកទេស និងបច្ចុប្បន្នភាពកាលវិភាគ។'
+                      : 'Notifications for upcoming clinical visits, specialist confirmations, and schedule updates.'
+                  }}</span>
                 </div>
                 <div class="toggle-action">
                   <input
@@ -412,11 +464,14 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                   </svg>
                 </div>
                 <div class="toggle-info">
-                  <span class="toggle-title">School reports</span>
-                  <span class="toggle-desc"
-                    >Alerts when teachers and school therapists file new developmental observation
-                    notes.</span
-                  >
+                  <span class="toggle-title">{{
+                    currentLang() === 'km' ? 'របាយការណ៍សាលារៀន' : 'School reports'
+                  }}</span>
+                  <span class="toggle-desc">{{
+                    currentLang() === 'km'
+                      ? 'ការជូនដំណឹងនៅពេលគ្រូបង្រៀន និងអ្នកព្យាបាលនៅសាលាដាក់បញ្ចូលកំណត់សម្គាល់ការវិវត្តថ្មី។'
+                      : 'Alerts when teachers and school therapists file new developmental observation notes.'
+                  }}</span>
                 </div>
                 <div class="toggle-action">
                   <input type="checkbox" formControlName="schoolReports" class="toggle-checkbox" />
@@ -432,11 +487,14 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                   </svg>
                 </div>
                 <div class="toggle-info">
-                  <span class="toggle-title">System announcements</span>
-                  <span class="toggle-desc"
-                    >Important updates about the AutiCare platform, clinical care guides, and
-                    security.</span
-                  >
+                  <span class="toggle-title">{{
+                    currentLang() === 'km' ? 'សេចក្តីប្រកាសពីប្រព័ន្ធ' : 'System announcements'
+                  }}</span>
+                  <span class="toggle-desc">{{
+                    currentLang() === 'km'
+                      ? 'បច្ចុប្បន្នភាពសំខាន់ៗអំពីប្រព័ន្ធ AutiCare ការណែនាំអំពីការថែទាំគ្លីនិក និងសុវត្ថិភាព។'
+                      : 'Important updates about the AutiCare platform, clinical care guides, and security.'
+                  }}</span>
                 </div>
                 <div class="toggle-action">
                   <input
@@ -449,9 +507,11 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
             </div>
 
             @if (notificationSaved()) {
-              <ac-ui-message tone="success"
-                >Your notification preferences have been saved.</ac-ui-message
-              >
+              <ac-ui-message tone="success">{{
+                currentLang() === 'km'
+                  ? 'ចំណូលចិត្តការជូនដំណឹងរបស់អ្នកត្រូវបានរក្សាទុក។'
+                  : 'Your notification preferences have been saved.'
+              }}</ac-ui-message>
             }
 
             <div class="form-actions">
@@ -460,7 +520,15 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                 class="save-btn"
                 [disabled]="notificationSaving() || notificationForm.pristine"
               >
-                {{ notificationSaving() ? 'Saving…' : 'Save notification preferences' }}
+                {{
+                  notificationSaving()
+                    ? currentLang() === 'km'
+                      ? 'កំពុងរក្សាទុក…'
+                      : 'Saving…'
+                    : currentLang() === 'km'
+                      ? 'រក្សាទុកចំណូលចិត្តការជូនដំណឹង'
+                      : 'Save notification preferences'
+                }}
               </button>
             </div>
           </form>
@@ -599,9 +667,13 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               <!-- Preferred Language Selector -->
               <div class="language-field">
                 <ac-ui-field
-                  label="Preferred language"
+                  [label]="currentLang() === 'km' ? 'ភាសាដែលពេញចិត្ត' : 'Preferred language'"
                   [full]="true"
-                  hint="Select the language used for interface notifications and content."
+                  [hint]="
+                    currentLang() === 'km'
+                      ? 'ជ្រើសរើសភាសាសម្រាប់ប្រើប្រាស់លើផ្ទាំងកម្មវិធី និងការជូនដំណឹង។'
+                      : 'Select the language used for interface notifications and content.'
+                  "
                 >
                   <select formControlName="preferredLanguage" class="language-select">
                     <option value="km">🇰🇭 ភាសាខ្មែរ (Khmer)</option>
@@ -618,7 +690,13 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
             }
             @if (preferencesSaved()) {
-              <ac-ui-message tone="success">Accessibility preferences saved.</ac-ui-message>
+              <ac-ui-message tone="success">
+                {{
+                  currentLang() === 'km'
+                    ? 'ចំណូលចិត្តភាពងាយស្រួលប្រើប្រាស់ត្រូវបានរក្សាទុក។'
+                    : 'Accessibility preferences saved.'
+                }}
+              </ac-ui-message>
             }
 
             <div class="form-actions">
@@ -627,10 +705,52 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                 class="save-btn"
                 [disabled]="preferencesSaving() || preferencesForm.pristine"
               >
-                {{ preferencesSaving() ? 'Saving…' : 'Save preferences' }}
+                {{
+                  preferencesSaving()
+                    ? currentLang() === 'km'
+                      ? 'កំពុងរក្សាទុក…'
+                      : 'Saving…'
+                    : currentLang() === 'km'
+                      ? 'រក្សាទុកចំណូលចិត្ត'
+                      : 'Save preferences'
+                }}
               </button>
             </div>
           </form>
+        </section>
+
+        <!-- 5. Danger Zone / Account Deletion Section -->
+        <section class="profile-panel danger-panel" aria-labelledby="danger-title">
+          <header class="panel-header">
+            <div class="header-icon danger-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"></path>
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                ></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </div>
+            <div>
+              <h2 id="danger-title">
+                {{ currentLang() === 'km' ? 'តំបន់គ្រោះថ្នាក់' : 'Danger zone' }}
+              </h2>
+              <p>
+                {{
+                  currentLang() === 'km'
+                    ? 'លុបគណនីរបស់អ្នកជាអចិន្ត្រៃយ៍ និងទិន្នន័យដែលពាក់ព័ន្ធទាំងអស់។ សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។'
+                    : 'Permanently delete your account and all associated profile data. This action cannot be undone.'
+                }}
+              </p>
+            </div>
+          </header>
+
+          <div class="danger-action-row">
+            <button type="button" class="danger-btn" (click)="showDeleteDialog.set(true)">
+              {{ currentLang() === 'km' ? 'លុបគណនី' : 'Delete account' }}
+            </button>
+          </div>
         </section>
       </div>
 
@@ -669,6 +789,42 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
         </div>
       </aside>
     </div>
+
+    @if (showDeleteDialog()) {
+      <ac-ui-dialog
+        [heading]="currentLang() === 'km' ? 'លុបគណនីរបស់អ្នក?' : 'Delete your account?'"
+        [description]="
+          currentLang() === 'km'
+            ? 'តើអ្នកប្រាកដជាចង់លុបគណនីរបស់អ្នកមែនទេ? ទិន្នន័យកុមារ ការវាយតម្លៃ និងកំណត់ត្រាទាំងអស់នឹងត្រូវលុបជាអចិន្ត្រៃយ៍។ សកម្មភាពនេះមិនអាចត្រឡប់វិញបានឡើយ។'
+            : 'Are you sure you want to delete your account? All child profiles, screening assessments, and clinical records will be permanently removed. This action cannot be reversed.'
+        "
+        dialogRole="alertdialog"
+        size="sm"
+        (close)="showDeleteDialog.set(false)"
+      >
+        <div dialogFooter class="dialog-actions">
+          <button type="button" class="cancel-btn" (click)="showDeleteDialog.set(false)">
+            {{ currentLang() === 'km' ? 'បោះបង់' : 'Cancel' }}
+          </button>
+          <button
+            type="button"
+            class="delete-confirm-btn"
+            [disabled]="deletingAccount()"
+            (click)="confirmDeleteAccount()"
+          >
+            {{
+              deletingAccount()
+                ? currentLang() === 'km'
+                  ? 'កំពុងលុប…'
+                  : 'Deleting…'
+                : currentLang() === 'km'
+                  ? 'បញ្ជាក់ការលុបគណនី'
+                  : 'Confirm deletion'
+            }}
+          </button>
+        </div>
+      </ac-ui-dialog>
+    }
   `,
   styles: [
     `
@@ -1220,6 +1376,58 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
           width: 100%;
         }
       }
+
+      .danger-panel {
+        border-color: var(--ac-color-red-border);
+        background: var(--ac-color-surface);
+      }
+
+      .danger-icon {
+        color: var(--ac-color-red-600);
+        background: var(--ac-color-red-50);
+      }
+
+      .danger-action-row {
+        margin-top: 16px;
+      }
+
+      .danger-btn,
+      .delete-confirm-btn {
+        min-height: 44px;
+        padding: 0 20px;
+        border-radius: 10px;
+        border: 0;
+        background: var(--ac-color-red-600);
+        color: var(--ac-color-text-on-action);
+        font-weight: var(--ac-font-weight-bold);
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 120ms ease;
+      }
+
+      .danger-btn:hover,
+      .delete-confirm-btn:hover {
+        background: var(--ac-color-red-700);
+      }
+
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .cancel-btn {
+        min-height: 44px;
+        padding: 0 18px;
+        border-radius: 10px;
+        border: 1px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font-weight: var(--ac-font-weight-medium);
+        font-size: 14px;
+        cursor: pointer;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -1229,6 +1437,10 @@ export class SettingsPage implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly preferences = inject(PreferencesService);
   protected readonly i18n = inject(I18nService, { optional: true });
+
+  readonly currentLang = computed(() => this.i18n?.currentLang?.() ?? 'en');
+  readonly showDeleteDialog = signal(false);
+  readonly deletingAccount = signal(false);
 
   readonly parent = this.auth.parent;
   protected readonly saving = signal(false);
@@ -1416,19 +1628,37 @@ export class SettingsPage implements OnInit {
   protected getPasswordError(
     field: 'currentPassword' | 'newPassword' | 'confirmPassword',
   ): string | null {
+    const isKm = this.currentLang() === 'km';
     const ctrl = this.passwordForm.controls[field];
     if (field === 'currentPassword' && ctrl.hasError('required')) {
-      return 'Current password is required.';
+      return isKm ? 'សូមបញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្ន' : 'Current password is required.';
     }
     if (field === 'newPassword') {
-      if (ctrl.hasError('required')) return 'New password is required.';
-      if (ctrl.hasError('minlength')) return 'New password must be at least 12 characters.';
+      if (ctrl.hasError('required')) {
+        return isKm ? 'សូមបញ្ចូលពាក្យសម្ងាត់ថ្មី' : 'New password is required.';
+      }
+      if (ctrl.hasError('minlength')) {
+        return isKm
+          ? 'ពាក្យសម្ងាត់ថ្មីត្រូវមានយ៉ាងតិច 12 តួអក្សរ'
+          : 'New password must be at least 12 characters.';
+      }
     }
     if (field === 'confirmPassword') {
-      if (ctrl.hasError('required')) return 'Please confirm your new password.';
-      if (this.passwordForm.hasError('passwordMismatch')) return 'Passwords do not match.';
+      if (ctrl.hasError('required')) {
+        return isKm
+          ? 'សូមផ្ទៀងផ្ទាត់ពាក្យសម្ងាត់ថ្មីរបស់អ្នក'
+          : 'Please confirm your new password.';
+      }
+      if (this.passwordForm.hasError('passwordMismatch')) {
+        return isKm ? 'ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ' : 'Passwords do not match.';
+      }
     }
     return null;
+  }
+
+  protected confirmDeleteAccount(): void {
+    this.deletingAccount.set(true);
+    this.auth.logout();
   }
 
   protected resetPasswordForm(): void {

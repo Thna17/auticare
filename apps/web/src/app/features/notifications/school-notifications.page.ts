@@ -4,9 +4,8 @@
 // PATCH /schools/notifications/:id/decision, which atomically updates the
 // admission request, marks the notification read, upserts the enrollment, and
 // notifies the parent.
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import type {
   PaginationMeta,
   SchoolNotificationItem,
@@ -18,18 +17,13 @@ import { UiPaginationComponent } from '../../design-system/components/ui-paginat
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { NotificationsStateService } from '../../core/notifications/notifications-state.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
 
 @Component({
   standalone: true,
-  imports: [
-    DatePipe,
-    UiEmptyStateComponent,
-    UiMessageComponent,
-    UiPaginationComponent,
-    UiSpinnerComponent,
-  ],
+  imports: [UiEmptyStateComponent, UiMessageComponent, UiPaginationComponent, UiSpinnerComponent],
   selector: 'ac-school-notifications',
   template: `
     <div class="notifications-card">
@@ -41,33 +35,41 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
             [class.active]="statusFilter() === 'ALL'"
             (click)="setFilter('ALL')"
           >
-            All
+            {{ currentLang() === 'km' ? 'ទាំងអស់' : 'All' }}
           </button>
           <button
             class="tab-btn"
             [class.active]="statusFilter() === 'PENDING'"
             (click)="setFilter('PENDING')"
           >
-            Pending
+            {{ currentLang() === 'km' ? 'រង់ចាំ' : 'Pending' }}
           </button>
           <button
             class="tab-btn"
             [class.active]="statusFilter() === 'DECIDED'"
             (click)="setFilter('DECIDED')"
           >
-            Decided
+            {{ currentLang() === 'km' ? 'បានសម្រេច' : 'Decided' }}
           </button>
           <button
             class="tab-btn"
             [class.active]="statusFilter() === 'READ'"
             (click)="setFilter('READ')"
           >
-            Read
+            {{ currentLang() === 'km' ? 'បានអាន' : 'Read' }}
           </button>
         </div>
         <div class="filter-controls">
           <button class="advanced-filter-btn" (click)="markAllRead()" [disabled]="markingAll()">
-            {{ markingAll() ? 'Marking…' : '✓ Mark all read' }}
+            {{
+              markingAll()
+                ? currentLang() === 'km'
+                  ? 'កំពុងសម្គាល់…'
+                  : 'Marking…'
+                : currentLang() === 'km'
+                  ? '✓ សម្គាល់ថាបានអានទាំងអស់'
+                  : '✓ Mark all read'
+            }}
           </button>
           <button class="icon-btn" aria-label="Refresh" (click)="load()" [disabled]="loading()">
             {{ loading() ? '…' : '↻' }}
@@ -77,19 +79,35 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
 
       <!-- States -->
       @if (loading()) {
-        <ac-ui-spinner label="Loading notifications…" />
+        <ac-ui-spinner
+          [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកការជូនដំណឹង…' : 'Loading notifications…'"
+        />
       } @else if (error(); as loadError) {
         <ac-ui-message tone="error">
           {{ loadError }}
-          <button type="button" class="retry-btn" (click)="load()">Retry</button>
+          <button type="button" class="retry-btn" (click)="load()">
+            {{ currentLang() === 'km' ? 'ព្យាយាមម្តងទៀត' : 'Retry' }}
+          </button>
         </ac-ui-message>
       } @else if (notifications().length === 0) {
         <ac-ui-empty-state
-          [title]="statusFilter() === 'ALL' ? 'You are all caught up' : 'No matches'"
+          [title]="
+            statusFilter() === 'ALL'
+              ? currentLang() === 'km'
+                ? 'អ្នកបានអានទាំងអស់រួចរាល់ហើយ'
+                : 'You are all caught up'
+              : currentLang() === 'km'
+                ? 'គ្មានលទ្ធផលត្រូវគ្នាទេ'
+                : 'No matches'
+          "
           [message]="
             statusFilter() === 'ALL'
-              ? 'Enrollment requests and other school updates will appear here.'
-              : 'No notifications match this filter. Choose another filter to see more.'
+              ? currentLang() === 'km'
+                ? 'សំណើចុះឈ្មោះ និងបច្ចុប្បន្នភាពសាលានឹងបង្ហាញនៅទីនេះ។'
+                : 'Enrollment requests and other school updates will appear here.'
+              : currentLang() === 'km'
+                ? 'គ្មានការជូនដំណឹងដែលត្រូវនឹងតម្រងនេះទេ។ សូមជ្រើសរើសតម្រងផ្សេង។'
+                : 'No notifications match this filter. Choose another filter to see more.'
           "
         />
       } @else {
@@ -97,11 +115,11 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
         <table class="notifications-table">
           <thead>
             <tr>
-              <th>SENDER & STUDENT</th>
-              <th>MESSAGE</th>
-              <th>DATE</th>
-              <th>STATUS</th>
-              <th>ACTIONS</th>
+              <th>{{ currentLang() === 'km' ? 'អ្នកផ្ញើ និងសិស្ស' : 'SENDER & STUDENT' }}</th>
+              <th>{{ currentLang() === 'km' ? 'សារ' : 'MESSAGE' }}</th>
+              <th>{{ currentLang() === 'km' ? 'កាលបរិច្ឆេទ' : 'DATE' }}</th>
+              <th>{{ currentLang() === 'km' ? 'ស្ថានភាព' : 'STATUS' }}</th>
+              <th>{{ currentLang() === 'km' ? 'សកម្មភាព' : 'ACTIONS' }}</th>
             </tr>
           </thead>
           <tbody>
@@ -117,9 +135,14 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
                       }
                     </div>
                     <div class="sender-info">
-                      <span class="sender-name">{{ notification.senderName || 'System' }}</span>
+                      <span class="sender-name">{{
+                        notification.senderName || (currentLang() === 'km' ? 'ប្រព័ន្ធ' : 'System')
+                      }}</span>
                       @if (notification.studentName) {
-                        <span class="student-name">Student: {{ notification.studentName }}</span>
+                        <span class="student-name"
+                          >{{ currentLang() === 'km' ? 'សិស្ស៖ ' : 'Student: '
+                          }}{{ notification.studentName }}</span
+                        >
                       }
                     </div>
                   </div>
@@ -130,23 +153,37 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
                     {{ notification.requestMessage ?? notification.body }}
                   </span>
                 </td>
-                <td class="date-cell">{{ notification.createdAt | date: 'MMM d, y · HH:mm' }}</td>
+                <td class="date-cell">{{ formatTimeAgo(notification.createdAt) }}</td>
                 <td class="status-cell">
                   @switch (
                     notification.type === 'ENROLLMENT_REQUEST' ? notification.admissionStatus : null
                   ) {
                     @case ('REQUESTED') {
-                      <span class="status-pill status-pill--pending">Pending</span>
+                      <span class="status-pill status-pill--pending">{{
+                        currentLang() === 'km' ? 'រង់ចាំ' : 'Pending'
+                      }}</span>
                     }
                     @case ('APPROVED') {
-                      <span class="status-pill status-pill--approved">Approved</span>
+                      <span class="status-pill status-pill--approved">{{
+                        currentLang() === 'km' ? 'បានអនុម័ត' : 'Approved'
+                      }}</span>
                     }
                     @case ('REJECTED') {
-                      <span class="status-pill status-pill--rejected">Rejected</span>
+                      <span class="status-pill status-pill--rejected">{{
+                        currentLang() === 'km' ? 'បានបដិសេធ' : 'Rejected'
+                      }}</span>
                     }
                     @default {
                       <span class="status-pill status-pill--info">
-                        {{ notification.status === 'UNREAD' ? 'Unread' : 'Read' }}
+                        {{
+                          notification.status === 'UNREAD'
+                            ? currentLang() === 'km'
+                              ? 'មិនទាន់អាន'
+                              : 'Unread'
+                            : currentLang() === 'km'
+                              ? 'បានអាន'
+                              : 'Read'
+                        }}
                       </span>
                     }
                   }
@@ -157,28 +194,30 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
                     notification.admissionStatus === 'REQUESTED'
                   ) {
                     @if (actingId() === notification.id) {
-                      <span class="acting-label">Saving…</span>
+                      <span class="acting-label">{{
+                        currentLang() === 'km' ? 'កំពុងរក្សាទុក…' : 'Saving…'
+                      }}</span>
                     } @else {
                       <button
                         type="button"
                         class="status-link approve"
                         (click)="decide(notification, 'APPROVED')"
                       >
-                        Approve
+                        {{ currentLang() === 'km' ? 'អនុម័ត' : 'Approve' }}
                       </button>
                       <button
                         type="button"
                         class="status-link reject"
                         (click)="decide(notification, 'REJECTED')"
                       >
-                        Reject
+                        {{ currentLang() === 'km' ? 'បដិសេធ' : 'Reject' }}
                       </button>
                       <button
                         type="button"
                         class="status-link details"
                         (click)="decide(notification, 'PENDING')"
                       >
-                        Keep Pending
+                        {{ currentLang() === 'km' ? 'រក្សាទុកសិន' : 'Keep Pending' }}
                       </button>
                     }
                   } @else if (notification.status === 'UNREAD') {
@@ -187,7 +226,7 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
                       class="status-link details"
                       (click)="markRead(notification)"
                     >
-                      Mark read
+                      {{ currentLang() === 'km' ? 'សម្គាល់ថាបានអាន' : 'Mark read' }}
                     </button>
                   } @else {
                     <span class="no-actions">—</span>
@@ -492,6 +531,9 @@ type StatusFilter = 'ALL' | 'PENDING' | 'DECIDED' | 'READ';
 export class SchoolNotificationsPage implements OnInit {
   private readonly api = inject(SchoolsApi);
   private readonly notificationsState = inject(NotificationsStateService);
+  private readonly i18n = inject(I18nService, { optional: true });
+
+  readonly currentLang = computed(() => this.i18n?.currentLang?.() ?? 'en');
 
   readonly notifications = signal<SchoolNotificationItem[]>([]);
   readonly loading = signal(true);
@@ -645,5 +687,51 @@ export class SchoolNotificationsPage implements OnInit {
         .map((part) => part[0]?.toUpperCase() ?? '')
         .join('') || '?'
     );
+  }
+
+  formatTimeAgo(dateInput: string | Date | number): string {
+    const date = new Date(dateInput);
+    const now = new Date();
+    const diffMs = Math.max(0, now.getTime() - date.getTime());
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHours = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
+
+    const isKm = this.currentLang() === 'km';
+
+    if (diffMin < 1) {
+      return isKm ? 'ទើបតែឥឡូវនេះ' : 'Just now';
+    }
+    if (diffHours < 1) {
+      if (isKm) {
+        return `${diffMin} នាទីមុន`;
+      }
+      return diffMin === 1 ? '1 minute ago' : `${diffMin} minutes ago`;
+    }
+    if (diffDays < 1) {
+      if (isKm) {
+        return `${diffHours} ម៉ោងមុន`;
+      }
+      return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+    }
+    if (diffDays < 30) {
+      if (isKm) {
+        return `${diffDays} ថ្ងៃមុន`;
+      }
+      return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+    }
+    if (diffMonths < 12) {
+      if (isKm) {
+        return `${diffMonths} ខែមុន`;
+      }
+      return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
+    }
+    if (isKm) {
+      return `${diffYears} ឆ្នាំមុន`;
+    }
+    return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
   }
 }

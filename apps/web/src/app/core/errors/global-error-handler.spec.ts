@@ -103,7 +103,7 @@ describe('GlobalErrorHandler & Client Telemetry Service', () => {
     errorHandler.handleError(new Error('Crash in Khmer mode'));
 
     expect(clientErrorService.errorMessage()).toBe(
-      'មានបញ្ហាបច្ចេកទេសមួយបានកើតឡើង។ សូមព្យាយាមម្តងទៀត ឬផ្ទុកទំព័រឡើងវិញ។',
+      'សូមអភ័យទោស មានបញ្ហាបច្ចេកទេសបន្តិចបន្តួចបានកើតឡើង។ សូមព្យាយាមម្តងទៀត។',
     );
   });
 
@@ -113,7 +113,7 @@ describe('GlobalErrorHandler & Client Telemetry Service', () => {
     errorHandler.handleError(new Error('Crash in English mode'));
 
     expect(clientErrorService.errorMessage()).toBe(
-      'An unexpected technical error occurred. Please try again or refresh the page.',
+      'An unexpected error occurred. Please try again or contact support.',
     );
   });
 
@@ -169,7 +169,7 @@ describe('AppComponent Global Error Toast Integration', () => {
 
     const toast = fixture.nativeElement.querySelector('.global-error-toast');
     expect(toast).not.toBeNull();
-    expect(toast.textContent).toContain('មានបញ្ហាបច្ចេកទេសមួយបានកើតឡើង');
+    expect(toast.textContent).toContain('សូមអភ័យទោស មានបញ្ហាបច្ចេកទេសបន្តិចបន្តួចបានកើតឡើង');
   });
 
   it('dismisses toast when close button is clicked', () => {

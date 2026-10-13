@@ -1,6 +1,5 @@
-import { DatePipe } from '@angular/common';
 import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { NotificationResponse, NotificationType, PaginationMeta } from '@auticare/contracts';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
@@ -8,19 +7,8 @@ import { UiPaginationComponent } from '../../design-system/components/ui-paginat
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { NotificationsStateService } from '../../core/notifications/notifications-state.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ParentNotificationsApi } from './data-access/parent-notifications.api';
-
-/** Plain-language label and tone per notification type. */
-const PRESENTATION: Record<NotificationType, { label: string; tone: string }> = {
-  SYSTEM: { label: 'AutiCare', tone: 'neutral' },
-  APPOINTMENT: { label: 'Appointment', tone: 'info' },
-  ADMISSION: { label: 'Admission', tone: 'info' },
-  SCREENING: { label: 'Screening', tone: 'info' },
-  ACTIVITY: { label: 'Activity', tone: 'positive' },
-  SCHOOL_REPORT: { label: 'School report', tone: 'positive' },
-  ENROLLMENT_REQUEST: { label: 'Enrollment', tone: 'caution' },
-  REPORT_REQUEST: { label: 'Report request', tone: 'caution' },
-};
 
 type ReadFilter = 'ALL' | 'UNREAD';
 
@@ -28,7 +16,6 @@ type ReadFilter = 'ALL' | 'UNREAD';
   standalone: true,
   selector: 'ac-parent-notifications',
   imports: [
-    DatePipe,
     RouterLink,
     UiEmptyStateComponent,
     UiMessageComponent,
@@ -39,26 +26,42 @@ type ReadFilter = 'ALL' | 'UNREAD';
     <section class="notifications">
       <header class="head">
         <div>
-          <h2>Your notifications</h2>
-          <p class="sub">Updates from your child’s school, appointments and screenings.</p>
+          <h2>{{ currentLang() === 'km' ? 'ការជូនដំណឹងរបស់អ្នក' : 'Your notifications' }}</h2>
+          <p class="sub">
+            {{
+              currentLang() === 'km'
+                ? 'បច្ចុប្បន្នភាពពីសាលារៀន ការណាត់ជួប និងការវាយតម្លៃរបស់កូនអ្នក។'
+                : 'Updates from your child’s school, appointments and screenings.'
+            }}
+          </p>
         </div>
         <div class="head-actions">
           @if (unreadTotal() !== null && unreadTotal()! > 0) {
-            <span class="unread-pill">{{ unreadTotal() }} unread</span>
+            <span class="unread-pill">
+              {{ unreadTotal() }} {{ currentLang() === 'km' ? 'មិនទាន់អាន' : 'unread' }}
+            </span>
             <button
               type="button"
               class="mark-all-btn"
               [disabled]="markingAll()"
               (click)="markAllRead()"
             >
-              {{ markingAll() ? 'Marking…' : '✓ Mark all read' }}
+              {{
+                markingAll()
+                  ? currentLang() === 'km'
+                    ? 'កំពុងសម្គាល់…'
+                    : 'Marking…'
+                  : currentLang() === 'km'
+                    ? '✓ សម្គាល់ថាបានអានទាំងអស់'
+                    : '✓ Mark all as read'
+              }}
             </button>
           }
         </div>
       </header>
 
       <div class="filters" role="group" aria-label="Filter notifications">
-        @for (option of filterOptions; track option.value) {
+        @for (option of filterOptions(); track option.value) {
           <button
             type="button"
             class="filter"
@@ -72,19 +75,39 @@ type ReadFilter = 'ALL' | 'UNREAD';
       </div>
 
       @if (loading()) {
-        <ac-ui-spinner label="Loading your notifications…" />
+        <ac-ui-spinner
+          [label]="
+            currentLang() === 'km'
+              ? 'កំពុងផ្ទុកការជូនដំណឹងរបស់អ្នក…'
+              : 'Loading your notifications…'
+          "
+        />
       } @else if (error(); as problem) {
         <ac-ui-message tone="error">
           {{ problem }}
-          <button type="button" class="retry" (click)="load()">Try again</button>
+          <button type="button" class="retry" (click)="load()">
+            {{ currentLang() === 'km' ? 'ព្យាយាមម្តងទៀត' : 'Try again' }}
+          </button>
         </ac-ui-message>
       } @else if (notifications().length === 0) {
         <ac-ui-empty-state
-          [title]="filter() === 'UNREAD' ? 'Nothing unread' : 'No notifications yet'"
+          [title]="
+            filter() === 'UNREAD'
+              ? currentLang() === 'km'
+                ? 'គ្មានសារមិនទាន់អាន'
+                : 'Nothing unread'
+              : currentLang() === 'km'
+                ? 'មិនទាន់មានការជូនដំណឹង'
+                : 'No notifications yet'
+          "
           [message]="
             filter() === 'UNREAD'
-              ? 'You have read everything. Switch to All to see earlier updates.'
-              : 'You are all caught up. New updates from schools and clinics will appear here.'
+              ? currentLang() === 'km'
+                ? 'អ្នកបានអានការជូនដំណឹងទាំងអស់ហើយ។ ប្តូរទៅផ្ទាំង «ទាំងអស់» ដើម្បីមើលបច្ចុប្បន្នភាពមុនៗ។'
+                : 'You have read everything. Switch to All to see earlier updates.'
+              : currentLang() === 'km'
+                ? 'អ្នកបានអានទាំងអស់រួចរាល់ហើយ។ បច្ចុប្បន្នភាពថ្មីពីសាលារៀន និងគ្លីនិកនឹងបង្ហាញនៅទីនេះ។'
+                : 'You are all caught up. New updates from schools and clinics will appear here.'
           "
         />
       } @else {
@@ -102,7 +125,7 @@ type ReadFilter = 'ALL' | 'UNREAD';
                   }
                 </div>
                 <p class="body">{{ item.body }}</p>
-                <p class="when">{{ item.createdAt | date: 'medium' }}</p>
+                <p class="when">{{ formatTimeAgo(item.createdAt) }}</p>
               </div>
 
               <div class="row-actions">
@@ -111,33 +134,47 @@ type ReadFilter = 'ALL' | 'UNREAD';
                     class="row-link"
                     routerLink="/appointments"
                     [queryParams]="{ id: item.appointmentId }"
-                    >View appointment</a
+                    >{{ currentLang() === 'km' ? 'មើលការណាត់ជួប' : 'View appointment' }}</a
                   >
                 } @else if (item.type === 'SCREENING' && item.reportId) {
-                  <a class="row-link" [routerLink]="'/screening/result/' + item.reportId"
-                    >View screening result</a
-                  >
+                  <a class="row-link" [routerLink]="'/screening/result/' + item.reportId">{{
+                    currentLang() === 'km' ? 'មើលលទ្ធផលវាយតម្លៃ' : 'View screening result'
+                  }}</a>
                 } @else if (item.reportId) {
                   <a
                     class="row-link"
                     routerLink="/progress"
                     [queryParams]="{ reportId: item.reportId }"
-                    >View report</a
+                    >{{ currentLang() === 'km' ? 'មើលរបាយការណ៍' : 'View report' }}</a
                   >
                 } @else if (item.enrollmentId) {
-                  <a class="row-link" routerLink="/schools">View enrollment</a>
+                  <a class="row-link" routerLink="/schools">
+                    {{ currentLang() === 'km' ? 'មើលការចុះឈ្មោះ' : 'View enrollment' }}
+                  </a>
                 } @else if (item.type === 'APPOINTMENT') {
-                  <a class="row-link" routerLink="/appointments">View appointments</a>
+                  <a class="row-link" routerLink="/appointments">
+                    {{ currentLang() === 'km' ? 'មើលការណាត់ជួប' : 'View appointments' }}
+                  </a>
                 } @else if (item.type === 'SCHOOL_REPORT' || item.type === 'REPORT_REQUEST') {
-                  <a class="row-link" routerLink="/progress">View reports</a>
+                  <a class="row-link" routerLink="/progress">
+                    {{ currentLang() === 'km' ? 'មើលរបាយការណ៍' : 'View reports' }}
+                  </a>
                 } @else if (item.type === 'ADMISSION' || item.type === 'ENROLLMENT_REQUEST') {
-                  <a class="row-link" routerLink="/schools">View schools</a>
+                  <a class="row-link" routerLink="/schools">
+                    {{ currentLang() === 'km' ? 'មើលសាលារៀន' : 'View schools' }}
+                  </a>
                 } @else if (item.type === 'SCREENING') {
-                  <a class="row-link" routerLink="/screening">View screenings</a>
+                  <a class="row-link" routerLink="/screening">
+                    {{ currentLang() === 'km' ? 'មើលការវាយតម្លៃ' : 'View screenings' }}
+                  </a>
                 } @else if (item.type === 'ACTIVITY') {
-                  <a class="row-link" routerLink="/activities">View activities</a>
+                  <a class="row-link" routerLink="/activities">
+                    {{ currentLang() === 'km' ? 'មើលសកម្មភាព' : 'View activities' }}
+                  </a>
                 } @else if (isCrisisNotification(item)) {
-                  <a class="row-link" routerLink="/crisis">Crisis resources</a>
+                  <a class="row-link" routerLink="/crisis">
+                    {{ currentLang() === 'km' ? 'ធនធានសង្គ្រោះបន្ទាន់' : 'Crisis resources' }}
+                  </a>
                 }
 
                 @if (item.status === 'UNREAD') {
@@ -147,7 +184,15 @@ type ReadFilter = 'ALL' | 'UNREAD';
                     [disabled]="actingId() === item.id"
                     (click)="markRead(item)"
                   >
-                    {{ actingId() === item.id ? 'Marking…' : 'Mark as read' }}
+                    {{
+                      actingId() === item.id
+                        ? currentLang() === 'km'
+                          ? 'កំពុងសម្គាល់…'
+                          : 'Marking…'
+                        : currentLang() === 'km'
+                          ? 'សម្គាល់ថាបានអាន'
+                          : 'Mark as read'
+                    }}
                   </button>
                 }
               </div>
@@ -406,15 +451,20 @@ type ReadFilter = 'ALL' | 'UNREAD';
 export class ParentNotificationsPage implements OnInit {
   private readonly api = inject(ParentNotificationsApi);
   private readonly notificationsState = inject(NotificationsStateService);
+  private readonly i18n = inject(I18nService, { optional: true });
+
+  readonly currentLang = computed(() => this.i18n?.currentLang?.() ?? 'en');
 
   protected readonly notifications = signal<readonly NotificationResponse[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly filter = signal<ReadFilter>('ALL');
-  protected readonly filterOptions: ReadonlyArray<{ value: ReadFilter; label: string }> = [
-    { value: 'ALL', label: 'All' },
-    { value: 'UNREAD', label: 'Unread' },
-  ];
+  protected readonly filterOptions = computed<ReadonlyArray<{ value: ReadFilter; label: string }>>(
+    () => [
+      { value: 'ALL', label: this.currentLang() === 'km' ? 'ទាំងអស់' : 'All' },
+      { value: 'UNREAD', label: this.currentLang() === 'km' ? 'មិនទាន់អាន' : 'Unread' },
+    ],
+  );
 
   protected readonly pagination = signal<PaginationMeta | null>(null);
   protected readonly page = signal(1);
@@ -520,8 +570,73 @@ export class ParentNotificationsPage implements OnInit {
     });
   }
 
-  protected presentation(type: NotificationType): { label: string; tone: string } {
-    return PRESENTATION[type] ?? { label: 'Update', tone: 'neutral' };
+  formatTimeAgo(dateInput: string | Date | number): string {
+    const date = new Date(dateInput);
+    const now = new Date();
+    const diffMs = Math.max(0, now.getTime() - date.getTime());
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHours = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
+
+    const isKm = this.currentLang() === 'km';
+
+    if (diffMin < 1) {
+      return isKm ? 'ទើបតែឥឡូវនេះ' : 'Just now';
+    }
+    if (diffHours < 1) {
+      if (isKm) {
+        return `${diffMin} នាទីមុន`;
+      }
+      return diffMin === 1 ? '1 minute ago' : `${diffMin} minutes ago`;
+    }
+    if (diffDays < 1) {
+      if (isKm) {
+        return `${diffHours} ម៉ោងមុន`;
+      }
+      return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+    }
+    if (diffDays < 30) {
+      if (isKm) {
+        return `${diffDays} ថ្ងៃមុន`;
+      }
+      return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+    }
+    if (diffMonths < 12) {
+      if (isKm) {
+        return `${diffMonths} ខែមុន`;
+      }
+      return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
+    }
+    if (isKm) {
+      return `${diffYears} ឆ្នាំមុន`;
+    }
+    return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
+  }
+
+  presentation(type: NotificationType): { label: string; tone: string } {
+    const isKm = this.currentLang() === 'km';
+    switch (type) {
+      case 'APPOINTMENT':
+        return { label: isKm ? 'ការណាត់ជួប' : 'Appointment', tone: 'info' };
+      case 'SCHOOL_REPORT':
+        return { label: isKm ? 'របាយការណ៍សាលា' : 'School report', tone: 'positive' };
+      case 'ADMISSION':
+        return { label: isKm ? 'ការចុះឈ្មោះចូលរៀន' : 'Admission', tone: 'info' };
+      case 'SCREENING':
+        return { label: isKm ? 'ការវាយតម្លៃ' : 'Screening', tone: 'info' };
+      case 'ACTIVITY':
+        return { label: isKm ? 'សកម្មភាព' : 'Activity', tone: 'positive' };
+      case 'ENROLLMENT_REQUEST':
+        return { label: isKm ? 'សំណើចុះឈ្មោះ' : 'Enrollment', tone: 'caution' };
+      case 'REPORT_REQUEST':
+        return { label: isKm ? 'សំណើរបាយការណ៍' : 'Report request', tone: 'caution' };
+      case 'SYSTEM':
+      default:
+        return { label: isKm ? 'ប្រព័ន្ធ' : 'AutiCare', tone: 'neutral' };
+    }
   }
 
   protected isCrisisNotification(item: NotificationResponse): boolean {

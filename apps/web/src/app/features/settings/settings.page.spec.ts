@@ -10,16 +10,19 @@ import { API_BASE_URL } from '../../core/config/api.config';
 import { AuthService } from '../../core/auth/auth.service';
 import type { FontSizeScale } from '../../core/preferences/preferences.service';
 import { PreferencesService } from '../../core/preferences/preferences.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { SettingsPage } from './settings.page';
 
 describe('SettingsPage', () => {
   let fixture: ComponentFixture<SettingsPage>;
   let component: SettingsPage;
+  let i18nService: I18nService;
   let mockAuthService: {
     parent: ReturnType<typeof signal>;
     loadCurrentUser: ReturnType<typeof vi.fn>;
     updateMyProfile: ReturnType<typeof vi.fn>;
     changePassword: ReturnType<typeof vi.fn>;
+    logout: ReturnType<typeof vi.fn>;
   };
   let mockPreferencesService: {
     reducedMotion: ReturnType<typeof signal<boolean>>;
@@ -55,6 +58,7 @@ describe('SettingsPage', () => {
       loadCurrentUser: vi.fn().mockReturnValue(of(true)),
       updateMyProfile: vi.fn().mockReturnValue(of(sampleParent)),
       changePassword: vi.fn().mockReturnValue(of({ message: 'Password changed successfully.' })),
+      logout: vi.fn(),
     };
 
     mockPreferencesService = {
@@ -101,6 +105,9 @@ describe('SettingsPage', () => {
         { provide: PreferencesService, useValue: mockPreferencesService },
       ],
     }).compileComponents();
+
+    i18nService = TestBed.inject(I18nService);
+    i18nService.setLanguage('en');
 
     fixture = TestBed.createComponent(SettingsPage);
     component = fixture.componentInstance;
@@ -275,6 +282,26 @@ describe('SettingsPage', () => {
       expect(component['passwordSaved']()).toBe(false);
       expect(component['passwordError']()).toBe('Current password does not match.');
     });
+
+    it('returns Khmer validation error messages when language is km', () => {
+      i18nService.setLanguage('km');
+      component['passwordForm'].controls.currentPassword.setValue('');
+      component['passwordForm'].controls.currentPassword.markAsTouched();
+      expect(component['getPasswordError']('currentPassword')).toBe(
+        'សូមបញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្ន',
+      );
+
+      component['passwordForm'].controls.newPassword.setValue('short');
+      component['passwordForm'].controls.newPassword.markAsTouched();
+      expect(component['getPasswordError']('newPassword')).toBe(
+        'ពាក្យសម្ងាត់ថ្មីត្រូវមានយ៉ាងតិច 12 តួអក្សរ',
+      );
+
+      component['passwordForm'].controls.newPassword.setValue('ValidPass123456!');
+      component['passwordForm'].controls.confirmPassword.setValue('MismatchPass123!');
+      component['passwordForm'].controls.confirmPassword.markAsTouched();
+      expect(component['getPasswordError']('confirmPassword')).toBe('ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ');
+    });
   });
 
   describe('Notification preferences panel', () => {
@@ -364,6 +391,41 @@ describe('SettingsPage', () => {
       const options = Array.from(select.options).map((opt) => opt.value);
       expect(options).toContain('km');
       expect(options).toContain('en');
+    });
+
+    it('renders preferred language label and notification cards in Khmer mode', () => {
+      i18nService.setLanguage('km');
+      fixture.detectChanges();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.textContent).toContain('ភាសាដែលពេញចិត្ត');
+      expect(el.textContent).toContain('ការជូនដំណឹងណាត់ជួប');
+      expect(el.textContent).toContain('របាយការណ៍សាលារៀន');
+      expect(el.textContent).toContain('សេចក្តីប្រកាសពីប្រព័ន្ធ');
+    });
+  });
+
+  describe('Danger zone and account deletion dialog', () => {
+    it('opens account deletion dialog and confirms deletion via logout', () => {
+      expect(component.showDeleteDialog()).toBe(false);
+      component.showDeleteDialog.set(true);
+      fixture.detectChanges();
+
+      expect(component.showDeleteDialog()).toBe(true);
+      component['confirmDeleteAccount']();
+      expect(component.deletingAccount()).toBe(true);
+      expect(mockAuthService.logout).toHaveBeenCalled();
+    });
+
+    it('translates account deletion dialog in Khmer mode', () => {
+      i18nService.setLanguage('km');
+      component.showDeleteDialog.set(true);
+      fixture.detectChanges();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.textContent).toContain('លុបគណនីរបស់អ្នក?');
+      expect(el.textContent).toContain('បោះបង់');
+      expect(el.textContent).toContain('បញ្ជាក់ការលុបគណនី');
     });
   });
 });

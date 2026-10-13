@@ -25,8 +25,8 @@ export class ClientErrorService {
     this.lastError.set(error);
     const msg =
       error.language === 'en'
-        ? 'An unexpected technical error occurred. Please try again or refresh the page.'
-        : 'មានបញ្ហាបច្ចេកទេសមួយបានកើតឡើង។ សូមព្យាយាមម្តងទៀត ឬផ្ទុកទំព័រឡើងវិញ។';
+        ? 'An unexpected error occurred. Please try again or contact support.'
+        : 'សូមអភ័យទោស មានបញ្ហាបច្ចេកទេសបន្តិចបន្តួចបានកើតឡើង។ សូមព្យាយាមម្តងទៀត។';
     this.errorMessage.set(msg);
   }
 
