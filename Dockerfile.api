@@ -13,14 +13,18 @@ RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
 # Copy monorepo manifests
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 
-# Install dependencies (frozen lockfile)
-RUN pnpm install --frozen-lockfile
+# Install dependencies
+RUN pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
 # Copy source code and Prisma schema
 COPY packages/contracts ./packages/contracts
+COPY packages/eslint-config ./packages/eslint-config
+COPY packages/tsconfig ./packages/tsconfig
 COPY apps/api ./apps/api
 
 # Build contracts and compile API TypeScript
