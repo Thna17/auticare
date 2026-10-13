@@ -4,6 +4,8 @@ import { AppointmentsFacade } from './state/appointments.facade';
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { formatHospitalName } from '../hospitals/cambodia-hospitals.data';
 
 type CalendarDay = {
   readonly iso: string;
@@ -20,22 +22,32 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
   imports: [UiDialogComponent, UiFieldComponent, UiMessageComponent],
   template: `
     <ac-ui-dialog
-      heading="Reschedule Appointment"
+      [heading]="currentLang() === 'km' ? 'ប្តូរកាលវិភាគការណាត់ជួប' : 'Reschedule Appointment'"
       [ariaLabel]="dialogLabel()"
       [showCloseButton]="true"
       size="md"
       (close)="close()"
     >
       <!-- Current Appointment Snapshot Card -->
-      <section class="section" aria-label="Current appointment details">
-        <span class="section-title">Current Appointment</span>
+      <section
+        class="section"
+        [attr.aria-label]="
+          currentLang() === 'km'
+            ? 'ព័ត៌មានលម្អិតការណាត់ជួបបច្ចុប្បន្ន'
+            : 'Current appointment details'
+        "
+      >
+        <span class="section-title">{{
+          currentLang() === 'km' ? 'ការណាត់ជួបបច្ចុប្បន្ន' : 'Current Appointment'
+        }}</span>
         <div class="current-summary-card">
           <div class="doctor-avatar" aria-hidden="true">
             {{ initials(facade.reschedule().appointment?.doctorName) }}
           </div>
           <div class="current-details">
             <strong class="current-doctor">{{
-              facade.reschedule().appointment?.doctorName ?? 'Specialist'
+              facade.reschedule().appointment?.doctorName ??
+                (currentLang() === 'km' ? 'អ្នកឯកទេស' : 'Specialist')
             }}</strong>
             <span class="current-hospital">
               <svg
@@ -50,7 +62,12 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
               </svg>
-              {{ facade.reschedule().appointment?.hospitalName }}
+              {{
+                formatHospitalName(
+                  facade.reschedule().appointment?.hospitalName ?? '',
+                  currentLang()
+                )
+              }}
             </span>
             <span class="scheduled-time">
               <svg
@@ -67,7 +84,7 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              Original: {{ formatCurrentTime() }}
+              {{ currentLang() === 'km' ? 'កាលវិភាគដើម: ' : 'Original: ' }}{{ formatCurrentTime() }}
             </span>
           </div>
         </div>
@@ -77,9 +94,14 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
       <section class="section" aria-labelledby="reschedule-date-label">
         <div class="section-header-row">
           <h3 id="reschedule-date-label" class="section-title">
-            Choose a New Date <span aria-hidden="true">*</span>
+            {{ currentLang() === 'km' ? 'ជ្រើសរើសកាលបរិច្ឆេទថ្មី' : 'Choose a New Date' }}
+            <span aria-hidden="true">*</span>
           </h3>
-          <span class="step-hint">Select your preferred consultation date</span>
+          <span class="step-hint">{{
+            currentLang() === 'km'
+              ? 'ជ្រើសរើសកាលបរិច្ឆេទពិគ្រោះដែលអ្នកពេញចិត្ត'
+              : 'Select your preferred consultation date'
+          }}</span>
         </div>
 
         <div class="calendar-wrapper">
@@ -88,7 +110,7 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
               type="button"
               class="month-nav-btn"
               (click)="shiftMonth(-1)"
-              aria-label="Previous month"
+              [attr.aria-label]="currentLang() === 'km' ? 'ខែមុន' : 'Previous month'"
             >
               ‹
             </button>
@@ -97,13 +119,13 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
               type="button"
               class="month-nav-btn"
               (click)="shiftMonth(1)"
-              aria-label="Next month"
+              [attr.aria-label]="currentLang() === 'km' ? 'ខែបន្ទាប់' : 'Next month'"
             >
               ›
             </button>
           </div>
           <div class="weekday-row">
-            @for (day of weekdayLabels; track day) {
+            @for (day of weekdayLabels(); track $index) {
               <span>{{ day }}</span>
             }
           </div>
@@ -122,6 +144,13 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
                 [class.muted]="!day.isCurrentMonth"
                 [class.selected]="facade.reschedule().date === day.iso"
                 [disabled]="day.isPast"
+                [title]="
+                  day.isPast
+                    ? currentLang() === 'km'
+                      ? 'កាលបរិច្ឆេទកន្លងផុត'
+                      : 'Past date'
+                    : day.iso
+                "
                 (click)="facade.selectRescheduleDate(day.iso)"
               >
                 {{ day.label }}
@@ -129,9 +158,18 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
             }
           </div>
           <div class="calendar-legend">
-            <span class="legend-item"><span class="legend-dot available"></span> Available</span>
-            <span class="legend-item"><span class="legend-dot selected"></span> Selected</span>
-            <span class="legend-item"><span class="legend-dot past"></span> Past dates</span>
+            <span class="legend-item"
+              ><span class="legend-dot available"></span>
+              {{ currentLang() === 'km' ? 'អាចកក់បាន' : 'Available' }}</span
+            >
+            <span class="legend-item"
+              ><span class="legend-dot selected"></span>
+              {{ currentLang() === 'km' ? 'បានជ្រើសរើស' : 'Selected' }}</span
+            >
+            <span class="legend-item"
+              ><span class="legend-dot past"></span>
+              {{ currentLang() === 'km' ? 'កាលបរិច្ឆេទកន្លងផុត' : 'Past dates' }}</span
+            >
           </div>
         </div>
       </section>
@@ -141,7 +179,11 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
         <section class="section" aria-labelledby="reschedule-time-label">
           <div class="section-header-row">
             <h3 id="reschedule-time-label" class="section-title">
-              Available Slots for {{ formatSelectedDate(facade.reschedule().date!) }}
+              {{
+                currentLang() === 'km'
+                  ? 'ម៉ោងទំនេរសម្រាប់ ' + formatSelectedDate(facade.reschedule().date!)
+                  : 'Available Slots for ' + formatSelectedDate(facade.reschedule().date!)
+              }}
               <span aria-hidden="true">*</span>
             </h3>
           </div>
@@ -149,7 +191,11 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
           @if (facade.reschedule().slotsLoading) {
             <p class="loading-slots">
               <span class="loading-spinner" aria-hidden="true"></span>
-              Checking doctor availability…
+              {{
+                currentLang() === 'km'
+                  ? 'កំពុងពិនិត្យកាលវិភាគវេជ្ជបណ្ឌិត…'
+                  : 'Checking doctor availability…'
+              }}
             </p>
           }
 
@@ -179,7 +225,7 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
                     <line x1="1" y1="12" x2="3" y2="12"></line>
                     <line x1="21" y1="12" x2="23" y2="12"></line>
                   </svg>
-                  Morning Sessions
+                  {{ currentLang() === 'km' ? 'វគ្គពេលព្រឹក' : 'Morning Sessions' }}
                 </span>
                 <div class="slot-row">
                   @for (slot of morningSlots(); track slot.iso) {
@@ -215,7 +261,7 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
                       d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
                     ></path>
                   </svg>
-                  Afternoon Sessions
+                  {{ currentLang() === 'km' ? 'វគ្គពេលរសៀល' : 'Afternoon Sessions' }}
                 </span>
                 <div class="slot-row">
                   @for (slot of afternoonSlots(); track slot.iso) {
@@ -240,12 +286,19 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
 
       <!-- Reschedule Reason Field -->
       <section class="section">
-        <ac-ui-field label="Reason for rescheduling" [optional]="true">
+        <ac-ui-field
+          [label]="currentLang() === 'km' ? 'មូលហេតុនៃការប្តូរកាលវិភាគ' : 'Reason for rescheduling'"
+          [optional]="true"
+        >
           <textarea
             class="notes-input"
             rows="2"
             maxlength="2000"
-            placeholder="Let the hospital team know why you need to move this appointment…"
+            [placeholder]="
+              currentLang() === 'km'
+                ? 'សូមប្រាប់ក្រុមការងារមន្ទីរពេទ្យពីមូលហេតុដែលអ្នកត្រូវការផ្លាស់ប្តូរការណាត់ជួបនេះ…'
+                : 'Let the hospital team know why you need to move this appointment…'
+            "
             [value]="facade.reschedule().reason"
             (input)="facade.setRescheduleReason($any($event.target).value)"
           ></textarea>
@@ -258,7 +311,9 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
       }
 
       <div dialogFooter class="modal-footer">
-        <button type="button" class="secondary" (click)="close()">Cancel</button>
+        <button type="button" class="secondary" (click)="close()">
+          {{ currentLang() === 'km' ? 'បោះបង់' : 'Cancel' }}
+        </button>
         <button
           type="button"
           class="primary"
@@ -267,7 +322,15 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
           "
           (click)="confirm()"
         >
-          {{ facade.reschedule().submitting ? 'Rescheduling…' : 'Confirm Reschedule' }}
+          {{
+            facade.reschedule().submitting
+              ? currentLang() === 'km'
+                ? 'កំពុងប្តូរកាលវិភាគ…'
+                : 'Rescheduling…'
+              : currentLang() === 'km'
+                ? 'បញ្ជាក់ការប្តូរកាលវិភាគ'
+                : 'Confirm Reschedule'
+          }}
         </button>
       </div>
     </ac-ui-dialog>
@@ -608,13 +671,21 @@ const defaultTimeSlots = ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] as con
 })
 export class RescheduleAppointmentModalComponent implements OnInit {
   protected readonly facade = inject(AppointmentsFacade);
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
+  protected readonly formatHospitalName = formatHospitalName;
   protected readonly defaultSlots = defaultTimeSlots;
-  protected readonly weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  protected readonly weekdayLabels = computed(() =>
+    this.currentLang() === 'km'
+      ? ['អា', 'ច', 'អ', 'ពុ', 'ព្រ', 'សុ', 'ស']
+      : ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  );
   private readonly viewMonth = signal(startOfMonth(new Date()));
 
-  protected readonly monthLabel = computed(() =>
-    this.viewMonth().toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
-  );
+  protected readonly monthLabel = computed(() => {
+    const locale = this.currentLang() === 'km' ? 'km-KH' : 'en-US';
+    return this.viewMonth().toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  });
 
   protected readonly allAvailableSlots = computed<
     readonly { time: string; iso: string; available: boolean }[]
@@ -653,10 +724,14 @@ export class RescheduleAppointmentModalComponent implements OnInit {
     });
   });
 
-  protected readonly dialogLabel = computed(
-    () =>
-      `Reschedule appointment with ${this.facade.reschedule().appointment?.doctorName ?? 'specialist'}`,
-  );
+  protected readonly dialogLabel = computed(() => {
+    const doctor =
+      this.facade.reschedule().appointment?.doctorName ??
+      (this.currentLang() === 'km' ? 'អ្នកឯកទេស' : 'specialist');
+    return this.currentLang() === 'km'
+      ? `ប្តូរកាលវិភាគការណាត់ជួបជាមួយ ${doctor}`
+      : `Reschedule appointment with ${doctor}`;
+  });
 
   ngOnInit() {
     const current = this.facade.reschedule().appointment;
@@ -671,7 +746,8 @@ export class RescheduleAppointmentModalComponent implements OnInit {
   protected formatCurrentTime(): string {
     const appt = this.facade.reschedule().appointment;
     if (!appt) return '';
-    return new Date(appt.scheduledAt).toLocaleString(undefined, {
+    const locale = this.currentLang() === 'km' ? 'km-KH' : undefined;
+    return new Date(appt.scheduledAt).toLocaleString(locale, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -681,7 +757,8 @@ export class RescheduleAppointmentModalComponent implements OnInit {
   }
 
   protected formatSelectedDate(isoDate: string): string {
-    return new Date(`${isoDate}T00:00:00`).toLocaleDateString(undefined, {
+    const locale = this.currentLang() === 'km' ? 'km-KH' : undefined;
+    return new Date(`${isoDate}T00:00:00`).toLocaleDateString(locale, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',

@@ -19,15 +19,10 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { RescheduleAppointmentModalComponent } from './reschedule-appointment-modal.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { formatHospitalName } from '../hospitals/cambodia-hospitals.data';
 
 type TimeFilter = 'ALL' | 'UPCOMING' | 'PAST';
-
-const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: string }> = [
-  { value: 'REQUESTED', label: 'Pending' },
-  { value: 'CONFIRMED', label: 'Confirmed' },
-  { value: 'COMPLETED', label: 'Completed' },
-  { value: 'CANCELLED', label: 'Cancelled' },
-];
 
 @Component({
   standalone: true,
@@ -42,19 +37,25 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
   ],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
-      <span>Dashboard</span>
+      <span>{{ currentLang() === 'km' ? 'ផ្ទាំងគ្រប់គ្រង' : 'Dashboard' }}</span>
       <span aria-hidden="true">/</span>
-      <span aria-current="page">Appointments</span>
+      <span aria-current="page">{{ currentLang() === 'km' ? 'ការណាត់ជួប' : 'Appointments' }}</span>
     </nav>
 
     <section class="page-header">
       <div>
-        <h1>Appointment Dashboard</h1>
+        <h1>
+          {{ currentLang() === 'km' ? 'ផ្ទាំងគ្រប់គ្រងការណាត់ជួប' : 'Appointment Dashboard' }}
+        </h1>
         <p>
           {{
             isAdmin()
-              ? 'Administrative oversight for all clinical appointments across the platform.'
-              : 'Track upcoming visits, specialist schedules, and clinical consultations.'
+              ? currentLang() === 'km'
+                ? 'ការត្រួតពិនិត្យផ្នែករដ្ឋបាលលើការណាត់ជួបគ្លីនិកទាំងអស់នៅក្នុងប្រព័ន្ធ។'
+                : 'Administrative oversight for all clinical appointments across the platform.'
+              : currentLang() === 'km'
+                ? 'តាមដានការណាត់ជួបដែលនឹងមកដល់ កាលវិភាគអ្នកឯកទេស និងការពិគ្រោះយោបល់គ្លីនិក។'
+                : 'Track upcoming visits, specialist schedules, and clinical consultations.'
           }}
         </p>
       </div>
@@ -74,7 +75,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          Schedule New
+          {{ currentLang() === 'km' ? 'កក់ការណាត់ជួបថ្មី' : 'Schedule New' }}
         </a>
       }
     </section>
@@ -82,25 +83,44 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
     @if (isAdmin()) {
       <section class="admin-oversight-banner" aria-label="Administrative Appointment Oversight">
         <div class="admin-oversight-top">
-          <span class="admin-pill">ADMIN OVERSIGHT</span>
-          <h2>Administrative Appointment Oversight</h2>
+          <span class="admin-pill">{{
+            currentLang() === 'km' ? 'ការត្រួតពិនិត្យរដ្ឋបាល' : 'ADMIN OVERSIGHT'
+          }}</span>
+          <h2>
+            {{
+              currentLang() === 'km'
+                ? 'ការត្រួតពិនិត្យការណាត់ជួបកម្រិតរដ្ឋបាល'
+                : 'Administrative Appointment Oversight'
+            }}
+          </h2>
           <p>
-            You have system-wide visibility into all patient bookings and specialist schedules.
-            Filter by parent, child, or specialist below.
+            {{
+              currentLang() === 'km'
+                ? 'អ្នកមានសិទ្ធិមើលការកក់របស់អ្នកជំងឺ និងកាលវិភាគរបស់អ្នកឯកទេសទាំងអស់ក្នុងប្រព័ន្ធទាំងមូល។ ចម្រាញ់តាមអាណាព្យាបាល កុមារ ឬអ្នកឯកទេសខាងក្រោម។'
+                : 'You have system-wide visibility into all patient bookings and specialist schedules. Filter by parent, child, or specialist below.'
+            }}
           </p>
         </div>
         <div class="admin-filter-row">
           <input
             type="search"
             class="admin-search-input"
-            placeholder="Filter by parent, child, or specialist…"
+            [placeholder]="
+              currentLang() === 'km'
+                ? 'ស្វែងរកតាមអាណាព្យាបាល កុមារ ឬអ្នកឯកទេស…'
+                : 'Filter by parent, child, or specialist…'
+            "
             [value]="adminSearchQuery()"
             (input)="adminSearchQuery.set($any($event.target).value)"
-            aria-label="Filter appointments by parent, child, or specialist"
+            [attr.aria-label]="
+              currentLang() === 'km'
+                ? 'ស្វែងរកការណាត់ជួបតាមអាណាព្យាបាល កុមារ ឬអ្នកឯកទេស'
+                : 'Filter appointments by parent, child, or specialist'
+            "
           />
           @if (adminSearchQuery()) {
             <button type="button" class="admin-clear-btn" (click)="adminSearchQuery.set('')">
-              Clear filter
+              {{ currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear filter' }}
             </button>
           }
         </div>
@@ -127,10 +147,18 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
           </span>
-          <p class="stat-label">Upcoming Visits</p>
+          <p class="stat-label">
+            {{ currentLang() === 'km' ? 'ការណាត់ជួបខាងមុខ' : 'Upcoming Visits' }}
+          </p>
         </div>
         <p class="stat-value">{{ facade.stats().upcoming }}</p>
-        <p class="stat-desc">Scheduled &amp; confirmed clinical sessions</p>
+        <p class="stat-desc">
+          {{
+            currentLang() === 'km'
+              ? 'វគ្គគ្លីនិកដែលបានកំណត់ និងបញ្ជាក់រួចរាល់'
+              : 'Scheduled & confirmed clinical sessions'
+          }}
+        </p>
       </article>
 
       <article class="stat-card">
@@ -150,10 +178,18 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
           </span>
-          <p class="stat-label">Pending Approval</p>
+          <p class="stat-label">
+            {{ currentLang() === 'km' ? 'រង់ចាំការអនុម័ត' : 'Pending Approval' }}
+          </p>
         </div>
         <p class="stat-value">{{ facade.stats().pendingReview }}</p>
-        <p class="stat-desc">Awaiting specialist &amp; hospital review</p>
+        <p class="stat-desc">
+          {{
+            currentLang() === 'km'
+              ? 'កំពុងរង់ចាំការពិនិត្យពីវេជ្ជបណ្ឌិត និងមន្ទីរពេទ្យ'
+              : 'Awaiting specialist & hospital review'
+          }}
+        </p>
       </article>
 
       <article class="stat-card">
@@ -173,10 +209,18 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
           </span>
-          <p class="stat-label">Past Completed Visits</p>
+          <p class="stat-label">
+            {{ currentLang() === 'km' ? 'ការពិនិត្យដែលបានបញ្ចប់' : 'Past Completed Visits' }}
+          </p>
         </div>
         <p class="stat-value">{{ completedCount() }}</p>
-        <p class="stat-desc">Past consultations and assessments</p>
+        <p class="stat-desc">
+          {{
+            currentLang() === 'km'
+              ? 'ការពិគ្រោះយោបល់ និងការវាយតម្លៃកន្លងមក'
+              : 'Past consultations and assessments'
+          }}
+        </p>
       </article>
 
       <article class="stat-card">
@@ -198,17 +242,25 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
               <line x1="16" y1="17" x2="8" y2="17"></line>
             </svg>
           </span>
-          <p class="stat-label">Total Appointments</p>
+          <p class="stat-label">
+            {{ currentLang() === 'km' ? 'ការណាត់ជួបសរុប' : 'Total Appointments' }}
+          </p>
         </div>
         <p class="stat-value">{{ facade.stats().total }}</p>
-        <p class="stat-desc">Overall bookings and requests</p>
+        <p class="stat-desc">
+          {{
+            currentLang() === 'km'
+              ? 'ការកក់ និងសំណើណាត់ជួបទាំងអស់'
+              : 'Overall bookings and requests'
+          }}
+        </p>
       </article>
     </section>
 
     <section class="list-section">
       <div class="filter-bar">
         <div class="time-pills" role="group" aria-label="Filter by time">
-          @for (option of timeOptions; track option.value) {
+          @for (option of timeOptions(); track option.value) {
             <button
               type="button"
               [class.active]="timeFilter() === option.value"
@@ -234,13 +286,21 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
           >
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
           </svg>
-          {{ showStatusFilters() ? 'Hide filters' : 'Status filters' }}
+          {{
+            showStatusFilters()
+              ? currentLang() === 'km'
+                ? 'លាក់តម្រង'
+                : 'Hide filters'
+              : currentLang() === 'km'
+                ? 'តម្រងស្ថានភាព'
+                : 'Status filters'
+          }}
         </button>
       </div>
 
       @if (showStatusFilters()) {
         <div class="status-pills" role="group" aria-label="Filter by status">
-          @for (option of statusOptions; track option.value) {
+          @for (option of statusOptions(); track option.value) {
             <button
               type="button"
               [class.active]="isStatusVisible(option.value)"
@@ -253,28 +313,51 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       }
 
       @if (facade.loading()) {
-        <ac-ui-spinner label="Loading appointments…" />
+        <ac-ui-spinner
+          [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកការណាត់ជួប…' : 'Loading appointments…'"
+        />
       } @else if (facade.error()) {
         <ac-ui-message tone="error">{{ facade.error() }}</ac-ui-message>
       } @else if (visibleAppointments().length === 0) {
-        <ac-ui-empty-state
-          title="No appointments to show"
-          [message]="
-            adminSearchQuery()
-              ? 'No appointments match &quot;' + adminSearchQuery() + '&quot;.'
-              : isAdmin()
-                ? 'No appointments are currently recorded in the system.'
-                : 'Schedule a visit with a specialist to see it listed here.'
-          "
-        >
-          @if (adminSearchQuery()) {
-            <button type="button" class="admin-clear-btn" (click)="adminSearchQuery.set('')">
-              Clear filter
-            </button>
-          } @else if (!isAdmin()) {
-            <a class="schedule-cta" routerLink="/appointments/new">Schedule appointment</a>
-          }
-        </ac-ui-empty-state>
+        @if (currentLang() === 'km') {
+          <ac-ui-empty-state
+            title="មិនមានការណាត់ជួបត្រូវបង្ហាញទេ"
+            [message]="
+              adminSearchQuery()
+                ? 'មិនមានការណាត់ជួបដែលត្រូវនឹង &quot;' + adminSearchQuery() + '&quot; ទេ។'
+                : isAdmin()
+                  ? 'បច្ចុប្បន្នមិនមានការណាត់ជួបណាមួយត្រូវបានកត់ត្រាក្នុងប្រព័ន្ធទេ។'
+                  : 'កំណត់កាលវិភាគពិគ្រោះជាមួយអ្នកឯកទេស ដើម្បីមើលបញ្ជីនៅទីនេះ។'
+            "
+          >
+            @if (adminSearchQuery()) {
+              <button type="button" class="admin-clear-btn" (click)="adminSearchQuery.set('')">
+                សម្អាតការស្វែងរក
+              </button>
+            } @else if (!isAdmin()) {
+              <a class="schedule-cta" routerLink="/appointments/new">កក់ការណាត់ជួប</a>
+            }
+          </ac-ui-empty-state>
+        } @else {
+          <ac-ui-empty-state
+            title="No appointments to show"
+            [message]="
+              adminSearchQuery()
+                ? 'No appointments match &quot;' + adminSearchQuery() + '&quot;.'
+                : isAdmin()
+                  ? 'No appointments are currently recorded in the system.'
+                  : 'Schedule a visit with a specialist to see it listed here.'
+            "
+          >
+            @if (adminSearchQuery()) {
+              <button type="button" class="admin-clear-btn" (click)="adminSearchQuery.set('')">
+                Clear filter
+              </button>
+            } @else if (!isAdmin()) {
+              <a class="schedule-cta" routerLink="/appointments/new">Schedule appointment</a>
+            }
+          </ac-ui-empty-state>
+        }
       } @else {
         @if (cancelError(); as problem) {
           <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
@@ -295,7 +378,12 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                     </span>
                     <div class="doctor-info">
                       <div class="doctor-heading-row">
-                        <p class="doctor-name">{{ appointment.doctorName ?? 'Specialist TBD' }}</p>
+                        <p class="doctor-name">
+                          {{
+                            appointment.doctorName ??
+                              (currentLang() === 'km' ? 'រង់ចាំកំណត់អ្នកឯកទេស' : 'Specialist TBD')
+                          }}
+                        </p>
                         <span class="specialty-badge">{{ doctorSpecialty(appointment) }}</span>
                       </div>
                       <span class="child-tag">
@@ -311,12 +399,16 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                           <circle cx="12" cy="7" r="4"></circle>
                         </svg>
-                        Patient: {{ appointment.childName ?? 'Patient TBD' }}
+                        {{ currentLang() === 'km' ? 'អ្នកជំងឺ: ' : 'Patient: '
+                        }}{{
+                          appointment.childName ??
+                            (currentLang() === 'km' ? 'មិនទាន់បញ្ជាក់អ្នកជំងឺ' : 'Patient TBD')
+                        }}
                       </span>
                     </div>
                   </div>
                   <ac-ui-badge [tone]="statusTone[appointment.status]">
-                    {{ presentation(appointment.status).label }}
+                    {{ getStatusLabel(appointment.status) }}
                   </ac-ui-badge>
                 </div>
 
@@ -336,7 +428,9 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                       <circle cx="12" cy="10" r="3"></circle>
                     </svg>
-                    <span class="meta-text">{{ appointment.hospitalName }}</span>
+                    <span class="meta-text">{{
+                      formatHospitalName(appointment.hospitalName, currentLang())
+                    }}</span>
                   </div>
 
                   <div class="meta-item schedule-meta">
@@ -378,8 +472,13 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                       </svg>
                       <span class="meta-text">
-                        <strong class="meta-label">Parent:</strong>
-                        {{ appointment.parentName ?? 'Unknown' }}
+                        <strong class="meta-label">{{
+                          currentLang() === 'km' ? 'អាណាព្យាបាល:' : 'Parent:'
+                        }}</strong>
+                        {{
+                          appointment.parentName ??
+                            (currentLang() === 'km' ? 'មិនស្គាល់' : 'Unknown')
+                        }}
                         @if (appointment.parentEmail) {
                           ({{ appointment.parentEmail }})
                         }
@@ -391,8 +490,12 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                 <!-- Reason description if present -->
                 @if (appointment.reason) {
                   <div class="visit-reason-box">
-                    <span class="reason-tag">Visit Reason</span>
-                    <span class="reason-content">{{ appointment.reason }}</span>
+                    <span class="reason-tag">{{
+                      currentLang() === 'km' ? 'មូលហេតុនៃការជួបពិគ្រោះ' : 'Visit Reason'
+                    }}</span>
+                    <span class="reason-content">{{
+                      formatReasonContent(appointment.reason)
+                    }}</span>
                   </div>
                 }
 
@@ -400,7 +503,9 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                 @if (appointment.status === 'CANCELLED' && appointment.rejectionReason) {
                   <div class="cancellation-reason-box">
                     <p class="meta reason">
-                      <span class="reason-label">Cancellation reason:</span>
+                      <span class="reason-label">{{
+                        currentLang() === 'km' ? 'មូលហេតុនៃការបោះបង់:' : 'Cancellation reason:'
+                      }}</span>
                       {{ appointment.rejectionReason }}
                     </p>
                   </div>
@@ -410,7 +515,13 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                 @if (isCancellable(appointment)) {
                   <div class="appointment-card-actions">
                     @if (confirmingId() === appointment.id) {
-                      <div class="cancel-confirm" role="group" aria-label="Confirm cancellation">
+                      <div
+                        class="cancel-confirm"
+                        role="group"
+                        [attr.aria-label]="
+                          currentLang() === 'km' ? 'បញ្ជាក់ការបោះបង់' : 'Confirm cancellation'
+                        "
+                      >
                         <div class="cancel-confirm-msg">
                           <svg
                             viewBox="0 0 24 24"
@@ -425,7 +536,11 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                             <line x1="12" y1="8" x2="12" y2="12"></line>
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                           </svg>
-                          <span>Cancel this appointment?</span>
+                          <span>{{
+                            currentLang() === 'km'
+                              ? 'តើអ្នកពិតជាចង់បោះបង់ការណាត់ជួបនេះមែនទេ?'
+                              : 'Cancel this appointment?'
+                          }}</span>
                         </div>
                         <div class="cancel-confirm-buttons">
                           <button
@@ -434,10 +549,18 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                             [disabled]="isCancelling(appointment.id)"
                             (click)="confirmCancel(appointment)"
                           >
-                            {{ isCancelling(appointment.id) ? 'Cancelling…' : 'Yes, cancel' }}
+                            {{
+                              isCancelling(appointment.id)
+                                ? currentLang() === 'km'
+                                  ? 'កំពុងបោះបង់…'
+                                  : 'Cancelling…'
+                                : currentLang() === 'km'
+                                  ? 'បាទ/ចាស បោះបង់'
+                                  : 'Yes, cancel'
+                            }}
                           </button>
                           <button type="button" class="cancel-no" (click)="confirmingId.set(null)">
-                            Keep it
+                            {{ currentLang() === 'km' ? 'រក្សាទុក' : 'Keep it' }}
                           </button>
                         </div>
                       </div>
@@ -460,7 +583,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                             <polyline points="1 4 1 10 7 10"></polyline>
                             <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
                           </svg>
-                          Reschedule
+                          {{ currentLang() === 'km' ? 'ប្តូរកាលវិភាគ' : 'Reschedule' }}
                         </button>
                         <button type="button" class="cancel-btn" (click)="askCancel(appointment)">
                           <svg
@@ -476,7 +599,7 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
                             <line x1="15" y1="9" x2="9" y2="15"></line>
                             <line x1="9" y1="9" x2="15" y2="15"></line>
                           </svg>
-                          Cancel Visit
+                          {{ currentLang() === 'km' ? 'បោះបង់ការណាត់' : 'Cancel Visit' }}
                         </button>
                       </div>
                     }
@@ -493,8 +616,8 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
             [totalPages]="meta.totalPages"
             [total]="meta.total"
             [perPage]="meta.limit"
-            itemNoun="appointments"
-            label="Appointment pages"
+            [itemNoun]="currentLang() === 'km' ? 'ការណាត់ជួប' : 'appointments'"
+            [label]="currentLang() === 'km' ? 'ទំព័រការណាត់ជួប' : 'Appointment pages'"
             (pageChange)="facade.goToPage($event)"
           />
         }
@@ -509,17 +632,41 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
       <section class="banners">
         <article class="banner">
           <div>
-            <h2>Need assistance scheduling?</h2>
-            <p>Our care coordinators can help you find the right specialist and time slot.</p>
+            <h2>
+              {{
+                currentLang() === 'km'
+                  ? 'ត្រូវការជំនួយក្នុងការកំណត់កាលវិភាគ?'
+                  : 'Need assistance scheduling?'
+              }}
+            </h2>
+            <p>
+              {{
+                currentLang() === 'km'
+                  ? 'ក្រុមអ្នកសម្របសម្រួលរបស់យើងអាចជួយអ្នកស្វែងរកអ្នកឯកទេស និងពេលវេលាសមស្រប។'
+                  : 'Our care coordinators can help you find the right specialist and time slot.'
+              }}
+            </p>
           </div>
-          <a routerLink="/support">Contact support</a>
+          <a routerLink="/support">{{
+            currentLang() === 'km' ? 'ទាក់ទងផ្នែកគាំទ្រ' : 'Contact support'
+          }}</a>
         </article>
         <article class="banner">
           <div>
-            <h2>Insurance &amp; Claims</h2>
-            <p>Check coverage details and submit claims for completed appointments.</p>
+            <h2>
+              {{ currentLang() === 'km' ? 'ការធានារ៉ាប់រង និងការទាមទារ' : 'Insurance & Claims' }}
+            </h2>
+            <p>
+              {{
+                currentLang() === 'km'
+                  ? 'ពិនិត្យព័ត៌មានលម្អិតអំពីការរ៉ាប់រង និងដាក់ពាក្យទាមទារសំណងសម្រាប់ការណាត់ជួបដែលបានបញ្ចប់។'
+                  : 'Check coverage details and submit claims for completed appointments.'
+              }}
+            </p>
           </div>
-          <a routerLink="/support">Learn more</a>
+          <a routerLink="/support">{{
+            currentLang() === 'km' ? 'ស្វែងយល់បន្ថែម' : 'Learn more'
+          }}</a>
         </article>
       </section>
     }
@@ -1206,6 +1353,9 @@ const statusFilterOptions: ReadonlyArray<{ value: AppointmentStatus; label: stri
 export class AppointmentDashboardPage implements OnInit, OnDestroy {
   protected readonly facade = inject(AppointmentsFacade);
   protected readonly auth = inject(AuthService);
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
+  protected readonly formatHospitalName = formatHospitalName;
   private readonly route = inject(ActivatedRoute);
   protected readonly isAdmin = computed(() => this.auth.parent()?.role === 'ADMIN');
   protected readonly adminSearchQuery = signal('');
@@ -1213,9 +1363,19 @@ export class AppointmentDashboardPage implements OnInit, OnDestroy {
   protected readonly timeFilter = signal<TimeFilter>('ALL');
   protected readonly showStatusFilters = signal(false);
   protected readonly visibleStatuses = signal<ReadonlySet<AppointmentStatus>>(
-    new Set(statusFilterOptions.map((option) => option.value)),
+    new Set<AppointmentStatus>(['REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED']),
   );
-  protected readonly statusOptions = statusFilterOptions;
+
+  protected readonly statusOptions = computed(() => {
+    const isKm = this.currentLang() === 'km';
+    return [
+      { value: 'REQUESTED' as const, label: isKm ? 'រង់ចាំការអនុម័ត' : 'Pending' },
+      { value: 'CONFIRMED' as const, label: isKm ? 'បានបញ្ជាក់' : 'Confirmed' },
+      { value: 'COMPLETED' as const, label: isKm ? 'បានបញ្ចប់' : 'Completed' },
+      { value: 'CANCELLED' as const, label: isKm ? 'បានបោះបង់' : 'Cancelled' },
+    ];
+  });
+
   protected readonly statusTone = statusTone;
   protected readonly cancelError = this.facade.cancelError;
   /** Which row is showing its inline confirmation, if any. */
@@ -1225,11 +1385,14 @@ export class AppointmentDashboardPage implements OnInit, OnDestroy {
     () => this.facade.appointments().filter((a) => a.status === 'COMPLETED').length,
   );
 
-  protected readonly timeOptions: ReadonlyArray<{ value: TimeFilter; label: string }> = [
-    { value: 'ALL', label: 'All Time' },
-    { value: 'UPCOMING', label: 'Upcoming' },
-    { value: 'PAST', label: 'Past' },
-  ];
+  protected readonly timeOptions = computed(() => {
+    const isKm = this.currentLang() === 'km';
+    return [
+      { value: 'ALL' as const, label: isKm ? 'ទាំងអស់' : 'All Time' },
+      { value: 'UPCOMING' as const, label: isKm ? 'ខាងមុខ' : 'Upcoming' },
+      { value: 'PAST' as const, label: isKm ? 'កន្លងផុត' : 'Past' },
+    ];
+  });
   private scrollTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -1325,12 +1488,26 @@ export class AppointmentDashboardPage implements OnInit, OnDestroy {
     this.confirmingId.set(null);
   }
 
+  protected getStatusLabel(status: AppointmentStatus): string {
+    const isKm = this.currentLang() === 'km';
+    switch (status) {
+      case 'REQUESTED':
+        return isKm ? 'រង់ចាំការអនុម័ត' : 'Pending';
+      case 'CONFIRMED':
+        return isKm ? 'បានបញ្ជាក់' : 'Confirmed';
+      case 'COMPLETED':
+        return isKm ? 'បានបញ្ចប់' : 'Completed';
+      case 'CANCELLED':
+        return isKm ? 'បានបោះបង់' : 'Cancelled';
+    }
+  }
+
   protected presentation(status: AppointmentStatus) {
     return statusPresentation[status];
   }
 
   protected formatDate(scheduledAt: string): string {
-    return new Date(scheduledAt).toLocaleString(undefined, {
+    return new Date(scheduledAt).toLocaleString(this.currentLang() === 'km' ? 'km-KH' : undefined, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -1350,13 +1527,34 @@ export class AppointmentDashboardPage implements OnInit, OnDestroy {
   }
 
   protected doctorSpecialty(appointment: AppointmentResponse): string {
+    const isKm = this.currentLang() === 'km';
     const reason = appointment.reason?.toLowerCase() ?? '';
     if (reason.includes('speech') || reason.includes('communication')) {
-      return 'Speech & Language';
+      return isKm ? 'ការព្យាបាលការនិយាយ និងភាសា' : 'Speech & Language';
     }
     if (reason.includes('sensory') || reason.includes('motor')) {
-      return 'Occupational Therapy';
+      return isKm ? 'ការព្យាបាលចលករ និងញាណដឹង' : 'Occupational Therapy';
     }
-    return 'Pediatric Specialist';
+    return isKm ? 'វេជ្ជបណ្ឌិតឯកទេសកុមារ' : 'Pediatric Specialist';
+  }
+
+  protected formatReasonContent(reason?: string | null): string {
+    if (!reason) return '';
+    const isKm = this.currentLang() === 'km';
+    if (!isKm) return reason;
+    switch (reason.trim()) {
+      case 'Consultation':
+        return 'ការពិគ្រោះយោបល់';
+      case 'Follow-up':
+        return 'ការតាមដានបន្ត';
+      case 'Test results':
+        return 'លទ្ធផលតេស្ត';
+      case 'Routine checkup':
+        return 'ការពិនិត្យសុខភាពជាប្រចាំ';
+      case 'Other':
+        return 'ផ្សេងៗ';
+      default:
+        return reason;
+    }
   }
 }

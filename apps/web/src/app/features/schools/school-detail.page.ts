@@ -15,6 +15,7 @@ import type {
   SchoolReviewResponse,
 } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import { ChildrenApi } from '../children/data-access/children.api';
@@ -24,7 +25,12 @@ import { SchoolProfileViewComponent } from './components/school-profile-view.com
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { availabilityLabel, availabilityTone } from './school-display.util';
-import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schools.data';
+import {
+  CAMBODIAN_INCLUSIVE_SCHOOLS,
+  formatFacilityTag,
+  formatSchoolName,
+} from './cambodia-schools.data';
+import { formatCityBilingual } from '../hospitals/cambodia-hospitals.data';
 
 /**
  * Parent-facing school detail page (/schools/:id).
@@ -44,7 +50,9 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
   ],
   template: `
     <div class="top-nav-bar">
-      <a class="back" routerLink="/schools">← Back to schools</a>
+      <a class="back" routerLink="/schools">
+        {{ currentLang() === 'km' ? '← ត្រឡប់ទៅបញ្ជីសាលារៀន' : '← Back to schools' }}
+      </a>
 
       @if (isParent()) {
         <button
@@ -54,11 +62,25 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
           (click)="toggleFavorite()"
           [disabled]="togglingFavorite()"
           [attr.aria-label]="
-            school()?.isFavorite ? 'Remove from saved schools' : 'Save school to favorites'
+            school()?.isFavorite
+              ? currentLang() === 'km'
+                ? 'លុបចេញពីសាលាដែលបានរក្សាទុក'
+                : 'Remove from saved schools'
+              : currentLang() === 'km'
+                ? 'រក្សាទុកសាលា'
+                : 'Save school to favorites'
           "
         >
           <span class="star-icon" aria-hidden="true">{{ school()?.isFavorite ? '★' : '☆' }}</span>
-          <span>{{ school()?.isFavorite ? 'Saved to Favorites' : 'Bookmark School' }}</span>
+          <span>{{
+            school()?.isFavorite
+              ? currentLang() === 'km'
+                ? 'បានរក្សាទុកក្នុងបញ្ជីពេញចិត្ត'
+                : 'Saved to Favorites'
+              : currentLang() === 'km'
+                ? 'រក្សាទុកសាលា'
+                : 'Bookmark School'
+          }}</span>
         </button>
       }
     </div>
@@ -70,14 +92,23 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
     }
 
     @if (loading()) {
-      <ac-ui-card><ac-ui-spinner label="Loading school…" /></ac-ui-card>
+      <ac-ui-card>
+        <ac-ui-spinner
+          [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកព័ត៌មានសាលា…' : 'Loading school…'"
+        />
+      </ac-ui-card>
     } @else if (error(); as loadError) {
       <ac-ui-card>
         <ac-ui-message tone="error">{{ loadError }}</ac-ui-message>
       </ac-ui-card>
     } @else if (school(); as s) {
       <!-- School Hero Header -->
-      <section class="school-hero-header" aria-label="School Overview Header">
+      <section
+        class="school-hero-header"
+        [attr.aria-label]="
+          currentLang() === 'km' ? 'បឋមកថាសង្ខេបសាលារៀន' : 'School Overview Header'
+        "
+      >
         <div class="hero-cover-container">
           @if (s.coverImageUrl) {
             <img class="hero-cover-img" [src]="s.coverImageUrl" [alt]="s.name + ' campus'" />
@@ -101,9 +132,16 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
 
             <div class="hero-title-meta">
               <div class="hero-title-row">
-                <h1 class="hero-title">{{ s.name }}</h1>
+                <h1 class="hero-title">{{ formatSchoolName(s.name, currentLang()) }}</h1>
                 @if (s.isVerified) {
-                  <span class="hero-verified-badge" title="Verified AutiCare Partner School">
+                  <span
+                    class="hero-verified-badge"
+                    [title]="
+                      currentLang() === 'km'
+                        ? 'សាលាដៃគូដែលបានផ្ទៀងផ្ទាត់ដោយ AutiCare'
+                        : 'Verified AutiCare Partner School'
+                    "
+                  >
                     <svg
                       viewBox="0 0 20 20"
                       fill="currentColor"
@@ -117,19 +155,29 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                         clip-rule="evenodd"
                       />
                     </svg>
-                    Verified School
+                    {{ currentLang() === 'km' ? 'សាលាដែលបានផ្ទៀងផ្ទាត់' : 'Verified School' }}
                   </span>
                   <span class="hero-accredited-badge">
-                    <span class="badge-km">ដៃគូអប់រំពិសេសដែលបានបញ្ជាក់</span>
-                    <span class="badge-en">(Accredited Inclusive Partner)</span>
+                    {{
+                      currentLang() === 'km'
+                        ? 'ដៃគូអប់រំពិសេសដែលបានបញ្ជាក់'
+                        : 'Accredited Inclusive Partner'
+                    }}
                   </span>
                 }
                 @if (hasSensoryRoom(s)) {
                   <span
                     class="hero-sensory-room-badge"
-                    title="Equipped with dedicated sensory calming rooms"
+                    [title]="
+                      currentLang() === 'km'
+                        ? 'បំពាក់ដោយបន្ទប់សម្រួលវិញ្ញាណស្ងប់ស្ងាត់'
+                        : 'Equipped with dedicated sensory calming rooms'
+                    "
                   >
-                    🌿 Sensory Room Available
+                    🌿
+                    {{
+                      currentLang() === 'km' ? 'មានបន្ទប់សម្រួលវិញ្ញាណ' : 'Sensory Room Available'
+                    }}
                   </span>
                 }
               </div>
@@ -152,7 +200,7 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                   </svg>
-                  <span>{{ s.address }}, {{ s.city }}</span>
+                  <span>{{ s.address }}, {{ formatProvinceLabel(s.city) }}</span>
                 </span>
 
                 <span class="meta-separator">•</span>
@@ -165,9 +213,16 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 >
                   <span class="star-gold">★</span>
                   <strong>{{ s.rating !== null ? s.rating.toFixed(1) : '—' }}</strong>
-                  <span class="reviews-count"
-                    >({{ s.reviewCount }} {{ s.reviewCount === 1 ? 'review' : 'reviews' }})</span
-                  >
+                  <span class="reviews-count">
+                    ({{ s.reviewCount }}
+                    {{
+                      currentLang() === 'km'
+                        ? 'ការវាយតម្លៃ'
+                        : s.reviewCount === 1
+                          ? 'review'
+                          : 'reviews'
+                    }})
+                  </span>
                 </span>
 
                 <span class="meta-separator">•</span>
@@ -195,7 +250,7 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                     ></path>
                     <polyline points="22,6 12,13 2,6"></polyline>
                   </svg>
-                  <span>Contact School</span>
+                  <span>{{ currentLang() === 'km' ? 'ទាក់ទងសាលា' : 'Contact School' }}</span>
                 </button>
                 <button type="button" class="btn-hero-admission" (click)="openAdmissionModal()">
                   <svg
@@ -209,7 +264,9 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                   >
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                   </svg>
-                  <span>Apply for Admission</span>
+                  <span>{{
+                    currentLang() === 'km' ? 'ដាក់ពាក្យស្នើសុំចូលរៀន' : 'Apply for Admission'
+                  }}</span>
                 </button>
               }
             </div>
@@ -236,7 +293,9 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 </svg>
               </div>
               <div class="highlight-content">
-                <span class="highlight-caption">Teacher-Student Ratio</span>
+                <span class="highlight-caption">
+                  {{ currentLang() === 'km' ? 'សមាមាត្រសិស្សនិងគ្រូ' : 'Teacher-Student Ratio' }}
+                </span>
                 <span class="highlight-val">{{ s.studentTeacherRatio || '1:3' }}</span>
               </div>
             </div>
@@ -258,18 +317,28 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 </svg>
               </div>
               <div class="highlight-content">
-                <span class="highlight-caption"
-                  >Programs Offered ({{ s.specializations.length }})</span
-                >
+                <span class="highlight-caption">
+                  {{
+                    currentLang() === 'km'
+                      ? 'កម្មវិធីសិក្សាផ្ដល់ជូន (' + s.specializations.length + ')'
+                      : 'Programs Offered (' + s.specializations.length + ')'
+                  }}
+                </span>
                 <div class="highlight-tags">
                   @for (prog of s.specializations.slice(0, 3); track prog) {
-                    <span class="tag-prog">{{ prog }}</span>
+                    <span class="tag-prog">{{ formatSpecialization(prog) }}</span>
                   }
                   @if (s.specializations.length > 3) {
                     <span class="tag-more">+{{ s.specializations.length - 3 }}</span>
                   }
                   @if (s.specializations.length === 0) {
-                    <span class="tag-empty">Individualized Education Plans</span>
+                    <span class="tag-empty">
+                      {{
+                        currentLang() === 'km'
+                          ? 'ផែនការអប់រំបុគ្គល (IEP)'
+                          : 'Individualized Education Plans'
+                      }}
+                    </span>
                   }
                 </div>
               </div>
@@ -293,9 +362,13 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 </svg>
               </div>
               <div class="highlight-content">
-                <span class="highlight-caption"
-                  >Facilities Overview ({{ s.facilities.length }})</span
-                >
+                <span class="highlight-caption">
+                  {{
+                    currentLang() === 'km'
+                      ? 'ទិដ្ឋភាពទូទៅនៃបរិក្ខារ (' + s.facilities.length + ')'
+                      : 'Facilities Overview (' + s.facilities.length + ')'
+                  }}
+                </span>
                 <div class="highlight-tags">
                   @for (fac of s.facilities.slice(0, 3); track fac) {
                     <span class="tag-fac">{{ formatFacility(fac) }}</span>
@@ -304,7 +377,13 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                     <span class="tag-more">+{{ s.facilities.length - 3 }}</span>
                   }
                   @if (s.facilities.length === 0) {
-                    <span class="tag-empty">Sensory & calming spaces</span>
+                    <span class="tag-empty">
+                      {{
+                        currentLang() === 'km'
+                          ? 'បន្ទប់សម្រួលវិញ្ញាណ និងកន្លែងស្ងប់ស្ងាត់'
+                          : 'Sensory & calming spaces'
+                      }}
+                    </span>
                   }
                 </div>
               </div>
@@ -314,7 +393,13 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
       </section>
 
       <!-- Tabs Navigation -->
-      <nav class="tabs-bar" role="tablist" aria-label="School detail tabs">
+      <nav
+        class="tabs-bar"
+        role="tablist"
+        [attr.aria-label]="
+          currentLang() === 'km' ? 'ផ្ទាំងព័ត៌មានលម្អិតសាលា' : 'School detail tabs'
+        "
+      >
         <button
           type="button"
           role="tab"
@@ -323,7 +408,7 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
           [attr.aria-selected]="activeTab() === 'overview'"
           (click)="activeTab.set('overview')"
         >
-          Overview & Details
+          {{ currentLang() === 'km' ? 'ទិដ្ឋភាពទូទៅ និងព័ត៌មានលម្អិត' : 'Overview & Details' }}
         </button>
         <button
           type="button"
@@ -333,7 +418,11 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
           [attr.aria-selected]="activeTab() === 'programs'"
           (click)="selectProgramsTab()"
         >
-          Inclusive Programs & Adaptations
+          {{
+            currentLang() === 'km'
+              ? 'កម្មវិធីបរិយាបន្ន និងការសម្របសម្រួល'
+              : 'Inclusive Programs & Adaptations'
+          }}
         </button>
         <button
           type="button"
@@ -343,7 +432,11 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
           [attr.aria-selected]="activeTab() === 'reviews'"
           (click)="selectReviewsTab()"
         >
-          Reviews ({{ totalReviewCount() }})
+          {{
+            currentLang() === 'km'
+              ? 'ការវាយតម្លៃ (' + totalReviewCount() + ')'
+              : 'Reviews (' + totalReviewCount() + ')'
+          }}
         </button>
       </nav>
 
@@ -355,22 +448,47 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
           <ac-ui-card class="enroll-card">
             <div class="enroll-callout-header">
               <div class="enroll-text-block">
-                <h2 class="enroll-title">Admissions & Enrollment</h2>
+                <h2 class="enroll-title">
+                  {{
+                    currentLang() === 'km'
+                      ? 'ការចុះឈ្មោះ និងការទទួលចូលរៀន'
+                      : 'Admissions & Enrollment'
+                  }}
+                </h2>
                 <p class="enroll-hint">
-                  Interested in enrolling your child at {{ s.name }}? Connect directly with the
-                  admissions team.
+                  {{
+                    currentLang() === 'km'
+                      ? 'ចាប់អារម្មណ៍ក្នុងការចុះឈ្មោះកូនរបស់អ្នកនៅ ' +
+                        formatSchoolName(s.name, currentLang()) +
+                        ' ឬទេ? ភ្ជាប់ទំនាក់ទំនងផ្ទាល់ជាមួយក្រុមការងារចុះឈ្មោះ។'
+                      : 'Interested in enrolling your child at ' +
+                        s.name +
+                        '? Connect directly with the admissions team.'
+                  }}
                 </p>
               </div>
               <button type="button" class="btn-primary" (click)="openAdmissionModal()">
-                Apply for Admission →
+                {{ currentLang() === 'km' ? 'ដាក់ពាក្យស្នើសុំចូលរៀន →' : 'Apply for Admission →' }}
               </button>
             </div>
 
             @if (submitted(); as done) {
               <div class="success-box" role="status">
-                <strong>Request sent.</strong>
-                {{ done.childName }}'s enrollment request at {{ done.schoolName }} was delivered —
-                the school will review it and respond on your notifications.
+                <strong>{{
+                  currentLang() === 'km' ? 'បានផ្ញើសំណើដោយជោគជ័យ។' : 'Request sent.'
+                }}</strong>
+                {{
+                  currentLang() === 'km'
+                    ? 'សំណើសុំចុះឈ្មោះសម្រាប់ ' +
+                      done.childName +
+                      ' នៅ ' +
+                      formatSchoolName(done.schoolName, currentLang()) +
+                      ' ត្រូវបានបញ្ជូនរួចហើយ — សាលានឹងពិនិត្យ និងជូនដំណឹងដល់អ្នក។'
+                    : done.childName +
+                      '’s enrollment request at ' +
+                      done.schoolName +
+                      ' was delivered — the school will review it and respond on your notifications.'
+                }}
               </div>
             }
           </ac-ui-card>
@@ -382,40 +500,85 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
             <div class="program-card-header">
               <span class="program-icon" aria-hidden="true">🌈</span>
               <div>
-                <h2>Sensory Support & Regulation Architecture</h2>
+                <h2>
+                  {{
+                    currentLang() === 'km'
+                      ? 'រចនាសម្ព័ន្ធគាំទ្រ និងសម្រួលវិញ្ញាណ'
+                      : 'Sensory Support & Regulation Architecture'
+                  }}
+                </h2>
                 <p class="program-desc">
-                  Comprehensive sensory accommodation framework designed to minimize overstimulation
-                  and nurture self-regulation.
+                  {{
+                    currentLang() === 'km'
+                      ? 'ក្របខ័ណ្ឌសម្របសម្រួលវិញ្ញាណដ៏ទូលំទូលាយ ដែលរៀបចំឡើងដើម្បីកាត់បន្ថយការភ្ញោចខ្លាំងពេក និងជួយពង្រឹងការគ្រប់គ្រងអារម្មណ៍ខ្លួនឯង។'
+                      : 'Comprehensive sensory accommodation framework designed to minimize overstimulation and nurture self-regulation.'
+                  }}
                 </p>
               </div>
             </div>
             <div class="sensory-levels-grid">
               <div class="sensory-feature-box">
-                <span class="feature-title">🌿 Low-Stimulus Environment</span>
+                <span class="feature-title">
+                  🌿
+                  {{
+                    currentLang() === 'km'
+                      ? 'បរិយាកាសកាត់បន្ថយការភ្ញោច'
+                      : 'Low-Stimulus Environment'
+                  }}
+                </span>
                 <p>
-                  Acoustic dampening panels, soft ambient lighting (dimmable non-fluorescent LEDs),
-                  and reduced visual clutter in all primary classrooms.
+                  {{
+                    currentLang() === 'km'
+                      ? 'បន្ទះស្រូបសំឡេង ពន្លឺភ្លើងស្រទន់មិនចាំង និងការកាត់បន្ថយភាពរញ៉េរញ៉ៃនៅក្នុងថ្នាក់រៀនបឋមទាំងអស់។'
+                      : 'Acoustic dampening panels, soft ambient lighting (dimmable non-fluorescent LEDs), and reduced visual clutter in all primary classrooms.'
+                  }}
                 </p>
               </div>
               <div class="sensory-feature-box">
-                <span class="feature-title">🧘 Dedicated Regulation Zones</span>
+                <span class="feature-title">
+                  🧘
+                  {{
+                    currentLang() === 'km'
+                      ? 'តំបន់សម្រួលអារម្មណ៍ជាក់លាក់'
+                      : 'Dedicated Regulation Zones'
+                  }}
+                </span>
                 <p>
-                  Equipped quiet spaces with weighted blankets, bubble tubes, tactile sensory walls,
-                  and crash pads for guided decompression.
+                  {{
+                    currentLang() === 'km'
+                      ? 'កន្លែងស្ងប់ស្ងាត់បំពាក់ដោយភួយទម្ងន់ បំពង់ពពុះទឹក ជញ្ជាំងវិញ្ញាណ និងពូកទន់សម្រាប់សម្រួលអារម្មណ៍។'
+                      : 'Equipped quiet spaces with weighted blankets, bubble tubes, tactile sensory walls, and crash pads for guided decompression.'
+                  }}
                 </p>
               </div>
               <div class="sensory-feature-box">
-                <span class="feature-title">🎧 Sensory Toolkits Provided</span>
+                <span class="feature-title">
+                  🎧
+                  {{ currentLang() === 'km' ? 'ប្រអប់ឧបករណ៍វិញ្ញាណ' : 'Sensory Toolkits Provided' }}
+                </span>
                 <p>
-                  Noise-dampening earmuffs, chewelry, fidget tools, and individualized sensory break
-                  passports accessible anytime.
+                  {{
+                    currentLang() === 'km'
+                      ? 'កាសទប់សំឡេង ឧបករណ៍ទំពារ ឧបករណ៍លេងដៃ និងប័ណ្ណសម្រាកវិញ្ញាណផ្ទាល់ខ្លួនដែលអាចប្រើប្រាស់បានគ្រប់ពេល។'
+                      : 'Noise-dampening earmuffs, chewelry, fidget tools, and individualized sensory break passports accessible anytime.'
+                  }}
                 </p>
               </div>
               <div class="sensory-feature-box">
-                <span class="feature-title">🚦 Predictable Transitions</span>
+                <span class="feature-title">
+                  🚦
+                  {{
+                    currentLang() === 'km'
+                      ? 'ការផ្លាស់ប្តូរសកម្មភាពដែលមានការដឹងជាមុន'
+                      : 'Predictable Transitions'
+                  }}
+                </span>
                 <p>
-                  Auditory chimes, visual countdown timers, and customized transition warnings
-                  between learning intervals.
+                  {{
+                    currentLang() === 'km'
+                      ? 'កណ្ដឹងសំឡេង កម្មវិធីរាប់ថយក្រោយតាមរូបភាព និងការជូនដំណឹងផ្លាស់ប្តូរសកម្មភាពជាមុនរវាងម៉ោងសិក្សា។'
+                      : 'Auditory chimes, visual countdown timers, and customized transition warnings between learning intervals.'
+                  }}
                 </p>
               </div>
             </div>
@@ -426,33 +589,84 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
             <div class="program-card-header">
               <span class="program-icon" aria-hidden="true">👥</span>
               <div>
-                <h2>Inclusive Specialist-to-Student Ratios</h2>
+                <h2>
+                  {{
+                    currentLang() === 'km'
+                      ? 'សមាមាត្រអ្នកឯកទេស និងសិស្ស'
+                      : 'Inclusive Specialist-to-Student Ratios'
+                  }}
+                </h2>
                 <p class="program-desc">
-                  Integrated clinical and educational practitioners supporting every learner's
-                  individualized progress.
+                  {{
+                    currentLang() === 'km'
+                      ? 'ក្រុមអ្នកអនុវត្តគ្លីនិក និងអប់រំរួមគ្នា ដើម្បីជួយគាំទ្រដល់ការវិវត្តន៍ផ្ទាល់ខ្លួនរបស់សិស្សគ្រប់រូប។'
+                      : 'Integrated clinical and educational practitioners supporting every learner’s individualized progress.'
+                  }}
                 </p>
               </div>
             </div>
             <div class="ratios-grid">
               <div class="ratio-stat-box">
                 <span class="ratio-number">{{ s.studentTeacherRatio || '3:1' }}</span>
-                <span class="ratio-label">Classroom Support</span>
-                <span class="ratio-sub">Special educator & paraprofessional staffing</span>
+                <span class="ratio-label">
+                  {{ currentLang() === 'km' ? 'ការគាំទ្រក្នុងថ្នាក់រៀន' : 'Classroom Support' }}
+                </span>
+                <span class="ratio-sub">
+                  {{
+                    currentLang() === 'km'
+                      ? 'គ្រូអប់រំពិសេស និងជំនួយការគ្រូ'
+                      : 'Special educator & paraprofessional staffing'
+                  }}
+                </span>
               </div>
               <div class="ratio-stat-box">
                 <span class="ratio-number">1:3</span>
-                <span class="ratio-label">Speech & Language (SLP)</span>
-                <span class="ratio-sub">On-campus communication therapy</span>
+                <span class="ratio-label">
+                  {{
+                    currentLang() === 'km' ? 'ការនិយាយ និងភាសា (SLP)' : 'Speech & Language (SLP)'
+                  }}
+                </span>
+                <span class="ratio-sub">
+                  {{
+                    currentLang() === 'km'
+                      ? 'ការព្យាបាលទំនាក់ទំនងក្នុងបរិវេណសាលា'
+                      : 'On-campus communication therapy'
+                  }}
+                </span>
               </div>
               <div class="ratio-stat-box">
                 <span class="ratio-number">1:4</span>
-                <span class="ratio-label">Occupational Therapy (OT)</span>
-                <span class="ratio-sub">Sensory & fine-motor coordination</span>
+                <span class="ratio-label">
+                  {{
+                    currentLang() === 'km'
+                      ? 'ការព្យាបាលការបំពេញមុខងារ (OT)'
+                      : 'Occupational Therapy (OT)'
+                  }}
+                </span>
+                <span class="ratio-sub">
+                  {{
+                    currentLang() === 'km'
+                      ? 'ការសម្របសម្រួលវិញ្ញាណ និងចលនាសាច់ដុំតូច'
+                      : 'Sensory & fine-motor coordination'
+                  }}
+                </span>
               </div>
               <div class="ratio-stat-box">
                 <span class="ratio-number">1:6</span>
-                <span class="ratio-label">Behavioral Specialist (BCBA)</span>
-                <span class="ratio-sub">Positive behavioral intervention plans</span>
+                <span class="ratio-label">
+                  {{
+                    currentLang() === 'km'
+                      ? 'អ្នកឯកទេសអាកប្បកិរិយា (BCBA)'
+                      : 'Behavioral Specialist (BCBA)'
+                  }}
+                </span>
+                <span class="ratio-sub">
+                  {{
+                    currentLang() === 'km'
+                      ? 'ផែនការអន្តរាគមន៍អាកប្បកិរិយាវិជ្ជមាន'
+                      : 'Positive behavioral intervention plans'
+                  }}
+                </span>
               </div>
             </div>
           </ac-ui-card>
@@ -462,37 +676,82 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
             <div class="program-card-header">
               <span class="program-icon" aria-hidden="true">🛠️</span>
               <div>
-                <h2>Available Classroom Accommodations</h2>
+                <h2>
+                  {{
+                    currentLang() === 'km'
+                      ? 'ការសម្របសម្រួលក្នុងថ្នាក់រៀនដែលមានស្រាប់'
+                      : 'Available Classroom Accommodations'
+                  }}
+                </h2>
                 <p class="program-desc">
-                  Environmental, instructional, and assistive adaptations available throughout the
-                  campus.
+                  {{
+                    currentLang() === 'km'
+                      ? 'ការសម្របសម្រួលបរិស្ថាន ការបង្រៀន និងឧបករណ៍ជំនួយនៅទូទាំងសាលា។'
+                      : 'Environmental, instructional, and assistive adaptations available throughout the campus.'
+                  }}
                 </p>
               </div>
             </div>
             <div class="accommodations-list">
               <div class="accommodation-pill">
                 <span class="pill-dot">✓</span>
-                <span>Visual Daily Schedules & First/Then Boards</span>
+                <span>
+                  {{
+                    currentLang() === 'km'
+                      ? 'កាលវិភាគប្រចាំថ្ងៃជារូបភាព និងផ្ទាំងមុន/បន្ទាប់'
+                      : 'Visual Daily Schedules & First/Then Boards'
+                  }}
+                </span>
               </div>
               <div class="accommodation-pill">
                 <span class="pill-dot">✓</span>
-                <span>PECS & High-Tech AAC Speech Devices</span>
+                <span>
+                  {{
+                    currentLang() === 'km'
+                      ? 'ប្រព័ន្ធទំនាក់ទំនងរូបភាព PECS & ឧបករណ៍ AAC'
+                      : 'PECS & High-Tech AAC Speech Devices'
+                  }}
+                </span>
               </div>
               <div class="accommodation-pill">
                 <span class="pill-dot">✓</span>
-                <span>Flexible Sensory Seating (Wobble Stools & Cushions)</span>
+                <span>
+                  {{
+                    currentLang() === 'km'
+                      ? 'កៅអីអង្គុយវិញ្ញាណបត់បែន (កៅអីយោល និងខ្នើយ)'
+                      : 'Flexible Sensory Seating (Wobble Stools & Cushions)'
+                  }}
+                </span>
               </div>
               <div class="accommodation-pill">
                 <span class="pill-dot">✓</span>
-                <span>Weighted Lap Pads & Resistance Bands</span>
+                <span>
+                  {{
+                    currentLang() === 'km'
+                      ? 'បន្ទះទម្ងន់ដាក់លើភ្លៅ និងខ្សែយឺត'
+                      : 'Weighted Lap Pads & Resistance Bands'
+                  }}
+                </span>
               </div>
               <div class="accommodation-pill">
                 <span class="pill-dot">✓</span>
-                <span>Frequent Movement & Heavy Work Breaks</span>
+                <span>
+                  {{
+                    currentLang() === 'km'
+                      ? 'ម៉ោងសម្រាកធ្វើចលនា និងលំហាត់កម្លាំងញឹកញាប់'
+                      : 'Frequent Movement & Heavy Work Breaks'
+                  }}
+                </span>
               </div>
               <div class="accommodation-pill">
                 <span class="pill-dot">✓</span>
-                <span>Individualized Education Plan (IEP) Tracking</span>
+                <span>
+                  {{
+                    currentLang() === 'km'
+                      ? 'ការតាមដានផែនការអប់រំបុគ្គល (IEP)'
+                      : 'Individualized Education Plan (IEP) Tracking'
+                  }}
+                </span>
               </div>
             </div>
           </ac-ui-card>
@@ -502,18 +761,33 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
             <ac-ui-card class="enroll-card">
               <div class="enroll-callout-header">
                 <div class="enroll-text-block">
-                  <h2 class="enroll-title">Ready to Discuss Your Child's Accommodations?</h2>
+                  <h2 class="enroll-title">
+                    {{
+                      currentLang() === 'km'
+                        ? 'ត្រៀមខ្លួនដើម្បីពិភាក្សាអំពីការសម្របសម្រួលសម្រាប់កូនរបស់អ្នកហើយឬនៅ?'
+                        : 'Ready to Discuss Your Child’s Accommodations?'
+                    }}
+                  </h2>
                   <p class="enroll-hint">
-                    Schedule a tour with the inclusive admissions coordinator or submit an
-                    enrollment application directly.
+                    {{
+                      currentLang() === 'km'
+                        ? 'ណាត់ជួបដើម្បីទស្សនកិច្ចសាលាជាមួយអ្នកសម្របសម្រួលចុះឈ្មោះ ឬដាក់ពាក្យស្នើសុំចូលរៀនដោយផ្ទាល់។'
+                        : 'Schedule a tour with the inclusive admissions coordinator or submit an enrollment application directly.'
+                    }}
                   </p>
                 </div>
                 <div class="programs-cta-actions">
                   <button type="button" class="btn-secondary" (click)="openContactModal()">
-                    Contact School Admissions
+                    {{
+                      currentLang() === 'km'
+                        ? 'ទាក់ទងផ្នែកចុះឈ្មោះរបស់សាលា'
+                        : 'Contact School Admissions'
+                    }}
                   </button>
                   <button type="button" class="btn-primary" (click)="openAdmissionModal()">
-                    Apply for Admission →
+                    {{
+                      currentLang() === 'km' ? 'ដាក់ពាក្យស្នើសុំចូលរៀន →' : 'Apply for Admission →'
+                    }}
                   </button>
                 </div>
               </div>
@@ -535,8 +809,13 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                   }
                 </div>
                 <span class="review-count-caption">
-                  Based on {{ totalReviewCount() }} parent review{{
-                    totalReviewCount() === 1 ? '' : 's'
+                  {{
+                    currentLang() === 'km'
+                      ? 'ផ្អែកលើការវាយតម្លៃរបស់មាតាបិតាចំនួន ' + totalReviewCount()
+                      : 'Based on ' +
+                        totalReviewCount() +
+                        ' parent review' +
+                        (totalReviewCount() === 1 ? '' : 's')
                   }}
                 </span>
               </div>
@@ -544,7 +823,7 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
 
             @if (isParent()) {
               <button type="button" class="btn-primary" (click)="openReviewModal()">
-                Write a Review
+                {{ currentLang() === 'km' ? 'សរសេរការវាយតម្លៃ' : 'Write a Review' }}
               </button>
             }
           </div>
@@ -552,17 +831,27 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
 
         @if (loadingReviews()) {
           <ac-ui-card class="reviews-state-card">
-            <ac-ui-spinner label="Loading reviews…" />
+            <ac-ui-spinner
+              [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកការវាយតម្លៃ…' : 'Loading reviews…'"
+            />
           </ac-ui-card>
         } @else if (reviews().length === 0) {
           <ac-ui-card class="reviews-state-card empty-card">
-            <p class="empty-title">No reviews yet</p>
+            <p class="empty-title">
+              {{ currentLang() === 'km' ? 'មិនទាន់មានការវាយតម្លៃនៅឡើយទេ' : 'No reviews yet' }}
+            </p>
             <p class="empty-subtitle">
-              Be the first parent to share feedback and experience with {{ s.name }}.
+              {{
+                currentLang() === 'km'
+                  ? 'ក្លាយជាមាតាបិតាដំបូងគេដែលចែករំលែកមតិកែលម្អ និងបទពិសោធន៍ជាមួយ ' +
+                    formatSchoolName(s.name, currentLang()) +
+                    '។'
+                  : 'Be the first parent to share feedback and experience with ' + s.name + '.'
+              }}
             </p>
             @if (isParent()) {
               <button type="button" class="btn-secondary" (click)="openReviewModal()">
-                Write the first review
+                {{ currentLang() === 'km' ? 'សរសេរការវាយតម្លៃដំបូងគេ' : 'Write the first review' }}
               </button>
             }
           </ac-ui-card>
@@ -593,8 +882,10 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
       <!-- Clean Admission Request Modal Dialog -->
       @if (showAdmissionModal()) {
         <ac-ui-dialog
-          heading="Apply for Admission"
-          [description]="s.name + ' · ' + s.city"
+          [heading]="currentLang() === 'km' ? 'ដាក់ពាក្យស្នើសុំចូលរៀន' : 'Apply for Admission'"
+          [description]="
+            formatSchoolName(s.name, currentLang()) + ' · ' + formatProvinceLabel(s.city)
+          "
           size="md"
           (close)="closeAdmissionModal()"
         >
@@ -617,15 +908,19 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 </svg>
               </div>
               <p class="dialog-hint">
-                Add a child to your family profile first before requesting school admission.
+                {{
+                  currentLang() === 'km'
+                    ? 'សូមបន្ថែមព័ត៌មានកុមារទៅក្នុងគណនីគ្រួសាររបស់អ្នកជាមុនសិន មុនពេលស្នើសុំចុះឈ្មោះចូលរៀន។'
+                    : 'Add a child to your family profile first before requesting school admission.'
+                }}
               </p>
               <a class="btn-primary" routerLink="/children/new" (click)="closeAdmissionModal()">
-                + Add Child Profile
+                {{ currentLang() === 'km' ? '+ បន្ថែមប្រវត្តិកុមារ' : '+ Add Child Profile' }}
               </a>
             </div>
             <div dialogFooter class="dialog-footer-actions">
               <button type="button" class="btn-secondary" (click)="closeAdmissionModal()">
-                Close
+                {{ currentLang() === 'km' ? 'បិទ' : 'Close' }}
               </button>
             </div>
           } @else if (submitted(); as done) {
@@ -646,31 +941,57 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 </svg>
               </div>
               <div class="success-content">
-                <strong>Admission Request Sent!</strong>
+                <strong>{{
+                  currentLang() === 'km'
+                    ? 'បានផ្ញើសំណើសុំចូលរៀនដោយជោគជ័យ!'
+                    : 'Admission Request Sent!'
+                }}</strong>
                 <p>
-                  {{ done.childName }}'s application at {{ done.schoolName }} was successfully
-                  delivered. The admissions committee will review your child's profile and notify
-                  you.
+                  {{
+                    currentLang() === 'km'
+                      ? 'ពាក្យស្នើសុំសម្រាប់ ' +
+                        done.childName +
+                        ' នៅ ' +
+                        formatSchoolName(done.schoolName, currentLang()) +
+                        ' ត្រូវបានបញ្ជូនដោយជោគជ័យ។ គណៈកម្មការសាលានឹងពិនិត្យប្រវត្តិកូនរបស់អ្នក និងជូនដំណឹងដល់អ្នក។'
+                      : done.childName +
+                        '’s application at ' +
+                        done.schoolName +
+                        ' was successfully delivered. The admissions committee will review your child’s profile and notify you.'
+                  }}
                 </p>
               </div>
             </div>
             <div dialogFooter class="dialog-footer-actions">
               <button type="button" class="btn-secondary" (click)="resetForm()">
-                Apply for Another Child
+                {{
+                  currentLang() === 'km'
+                    ? 'ដាក់ពាក្យសម្រាប់កូនម្នាក់ទៀត'
+                    : 'Apply for Another Child'
+                }}
               </button>
               <button type="button" class="btn-primary" (click)="closeAdmissionModal()">
-                Done
+                {{ currentLang() === 'km' ? 'រួចរាល់' : 'Done' }}
               </button>
             </div>
           } @else {
             <div class="admission-form">
               <p class="admission-intro">
-                Submit an admission request for your child to <strong>{{ s.name }}</strong
-                >. The school team will receive your contact details and message.
+                {{
+                  currentLang() === 'km'
+                    ? 'ដាក់ពាក្យស្នើសុំចូលរៀនសម្រាប់កូនរបស់អ្នកទៅកាន់ ' +
+                      formatSchoolName(s.name, currentLang()) +
+                      '។ ក្រុមការងារសាលានឹងទទួលបានព័ត៌មានទំនាក់ទំនង និងសាររបស់អ្នក។'
+                    : 'Submit an admission request for your child to ' +
+                      s.name +
+                      '. The school team will receive your contact details and message.'
+                }}
               </p>
 
               <label class="field">
-                <span class="field-label">Child to enroll *</span>
+                <span class="field-label">{{
+                  currentLang() === 'km' ? 'កុមារដែលត្រូវចុះឈ្មោះ *' : 'Child to enroll *'
+                }}</span>
                 <select
                   class="field-input"
                   [value]="selectedChildId()"
@@ -678,19 +999,33 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 >
                   @for (child of children(); track child.id) {
                     <option [value]="child.id">
-                      {{ child.firstName }} (Age {{ calculateChildAge(child.dateOfBirth) }})
+                      {{ child.firstName }} ({{
+                        currentLang() === 'km'
+                          ? 'អាយុ ' + calculateChildAge(child.dateOfBirth)
+                          : 'Age ' + calculateChildAge(child.dateOfBirth)
+                      }})
                     </option>
                   }
                 </select>
               </label>
 
               <label class="field">
-                <span class="field-label">Message or notes for the admissions team (optional)</span>
+                <span class="field-label">
+                  {{
+                    currentLang() === 'km'
+                      ? 'សារ ឬកំណត់ចំណាំផ្ញើទៅក្រុមការងារចុះឈ្មោះ (មិនតម្រូវ)'
+                      : 'Message or notes for the admissions team (optional)'
+                  }}
+                </span>
                 <textarea
                   class="field-input"
                   rows="4"
                   maxlength="2000"
-                  placeholder="Share details regarding your child's developmental profile, diagnosis, sensory accommodations, or preferred start dates..."
+                  [placeholder]="
+                    currentLang() === 'km'
+                      ? 'ចែករំលែកព័ត៌មានលម្អិតទាក់ទងនឹងការលូតលាស់ ការធ្វើរោគវិនិច្ឆ័យ ការសម្របសម្រួលវិញ្ញាណ ឬកាលបរិច្ឆេទចាប់ផ្តើមដែលចង់បាន...'
+                      : 'Share details regarding your child’s developmental profile, diagnosis, sensory accommodations, or preferred start dates...'
+                  "
                   [value]="message()"
                   (input)="message.set($any($event.target).value)"
                 ></textarea>
@@ -709,7 +1044,7 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 (click)="closeAdmissionModal()"
                 [disabled]="submitting()"
               >
-                Cancel
+                {{ currentLang() === 'km' ? 'បោះបង់' : 'Cancel' }}
               </button>
               <button
                 type="button"
@@ -717,7 +1052,15 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 (click)="submitRequest()"
                 [disabled]="!canSubmit()"
               >
-                {{ submitting() ? 'Sending…' : 'Submit Application' }}
+                {{
+                  submitting()
+                    ? currentLang() === 'km'
+                      ? 'កំពុងផ្ញើ…'
+                      : 'Sending…'
+                    : currentLang() === 'km'
+                      ? 'បញ្ជូនពាក្យសុំ'
+                      : 'Submit Application'
+                }}
               </button>
             </div>
           }
@@ -726,14 +1069,28 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
 
       <!-- Add Review Modal Dialog -->
       @if (showReviewModal()) {
-        <ac-ui-dialog heading="Write a School Review" size="md" (close)="closeReviewModal()">
+        <ac-ui-dialog
+          [heading]="currentLang() === 'km' ? 'សរសេរការវាយតម្លៃសាលា' : 'Write a School Review'"
+          size="md"
+          (close)="closeReviewModal()"
+        >
           <div class="review-modal-form">
             <p class="modal-subheading">
-              Share your experience at <strong>{{ s.name }}</strong> with other families.
+              {{
+                currentLang() === 'km'
+                  ? 'ចែករំលែកបទពិសោធន៍របស់អ្នកនៅ ' +
+                    formatSchoolName(s.name, currentLang()) +
+                    ' ជាមួយក្រុមគ្រួសារដទៃទៀត។'
+                  : 'Share your experience at ' + s.name + ' with other families.'
+              }}
             </p>
 
             <div class="rating-picker-block">
-              <span class="field-label" id="star-picker-label">Overall Rating (required)</span>
+              <span class="field-label" id="star-picker-label">
+                {{
+                  currentLang() === 'km' ? 'ការវាយតម្លៃសរុប (តម្រូវ)' : 'Overall Rating (required)'
+                }}
+              </span>
               <div
                 class="star-rating-buttons"
                 role="radiogroup"
@@ -755,12 +1112,20 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
             </div>
 
             <label class="field">
-              <span class="field-label">Feedback comments (optional)</span>
+              <span class="field-label">
+                {{
+                  currentLang() === 'km' ? 'មតិកែលម្អ (មិនតម្រូវ)' : 'Feedback comments (optional)'
+                }}
+              </span>
               <textarea
                 class="field-input"
                 rows="4"
                 maxlength="1000"
-                placeholder="Share details about the learning environment, teachers, therapies, or communication..."
+                [placeholder]="
+                  currentLang() === 'km'
+                    ? 'ចែករំលែកព័ត៌មានលម្អិតអំពីបរិយាកាសសិក្សា លោកគ្រូអ្នកគ្រូ ការព្យាបាល ឬការទំនាក់ទំនង...'
+                    : 'Share details about the learning environment, teachers, therapies, or communication...'
+                "
                 [value]="reviewComment()"
                 (input)="reviewComment.set($any($event.target).value)"
               ></textarea>
@@ -779,7 +1144,7 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
               (click)="closeReviewModal()"
               [disabled]="submittingReview()"
             >
-              Cancel
+              {{ currentLang() === 'km' ? 'បោះបង់' : 'Cancel' }}
             </button>
             <button
               type="button"
@@ -787,7 +1152,15 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
               (click)="submitReview()"
               [disabled]="submittingReview()"
             >
-              {{ submittingReview() ? 'Submitting…' : 'Submit Review' }}
+              {{
+                submittingReview()
+                  ? currentLang() === 'km'
+                    ? 'កំពុងបញ្ជូន…'
+                    : 'Submitting…'
+                  : currentLang() === 'km'
+                    ? 'បញ្ជូនការវាយតម្លៃ'
+                    : 'Submit Review'
+              }}
             </button>
           </div>
         </ac-ui-dialog>
@@ -796,8 +1169,12 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
       <!-- Contact School Modal Dialog -->
       @if (showContactModal()) {
         <ac-ui-dialog
-          heading="Contact School Admissions"
-          [description]="s.name + ' · ' + s.city"
+          [heading]="
+            currentLang() === 'km' ? 'ទាក់ទងផ្នែកចុះឈ្មោះរបស់សាលា' : 'Contact School Admissions'
+          "
+          [description]="
+            formatSchoolName(s.name, currentLang()) + ' · ' + formatProvinceLabel(s.city)
+          "
           size="md"
           (close)="closeContactModal()"
         >
@@ -819,36 +1196,64 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 </svg>
               </div>
               <div class="success-content">
-                <strong>Inquiry Sent Successfully!</strong>
+                <strong>{{
+                  currentLang() === 'km'
+                    ? 'បានផ្ញើសារសាកសួរដោយជោគជ័យ!'
+                    : 'Inquiry Sent Successfully!'
+                }}</strong>
                 <p>
-                  Your inquiry has been sent to {{ s.name }}. The admissions team will contact you
-                  shortly.
+                  {{
+                    currentLang() === 'km'
+                      ? 'សារសាកសួររបស់អ្នកត្រូវបានផ្ញើទៅកាន់ ' +
+                        formatSchoolName(s.name, currentLang()) +
+                        ' រួចហើយ។ ក្រុមការងារចុះឈ្មោះនឹងទាក់ទងមកអ្នកក្នុងពេលឆាប់ៗ។'
+                      : 'Your inquiry has been sent to ' +
+                        s.name +
+                        '. The admissions team will contact you shortly.'
+                  }}
                 </p>
               </div>
             </div>
             <div dialogFooter class="dialog-footer-actions">
-              <button type="button" class="btn-primary" (click)="closeContactModal()">Done</button>
+              <button type="button" class="btn-primary" (click)="closeContactModal()">
+                {{ currentLang() === 'km' ? 'រួចរាល់' : 'Done' }}
+              </button>
             </div>
           } @else {
             <div class="contact-form">
               <p class="dialog-hint">
-                Have questions about sensory adaptations, specialist therapy, or campus tours? Send
-                a message directly to {{ s.name }}.
+                {{
+                  currentLang() === 'km'
+                    ? 'មានសំណួរទាក់ទងនឹងការសម្របសម្រួលវិញ្ញាណ ការព្យាបាលឯកទេស ឬទស្សនកិច្ចសាលា? ផ្ញើសារផ្ទាល់ទៅកាន់ ' +
+                      formatSchoolName(s.name, currentLang()) +
+                      '។'
+                    : 'Have questions about sensory adaptations, specialist therapy, or campus tours? Send a message directly to ' +
+                      s.name +
+                      '.'
+                }}
               </p>
 
               <label class="field">
-                <span class="field-label">Your Name *</span>
+                <span class="field-label">{{
+                  currentLang() === 'km' ? 'ឈ្មោះរបស់អ្នក *' : 'Your Name *'
+                }}</span>
                 <input
                   type="text"
                   class="field-input"
-                  placeholder="Parent or Guardian Name"
+                  [placeholder]="
+                    currentLang() === 'km'
+                      ? 'ឈ្មោះមាតាបិតា ឬអាណាព្យាបាល'
+                      : 'Parent or Guardian Name'
+                  "
                   [value]="contactName()"
                   (input)="contactName.set($any($event.target).value)"
                 />
               </label>
 
               <label class="field">
-                <span class="field-label">Email Address *</span>
+                <span class="field-label">{{
+                  currentLang() === 'km' ? 'អាសយដ្ឋានអ៊ីមែល *' : 'Email Address *'
+                }}</span>
                 <input
                   type="email"
                   class="field-input"
@@ -859,28 +1264,54 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
               </label>
 
               <label class="field">
-                <span class="field-label">Inquiry Reason *</span>
+                <span class="field-label">{{
+                  currentLang() === 'km' ? 'មូលហេតុនៃការសាកសួរ *' : 'Inquiry Reason *'
+                }}</span>
                 <select
                   class="field-input"
                   [value]="contactSubject()"
                   (change)="contactSubject.set($any($event.target).value)"
                 >
-                  <option value="Campus Tour Request">Campus Tour Request</option>
-                  <option value="Tuition & Enrollment">Tuition & Enrollment</option>
-                  <option value="Sensory & Classroom Adaptations">
-                    Sensory & Classroom Adaptations
+                  <option value="Campus Tour Request">
+                    {{ currentLang() === 'km' ? 'ស្នើសុំទស្សនកិច្ចសាលា' : 'Campus Tour Request' }}
                   </option>
-                  <option value="Therapy Services (OT/Speech)">Therapy Services (OT/Speech)</option>
-                  <option value="General Question">General Question</option>
+                  <option value="Tuition & Enrollment">
+                    {{
+                      currentLang() === 'km' ? 'តម្លៃសិក្សា និងការចុះឈ្មោះ' : 'Tuition & Enrollment'
+                    }}
+                  </option>
+                  <option value="Sensory & Classroom Adaptations">
+                    {{
+                      currentLang() === 'km'
+                        ? 'ការសម្របសម្រួលវិញ្ញាណ និងថ្នាក់រៀន'
+                        : 'Sensory & Classroom Adaptations'
+                    }}
+                  </option>
+                  <option value="Therapy Services (OT/Speech)">
+                    {{
+                      currentLang() === 'km'
+                        ? 'សេវាព្យាបាល (OT/ការនិយាយ)'
+                        : 'Therapy Services (OT/Speech)'
+                    }}
+                  </option>
+                  <option value="General Question">
+                    {{ currentLang() === 'km' ? 'សំណួរទូទៅ' : 'General Question' }}
+                  </option>
                 </select>
               </label>
 
               <label class="field">
-                <span class="field-label">Message *</span>
+                <span class="field-label">{{
+                  currentLang() === 'km' ? 'សារ *' : 'Message *'
+                }}</span>
                 <textarea
                   class="field-input"
                   rows="4"
-                  placeholder="Please specify any particular questions regarding your child's developmental profile..."
+                  [placeholder]="
+                    currentLang() === 'km'
+                      ? 'សូមបញ្ជាក់សំណួរជាក់លាក់ណាមួយទាក់ទងនឹងការលូតលាស់របស់កូនអ្នក...'
+                      : 'Please specify any particular questions regarding your child’s developmental profile...'
+                  "
                   [value]="contactMessage()"
                   (input)="contactMessage.set($any($event.target).value)"
                 ></textarea>
@@ -889,7 +1320,7 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
 
             <div dialogFooter class="dialog-footer-actions">
               <button type="button" class="btn-secondary" (click)="closeContactModal()">
-                Cancel
+                {{ currentLang() === 'km' ? 'បោះបង់' : 'Cancel' }}
               </button>
               <button
                 type="button"
@@ -897,7 +1328,7 @@ import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schoo
                 [disabled]="!contactMessage().trim()"
                 (click)="submitContactInquiry()"
               >
-                Send Inquiry
+                {{ currentLang() === 'km' ? 'ផ្ញើសារសាកសួរ' : 'Send Inquiry' }}
               </button>
             </div>
           }
@@ -1874,6 +2305,9 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
   private readonly api = inject(SchoolsApi);
   private readonly childrenApi = inject(ChildrenApi);
   private readonly requestsApi = inject(EnrollmentRequestsApi);
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
+  protected readonly formatSchoolName = formatSchoolName;
 
   readonly school = signal<SchoolDetailResponse | null>(null);
   readonly loading = signal(true);
@@ -1923,11 +2357,35 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
   readonly totalReviewCount = computed(() => this.school()?.reviewCount ?? 0);
   readonly averageRating = computed(() => this.school()?.rating ?? 0);
 
+  protected formatProvinceLabel(city: string): string {
+    return formatCityBilingual(city, this.currentLang());
+  }
+
+  protected formatSpecialization(spec: string): string {
+    if (this.currentLang() === 'en') return spec;
+    switch (spec.trim().toLowerCase()) {
+      case 'speech therapy':
+        return 'ការព្យាបាលការនិយាយ';
+      case 'sensory integration':
+        return 'ការរួមបញ្ចូលញ្ញាណ';
+      case 'occupational therapy':
+        return 'ការព្យាបាលការបំពេញមុខងារ';
+      case 'social skills':
+        return 'ជំនាញសង្គម';
+      default:
+        return spec;
+    }
+  }
+
   ngOnInit() {
     const schoolId = this.route.snapshot.paramMap.get('id') ?? '';
     if (!schoolId) {
       this.loading.set(false);
-      this.error.set('This school could not be found.');
+      this.error.set(
+        this.currentLang() === 'km'
+          ? 'មិនអាចរកឃើញសាលារៀននេះទេ។'
+          : 'This school could not be found.',
+      );
       return;
     }
     this.api.getSchoolById(schoolId).subscribe({
@@ -1940,7 +2398,11 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
         if (fallback) {
           this.school.set(fallback as unknown as SchoolDetailResponse);
         } else {
-          this.error.set('This school profile could not be loaded.');
+          this.error.set(
+            this.currentLang() === 'km'
+              ? 'មិនអាចផ្ទុកព័ត៌មានលម្អិតនៃសាលារៀននេះបានទេ។'
+              : 'This school profile could not be loaded.',
+          );
         }
         this.loading.set(false);
       },
@@ -1966,7 +2428,7 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
   }
 
   formatFacility(tag: string): string {
-    return formatFacilityTag(tag);
+    return formatFacilityTag(tag, this.currentLang());
   }
 
   getInitials(name: string): string {
@@ -1978,7 +2440,7 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
   }
 
   getAvailabilityLabel(status: SchoolAvailabilityStatus): string {
-    return availabilityLabel(status);
+    return availabilityLabel(status, this.currentLang());
   }
 
   getAvailabilityTone(status: SchoolAvailabilityStatus): string {
@@ -2018,11 +2480,23 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
       next: () => {
         this.togglingFavorite.set(false);
         this.school.update((curr) => (curr ? { ...curr, isFavorite: !wasFavorite } : null));
-        this.showToast(wasFavorite ? 'Removed from saved schools.' : 'Saved to favorite schools.');
+        this.showToast(
+          wasFavorite
+            ? this.currentLang() === 'km'
+              ? 'បានដកចេញពីបញ្ជីសាលាដែលបានរក្សាទុក។'
+              : 'Removed from saved schools.'
+            : this.currentLang() === 'km'
+              ? 'បានរក្សាទុកក្នុងបញ្ជីសាលាដែលពេញចិត្ត។'
+              : 'Saved to favorite schools.',
+        );
       },
       error: () => {
         this.togglingFavorite.set(false);
-        this.showToast('Could not update favorites. Please try again.');
+        this.showToast(
+          this.currentLang() === 'km'
+            ? 'មិនអាចធ្វើបច្ចុប្បន្នភាពការរក្សាទុកបានទេ។ សូមព្យាយាមម្តងទៀត។'
+            : 'Could not update favorites. Please try again.',
+        );
       },
     });
   }
@@ -2119,6 +2593,22 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
   }
 
   getRatingLabel(rating: number): string {
+    if (this.currentLang() === 'km') {
+      switch (rating) {
+        case 1:
+          return 'ផ្កាយ ១ - ត្រូវការការកែលម្អ';
+        case 2:
+          return 'ផ្កាយ ២ - មធ្យម';
+        case 3:
+          return 'ផ្កាយ ៣ - ល្អ';
+        case 4:
+          return 'ផ្កាយ ៤ - ល្អប្រសើរ';
+        case 5:
+          return 'ផ្កាយ ៥ - ល្អឥតខ្ចោះ';
+        default:
+          return '';
+      }
+    }
     switch (rating) {
       case 1:
         return '1 star - Needs Improvement';
@@ -2153,7 +2643,11 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
           this.submittingReview.set(false);
           this.showReviewModal.set(false);
           this.reviews.update((curr) => [newReview, ...curr]);
-          this.showToast('Thank you for submitting your review!');
+          this.showToast(
+            this.currentLang() === 'km'
+              ? 'សូមអរគុណសម្រាប់ការបញ្ជូនការវាយតម្លៃរបស់អ្នក!'
+              : 'Thank you for submitting your review!',
+          );
 
           // Refresh aggregations
           this.api.listReviews(s.id).subscribe({
@@ -2175,16 +2669,24 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
           this.submittingReview.set(false);
           const status = err?.status as number | undefined;
           if (status === 409) {
-            this.reviewError.set('You have already submitted a review for this school.');
+            this.reviewError.set(
+              this.currentLang() === 'km'
+                ? 'អ្នកបានបញ្ជូនការវាយតម្លៃសម្រាប់សាលានេះរួចហើយ។'
+                : 'You have already submitted a review for this school.',
+            );
           } else {
-            this.reviewError.set('Could not submit your review. Please try again.');
+            this.reviewError.set(
+              this.currentLang() === 'km'
+                ? 'មិនអាចបញ្ជូនការវាយតម្លៃបានទេ។ សូមព្យាយាមម្តងទៀត។'
+                : 'Could not submit your review. Please try again.',
+            );
           }
         },
       });
   }
 
   formatReviewDate(isoDate: string): string {
-    return new Date(isoDate).toLocaleDateString(undefined, {
+    return new Date(isoDate).toLocaleDateString(this.currentLang() === 'km' ? 'km-KH' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -2195,7 +2697,9 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
     const school = this.school();
     const childId = this.selectedChildId();
     if (!school || !childId) {
-      this.formError.set('Choose a child first.');
+      this.formError.set(
+        this.currentLang() === 'km' ? 'សូមជ្រើសរើសកុមារជាមុនសិន។' : 'Choose a child first.',
+      );
       return;
     }
 
@@ -2224,12 +2728,22 @@ export class SchoolDetailPage implements OnInit, OnDestroy {
           const status = err?.status as number | undefined;
           if (status === 409) {
             this.formError.set(
-              'This child already has an enrollment or an open request at this school.',
+              this.currentLang() === 'km'
+                ? 'កុមារនេះមានការចុះឈ្មោះ ឬពាក្យស្នើសុំដែលកំពុងដំណើរការនៅសាលានេះរួចហើយ។'
+                : 'This child already has an enrollment or an open request at this school.',
             );
           } else if (status === 404) {
-            this.formError.set('This school or child could not be found.');
+            this.formError.set(
+              this.currentLang() === 'km'
+                ? 'រកមិនឃើញសាលារៀន ឬកុមារនេះទេ។'
+                : 'This school or child could not be found.',
+            );
           } else {
-            this.formError.set('Could not send the request. Please try again.');
+            this.formError.set(
+              this.currentLang() === 'km'
+                ? 'មិនអាចផ្ញើសំណើបានទេ។ សូមព្យាយាមម្តងទៀត។'
+                : 'Could not send the request. Please try again.',
+            );
           }
         },
       });

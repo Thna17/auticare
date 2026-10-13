@@ -42,7 +42,7 @@ export type WizardStep = 1 | 2 | 3;
         facade.booking().step === 'confirmed'
           ? ''
           : currentLang() === 'km'
-            ? 'កក់ការណាត់ជួបពិគ្រោះ (Book Appointment)'
+            ? 'កក់ការណាត់ជួបពិគ្រោះ'
             : 'Book Appointment'
       "
       [ariaLabel]="dialogLabel()"
@@ -66,7 +66,7 @@ export type WizardStep = 1 | 2 | 3;
           >
             <span class="step-badge">1</span>
             <span class="step-label">{{
-              currentLang() === 'km' ? 'កុមារ និងមូលហេតុ (Child & Reason)' : 'Child & Reason'
+              currentLang() === 'km' ? 'កុមារ និងមូលហេតុ' : 'Child & Reason'
             }}</span>
           </button>
           <div class="step-divider" [class.filled]="step() > 1" aria-hidden="true"></div>
@@ -83,7 +83,7 @@ export type WizardStep = 1 | 2 | 3;
           >
             <span class="step-badge">2</span>
             <span class="step-label">{{
-              currentLang() === 'km' ? 'កាលបរិច្ឆេទ និងម៉ោង (Date & Slot)' : 'Date & Slot'
+              currentLang() === 'km' ? 'កាលបរិច្ឆេទ និងម៉ោង' : 'Date & Slot'
             }}</span>
           </button>
           <div class="step-divider" [class.filled]="step() > 2" aria-hidden="true"></div>
@@ -101,9 +101,7 @@ export type WizardStep = 1 | 2 | 3;
           >
             <span class="step-badge">3</span>
             <span class="step-label">{{
-              currentLang() === 'km'
-                ? 'កំណត់សម្គាល់ (Care Notes & Confirm)'
-                : 'Care Notes & Confirm'
+              currentLang() === 'km' ? 'កំណត់សម្គាល់' : 'Care Notes & Confirm'
             }}</span>
           </button>
         </nav>
@@ -115,10 +113,12 @@ export type WizardStep = 1 | 2 | 3;
           </div>
           <div class="doctor-context-details">
             <strong class="doctor-name">{{
-              facade.booking().doctor?.fullName ?? 'Clinical Specialist'
+              facade.booking().doctor?.fullName ??
+                (currentLang() === 'km' ? 'វេជ្ជបណ្ឌិតឯកទេស' : 'Clinical Specialist')
             }}</strong>
             <span class="doctor-specialty">{{
-              facade.booking().doctor?.specialty ?? 'Developmental Pediatrics'
+              facade.booking().doctor?.specialty ??
+                (currentLang() === 'km' ? 'វេជ្ជបណ្ឌិតកុមារឯកទេស' : 'Developmental Pediatrics')
             }}</span>
             <small class="doctor-schedule">
               <svg
@@ -143,12 +143,16 @@ export type WizardStep = 1 | 2 | 3;
           <section class="section" aria-labelledby="booking-patient-label">
             <div class="section-header-row">
               <h3 id="booking-patient-label" class="section-title">
-                1. Select Patient &amp; Visit Reason (១. ជ្រើសរើសអ្នកជំងឺ និងមូលហេតុ)
+                {{
+                  currentLang() === 'km'
+                    ? '១. ជ្រើសរើសអ្នកជំងឺ និងមូលហេតុ'
+                    : '1. Select Patient & Visit Reason'
+                }}
                 <span aria-hidden="true">*</span>
               </h3>
               <span class="step-hint">{{
                 currentLang() === 'km'
-                  ? 'តើកុមាររូបណាដែលត្រូវមកពិនិត្យ និងអ្វីជាការផ្តោតសំខាន់? / Who will attend and what is the primary focus?'
+                  ? 'តើកុមាររូបណាដែលត្រូវមកពិនិត្យ និងអ្វីជាការផ្តោតសំខាន់?'
                   : 'Who will attend and what is the primary focus?'
               }}</span>
             </div>
@@ -180,7 +184,7 @@ export type WizardStep = 1 | 2 | 3;
                 <span class="avatar plus" aria-hidden="true">+</span>
                 <span class="patient-copy"
                   ><strong>{{
-                    currentLang() === 'km' ? '+ បន្ថែមកុមារថ្មី (Add New Child)' : 'Add New Child'
+                    currentLang() === 'km' ? '+ បន្ថែមកុមារថ្មី' : 'Add New Child'
                   }}</strong></span
                 >
               </a>
@@ -190,12 +194,16 @@ export type WizardStep = 1 | 2 | 3;
             <div class="reason-section-group">
               <div class="section-header-row sub-header">
                 <h4 id="booking-reason-label" class="sub-section-title">
-                  Primary Consultation Reason (មូលហេតុចម្បងនៃការពិគ្រោះ)
+                  {{
+                    currentLang() === 'km'
+                      ? 'មូលហេតុចម្បងនៃការពិគ្រោះ'
+                      : 'Primary Consultation Reason'
+                  }}
                   <span aria-hidden="true">*</span>
                 </h4>
                 <span class="step-hint">{{
                   currentLang() === 'km'
-                    ? 'ជួយវេជ្ជបណ្ឌិតត្រៀមរៀបចំជាមុន / Helps the specialist prepare'
+                    ? 'ជួយវេជ្ជបណ្ឌិតត្រៀមរៀបចំជាមុន'
                     : 'Helps the specialist prepare'
                 }}</span>
               </div>
@@ -229,7 +237,7 @@ export type WizardStep = 1 | 2 | 3;
               <div class="symptom-chips-container">
                 <span class="symptoms-label">{{
                   currentLang() === 'km'
-                    ? 'ចំណុចផ្តោតសំខាន់នៃការលូតលាស់ទូទៅ (Common Developmental Focus Areas):'
+                    ? 'ចំណុចផ្តោតសំខាន់នៃការលូតលាស់ទូទៅ:'
                     : 'Common Developmental Focus Areas:'
                 }}</span>
                 <div class="symptom-chips-row">
@@ -255,12 +263,16 @@ export type WizardStep = 1 | 2 | 3;
           <section class="section" aria-labelledby="booking-date-label">
             <div class="section-header-row">
               <h3 id="booking-date-label" class="section-title">
-                2. Choose Date &amp; Time Slot (២. ជ្រើសរើសថ្ងៃ និងម៉ោងពិនិត្យ)
+                {{
+                  currentLang() === 'km'
+                    ? '២. ជ្រើសរើសថ្ងៃ និងម៉ោងពិនិត្យ'
+                    : '2. Choose Date & Time Slot'
+                }}
                 <span aria-hidden="true">*</span>
               </h3>
               <span class="step-hint">{{
                 currentLang() === 'km'
-                  ? 'ជ្រើសរើសថ្ងៃធ្វើការដែលមានវេជ្ជបណ្ឌិត / Select an available working day'
+                  ? 'ជ្រើសរើសថ្ងៃធ្វើការដែលមានវេជ្ជបណ្ឌិត'
                   : 'Select an available working day'
               }}</span>
             </div>
@@ -272,7 +284,7 @@ export type WizardStep = 1 | 2 | 3;
                   type="button"
                   class="month-nav-btn"
                   (click)="shiftMonth(-1)"
-                  aria-label="Previous month"
+                  [attr.aria-label]="currentLang() === 'km' ? 'ខែមុន' : 'Previous month'"
                 >
                   ‹
                 </button>
@@ -281,14 +293,14 @@ export type WizardStep = 1 | 2 | 3;
                   type="button"
                   class="month-nav-btn"
                   (click)="shiftMonth(1)"
-                  aria-label="Next month"
+                  [attr.aria-label]="currentLang() === 'km' ? 'ខែបន្ទាប់' : 'Next month'"
                 >
                   ›
                 </button>
               </div>
 
               <div class="weekday-row">
-                @for (day of weekdayLabels; track day) {
+                @for (day of weekdayLabels(); track day) {
                   <span>{{ day }}</span>
                 }
               </div>
@@ -311,7 +323,13 @@ export type WizardStep = 1 | 2 | 3;
                     [class.selected]="facade.booking().date === day.iso"
                     [disabled]="day.isPast || day.isOffDay"
                     [attr.aria-disabled]="day.isPast || day.isOffDay ? 'true' : null"
-                    [title]="day.isOffDay ? 'Specialist off duty' : day.iso"
+                    [title]="
+                      day.isOffDay
+                        ? currentLang() === 'km'
+                          ? 'វេជ្ជបណ្ឌិតឈប់សម្រាក'
+                          : 'Specialist off duty'
+                        : day.iso
+                    "
                     (click)="facade.selectDate(day.iso)"
                   >
                     {{ day.label }}
@@ -322,15 +340,15 @@ export type WizardStep = 1 | 2 | 3;
               <div class="calendar-legend">
                 <span class="legend-item"
                   ><span class="legend-dot available"></span>
-                  {{ currentLang() === 'km' ? 'អាចកក់បាន (Available)' : 'Available' }}</span
+                  {{ currentLang() === 'km' ? 'អាចកក់បាន' : 'Available' }}</span
                 >
                 <span class="legend-item"
                   ><span class="legend-dot off-duty"></span>
-                  {{ currentLang() === 'km' ? 'ថ្ងៃឈប់សម្រាក (Off duty)' : 'Off duty' }}</span
+                  {{ currentLang() === 'km' ? 'ថ្ងៃឈប់សម្រាក' : 'Off duty' }}</span
                 >
                 <span class="legend-item"
                   ><span class="legend-dot selected"></span>
-                  {{ currentLang() === 'km' ? 'បានជ្រើសរើស (Selected)' : 'Selected' }}</span
+                  {{ currentLang() === 'km' ? 'បានជ្រើសរើស' : 'Selected' }}</span
                 >
               </div>
             </div>
@@ -340,7 +358,11 @@ export type WizardStep = 1 | 2 | 3;
               <div class="slots-container" aria-labelledby="booking-time-label">
                 <div class="section-header-row">
                   <h4 id="booking-time-label" class="sub-section-title">
-                    Available Slots for {{ formatSelectedDate(facade.booking().date!) }}
+                    {{
+                      currentLang() === 'km'
+                        ? 'ម៉ោងទំនេរសម្រាប់ ' + formatSelectedDate(facade.booking().date!)
+                        : 'Available Slots for ' + formatSelectedDate(facade.booking().date!)
+                    }}
                     <span aria-hidden="true">*</span>
                   </h4>
                 </div>
@@ -350,7 +372,7 @@ export type WizardStep = 1 | 2 | 3;
                     <span class="loading-spinner" aria-hidden="true"></span>
                     {{
                       currentLang() === 'km'
-                        ? 'កំពុងពិនិត្យកាលវិភាគផ្ទាល់របស់វេជ្ជបណ្ឌិត… (Checking schedule…)'
+                        ? 'កំពុងពិនិត្យកាលវិភាគផ្ទាល់របស់វេជ្ជបណ្ឌិត…'
                         : 'Checking specialist live schedule…'
                     }}
                   </p>
@@ -383,7 +405,7 @@ export type WizardStep = 1 | 2 | 3;
                             <line x1="1" y1="12" x2="3" y2="12"></line>
                             <line x1="21" y1="12" x2="23" y2="12"></line>
                           </svg>
-                          Morning Sessions (វគ្គពេលព្រឹក)
+                          {{ currentLang() === 'km' ? 'វគ្គពេលព្រឹក' : 'Morning Sessions' }}
                         </span>
                         <div class="slot-row">
                           @for (slot of morningSlots(); track slot.iso) {
@@ -420,7 +442,7 @@ export type WizardStep = 1 | 2 | 3;
                               d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
                             ></path>
                           </svg>
-                          Afternoon Sessions (វគ្គពេលរសៀល)
+                          {{ currentLang() === 'km' ? 'វគ្គពេលរសៀល' : 'Afternoon Sessions' }}
                         </span>
                         <div class="slot-row">
                           @for (slot of afternoonSlots(); track slot.iso) {
@@ -443,9 +465,17 @@ export type WizardStep = 1 | 2 | 3;
                 } @else {
                   <div class="no-slots-notice" role="status">
                     <p>
-                      No appointments available on this date. Doctor's schedule:
-                      <strong>{{ formatSchedule(facade.booking().doctor) }}</strong
-                      >. Please select another working date.
+                      {{
+                        currentLang() === 'km'
+                          ? 'មិនមានការណាត់ជួបទំនេរនៅថ្ងៃនេះទេ។ កាលវិភាគវេជ្ជបណ្ឌិត: '
+                          : "No appointments available on this date. Doctor's schedule: "
+                      }}
+                      <strong>{{ formatSchedule(facade.booking().doctor) }}</strong>
+                      {{
+                        currentLang() === 'km'
+                          ? '។ សូមជ្រើសរើសថ្ងៃធ្វើការផ្សេងទៀត។'
+                          : '. Please select another working date.'
+                      }}
                     </p>
                   </div>
                 }
@@ -459,11 +489,13 @@ export type WizardStep = 1 | 2 | 3;
           <section class="section" aria-labelledby="booking-review-label">
             <div class="section-header-row">
               <h3 id="booking-review-label" class="section-title">
-                3. Care Notes &amp; Confirm (៣. កំណត់សម្គាល់ និងបញ្ជាក់)
+                {{
+                  currentLang() === 'km' ? '៣. កំណត់សម្គាល់ និងបញ្ជាក់' : '3. Care Notes & Confirm'
+                }}
               </h3>
               <span class="step-hint">{{
                 currentLang() === 'km'
-                  ? 'ផ្ទៀងផ្ទាត់ព័ត៌មានកក់ និងចែករំលែកតម្រូវការសម្របសម្រួលញ្ញាណ / Verify details and share accommodations'
+                  ? 'ផ្ទៀងផ្ទាត់ព័ត៌មានកក់ និងចែករំលែកតម្រូវការសម្របសម្រួលញ្ញាណ'
                   : 'Verify your booking details and share sensory accommodations'
               }}</span>
             </div>
@@ -472,42 +504,46 @@ export type WizardStep = 1 | 2 | 3;
             <div class="review-card">
               <div class="review-item">
                 <span class="review-key">{{
-                  currentLang() === 'km' ? 'អ្នកជំងឺ (Patient)' : 'Patient'
+                  currentLang() === 'km' ? 'អ្នកជំងឺ' : 'Patient'
                 }}</span>
                 <strong class="review-val">{{ selectedChildName() }}</strong>
               </div>
               <div class="review-item">
                 <span class="review-key">{{
-                  currentLang() === 'km' ? 'វេជ្ជបណ្ឌិត (Specialist)' : 'Specialist'
+                  currentLang() === 'km' ? 'អ្នកឯកទេស' : 'Specialist'
                 }}</span>
                 <strong class="review-val">{{
-                  facade.booking().doctor?.fullName ?? 'Specialist'
+                  facade.booking().doctor?.fullName ??
+                    (currentLang() === 'km' ? 'អ្នកឯកទេស' : 'Specialist')
                 }}</strong>
               </div>
               <div class="review-item">
                 <span class="review-key">{{
-                  currentLang() === 'km' ? 'កាលបរិច្ឆេទ និងម៉ោង (Date & Time)' : 'Date & Time'
+                  currentLang() === 'km' ? 'កាលបរិច្ឆេទ និងម៉ោង' : 'Date & Time'
                 }}</span>
                 <strong class="review-val">
-                  {{ formatSelectedDate(facade.booking().date!) }} at {{ facade.booking().time }}
+                  {{ formatSelectedDate(facade.booking().date!) }}
+                  {{ currentLang() === 'km' ? 'នៅម៉ោង' : 'at' }} {{ facade.booking().time }}
                 </strong>
               </div>
               @if (facade.booking().visitReason) {
                 <div class="review-item">
                   <span class="review-key">{{
-                    currentLang() === 'km' ? 'ប្រភេទជួប (Visit Type)' : 'Visit Type'
+                    currentLang() === 'km' ? 'ប្រភេទជួប' : 'Visit Type'
                   }}</span>
-                  <strong class="review-val">{{ facade.booking().visitReason }}</strong>
+                  <strong class="review-val">{{
+                    formatVisitReason(facade.booking().visitReason!)
+                  }}</strong>
                 </div>
               }
               @if (selectedSymptomsList().length > 0) {
                 <div class="review-item symptoms-summary-item">
                   <span class="review-key">{{
-                    currentLang() === 'km' ? 'ចំណុចផ្តោត (Focus Areas)' : 'Focus Areas'
+                    currentLang() === 'km' ? 'ចំណុចផ្តោត' : 'Focus Areas'
                   }}</span>
                   <div class="review-symptom-tags">
                     @for (s of selectedSymptomsList(); track s) {
-                      <span class="review-symptom-tag">{{ s }}</span>
+                      <span class="review-symptom-tag">{{ formatSymptomLabel(s) }}</span>
                     }
                   </div>
                 </div>
@@ -518,7 +554,7 @@ export type WizardStep = 1 | 2 | 3;
             <ac-ui-field
               [label]="
                 currentLang() === 'km'
-                  ? 'ការសម្របសម្រួលញ្ញាណ និងកំណត់សម្គាល់ថែទាំ (Sensory Accommodations & Care Notes)'
+                  ? 'ការសម្របសម្រួលញ្ញាណ និងកំណត់សម្គាល់ថែទាំ'
                   : 'Sensory Accommodations & Care Notes'
               "
               [optional]="true"
@@ -529,7 +565,7 @@ export type WizardStep = 1 | 2 | 3;
                 maxlength="2000"
                 [placeholder]="
                   currentLang() === 'km'
-                    ? 'សូមចែករំលែកពីភាពងាយរងរំញោចញ្ញាណ (សំឡេង ពន្លឺ ការប៉ះពាល់) ឧបករណ៍ជំនួយទំនាក់ទំនង ឬគោលដៅនៃការជួបពិគ្រោះនេះ… (Share sensory sensitivities, communication tools, or goals…)'
+                    ? 'សូមចែករំលែកពីភាពងាយរងរំញោចញ្ញាណ (សំឡេង ពន្លឺ ការប៉ះពាល់) ឧបករណ៍ជំនួយទំនាក់ទំនង ឬគោលដៅនៃការជួបពិគ្រោះនេះ…'
                     : 'Share any sensory sensitivities (sound, light, tactile), special communication tools, or goals for this session…'
                 "
                 [value]="facade.booking().notes"
@@ -547,7 +583,7 @@ export type WizardStep = 1 | 2 | 3;
         <div dialogFooter class="modal-footer">
           @if (step() === 1) {
             <button type="button" class="secondary" (click)="close()">
-              {{ currentLang() === 'km' ? 'បោះបង់ (Cancel)' : 'Cancel' }}
+              {{ currentLang() === 'km' ? 'បោះបង់' : 'Cancel' }}
             </button>
             <button
               type="button"
@@ -555,18 +591,12 @@ export type WizardStep = 1 | 2 | 3;
               [disabled]="!facade.booking().childId"
               (click)="setStep(2)"
             >
-              {{
-                currentLang() === 'km'
-                  ? 'បន្តទៅថ្ងៃ និងម៉ោង (Continue to Date & Slot) →'
-                  : 'Continue to Date & Slot →'
-              }}
+              {{ currentLang() === 'km' ? 'បន្តទៅថ្ងៃ និងម៉ោង →' : 'Continue to Date & Slot →' }}
             </button>
           } @else if (step() === 2) {
             <button type="button" class="secondary" (click)="setStep(1)">
               {{
-                currentLang() === 'km'
-                  ? '← ត្រឡប់ទៅកុមារ និងមូលហេតុ (Back)'
-                  : '← Back to Child & Reason'
+                currentLang() === 'km' ? '← ត្រឡប់ទៅកុមារ និងមូលហេតុ' : '← Back to Child & Reason'
               }}
             </button>
             <button
@@ -575,17 +605,11 @@ export type WizardStep = 1 | 2 | 3;
               [disabled]="!facade.booking().date || !facade.booking().time"
               (click)="setStep(3)"
             >
-              {{
-                currentLang() === 'km'
-                  ? 'បន្តទៅផ្ទៀងផ្ទាត់ (Continue to Confirm) →'
-                  : 'Continue to Confirm →'
-              }}
+              {{ currentLang() === 'km' ? 'បន្តទៅផ្ទៀងផ្ទាត់ →' : 'Continue to Confirm →' }}
             </button>
           } @else if (step() === 3) {
             <button type="button" class="secondary" (click)="setStep(2)">
-              {{
-                currentLang() === 'km' ? '← ត្រឡប់ទៅថ្ងៃ និងម៉ោង (Back)' : '← Back to Date & Slot'
-              }}
+              {{ currentLang() === 'km' ? '← ត្រឡប់ទៅថ្ងៃ និងម៉ោង' : '← Back to Date & Slot' }}
             </button>
             <button
               type="button"
@@ -596,10 +620,10 @@ export type WizardStep = 1 | 2 | 3;
               {{
                 facade.booking().step === 'submitting'
                   ? currentLang() === 'km'
-                    ? 'កំពុងផ្ញើសំណើ… (Submitting…)'
+                    ? 'កំពុងផ្ញើសំណើ…'
                     : 'Submitting Request…'
                   : currentLang() === 'km'
-                    ? 'បញ្ជាក់ការកក់ណាត់ (Confirm Appointment)'
+                    ? 'បញ្ជាក់ការកក់ណាត់'
                     : 'Confirm Appointment'
               }}
             </button>
@@ -1306,13 +1330,13 @@ export class BookAppointmentModalComponent implements OnInit {
     const isKm = this.currentLang() === 'km';
     switch (reason) {
       case 'Consultation':
-        return isKm ? 'ការពិគ្រោះយោបល់ (Consultation)' : 'Consultation';
+        return isKm ? 'ការពិគ្រោះយោបល់' : 'Consultation';
       case 'Follow-up':
-        return isKm ? 'ការតាមដានបន្ត (Follow-up)' : 'Follow-up';
+        return isKm ? 'ការតាមដានបន្ត' : 'Follow-up';
       case 'Test results':
-        return isKm ? 'លទ្ធផលតេស្ត (Test Results)' : 'Test results';
+        return isKm ? 'លទ្ធផលតេស្ត' : 'Test results';
       case 'Other':
-        return isKm ? 'ផ្សេងៗ (Other)' : 'Other';
+        return isKm ? 'ផ្សេងៗ' : 'Other';
       default:
         return reason;
     }
@@ -1322,21 +1346,17 @@ export class BookAppointmentModalComponent implements OnInit {
     const isKm = this.currentLang() === 'km';
     switch (symptom) {
       case 'Speech & Language Delay':
-        return isKm ? 'ការយឺតយ៉ាវក្នុងការនិយាយ (Speech Delay)' : 'Speech & Language Delay';
+        return isKm ? 'ការយឺតយ៉ាវក្នុងការនិយាយ និងភាសា' : 'Speech & Language Delay';
       case 'Sensory Sensitivity (Sound/Light)':
-        return isKm
-          ? 'ភាពងាយរងរំញោចញ្ញាណ (Sensory Sensitivity)'
-          : 'Sensory Sensitivity (Sound/Light)';
+        return isKm ? 'ភាពងាយរងរំញោចញ្ញាណ (សំឡេង/ពន្លឺ)' : 'Sensory Sensitivity (Sound/Light)';
       case 'Social & Peer Communication':
-        return isKm ? 'ទំនាក់ទំនងសង្គម (Social Interaction)' : 'Social & Peer Communication';
+        return isKm ? 'ទំនាក់ទំនងសង្គម និងមិត្តភក្តិ' : 'Social & Peer Communication';
       case 'Repetitive Motor Behaviors':
-        return isKm ? 'ចលនារាងកាយច្រំដែល (Repetitive Behaviors)' : 'Repetitive Motor Behaviors';
+        return isKm ? 'ចលនារាងកាយច្រំដែល' : 'Repetitive Motor Behaviors';
       case 'Emotional Regulation':
-        return isKm ? 'ការគ្រប់គ្រងអារម្មណ៍ (Emotional Regulation)' : 'Emotional Regulation';
+        return isKm ? 'ការគ្រប់គ្រងអារម្មណ៍' : 'Emotional Regulation';
       case 'School Learning Accommodations':
-        return isKm
-          ? 'ការសម្របសម្រួលនៅសាលា (School Accommodations)'
-          : 'School Learning Accommodations';
+        return isKm ? 'ការសម្របសម្រួលការសិក្សានៅសាលា' : 'School Learning Accommodations';
       default:
         return symptom;
     }
@@ -1358,11 +1378,18 @@ export class BookAppointmentModalComponent implements OnInit {
     });
   }
 
-  protected readonly weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  protected readonly weekdayLabels = computed(() =>
+    this.currentLang() === 'km'
+      ? ['អា', 'ច', 'អ', 'ព', 'ព្រ', 'សុ', 'ស']
+      : ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  );
   private readonly viewMonth = signal(startOfMonth(new Date()));
 
   protected readonly monthLabel = computed(() =>
-    this.viewMonth().toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+    this.viewMonth().toLocaleDateString(this.currentLang() === 'km' ? 'km-KH' : undefined, {
+      month: 'long',
+      year: 'numeric',
+    }),
   );
 
   protected readonly morningSlots = computed(() =>
@@ -1375,9 +1402,13 @@ export class BookAppointmentModalComponent implements OnInit {
 
   protected readonly selectedChildName = computed(() => {
     const childId = this.facade.booking().childId;
-    if (!childId) return 'Not selected';
+    if (!childId) return this.currentLang() === 'km' ? 'មិនទាន់ជ្រើសរើស' : 'Not selected';
     const child = this.children.children().find((c) => c.id === childId);
-    return child ? `${child.firstName} ${child.lastName ?? ''}`.trim() : 'Patient';
+    return child
+      ? `${child.firstName} ${child.lastName ?? ''}`.trim()
+      : this.currentLang() === 'km'
+        ? 'អ្នកជំងឺ'
+        : 'Patient';
   });
 
   protected readonly calendarDays = computed<readonly CalendarDay[]>(() => {
@@ -1413,8 +1444,10 @@ export class BookAppointmentModalComponent implements OnInit {
     });
   });
 
-  protected readonly dialogLabel = computed(
-    () => `Book appointment with ${this.facade.booking().doctor?.fullName ?? 'specialist'}`,
+  protected readonly dialogLabel = computed(() =>
+    this.currentLang() === 'km'
+      ? `កក់ការណាត់ជួបជាមួយ ${this.facade.booking().doctor?.fullName ?? 'អ្នកឯកទេស'}`
+      : `Book appointment with ${this.facade.booking().doctor?.fullName ?? 'specialist'}`,
   );
 
   ngOnInit() {
@@ -1432,9 +1465,12 @@ export class BookAppointmentModalComponent implements OnInit {
       endHour?: number;
     } | null,
   ): string {
-    if (!doctor) return 'Schedule details upon inquiry';
+    const isKm = this.currentLang() === 'km';
+    if (!doctor) return isKm ? 'ព័ត៌មានលម្អិតកាលវិភាគពេលសាកសួរ' : 'Schedule details upon inquiry';
     const days = doctor.availableDays ?? '1,2,3,4,5';
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = isKm
+      ? ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍']
+      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const activeDays = days
       .split(',')
       .map((s) => Number(s.trim()))
@@ -1446,15 +1482,22 @@ export class BookAppointmentModalComponent implements OnInit {
     const end = doctor.endHour ?? 17;
     const timeRange = `${start.toString().padStart(2, '0')}:00 - ${end.toString().padStart(2, '0')}:00`;
 
-    return activeDays ? `${activeDays} (${timeRange})` : `Hours: ${timeRange}`;
+    return activeDays
+      ? `${activeDays} (${timeRange})`
+      : isKm
+        ? `ម៉ោងធ្វើការ: ${timeRange}`
+        : `Hours: ${timeRange}`;
   }
 
   protected formatSelectedDate(isoDate: string): string {
-    return new Date(`${isoDate}T00:00:00`).toLocaleDateString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
+    return new Date(`${isoDate}T00:00:00`).toLocaleDateString(
+      this.currentLang() === 'km' ? 'km-KH' : undefined,
+      {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      },
+    );
   }
 
   protected shiftMonth(delta: number) {
@@ -1510,7 +1553,8 @@ export class BookAppointmentModalComponent implements OnInit {
     if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) {
       years -= 1;
     }
-    return `Age ${Math.max(years, 0)}`;
+    const safeYears = Math.max(years, 0);
+    return this.currentLang() === 'km' ? `អាយុ ${safeYears} ឆ្នាំ` : `Age ${safeYears}`;
   }
 }
 

@@ -11,6 +11,7 @@ import type {
 } from '@auticare/contracts';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { SchoolsApi } from './data-access/schools.api';
 import { EnrollmentRequestsApi } from './data-access/enrollment-requests.api';
@@ -19,7 +20,12 @@ import { UiDialogComponent } from '../../design-system/components/ui-dialog.comp
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
-import { CAMBODIAN_INCLUSIVE_SCHOOLS, formatFacilityTag } from './cambodia-schools.data';
+import {
+  CAMBODIAN_INCLUSIVE_SCHOOLS,
+  formatFacilityTag,
+  formatSchoolName,
+} from './cambodia-schools.data';
+import { formatCityBilingual } from '../hospitals/cambodia-hospitals.data';
 
 interface SchoolViewModel extends SchoolResponse {
   rating: number | null;
@@ -54,10 +60,13 @@ const SPECIALIZATION_OPTIONS = [
     <!-- Page Header -->
     <section class="page-header">
       <div class="header-content">
-        <h1>Special Education Schools</h1>
+        <h1>{{ currentLang() === 'km' ? 'សាលារៀនអប់រំពិសេស' : 'Special Education Schools' }}</h1>
         <p>
-          Discover and connect with specialized educational institutions tailored for neurodivergent
-          children.
+          {{
+            currentLang() === 'km'
+              ? 'ស្វែងរក និងភ្ជាប់ទំនាក់ទំនងជាមួយគ្រឹះស្ថានអប់រំពិសេសដែលសមស្របសម្រាប់កុមារដែលមានការលូតលាស់ខុសប្លែក។'
+              : 'Discover and connect with specialized educational institutions tailored for neurodivergent children.'
+          }}
         </p>
       </div>
       <div class="header-actions">
@@ -76,9 +85,17 @@ const SPECIALIZATION_OPTIONS = [
             </svg>
           </span>
           <input
-            aria-label="Search schools by name, curriculum or specialization"
+            [attr.aria-label]="
+              currentLang() === 'km'
+                ? 'ស្វែងរកសាលារៀន តាមឈ្មោះ កម្មវិធីសិក្សា ទីក្រុង ឬជំនាញឯកទេស...'
+                : 'Search schools by name, curriculum or specialization'
+            "
             type="text"
-            placeholder="Search school name, curriculum, city, or specialization..."
+            [placeholder]="
+              currentLang() === 'km'
+                ? 'ស្វែងរកសាលារៀន តាមឈ្មោះ កម្មវិធីសិក្សា ទីក្រុង ឬជំនាញឯកទេស...'
+                : 'Search school name, curriculum, city, or specialization...'
+            "
             class="search-input"
             [value]="search()"
             (input)="search.set($any($event.target).value)"
@@ -89,7 +106,7 @@ const SPECIALIZATION_OPTIONS = [
               type="button"
               class="clear-search-btn"
               (click)="search.set(''); applyFilters()"
-              aria-label="Clear search"
+              [attr.aria-label]="currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear search'"
             >
               ✕
             </button>
@@ -99,7 +116,11 @@ const SPECIALIZATION_OPTIONS = [
     </section>
 
     <!-- View Navigation Tabs -->
-    <nav class="view-tabs" role="tablist" aria-label="School view selection">
+    <nav
+      class="view-tabs"
+      role="tablist"
+      [attr.aria-label]="currentLang() === 'km' ? 'ជម្រើសទិដ្ឋភាពសាលារៀន' : 'School view selection'"
+    >
       <button
         type="button"
         role="tab"
@@ -120,7 +141,7 @@ const SPECIALIZATION_OPTIONS = [
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
           <polyline points="9 22 9 12 15 12 15 22"></polyline>
         </svg>
-        <span>School Directory</span>
+        <span>{{ currentLang() === 'km' ? 'បញ្ជីសាលារៀន' : 'School Directory' }}</span>
       </button>
       @if (isParent()) {
         <button
@@ -145,7 +166,7 @@ const SPECIALIZATION_OPTIONS = [
             <line x1="16" y1="13" x2="8" y2="13"></line>
             <line x1="16" y1="17" x2="8" y2="17"></line>
           </svg>
-          <span>My Applications</span>
+          <span>{{ currentLang() === 'km' ? 'ពាក្យស្នើសុំរបស់ខ្ញុំ' : 'My Applications' }}</span>
           @if (applications().length > 0) {
             <span class="tab-count-badge">{{ applications().length }}</span>
           }
@@ -157,7 +178,10 @@ const SPECIALIZATION_OPTIONS = [
     @if (activeTab() === 'directory') {
       <div class="content-wrapper">
         <!-- Filters Sidebar -->
-        <aside class="filters-sidebar" aria-label="Directory Filters">
+        <aside
+          class="filters-sidebar"
+          [attr.aria-label]="currentLang() === 'km' ? 'តម្រងស្វែងរកបញ្ជីសាលា' : 'Directory Filters'"
+        >
           <div class="filters-header">
             <span class="filter-icon" aria-hidden="true">
               <svg
@@ -171,12 +195,14 @@ const SPECIALIZATION_OPTIONS = [
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
               </svg>
             </span>
-            <h2>Filters</h2>
+            <h2>{{ currentLang() === 'km' ? 'តម្រងស្វែងរក' : 'Filters' }}</h2>
           </div>
 
           @if (isParent()) {
             <div class="filter-group">
-              <label class="filter-label">Saved Schools</label>
+              <label class="filter-label">{{
+                currentLang() === 'km' ? 'សាលាដែលបានរក្សាទុក' : 'Saved Schools'
+              }}</label>
               <button
                 type="button"
                 class="saved-toggle-btn"
@@ -185,43 +211,71 @@ const SPECIALIZATION_OPTIONS = [
                 [attr.aria-pressed]="savedOnly()"
               >
                 <span class="star-icon" aria-hidden="true">{{ savedOnly() ? '♥' : '♡' }}</span>
-                <span>{{ savedOnly() ? 'Showing Saved Only' : 'Show Saved Only' }}</span>
+                <span>{{
+                  savedOnly()
+                    ? currentLang() === 'km'
+                      ? 'បង្ហាញតែសាលាដែលបានរក្សាទុក'
+                      : 'Showing Saved Only'
+                    : currentLang() === 'km'
+                      ? 'បង្ហាញតែសាលាដែលបានរក្សាទុក'
+                      : 'Show Saved Only'
+                }}</span>
               </button>
             </div>
           }
 
           <div class="filter-group">
-            <label class="filter-label">City / Province</label>
+            <label class="filter-label">{{
+              currentLang() === 'km' ? 'រាជធានី/ខេត្ត' : 'City / Province'
+            }}</label>
             <select
-              aria-label="Filter schools by province"
+              [attr.aria-label]="
+                currentLang() === 'km' ? 'ចម្រាញ់សាលាតាមខេត្ត/ក្រុង' : 'Filter schools by province'
+              "
               class="filter-select"
               [value]="province()"
               (change)="province.set($any($event.target).value); applyFilters()"
             >
-              <option value="">All provinces</option>
+              <option value="">
+                {{ currentLang() === 'km' ? 'គ្រប់ខេត្ត/ក្រុង' : 'All provinces' }}
+              </option>
               @for (city of cities(); track city) {
-                <option [value]="city">{{ city }}</option>
+                <option [value]="city">{{ formatProvinceLabel(city) }}</option>
               }
             </select>
           </div>
 
           <div class="filter-group">
-            <label class="filter-label">Availability</label>
+            <label class="filter-label">{{
+              currentLang() === 'km' ? 'ស្ថានភាពទទួល' : 'Availability'
+            }}</label>
             <select
-              aria-label="Filter schools by availability"
+              [attr.aria-label]="
+                currentLang() === 'km'
+                  ? 'ចម្រាញ់សាលាតាមស្ថានភាពទទួល'
+                  : 'Filter schools by availability'
+              "
               class="filter-select"
               [value]="availability()"
               (change)="availability.set($any($event.target).value); applyFilters()"
             >
-              <option value="">Any availability</option>
-              <option value="IMMEDIATE">Immediate openings</option>
-              <option value="WAITLIST">Waitlist</option>
-              <option value="CLOSED">Closed</option>
+              <option value="">
+                {{ currentLang() === 'km' ? 'គ្រប់ស្ថានភាពទទួល' : 'Any availability' }}
+              </option>
+              <option value="IMMEDIATE">
+                {{ currentLang() === 'km' ? 'មានកន្លែងភ្លាមៗ' : 'Immediate openings' }}
+              </option>
+              <option value="WAITLIST">
+                {{ currentLang() === 'km' ? 'បញ្ជីរង់ចាំ' : 'Waitlist' }}
+              </option>
+              <option value="CLOSED">{{ currentLang() === 'km' ? 'បិទការទទួល' : 'Closed' }}</option>
             </select>
           </div>
 
           <div class="filter-group">
-            <label class="filter-label">Specializations</label>
+            <label class="filter-label">{{
+              currentLang() === 'km' ? 'ជំនាញឯកទេស' : 'Specializations'
+            }}</label>
             <div class="tags-group">
               @for (tag of specializationOptions; track tag) {
                 <button
@@ -230,48 +284,70 @@ const SPECIALIZATION_OPTIONS = [
                   [class.active]="selectedSpecializations().includes(tag)"
                   (click)="toggleSpecialization(tag)"
                 >
-                  {{ tag }}
+                  {{ formatSpecialization(tag) }}
                 </button>
               }
             </div>
           </div>
 
           <button class="apply-filters-btn" (click)="applyFilters()" [disabled]="loading()">
-            {{ loading() ? 'Searching…' : 'Apply Filters' }}
+            {{
+              loading()
+                ? currentLang() === 'km'
+                  ? 'កំពុងស្វែងរក…'
+                  : 'Searching…'
+                : currentLang() === 'km'
+                  ? 'អនុវត្តតម្រង'
+                  : 'Apply Filters'
+            }}
           </button>
           <button class="clear-filters-btn" type="button" (click)="clearFilters()">
-            Reset filters
+            {{ currentLang() === 'km' ? 'កំណត់តម្រងឡើងវិញ' : 'Reset filters' }}
           </button>
         </aside>
 
         <!-- Schools List -->
         <div class="schools-list">
           @if (loading()) {
-            <ac-ui-spinner label="Loading schools…" />
+            <ac-ui-spinner
+              [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកបញ្ជីសាលារៀន…' : 'Loading schools…'"
+            />
           } @else if (error()) {
             <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
           } @else if (!schools().length) {
             <ac-ui-empty-state
-              title="No schools found"
-              message="Try adjusting your search query or location filters to find matching schools."
+              [title]="currentLang() === 'km' ? 'រកមិនឃើញសាលារៀនទេ' : 'No schools found'"
+              [message]="
+                currentLang() === 'km'
+                  ? 'សូមសាកល្បងផ្លាស់ប្តូរពាក្យស្វែងរក ឬតម្រងទីតាំង ដើម្បីស្វែងរកសាលារៀនដែលត្រូវគ្នា។'
+                  : 'Try adjusting your search query or location filters to find matching schools.'
+              "
             >
               <button type="button" class="btn-secondary" (click)="clearFilters()">
-                Clear filters
+                {{ currentLang() === 'km' ? 'សម្អាតតម្រង' : 'Clear filters' }}
               </button>
             </ac-ui-empty-state>
           } @else {
             <div class="list-header">
               <span class="results-count">
-                <strong>{{ pagination()?.total ?? schools().length }}</strong> schools available in
-                directory
+                <strong>{{ pagination()?.total ?? schools().length }}</strong>
+                {{
+                  currentLang() === 'km' ? ' សាលារៀនក្នុងបញ្ជី' : ' schools available in directory'
+                }}
               </span>
               <div class="sort-dropdown">
-                <label>Sort by:</label>
-                <select aria-label="Sort schools">
-                  <option>Highest Rated</option>
-                  <option>Nearest</option>
-                  <option>Most Reviews</option>
-                  <option>Name A-Z</option>
+                <label>{{ currentLang() === 'km' ? 'តម្រៀបតាម:' : 'Sort by:' }}</label>
+                <select
+                  [attr.aria-label]="currentLang() === 'km' ? 'តម្រៀបសាលារៀន' : 'Sort schools'"
+                >
+                  <option>
+                    {{ currentLang() === 'km' ? 'ការវាយតម្លៃខ្ពស់បំផុត' : 'Highest Rated' }}
+                  </option>
+                  <option>{{ currentLang() === 'km' ? 'ជិតបំផុត' : 'Nearest' }}</option>
+                  <option>
+                    {{ currentLang() === 'km' ? 'ការវាយតម្លៃច្រើនបំផុត' : 'Most Reviews' }}
+                  </option>
+                  <option>{{ currentLang() === 'km' ? 'ឈ្មោះពី A ដល់ Z' : 'Name A-Z' }}</option>
                 </select>
               </div>
             </div>
@@ -282,7 +358,9 @@ const SPECIALIZATION_OPTIONS = [
                   <a
                     class="school-link"
                     [routerLink]="['/schools', school.id]"
-                    aria-label="View school profile"
+                    [attr.aria-label]="
+                      currentLang() === 'km' ? 'មើលព័ត៌មានលម្អិតសាលា' : 'View school profile'
+                    "
                   >
                     <img
                       [src]="
@@ -305,11 +383,14 @@ const SPECIALIZATION_OPTIONS = [
                         >
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
-                        Verified
+                        {{ currentLang() === 'km' ? 'បានផ្ទៀងផ្ទាត់' : 'Verified' }}
                       </span>
                       <span class="accreditation-badge">
-                        <span class="badge-km">ដៃគូអប់រំពិសេសដែលបានបញ្ជាក់</span>
-                        <span class="badge-en">(Accredited Special Ed Partner)</span>
+                        {{
+                          currentLang() === 'km'
+                            ? 'ដៃគូអប់រំពិសេសដែលបានបញ្ជាក់'
+                            : 'Accredited Special Ed Partner'
+                        }}
                       </span>
                     }
                   </a>
@@ -319,7 +400,13 @@ const SPECIALIZATION_OPTIONS = [
                       class="card-favorite-btn"
                       [class.active]="school.isFavorite"
                       [attr.aria-label]="
-                        school.isFavorite ? 'Remove from saved schools' : 'Save school to favorites'
+                        school.isFavorite
+                          ? currentLang() === 'km'
+                            ? 'លុបចេញពីសាលាដែលបានរក្សាទុក'
+                            : 'Remove from saved schools'
+                          : currentLang() === 'km'
+                            ? 'រក្សាទុកសាលា'
+                            : 'Save school to favorites'
                       "
                       (click)="toggleSchoolFavorite(school, $event)"
                     >
@@ -331,7 +418,7 @@ const SPECIALIZATION_OPTIONS = [
                 <div class="school-content">
                   <div class="school-header">
                     <a class="school-link" [routerLink]="['/schools', school.id]">
-                      <h3>{{ school.name }}</h3>
+                      <h3>{{ formatSchoolName(school.name, currentLang()) }}</h3>
                     </a>
                     @if (school.rating !== null) {
                       <div class="rating">
@@ -355,7 +442,7 @@ const SPECIALIZATION_OPTIONS = [
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                       <circle cx="12" cy="10" r="3"></circle>
                     </svg>
-                    <span>{{ school.address }}, {{ school.city }}</span>
+                    <span>{{ school.address }}, {{ formatProvinceLabel(school.city) }}</span>
                   </div>
 
                   @if (school.description) {
@@ -365,7 +452,7 @@ const SPECIALIZATION_OPTIONS = [
                   @if (school.specializations.length) {
                     <div class="specializations-list">
                       @for (spec of school.specializations; track spec) {
-                        <span class="spec-tag">{{ spec }}</span>
+                        <span class="spec-tag">{{ formatSpecialization(spec) }}</span>
                       }
                     </div>
                   }
@@ -382,7 +469,13 @@ const SPECIALIZATION_OPTIONS = [
                     <div class="meta-item">
                       <span class="meta-icon" aria-hidden="true">👥</span>
                       <div>
-                        <span class="meta-label">INCLUSIVE SUPPORT RATIO</span>
+                        <span class="meta-label">
+                          {{
+                            currentLang() === 'km'
+                              ? 'សមាមាត្រសិស្សនិងគ្រូ'
+                              : 'INCLUSIVE SUPPORT RATIO'
+                          }}
+                        </span>
                         <span class="meta-value">{{ school.studentTeacherRatio ?? '—' }}</span>
                       </div>
                     </div>
@@ -390,7 +483,9 @@ const SPECIALIZATION_OPTIONS = [
                     <div class="meta-item">
                       <span class="meta-icon" aria-hidden="true">📅</span>
                       <div>
-                        <span class="meta-label">AVAILABILITY</span>
+                        <span class="meta-label">
+                          {{ currentLang() === 'km' ? 'ស្ថានភាពទទួល' : 'AVAILABILITY' }}
+                        </span>
                         <span
                           class="meta-value"
                           [class.waitlist]="school.availabilityStatus === 'WAITLIST'"
@@ -414,12 +509,16 @@ const SPECIALIZATION_OPTIONS = [
                     >
                       {{
                         school.availabilityStatus === 'CLOSED'
-                          ? 'Not accepting requests'
-                          : 'Request Enrollment'
+                          ? currentLang() === 'km'
+                            ? 'បិទការទទួលពាក្យ'
+                            : 'Not accepting requests'
+                          : currentLang() === 'km'
+                            ? 'ស្នើសុំចុះឈ្មោះ'
+                            : 'Request Enrollment'
                       }}
                     </button>
                     <a class="view-details-link" [routerLink]="['/schools', school.id]">
-                      View Profile →
+                      {{ currentLang() === 'km' ? 'មើលព័ត៌មានលម្អិត →' : 'View Profile →' }}
                     </a>
                   </div>
                 </div>
@@ -432,8 +531,8 @@ const SPECIALIZATION_OPTIONS = [
                 [totalPages]="meta.totalPages"
                 [total]="meta.total"
                 [perPage]="meta.limit"
-                itemNoun="schools"
-                label="School directory pages"
+                [itemNoun]="currentLang() === 'km' ? 'សាលារៀន' : 'schools'"
+                [label]="currentLang() === 'km' ? 'ទំព័របញ្ជីសាលារៀន' : 'School directory pages'"
                 (pageChange)="goToPage($event)"
               />
             }
@@ -444,25 +543,52 @@ const SPECIALIZATION_OPTIONS = [
 
     <!-- ── APPLICATIONS TRACKER VIEW ───────────────────────────────── -->
     @else if (activeTab() === 'applications') {
-      <section class="applications-container" aria-label="My School Applications">
+      <section
+        class="applications-container"
+        [attr.aria-label]="
+          currentLang() === 'km' ? 'ពាក្យស្នើសុំសាលារបស់ខ្ញុំ' : 'My School Applications'
+        "
+      >
         <div class="applications-header">
-          <h2>My Enrollment Applications</h2>
+          <h2>
+            {{
+              currentLang() === 'km' ? 'ពាក្យស្នើសុំចូលរៀនរបស់ខ្ញុំ' : 'My Enrollment Applications'
+            }}
+          </h2>
           <p class="applications-intro">
-            Track admission requests submitted to special education schools for your children.
+            {{
+              currentLang() === 'km'
+                ? 'តាមដានស្ថានភាពពាក្យស្នើសុំចូលរៀនដែលបានដាក់ទៅកាន់សាលាអប់រំពិសេសសម្រាប់កូនរបស់អ្នក។'
+                : 'Track admission requests submitted to special education schools for your children.'
+            }}
           </p>
         </div>
 
         @if (loadingApplications()) {
-          <ac-ui-spinner label="Loading your applications…" />
+          <ac-ui-spinner
+            [label]="
+              currentLang() === 'km'
+                ? 'កំពុងផ្ទុកពាក្យស្នើសុំរបស់អ្នក…'
+                : 'Loading your applications…'
+            "
+          />
         } @else if (applicationsError(); as err) {
           <ac-ui-message tone="error">{{ err }}</ac-ui-message>
         } @else if (applications().length === 0) {
           <ac-ui-empty-state
-            title="No enrollment applications yet"
-            message="You haven't submitted any enrollment requests yet. Browse the school directory to find a school suited for your child."
+            [title]="
+              currentLang() === 'km'
+                ? 'មិនទាន់មានពាក្យស្នើសុំចូលរៀននៅឡើយទេ'
+                : 'No enrollment applications yet'
+            "
+            [message]="
+              currentLang() === 'km'
+                ? 'អ្នកមិនទាន់បានដាក់ពាក្យស្នើសុំចូលរៀនណាមួយនៅឡើយទេ។ សូមចូលទៅកាន់បញ្ជីសាលារៀនដើម្បីស្វែងរកសាលាដែលសមស្របសម្រាប់កូនរបស់អ្នក។'
+                : 'You haven’t submitted any enrollment requests yet. Browse the school directory to find a school suited for your child.'
+            "
           >
             <button type="button" class="apply-filters-btn" (click)="setTab('directory')">
-              Browse School Directory
+              {{ currentLang() === 'km' ? 'ស្វែងរកបញ្ជីសាលារៀន' : 'Browse School Directory' }}
             </button>
           </ac-ui-empty-state>
         } @else {
@@ -471,7 +597,11 @@ const SPECIALIZATION_OPTIONS = [
             <div
               class="application-filter-pills"
               role="tablist"
-              aria-label="Filter applications by status"
+              [attr.aria-label]="
+                currentLang() === 'km'
+                  ? 'ចម្រាញ់ពាក្យសុំតាមស្ថានភាព'
+                  : 'Filter applications by status'
+              "
             >
               <button
                 type="button"
@@ -480,7 +610,11 @@ const SPECIALIZATION_OPTIONS = [
                 [class.active]="applicationStatusFilter() === 'ALL'"
                 (click)="applicationStatusFilter.set('ALL')"
               >
-                All ({{ applications().length }})
+                {{
+                  currentLang() === 'km'
+                    ? 'ទាំងអស់ (' + applications().length + ')'
+                    : 'All (' + applications().length + ')'
+                }}
               </button>
               <button
                 type="button"
@@ -489,7 +623,11 @@ const SPECIALIZATION_OPTIONS = [
                 [class.active]="applicationStatusFilter() === 'REQUESTED'"
                 (click)="applicationStatusFilter.set('REQUESTED')"
               >
-                Pending Review ({{ countByStatus('REQUESTED') }})
+                {{
+                  currentLang() === 'km'
+                    ? 'កំពុងរង់ចាំការពិនិត្យ (' + countByStatus('REQUESTED') + ')'
+                    : 'Pending Review (' + countByStatus('REQUESTED') + ')'
+                }}
               </button>
               <button
                 type="button"
@@ -498,7 +636,11 @@ const SPECIALIZATION_OPTIONS = [
                 [class.active]="applicationStatusFilter() === 'APPROVED'"
                 (click)="applicationStatusFilter.set('APPROVED')"
               >
-                Accepted ({{ countByStatus('APPROVED') }})
+                {{
+                  currentLang() === 'km'
+                    ? 'បានទទួលយក (' + countByStatus('APPROVED') + ')'
+                    : 'Accepted (' + countByStatus('APPROVED') + ')'
+                }}
               </button>
               <button
                 type="button"
@@ -507,7 +649,11 @@ const SPECIALIZATION_OPTIONS = [
                 [class.active]="applicationStatusFilter() === 'REJECTED'"
                 (click)="applicationStatusFilter.set('REJECTED')"
               >
-                Declined ({{ countByStatus('REJECTED') }})
+                {{
+                  currentLang() === 'km'
+                    ? 'បានបដិសេធ (' + countByStatus('REJECTED') + ')'
+                    : 'Declined (' + countByStatus('REJECTED') + ')'
+                }}
               </button>
             </div>
           </div>
@@ -518,7 +664,7 @@ const SPECIALIZATION_OPTIONS = [
                 <div class="app-card-header">
                   <div class="app-school-info">
                     <a class="app-school-link" [routerLink]="['/schools', app.schoolId]">
-                      <h3>{{ app.schoolName }}</h3>
+                      <h3>{{ formatSchoolName(app.schoolName, currentLang()) }}</h3>
                     </a>
                     <p class="app-school-location">
                       <svg
@@ -534,31 +680,44 @@ const SPECIALIZATION_OPTIONS = [
                         <circle cx="12" cy="10" r="3"></circle>
                       </svg>
                       <span>{{
-                        app.schoolCity || app.schoolAddress || 'Location details on school profile'
+                        app.schoolCity ||
+                          app.schoolAddress ||
+                          (currentLang() === 'km'
+                            ? 'ព័ត៌មានលម្អិតទីតាំងលើប្រវត្តិសាលា'
+                            : 'Location details on school profile')
                       }}</span>
                     </p>
                   </div>
                   <span class="app-status-badge" [class]="statusBadgeClass(app.status)">
-                    <span class="badge-km">{{ statusBadgeLabelKm(app.status) }}</span>
-                    <span class="badge-en">({{ statusBadgeLabel(app.status) }})</span>
+                    {{
+                      currentLang() === 'km'
+                        ? statusBadgeLabelKm(app.status)
+                        : statusBadgeLabel(app.status)
+                    }}
                   </span>
                 </div>
 
                 <div class="app-card-body">
                   <div class="app-meta-row">
                     <div class="app-meta-item">
-                      <span class="app-meta-label">Child</span>
+                      <span class="app-meta-label">{{
+                        currentLang() === 'km' ? 'កុមារ' : 'Child'
+                      }}</span>
                       <strong class="app-meta-value">{{ app.childName }}</strong>
                     </div>
                     <div class="app-meta-item">
-                      <span class="app-meta-label">Submitted On</span>
+                      <span class="app-meta-label">{{
+                        currentLang() === 'km' ? 'កាលបរិច្ឆេទដាក់ពាក្យ' : 'Submitted On'
+                      }}</span>
                       <span class="app-meta-value">{{ app.createdAt | date: 'mediumDate' }}</span>
                     </div>
                   </div>
 
                   @if (app.message) {
                     <div class="app-message-box">
-                      <span class="app-message-label">Note to school:</span>
+                      <span class="app-message-label">{{
+                        currentLang() === 'km' ? 'កំណត់ចំណាំផ្ញើទៅសាលា:' : 'Note to school:'
+                      }}</span>
                       <p class="app-message-text">"{{ app.message }}"</p>
                     </div>
                   }
@@ -567,54 +726,55 @@ const SPECIALIZATION_OPTIONS = [
                   @if (app.status === 'REQUESTED') {
                     <div class="app-response-note-box status-requested">
                       <span class="response-note-title"
-                        >⏳ ស្ថានភាពពិនិត្យពាក្យសុំ (Admissions Review Status)</span
+                        >⏳
+                        {{
+                          currentLang() === 'km'
+                            ? 'ស្ថានភាពពិនិត្យពាក្យសុំ'
+                            : 'Admissions Review Status'
+                        }}</span
                       >
                       <p class="response-note-text">
-                        <span class="note-km"
-                          >កំពុងរង់ចាំការពិនិត្យ៖ ពាក្យសុំ
-                          និងទិន្នន័យការលូតលាស់របស់កុមារកំពុងត្រូវបានពិនិត្យដោយគណៈកម្មការសាលា (៣-៥
-                          ថ្ងៃធ្វើការ)។</span
-                        >
-                        <span class="note-en"
-                          >Pending Review: Your child's application and developmental profile are
-                          currently under review by the admissions team. Turnaround is typically 3–5
-                          school days.</span
-                        >
+                        {{
+                          currentLang() === 'km'
+                            ? 'កំពុងរង់ចាំការពិនិត្យ៖ ពាក្យសុំ និងទិន្នន័យការលូតលាស់របស់កុមារកំពុងត្រូវបានពិនិត្យដោយគណៈកម្មការសាលា (៣-៥ ថ្ងៃធ្វើការ)។'
+                            : 'Pending Review: Your child’s application and developmental profile are currently under review by the admissions team. Turnaround is typically 3–5 school days.'
+                        }}
                       </p>
                     </div>
                   } @else if (app.status === 'APPROVED') {
                     <div class="app-response-note-box status-approved">
                       <span class="response-note-title"
-                        >✓ ការឆ្លើយតប និងការសម្រេចរបស់សាលា (School Response &amp; Decision)</span
+                        >✓
+                        {{
+                          currentLang() === 'km'
+                            ? 'ការឆ្លើយតប និងការសម្រេចរបស់សាលា'
+                            : 'School Response & Decision'
+                        }}</span
                       >
                       <p class="response-note-text">
-                        <span class="note-km"
-                          >ពាក្យសុំត្រូវបានទទួលយក! គណៈកម្មការសាលាបានយល់ព្រមទទួលពាក្យសុំចូលរៀន។
-                          លោកអ្នកនឹងទទួលបានកញ្ចប់ឯកសារចុះឈ្មោះក្នុងពេលឆាប់ៗនេះ។</span
-                        >
-                        <span class="note-en"
-                          >Application Accepted! The admissions committee has accepted your
-                          application. You will receive an enrollment packet and classroom
-                          orientation schedule shortly.</span
-                        >
+                        {{
+                          currentLang() === 'km'
+                            ? 'ពាក្យសុំត្រូវបានទទួលយក! គណៈកម្មការសាលាបានយល់ព្រមទទួលពាក្យសុំចូលរៀន។ លោកអ្នកនឹងទទួលបានកញ្ចប់ឯកសារចុះឈ្មោះក្នុងពេលឆាប់ៗនេះ។'
+                            : 'Application Accepted! The admissions committee has accepted your application. You will receive an enrollment packet and classroom orientation schedule shortly.'
+                        }}
                       </p>
                     </div>
                   } @else if (app.status === 'REJECTED') {
                     <div class="app-response-note-box status-rejected">
                       <span class="response-note-title"
-                        >✕ ការឆ្លើយតប និងការសម្រេចរបស់សាលា (School Response &amp; Decision)</span
+                        >✕
+                        {{
+                          currentLang() === 'km'
+                            ? 'ការឆ្លើយតប និងការសម្រេចរបស់សាលា'
+                            : 'School Response & Decision'
+                        }}</span
                       >
                       <p class="response-note-text">
-                        <span class="note-km"
-                          >ពាក្យសុំត្រូវបានបដិសេធ៖
-                          ថ្នាក់រៀនអប់រំពិសេសមានចំនួនកំណត់ពេញសម្រាប់វគ្គនេះ។
-                          សូមទាក់ទងអ្នកសម្របសម្រួលសម្រាប់ព័ត៌មានបញ្ជីរង់ចាំ (Waitlist)។</span
-                        >
-                        <span class="note-en"
-                          >Application Declined: Special education classroom capacity is currently
-                          full for this cohort. Please contact the admissions coordinator regarding
-                          waitlist opportunities.</span
-                        >
+                        {{
+                          currentLang() === 'km'
+                            ? 'ពាក្យសុំត្រូវបានបដិសេធ៖ ថ្នាក់រៀនអប់រំពិសេសមានចំនួនកំណត់ពេញសម្រាប់វគ្គនេះ។ សូមទាក់ទងអ្នកសម្របសម្រួលសម្រាប់ព័ត៌មានបញ្ជីរង់ចាំ។'
+                            : 'Application Declined: Special education classroom capacity is currently full for this cohort. Please contact the admissions coordinator regarding waitlist opportunities.'
+                        }}
                       </p>
                     </div>
                   }
@@ -622,7 +782,7 @@ const SPECIALIZATION_OPTIONS = [
 
                 <div class="app-card-footer">
                   <a class="view-profile-link" [routerLink]="['/schools', app.schoolId]">
-                    View School Profile →
+                    {{ currentLang() === 'km' ? 'មើលព័ត៌មានសាលា →' : 'View School Profile →' }}
                   </a>
                 </div>
               </article>
@@ -635,37 +795,59 @@ const SPECIALIZATION_OPTIONS = [
     <!-- Enrollment request dialog -->
     @if (requestDialogSchool(); as dialogSchool) {
       <ac-ui-dialog
-        heading="Request Enrollment"
-        [description]="dialogSchool.name + ' — ' + dialogSchool.city"
+        [heading]="currentLang() === 'km' ? 'ស្នើសុំចុះឈ្មោះចូលរៀន' : 'Request Enrollment'"
+        [description]="
+          formatSchoolName(dialogSchool.name, currentLang()) +
+          ' — ' +
+          formatProvinceLabel(dialogSchool.city)
+        "
         size="md"
         (close)="closeRequestDialog()"
       >
         @if (children().length === 0) {
           <div class="dialog-empty-notice">
             <p class="dialog-hint">
-              Add a child to your family profile first — then you can request enrollment here.
+              {{
+                currentLang() === 'km'
+                  ? 'សូមបន្ថែមព័ត៌មានកុមារទៅក្នុងគណនីគ្រួសាររបស់អ្នកជាមុនសិន ទើបអាចស្នើសុំចុះឈ្មោះបាន។'
+                  : 'Add a child to your family profile first — then you can request enrollment here.'
+              }}
             </p>
             <a class="btn-primary" routerLink="/children/new" (click)="closeRequestDialog()">
-              + Add Child Profile
+              {{ currentLang() === 'km' ? '+ បន្ថែមប្រវត្តិកុមារ' : '+ Add Child Profile' }}
             </a>
           </div>
           <div dialogFooter class="dialog-actions">
             <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
-              Close
+              {{ currentLang() === 'km' ? 'បិទ' : 'Close' }}
             </button>
           </div>
         } @else if (requestSubmitted(); as done) {
           <div class="success-box" role="status">
-            <strong>Request sent.</strong>
-            {{ done.childName }}'s enrollment request was delivered — {{ done.schoolName }}
-            will review it and respond on your notifications.
+            <strong>{{
+              currentLang() === 'km' ? 'បានផ្ញើសំណើដោយជោគជ័យ។' : 'Request sent.'
+            }}</strong>
+            {{
+              currentLang() === 'km'
+                ? 'សំណើសុំចុះឈ្មោះសម្រាប់ ' +
+                  done.childName +
+                  ' ត្រូវបានបញ្ជូនទៅកាន់ ' +
+                  formatSchoolName(done.schoolName, currentLang()) +
+                  ' រួចហើយ — ក្រុមការងារសាលានឹងពិនិត្យ និងជូនដំណឹងដល់អ្នក។'
+                : done.childName +
+                  '’s enrollment request was delivered — ' +
+                  done.schoolName +
+                  ' will review it and respond on your notifications.'
+            }}
           </div>
           <div dialogFooter class="dialog-actions">
-            <button type="button" class="btn-secondary" (click)="closeRequestDialog()">Done</button>
+            <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
+              {{ currentLang() === 'km' ? 'រួចរាល់' : 'Done' }}
+            </button>
           </div>
         } @else {
           <label class="dialog-field">
-            <span class="dialog-label">Child</span>
+            <span class="dialog-label">{{ currentLang() === 'km' ? 'កុមារ' : 'Child' }}</span>
             <select
               class="dialog-input"
               [value]="selectedChildId()"
@@ -678,12 +860,22 @@ const SPECIALIZATION_OPTIONS = [
           </label>
 
           <label class="dialog-field">
-            <span class="dialog-label">Message to the school (optional)</span>
+            <span class="dialog-label">
+              {{
+                currentLang() === 'km'
+                  ? 'សារផ្ញើទៅសាលា (មិនតម្រូវ)'
+                  : 'Message to the school (optional)'
+              }}
+            </span>
             <textarea
               class="dialog-input"
               rows="3"
               maxlength="2000"
-              placeholder="Share anything that helps the school — your child's needs, goals, or questions."
+              [placeholder]="
+                currentLang() === 'km'
+                  ? 'ចែករំលែកព័ត៌មានបន្ថែមអំពីកូនរបស់អ្នក តម្រូវការ គោលដៅ ឬសំណួរផ្សេងៗ...'
+                  : 'Share anything that helps the school — your child’s needs, goals, or questions.'
+              "
               [value]="requestMessage()"
               (input)="requestMessage.set($any($event.target).value)"
             ></textarea>
@@ -695,7 +887,7 @@ const SPECIALIZATION_OPTIONS = [
 
           <div dialogFooter class="dialog-actions">
             <button type="button" class="btn-secondary" (click)="closeRequestDialog()">
-              Cancel
+              {{ currentLang() === 'km' ? 'បោះបង់' : 'Cancel' }}
             </button>
             <button
               type="button"
@@ -703,7 +895,15 @@ const SPECIALIZATION_OPTIONS = [
               (click)="submitRequest()"
               [disabled]="requestSubmitting() || !selectedChildId()"
             >
-              {{ requestSubmitting() ? 'Sending…' : 'Send request' }}
+              {{
+                requestSubmitting()
+                  ? currentLang() === 'km'
+                    ? 'កំពុងផ្ញើ…'
+                    : 'Sending…'
+                  : currentLang() === 'km'
+                    ? 'ផ្ញើសំណើ'
+                    : 'Send request'
+              }}
             </button>
           </div>
         }
@@ -1758,6 +1958,9 @@ export class SchoolsPage implements OnInit {
   private readonly childrenApi = inject(ChildrenApi);
   private readonly requestsApi = inject(EnrollmentRequestsApi);
   private readonly auth = inject(AuthService);
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
+  protected readonly formatSchoolName = formatSchoolName;
 
   readonly schools = signal<readonly SchoolViewModel[]>([]);
   readonly loading = signal(false);
@@ -1800,8 +2003,28 @@ export class SchoolsPage implements OnInit {
   readonly requestError = signal<string | null>(null);
   readonly requestSubmitted = signal<{ childName: string; schoolName: string } | null>(null);
 
+  protected formatProvinceLabel(city: string): string {
+    return formatCityBilingual(city, this.currentLang());
+  }
+
+  protected formatSpecialization(spec: string): string {
+    if (this.currentLang() === 'en') return spec;
+    switch (spec.trim().toLowerCase()) {
+      case 'speech therapy':
+        return 'ការព្យាបាលការនិយាយ';
+      case 'sensory integration':
+        return 'ការរួមបញ្ចូលញ្ញាណ';
+      case 'occupational therapy':
+        return 'ការព្យាបាលការបំពេញមុខងារ';
+      case 'social skills':
+        return 'ជំនាញសង្គម';
+      default:
+        return spec;
+    }
+  }
+
   formatFacility(tag: string): string {
-    return formatFacilityTag(tag);
+    return formatFacilityTag(tag, this.currentLang());
   }
 
   ngOnInit() {
@@ -1838,7 +2061,11 @@ export class SchoolsPage implements OnInit {
         this.loadingApplications.set(false);
       },
       error: () => {
-        this.applicationsError.set('Could not load your applications. Please try again.');
+        this.applicationsError.set(
+          this.currentLang() === 'km'
+            ? 'មិនអាចផ្ទុកពាក្យស្នើសុំរបស់អ្នកបានទេ។ សូមព្យាយាមម្តងទៀត។'
+            : 'Could not load your applications. Please try again.',
+        );
         this.loadingApplications.set(false);
       },
     });
@@ -1974,6 +2201,16 @@ export class SchoolsPage implements OnInit {
   }
 
   availabilityLabel(status: SchoolResponse['availabilityStatus']): string {
+    if (this.currentLang() === 'km') {
+      switch (status) {
+        case 'IMMEDIATE':
+          return 'មានកន្លែងភ្លាមៗ';
+        case 'WAITLIST':
+          return 'បញ្ជីរង់ចាំ';
+        case 'CLOSED':
+          return 'បិទការទទួល';
+      }
+    }
     switch (status) {
       case 'IMMEDIATE':
         return 'Immediate';
@@ -2039,12 +2276,22 @@ export class SchoolsPage implements OnInit {
           const status = err?.status as number | undefined;
           if (status === 409) {
             this.requestError.set(
-              'This child already has an enrollment or an open request at this school.',
+              this.currentLang() === 'km'
+                ? 'កុមារនេះមានពាក្យសុំ ឬបានចុះឈ្មោះនៅសាលានេះរួចរាល់ហើយ។'
+                : 'This child already has an enrollment or an open request at this school.',
             );
           } else if (status === 404) {
-            this.requestError.set('This school or child could not be found.');
+            this.requestError.set(
+              this.currentLang() === 'km'
+                ? 'រកមិនឃើញសាលារៀន ឬកុមារនេះទេ។'
+                : 'This school or child could not be found.',
+            );
           } else {
-            this.requestError.set('Could not send the request. Please try again.');
+            this.requestError.set(
+              this.currentLang() === 'km'
+                ? 'មិនអាចផ្ញើសំណើបានទេ។ សូមព្យាយាមម្តងទៀត។'
+                : 'Could not send the request. Please try again.',
+            );
           }
         },
       });

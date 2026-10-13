@@ -63,12 +63,25 @@ export const CAMBODIAN_FACILITY_MAP: Record<string, { km: string; en: string; bi
     },
   };
 
-export function formatFacilityTag(tag: string): string {
+export function formatFacilityTag(tag: string, lang = 'km'): string {
   const normalized = tag.toLowerCase().trim();
   if (CAMBODIAN_FACILITY_MAP[normalized]) {
-    return CAMBODIAN_FACILITY_MAP[normalized].bilingual;
+    return lang === 'km'
+      ? CAMBODIAN_FACILITY_MAP[normalized].km
+      : CAMBODIAN_FACILITY_MAP[normalized].en;
   }
   return tag;
+}
+
+export function formatSchoolName(name: string, lang = 'km'): string {
+  if (!name) return '';
+  const match = name.match(/^(.*?)\s*\((.*?)\)$/);
+  if (match) {
+    const en = match[1].trim();
+    const km = match[2].trim();
+    return lang === 'km' ? km : en;
+  }
+  return name;
 }
 
 export const CAMBODIAN_INCLUSIVE_SCHOOLS: readonly CambodianSchoolItem[] = [

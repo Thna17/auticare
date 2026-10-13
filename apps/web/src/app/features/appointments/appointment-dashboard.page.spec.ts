@@ -9,10 +9,12 @@ import { API_BASE_URL } from '../../core/config/api.config';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppointmentsFacade } from './state/appointments.facade';
 import { AppointmentDashboardPage } from './appointment-dashboard.page';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 describe('AppointmentDashboardPage', () => {
   let fixture: ComponentFixture<AppointmentDashboardPage>;
   let component: AppointmentDashboardPage;
+  let i18nService: I18nService;
   let mockAuthService: {
     parent: ReturnType<typeof signal>;
   };
@@ -85,8 +87,12 @@ describe('AppointmentDashboardPage', () => {
         provideRouter([]),
         { provide: AuthService, useValue: mockAuthService },
         { provide: AppointmentsFacade, useValue: mockFacade },
+        I18nService,
       ],
     }).compileComponents();
+
+    i18nService = TestBed.inject(I18nService);
+    i18nService.setLanguage('en');
 
     fixture = TestBed.createComponent(AppointmentDashboardPage);
     component = fixture.componentInstance;

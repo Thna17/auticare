@@ -110,9 +110,9 @@ export function formatSpecialtyBilingual(specialty: string, lang = 'km'): string
   const def = CAMBODIAN_SPECIALTY_MAP[norm];
   if (!def) return specialty;
   if (lang === 'km') {
-    return `${def.km} (${def.en})`;
+    return def.km;
   }
-  return `${def.en} (${def.km})`;
+  return def.en;
 }
 
 export function formatCityBilingual(city: string, lang = 'km'): string {
@@ -122,9 +122,20 @@ export function formatCityBilingual(city: string, lang = 'km'): string {
   );
   if (!match) return city;
   if (lang === 'km') {
-    return `${match.nameKm} (${match.nameEn})`;
+    return match.nameKm;
   }
-  return `${match.nameEn} (${match.nameKm})`;
+  return match.nameEn;
+}
+
+export function formatHospitalName(name: string, lang = 'km'): string {
+  if (!name) return '';
+  const match = name.match(/^(.*?)\s*\((.*?)\)$/);
+  if (match) {
+    const en = match[1].trim();
+    const km = match[2].trim();
+    return lang === 'km' ? km : en;
+  }
+  return name;
 }
 
 export const CAMBODIAN_HOSPITALS_SEED: readonly HospitalResponse[] = [

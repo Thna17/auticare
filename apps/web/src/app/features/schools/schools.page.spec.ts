@@ -8,9 +8,11 @@ import type { AdmissionRequestResponse, ParentResponse, SchoolResponse } from '@
 import { AuthService } from '../../core/auth/auth.service';
 import { API_BASE_URL } from '../../core/config/api.config';
 import { SchoolsPage } from './schools.page';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 describe('SchoolsPage', () => {
   let httpTesting: HttpTestingController;
+  let i18nService: I18nService;
 
   const mockSchools: SchoolResponse[] = [
     {
@@ -82,10 +84,13 @@ describe('SchoolsPage', () => {
         provideRouter([]),
         { provide: API_BASE_URL, useValue: '/api/v1' },
         { provide: AuthService, useValue: mockAuthService },
+        I18nService,
       ],
     });
 
     httpTesting = TestBed.inject(HttpTestingController);
+    i18nService = TestBed.inject(I18nService);
+    i18nService.setLanguage('en');
   });
 
   afterEach(() => {
@@ -295,30 +300,47 @@ describe('SchoolsPage', () => {
     const fixture = TestBed.createComponent(SchoolsPage);
     flushInitialRequests(fixture);
 
-    const root = fixture.nativeElement as HTMLElement;
-    const card = root.querySelector('.school-card');
+    let root = fixture.nativeElement as HTMLElement;
+    let card = root.querySelector('.school-card');
     expect(card).toBeTruthy();
 
-    // Bilingual accreditation badge
-    const badge = card?.querySelector('.accreditation-badge');
-    expect(badge?.textContent).toContain('ដៃគូអប់រំពិសេសដែលបានបញ្ជាក់');
+    // In English mode ('en')
+    let badge = card?.querySelector('.accreditation-badge');
     expect(badge?.textContent).toContain('Accredited Special Ed Partner');
 
-    // Switch to Applications tab
-    const appTab = root.querySelectorAll('.view-tab')[1] as HTMLButtonElement;
+    // Switch to Applications tab in English
+    let appTab = root.querySelectorAll('.view-tab')[1] as HTMLButtonElement;
     appTab.click();
     fixture.detectChanges();
 
-    const appCards = root.querySelectorAll('.application-card');
-    // Pending card has Khmer review guidance
+    let appCards = root.querySelectorAll('.application-card');
+    expect(appCards[0].textContent).toContain('Admissions Review Status');
+    expect(appCards[0].textContent).toContain('Pending Review');
+    expect(appCards[1].textContent).toContain('School Response & Decision');
+    expect(appCards[1].textContent).toContain('Application Accepted!');
+
+    // Switch to Khmer mode ('km')
+    i18nService.setLanguage('km');
+    fixture.detectChanges();
+
+    root = fixture.nativeElement as HTMLElement;
+    appCards = root.querySelectorAll('.application-card');
     expect(appCards[0].textContent).toContain('ស្ថានភាពពិនិត្យពាក្យសុំ');
     expect(appCards[0].textContent).toContain('កំពុងរង់ចាំការពិនិត្យ');
-    expect(appCards[0].textContent).toContain('Pending Review');
-
-    // Accepted card has Khmer acceptance guidance
     expect(appCards[1].textContent).toContain('ការឆ្លើយតប និងការសម្រេចរបស់សាលា');
     expect(appCards[1].textContent).toContain('ពាក្យសុំត្រូវបានទទួលយក');
-    expect(appCards[1].textContent).toContain('Application Accepted!');
+
+    // Directory card badge in Khmer
+    appTab = root.querySelectorAll('.view-tab')[0] as HTMLButtonElement;
+    appTab.click();
+    fixture.detectChanges();
+    card = root.querySelector('.school-card');
+    badge = card?.querySelector('.accreditation-badge');
+    expect(badge?.textContent).toContain('ដៃគូអប់រំពិសេសដែលបានបញ្ជាក់');
+
+    // Reset back to English
+    i18nService.setLanguage('en');
+    fixture.detectChanges();
   });
 
   it('renders authentic Cambodian inclusive schools fallback when directory has no server listings', () => {
@@ -346,10 +368,22 @@ describe('SchoolsPage', () => {
     expect(schools[0].name).toContain('Rabbit School Organization');
     expect(schools[0].name).toContain('អង្គការសាលាទន្សាយ');
 
-    const root = fixture.nativeElement as HTMLElement;
+    // In English mode
+    let root = fixture.nativeElement as HTMLElement;
     expect(root.textContent).toContain('Rabbit School Organization');
-    expect(root.textContent).toContain('អង្គការសាលាទន្សាយ');
     expect(root.textContent).toContain('Hands of Hope Community');
     expect(root.textContent).toContain('National Institute of Special Education');
+
+    // In Khmer mode
+    i18nService.setLanguage('km');
+    fixture.detectChanges();
+    root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('អង្គការសាលាទន្សាយ');
+    expect(root.textContent).toContain('សហគមន៍ដៃនៃក្តីសង្ឃឹម');
+    expect(root.textContent).toContain('វិទ្យាស្ថានជាតិអប់រំពិសេស');
+
+    // Reset back to English
+    i18nService.setLanguage('en');
+    fixture.detectChanges();
   });
 });

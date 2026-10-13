@@ -8,9 +8,11 @@ import type { ChildResponse, ParentResponse, SchoolDetailResponse } from '@autic
 import { AuthService } from '../../core/auth/auth.service';
 import { API_BASE_URL } from '../../core/config/api.config';
 import { SchoolDetailPage } from './school-detail.page';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 describe('SchoolDetailPage', () => {
   let httpTesting: HttpTestingController;
+  let i18nService: I18nService;
 
   const mockSchool: SchoolDetailResponse = {
     id: 'school_1',
@@ -77,10 +79,13 @@ describe('SchoolDetailPage', () => {
             },
           },
         },
+        I18nService,
       ],
     });
 
     httpTesting = TestBed.inject(HttpTestingController);
+    i18nService = TestBed.inject(I18nService);
+    i18nService.setLanguage('en');
   });
 
   afterEach(() => {
@@ -330,13 +335,23 @@ describe('SchoolDetailPage', () => {
 
     fixture.detectChanges();
 
-    const compiled = fixture.nativeElement as HTMLElement;
+    let compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.hero-accredited-badge')?.textContent).toContain(
       'Accredited Inclusive Partner',
     );
+
+    // Verify Khmer parity
+    i18nService.setLanguage('km');
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.hero-accredited-badge')?.textContent).toContain(
       'ដៃគូអប់រំពិសេសដែលបានបញ្ជាក់',
     );
+
+    // Reset back to English
+    i18nService.setLanguage('en');
+    fixture.detectChanges();
+    compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.hero-sensory-room-badge')?.textContent).toContain(
       'Sensory Room Available',
     );

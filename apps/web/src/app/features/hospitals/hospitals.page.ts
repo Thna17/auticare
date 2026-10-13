@@ -13,6 +13,8 @@ import {
   CAMBODIA_PROVINCES,
   CAMBODIAN_HOSPITALS_SEED,
   formatCityBilingual,
+  formatHospitalName,
+  formatSpecialtyBilingual,
 } from './cambodia-hospitals.data';
 
 /** Card view model — `services` split into badge tags. */
@@ -48,9 +50,7 @@ const SERVICE_FILTER_OPTIONS = [
     <section class="page-header">
       <div class="header-content">
         <h1>
-          {{
-            currentLang() === 'km' ? 'បញ្ជីមន្ទីរពេទ្យ និងគ្លីនិកឯកទេស (Hospitals)' : 'Hospitals'
-          }}
+          {{ currentLang() === 'km' ? 'បញ្ជីមន្ទីរពេទ្យ និងគ្លីនិកឯកទេស' : 'Hospitals' }}
         </h1>
         <p>
           {{
@@ -64,7 +64,11 @@ const SERVICE_FILTER_OPTIONS = [
         <div class="search-box">
           <span class="search-icon" aria-hidden="true">🔍</span>
           <input
-            aria-label="Search hospitals by name, city or specialization"
+            [attr.aria-label]="
+              currentLang() === 'km'
+                ? 'ស្វែងរកមន្ទីរពេទ្យ ទីក្រុង/ខេត្ត ជំនាញឯកទេស...'
+                : 'Search hospitals by name, city or specialization'
+            "
             type="text"
             [placeholder]="
               currentLang() === 'km'
@@ -84,21 +88,25 @@ const SERVICE_FILTER_OPTIONS = [
       <aside class="filters-sidebar">
         <div class="filters-header">
           <span class="filter-icon">⚙</span>
-          <h2>{{ currentLang() === 'km' ? 'តម្រងស្វែងរក (Filters)' : 'Filters' }}</h2>
+          <h2>{{ currentLang() === 'km' ? 'តម្រងស្វែងរក' : 'Filters' }}</h2>
         </div>
 
         <div class="filter-group">
           <label class="filter-label">
-            {{ currentLang() === 'km' ? 'ទីក្រុង/ខេត្ត (City/Province)' : 'City/Province' }}
+            {{ currentLang() === 'km' ? 'ទីក្រុង/ខេត្ត' : 'City/Province' }}
           </label>
           <select
-            aria-label="Filter hospitals by city"
+            [attr.aria-label]="
+              currentLang() === 'km'
+                ? 'ចម្រាញ់មន្ទីរពេទ្យតាមទីក្រុង/ខេត្ត'
+                : 'Filter hospitals by city'
+            "
             class="filter-select"
             [value]="selectedCity()"
             (change)="selectedCity.set($any($event.target).value)"
           >
             <option value="">
-              {{ currentLang() === 'km' ? 'គ្រប់ទីក្រុង/ខេត្តទាំងអស់ (All cities)' : 'All cities' }}
+              {{ currentLang() === 'km' ? 'គ្រប់ទីក្រុង/ខេត្តទាំងអស់' : 'All cities' }}
             </option>
             @for (city of cities(); track city) {
               <option [value]="city">{{ formatCityLabel(city) }}</option>
@@ -108,7 +116,7 @@ const SERVICE_FILTER_OPTIONS = [
 
         <div class="filter-group">
           <label class="filter-label">
-            {{ currentLang() === 'km' ? 'សេវាកម្មព្យាបាល (Services)' : 'Services' }}
+            {{ currentLang() === 'km' ? 'សេវាកម្មព្យាបាល' : 'Services' }}
           </label>
           <div class="checkbox-group">
             @for (service of serviceOptions; track service) {
@@ -118,53 +126,71 @@ const SERVICE_FILTER_OPTIONS = [
                   [checked]="selectedServices().includes(service)"
                   (change)="toggleService(service)"
                 />
-                <span>{{ service }}</span>
+                <span>{{ formatServiceLabel(service) }}</span>
               </label>
             }
           </div>
         </div>
 
         <button type="button" class="apply-filters-btn" (click)="applyFilters()">
-          {{ currentLang() === 'km' ? 'អនុវត្ត (Go)' : 'Go' }}
+          {{ currentLang() === 'km' ? 'អនុវត្ត' : 'Go' }}
         </button>
         <button type="button" class="clear-filters-btn" (click)="clearFilters()">
-          {{ currentLang() === 'km' ? 'កំណត់ឡើងវិញ (Reset)' : 'Reset filters' }}
+          {{ currentLang() === 'km' ? 'កំណត់ឡើងវិញ' : 'Reset filters' }}
         </button>
       </aside>
 
       <!-- Results -->
       <div class="hospitals-list">
         <div class="list-header">
-          <span class="results-count">Showing {{ filteredHospitals().length }} results</span>
+          <span class="results-count">
+            {{
+              currentLang() === 'km'
+                ? 'បង្ហាញ ' + filteredHospitals().length + ' លទ្ធផល'
+                : 'Showing ' + filteredHospitals().length + ' results'
+            }}
+          </span>
           <div class="sort-dropdown">
-            <label>Sort by:</label>
+            <label>{{ currentLang() === 'km' ? 'តម្រៀបតាម:' : 'Sort by:' }}</label>
             <select
-              aria-label="Sort hospitals"
+              [attr.aria-label]="currentLang() === 'km' ? 'តម្រៀបមន្ទីរពេទ្យ' : 'Sort hospitals'"
               [value]="sortBy()"
               (change)="onSortChange($any($event.target).value)"
             >
-              <option value="name">Name A-Z</option>
-              <option value="city">City A-Z</option>
-              <option value="services">Most services</option>
+              <option value="name">
+                {{ currentLang() === 'km' ? 'ឈ្មោះពី A ដល់ Z' : 'Name A-Z' }}
+              </option>
+              <option value="city">
+                {{ currentLang() === 'km' ? 'ទីក្រុងពី A ដល់ Z' : 'City A-Z' }}
+              </option>
+              <option value="services">
+                {{ currentLang() === 'km' ? 'សេវាកម្មច្រើនជាងគេ' : 'Most services' }}
+              </option>
             </select>
           </div>
         </div>
 
         @if (loading()) {
-          <ac-ui-spinner label="Loading hospitals…" />
+          <ac-ui-spinner
+            [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកបញ្ជីមន្ទីរពេទ្យ…' : 'Loading hospitals…'"
+          />
         } @else if (error(); as loadError) {
           <ac-ui-message tone="error">{{ loadError }}</ac-ui-message>
         } @else if (filteredHospitals().length === 0) {
           <ac-ui-empty-state
-            title="No hospitals found"
+            [title]="currentLang() === 'km' ? 'រកមិនឃើញមន្ទីរពេទ្យទេ' : 'No hospitals found'"
             [message]="
               hospitals().length === 0
-                ? 'No hospitals are listed yet.'
-                : 'No hospitals match your filters. Try resetting them.'
+                ? currentLang() === 'km'
+                  ? 'មិនទាន់មានមន្ទីរពេទ្យក្នុងបញ្ជីនៅឡើយទេ។'
+                  : 'No hospitals are listed yet.'
+                : currentLang() === 'km'
+                  ? 'មិនមានមន្ទីរពេទ្យណាត្រូវនឹងតម្រងរបស់អ្នកទេ។ សូមសាកល្បងកំណត់តម្រងឡើងវិញ។'
+                  : 'No hospitals match your filters. Try resetting them.'
             "
           >
             <button type="button" class="clear-filters-btn" (click)="clearFilters()">
-              Reset filters
+              {{ currentLang() === 'km' ? 'កំណត់តម្រងឡើងវិញ' : 'Reset filters' }}
             </button>
           </ac-ui-empty-state>
         } @else {
@@ -176,29 +202,25 @@ const SERVICE_FILTER_OPTIONS = [
 
               <div class="hospital-content">
                 <div class="hospital-header">
-                  <h3>{{ hospital.name }}</h3>
+                  <h3>{{ formatHospitalName(hospital.name, currentLang()) }}</h3>
                 </div>
 
                 <div class="hospital-location">
                   <span class="location-icon">📍</span>
-                  <span>{{ hospital.address }}, {{ hospital.city }}</span>
+                  <span>{{ hospital.address }}, {{ formatCityLabel(hospital.city) }}</span>
                 </div>
 
                 @if (hospital.serviceTags.length) {
                   <div class="services-list">
                     @for (tag of hospital.serviceTags; track tag) {
-                      <span class="service-tag">{{ tag }}</span>
+                      <span class="service-tag">{{ formatServiceTag(tag) }}</span>
                     }
                   </div>
                 }
 
                 <div class="hospital-footer">
                   <a [routerLink]="['/appointments/hospitals', hospital.id]" class="booking-btn">
-                    {{
-                      currentLang() === 'km'
-                        ? 'កក់ការណាត់ជួប (Book Appointment)'
-                        : 'Book Appointment'
-                    }}
+                    {{ currentLang() === 'km' ? 'កក់ការណាត់ជួប' : 'Book Appointment' }}
                   </a>
                 </div>
               </div>
@@ -211,37 +233,53 @@ const SERVICE_FILTER_OPTIONS = [
     @if (canManage()) {
       <section class="admin-panel" aria-labelledby="add-hospital-title">
         <header>
-          <h2 id="add-hospital-title">Add a hospital</h2>
-          <p>Publish a clear, searchable care option for families.</p>
+          <h2 id="add-hospital-title">
+            {{ currentLang() === 'km' ? 'បន្ថែមមន្ទីរពេទ្យ' : 'Add a hospital' }}
+          </h2>
+          <p>
+            {{
+              currentLang() === 'km'
+                ? 'ផ្សព្វផ្សាយជម្រើសថែទាំសុខភាពច្បាស់លាស់សម្រាប់ក្រុមគ្រួសារ។'
+                : 'Publish a clear, searchable care option for families.'
+            }}
+          </p>
         </header>
         <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <div class="field-grid">
             <label class="field">
-              <span>Hospital name</span>
+              <span>{{ currentLang() === 'km' ? 'ឈ្មោះមន្ទីរពេទ្យ' : 'Hospital name' }}</span>
               <input type="text" formControlName="name" maxlength="160" />
             </label>
             <label class="field">
-              <span>City</span>
+              <span>{{ currentLang() === 'km' ? 'រាជធានី/ខេត្ត' : 'City' }}</span>
               <input type="text" formControlName="city" maxlength="120" />
             </label>
           </div>
           <label class="field">
-            <span>Address</span>
+            <span>{{ currentLang() === 'km' ? 'អាសយដ្ឋាន' : 'Address' }}</span>
             <input type="text" formControlName="address" maxlength="300" />
           </label>
           <label class="field">
-            <span>Services</span>
+            <span>{{ currentLang() === 'km' ? 'សេវាកម្មព្យាបាល' : 'Services' }}</span>
             <textarea
               rows="4"
               formControlName="services"
               maxlength="2000"
-              placeholder="Developmental pediatrics, occupational therapy, speech support..."
+              [placeholder]="
+                currentLang() === 'km'
+                  ? 'កុមាររោគវិវត្ត ការព្យាបាលការបំពេញមុខងារ ការព្យាបាលការនិយាយ...'
+                  : 'Developmental pediatrics, occupational therapy, speech support...'
+              "
             ></textarea>
           </label>
           @if (form.touched && form.invalid) {
-            <ac-ui-message tone="error"
-              >Complete the hospital details before publishing.</ac-ui-message
-            >
+            <ac-ui-message tone="error">
+              {{
+                currentLang() === 'km'
+                  ? 'សូមបំពេញព័ត៌មានលម្អិតរបស់មន្ទីរពេទ្យមុនពេលផ្សព្វផ្សាយ។'
+                  : 'Complete the hospital details before publishing.'
+              }}
+            </ac-ui-message>
           }
           @if (formError()) {
             <ac-ui-message tone="error">{{ formError() }}</ac-ui-message>
@@ -250,7 +288,15 @@ const SERVICE_FILTER_OPTIONS = [
             <ac-ui-message tone="success">{{ formMessage() }}</ac-ui-message>
           }
           <button type="submit" [disabled]="saving()">
-            {{ saving() ? 'Publishing...' : 'Add hospital' }}
+            {{
+              saving()
+                ? currentLang() === 'km'
+                  ? 'កំពុងផ្សព្វផ្សាយ...'
+                  : 'Publishing...'
+                : currentLang() === 'km'
+                  ? 'បន្ថែមមន្ទីរពេទ្យ'
+                  : 'Add hospital'
+            }}
           </button>
         </form>
       </section>
@@ -739,8 +785,18 @@ export class HospitalsPage implements OnInit {
     return combined.sort((a, b) => a.localeCompare(b));
   });
 
+  protected readonly formatHospitalName = formatHospitalName;
+
   protected formatCityLabel(city: string): string {
     return formatCityBilingual(city, this.currentLang());
+  }
+
+  protected formatServiceLabel(service: string): string {
+    return formatSpecialtyBilingual(service, this.currentLang());
+  }
+
+  protected formatServiceTag(tag: string): string {
+    return formatSpecialtyBilingual(tag, this.currentLang());
   }
 
   /** Frontend filtering + search + sorting over the loaded directory. */
@@ -851,11 +907,19 @@ export class HospitalsPage implements OnInit {
             [...items, hospital].sort((a, b) => a.name.localeCompare(b.name)),
           );
           this.form.reset();
-          this.formMessage.set(`${hospital.name} has been added to the directory.`);
+          this.formMessage.set(
+            this.currentLang() === 'km'
+              ? `${hospital.name} ត្រូវបានបញ្ចូលទៅក្នុងបញ្ជីដោយជោគជ័យ។`
+              : `${hospital.name} has been added to the directory.`,
+          );
           this.saving.set(false);
         },
         error: () => {
-          this.formError.set('Hospital could not be added. Please try again.');
+          this.formError.set(
+            this.currentLang() === 'km'
+              ? 'មិនអាចបន្ថែមមន្ទីរពេទ្យបានទេ។ សូមព្យាយាមម្តងទៀត។'
+              : 'Hospital could not be added. Please try again.',
+          );
           this.saving.set(false);
         },
       });

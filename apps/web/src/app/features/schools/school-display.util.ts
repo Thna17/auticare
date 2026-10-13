@@ -1,7 +1,20 @@
 import type { SchoolAvailabilityStatus } from '@auticare/contracts';
 
 /** Human label for an availability status. */
-export const availabilityLabel = (status: SchoolAvailabilityStatus): string => {
+export const availabilityLabel = (
+  status: SchoolAvailabilityStatus,
+  lang: 'km' | 'en' = 'en',
+): string => {
+  if (lang === 'km') {
+    switch (status) {
+      case 'IMMEDIATE':
+        return 'មានកន្លែងភ្លាមៗ';
+      case 'WAITLIST':
+        return 'បញ្ជីរង់ចាំ';
+      case 'CLOSED':
+        return 'បិទការទទួល';
+    }
+  }
   switch (status) {
     case 'IMMEDIATE':
       return 'Accepting now';

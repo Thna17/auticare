@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL } from '../../core/config/api.config';
 import { HospitalsApi } from '../hospitals/data-access/hospitals.api';
 import { SelectHospitalPage } from './select-hospital.page';
+import { I18nService } from '../../core/i18n/i18n.service';
 import type { HospitalResponse } from '@auticare/contracts';
 
 describe('SelectHospitalPage', () => {
@@ -61,8 +62,12 @@ describe('SelectHospitalPage', () => {
         provideRouter([]),
         { provide: API_BASE_URL, useValue: '/api/v1' },
         { provide: HospitalsApi, useValue: mockHospitalsApi },
+        I18nService,
       ],
     }).compileComponents();
+
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
 
     fixture = TestBed.createComponent(SelectHospitalPage);
     component = fixture.componentInstance;

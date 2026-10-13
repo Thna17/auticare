@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChildrenFacade } from '../children/state/children.facade';
 import { AppointmentsFacade } from './state/appointments.facade';
 import { BookAppointmentModalComponent } from './book-appointment-modal.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 interface MockChild {
   id: string;
@@ -124,8 +125,12 @@ describe('BookAppointmentModalComponent', () => {
         provideRouter([]),
         { provide: ChildrenFacade, useValue: mockChildrenFacade },
         { provide: AppointmentsFacade, useValue: mockAppointmentsFacade },
+        I18nService,
       ],
     }).compileComponents();
+
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
 
     fixture = TestBed.createComponent(BookAppointmentModalComponent);
     component = fixture.componentInstance;

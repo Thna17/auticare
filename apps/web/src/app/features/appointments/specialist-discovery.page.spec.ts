@@ -10,6 +10,7 @@ import { API_BASE_URL } from '../../core/config/api.config';
 import { HospitalsApi } from '../hospitals/data-access/hospitals.api';
 import { AppointmentsFacade } from './state/appointments.facade';
 import { SpecialistDiscoveryPage } from './specialist-discovery.page';
+import { I18nService } from '../../core/i18n/i18n.service';
 import type { DoctorResponse, SpecialtyCategory } from './appointments.types';
 import {
   CAMBODIAN_HOSPITALS_SEED,
@@ -19,6 +20,7 @@ import {
 describe('SpecialistDiscoveryPage', () => {
   let fixture: ComponentFixture<SpecialistDiscoveryPage>;
   let component: SpecialistDiscoveryPage;
+  let i18nService: I18nService;
 
   const mockDoctors: DoctorResponse[] = [
     {
@@ -135,8 +137,12 @@ describe('SpecialistDiscoveryPage', () => {
             },
           },
         },
+        I18nService,
       ],
     }).compileComponents();
+
+    i18nService = TestBed.inject(I18nService);
+    i18nService.setLanguage('en');
 
     fixture = TestBed.createComponent(SpecialistDiscoveryPage);
     component = fixture.componentInstance;
@@ -170,7 +176,11 @@ describe('SpecialistDiscoveryPage', () => {
       const pills = Array.from(
         compiled.querySelectorAll('.category-pills button'),
       ) as HTMLButtonElement[];
-      const speechPill = pills.find((p) => p.textContent?.trim() === 'Speech Therapy');
+      const speechPill = pills.find(
+        (p) =>
+          p.textContent?.trim() === 'Speech-Language Pathologist' ||
+          p.textContent?.trim() === 'Speech Therapy',
+      );
       expect(speechPill).toBeDefined();
 
       speechPill?.click();
@@ -425,27 +435,36 @@ describe('SpecialistDiscoveryPage', () => {
     });
 
     it('renders bilingual specialty badges for all 4 key developmental clinical specialties', () => {
-      const compiled = fixture.nativeElement as HTMLElement;
-      const badges = Array.from(compiled.querySelectorAll('.specialty-badge'));
+      // In English mode ('en')
+      i18nService.setLanguage('en');
+      fixture.detectChanges();
+
+      let compiled = fixture.nativeElement as HTMLElement;
+      let badges = Array.from(compiled.querySelectorAll('.specialty-badge'));
       expect(badges.length).toBe(6);
 
-      const allBadgeTexts = badges.map((b) => b.textContent?.trim()).join(' | ');
-
-      // Developmental Pediatrician (វេជ្ជបណ្ឌិតឯកទេសកុមារ)
-      expect(allBadgeTexts).toContain('វេជ្ជបណ្ឌិតឯកទេសកុមារ');
+      let allBadgeTexts = badges.map((b) => b.textContent?.trim()).join(' | ');
       expect(allBadgeTexts).toContain('Developmental Pediatrician');
-
-      // Speech-Language Pathologist (អ្នកព្យាបាលការនិយាយ និងភាសា)
-      expect(allBadgeTexts).toContain('អ្នកព្យាបាលការនិយាយ និងភាសា');
       expect(allBadgeTexts).toContain('Speech-Language Pathologist');
-
-      // Occupational Therapist (អ្នកព្យាបាលចលករ និងញាណដឹង)
-      expect(allBadgeTexts).toContain('អ្នកព្យាបាលចលករ និងញាណដឹង');
       expect(allBadgeTexts).toContain('Occupational Therapist');
-
-      // Child Neurologist (វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ)
-      expect(allBadgeTexts).toContain('វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ');
       expect(allBadgeTexts).toContain('Child Neurologist');
+
+      // In Khmer mode ('km')
+      i18nService.setLanguage('km');
+      fixture.detectChanges();
+
+      compiled = fixture.nativeElement as HTMLElement;
+      badges = Array.from(compiled.querySelectorAll('.specialty-badge'));
+      allBadgeTexts = badges.map((b) => b.textContent?.trim()).join(' | ');
+
+      expect(allBadgeTexts).toContain('វេជ្ជបណ្ឌិតឯកទេសកុមារ');
+      expect(allBadgeTexts).toContain('អ្នកព្យាបាលការនិយាយ និងភាសា');
+      expect(allBadgeTexts).toContain('អ្នកព្យាបាលចលករ និងញាណដឹង');
+      expect(allBadgeTexts).toContain('វេជ្ជបណ្ឌិតឯកទេសប្រព័ន្ធប្រសាទកុមារ');
+
+      // Reset back to English for subsequent tests
+      i18nService.setLanguage('en');
+      fixture.detectChanges();
     });
 
     it('filters doctors by Cambodian city / province selection', () => {

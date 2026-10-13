@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import type { HospitalResponse } from '@auticare/contracts';
 import { HospitalsApi } from '../hospitals/data-access/hospitals.api';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { formatCityBilingual, formatHospitalName } from '../hospitals/cambodia-hospitals.data';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
@@ -12,15 +14,31 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
   imports: [RouterLink, UiEmptyStateComponent, UiSpinnerComponent, UiMessageComponent],
   template: `
     <nav class="breadcrumbs" aria-label="Breadcrumb">
-      <a routerLink="/appointments">Hospital Appointments</a>
+      <a routerLink="/appointments">{{
+        currentLang() === 'km' ? 'ការណាត់ជួបមន្ទីរពេទ្យ' : 'Hospital Appointments'
+      }}</a>
       <span aria-hidden="true">/</span>
-      <span aria-current="page">Choose a hospital</span>
+      <span aria-current="page">{{
+        currentLang() === 'km' ? 'ជ្រើសរើសមន្ទីរពេទ្យ' : 'Choose a hospital'
+      }}</span>
     </nav>
 
     <section class="page-header">
       <div class="header-content">
-        <h1>Which hospital would you like to visit?</h1>
-        <p>Pick a hospital to see its available specialists and request an appointment.</p>
+        <h1>
+          {{
+            currentLang() === 'km'
+              ? 'តើអ្នកចង់ទៅពិគ្រោះនៅមន្ទីរពេទ្យណា?'
+              : 'Which hospital would you like to visit?'
+          }}
+        </h1>
+        <p>
+          {{
+            currentLang() === 'km'
+              ? 'ជ្រើសរើសមន្ទីរពេទ្យដើម្បីមើលវេជ្ជបណ្ឌិតឯកទេស និងស្នើសុំការណាត់ជួប។'
+              : 'Pick a hospital to see its available specialists and request an appointment.'
+          }}
+        </p>
       </div>
       <div class="header-actions">
         <div class="search-box">
@@ -28,8 +46,16 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
           <input
             type="search"
             class="search-input"
-            aria-label="Search hospitals by name, city, or address..."
-            placeholder="Search hospitals by name, city, or address..."
+            [attr.aria-label]="
+              currentLang() === 'km'
+                ? 'ស្វែងរកមន្ទីរពេទ្យតាមឈ្មោះ ទីក្រុង ឬអាសយដ្ឋាន...'
+                : 'Search hospitals by name, city, or address...'
+            "
+            [placeholder]="
+              currentLang() === 'km'
+                ? 'ស្វែងរកមន្ទីរពេទ្យតាមឈ្មោះ ទីក្រុង ឬអាសយដ្ឋាន...'
+                : 'Search hospitals by name, city, or address...'
+            "
             [value]="searchQuery()"
             (input)="searchQuery.set($any($event.target).value)"
           />
@@ -41,30 +67,62 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
       <div class="status-bar">
         <span class="count-tag">
           @if (hospitals().length === displayedHospitals().length) {
-            Showing all {{ hospitals().length }} hospitals
+            {{
+              currentLang() === 'km'
+                ? 'បង្ហាញមន្ទីរពេទ្យទាំង ' + hospitals().length
+                : 'Showing all ' + hospitals().length + ' hospitals'
+            }}
           } @else {
-            Showing {{ displayedHospitals().length }} of {{ hospitals().length }} hospitals
+            {{
+              currentLang() === 'km'
+                ? 'បង្ហាញ ' +
+                  displayedHospitals().length +
+                  ' ក្នុងចំណោម ' +
+                  hospitals().length +
+                  ' មន្ទីរពេទ្យ'
+                : 'Showing ' +
+                  displayedHospitals().length +
+                  ' of ' +
+                  hospitals().length +
+                  ' hospitals'
+            }}
           }
         </span>
       </div>
     }
 
     @if (loading()) {
-      <ac-ui-spinner label="Loading hospitals…" />
+      <ac-ui-spinner
+        [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកបញ្ជីមន្ទីរពេទ្យ…' : 'Loading hospitals…'"
+      />
     } @else if (error(); as problem) {
       <ac-ui-message tone="error">{{ problem }}</ac-ui-message>
-      <button type="button" class="retry" (click)="load()">Try again</button>
+      <button type="button" class="retry" (click)="load()">
+        {{ currentLang() === 'km' ? 'ព្យាយាមម្តងទៀត' : 'Try again' }}
+      </button>
     } @else if (hospitals().length === 0) {
       <ac-ui-empty-state
-        title="No hospitals available yet"
-        message="Check back soon, or contact support to add your care provider."
+        [title]="
+          currentLang() === 'km' ? 'មិនទាន់មានមន្ទីរពេទ្យនៅឡើយទេ' : 'No hospitals available yet'
+        "
+        [message]="
+          currentLang() === 'km'
+            ? 'សូមពិនិត្យមើលឡើងវិញនៅពេលក្រោយ ឬទាក់ទងមកកាន់យើងខ្ញុំដើម្បីបន្ថែមអ្នកផ្តល់សេវាថែទាំរបស់អ្នក។'
+            : 'Check back soon, or contact support to add your care provider.'
+        "
       />
     } @else if (displayedHospitals().length === 0) {
       <ac-ui-empty-state
-        title="No hospitals found"
-        message="No hospitals match your search query. Try searching with a different keyword or city."
+        [title]="currentLang() === 'km' ? 'រកមិនឃើញមន្ទីរពេទ្យទេ' : 'No hospitals found'"
+        [message]="
+          currentLang() === 'km'
+            ? 'មិនមានមន្ទីរពេទ្យណាត្រូវនឹងការស្វែងរករបស់អ្នកទេ។ សូមសាកល្បងស្វែងរកដោយពាក្យគន្លឹះ ឬទីក្រុងផ្សេង។'
+            : 'No hospitals match your search query. Try searching with a different keyword or city.'
+        "
       >
-        <button type="button" class="clear-search-btn" (click)="clearSearch()">Clear search</button>
+        <button type="button" class="clear-search-btn" (click)="clearSearch()">
+          {{ currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear search' }}
+        </button>
       </ac-ui-empty-state>
     } @else {
       <ul class="hospital-list">
@@ -73,8 +131,10 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
             <a class="hospital-card" [routerLink]="['/appointments/hospitals', hospital.id]">
               <div class="hospital-info">
                 <div class="hospital-title-row">
-                  <h2>{{ hospital.name }}</h2>
-                  <span class="city-badge">{{ hospital.city }}</span>
+                  <h2>{{ formatHospitalName(hospital.name, currentLang()) }}</h2>
+                  <span class="city-badge">{{
+                    formatCityBilingual(hospital.city, currentLang())
+                  }}</span>
                 </div>
                 <p class="hospital-address">{{ hospital.address }}</p>
                 @if (hospital.services) {
@@ -316,6 +376,11 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 })
 export class SelectHospitalPage implements OnInit {
   private readonly hospitalsApi = inject(HospitalsApi);
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
+  protected readonly formatHospitalName = formatHospitalName;
+  protected readonly formatCityBilingual = formatCityBilingual;
+
   protected readonly hospitals = signal<readonly HospitalResponse[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -359,7 +424,11 @@ export class SelectHospitalPage implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Hospitals could not be loaded.');
+        this.error.set(
+          this.currentLang() === 'km'
+            ? 'មិនអាចផ្ទុកទិន្នន័យមន្ទីរពេទ្យបានទេ។'
+            : 'Hospitals could not be loaded.',
+        );
         this.loading.set(false);
       },
     });

@@ -8,6 +8,7 @@ import {
   CAMBODIA_PROVINCES,
   CAMBODIAN_HOSPITALS_SEED,
   formatCityBilingual,
+  formatHospitalName,
   formatSpecialtyBilingual,
 } from '../hospitals/cambodia-hospitals.data';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
@@ -26,25 +27,32 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
       }}</a>
       <span aria-hidden="true">/</span>
       <span aria-current="page">{{
-        facade.activeHospital()?.name ??
-          (currentLang() === 'km' ? 'វេជ្ជបណ្ឌិតឯកទេស' : 'Specialists')
+        facade.activeHospital()?.name
+          ? formatHospitalName(facade.activeHospital()!.name, currentLang())
+          : currentLang() === 'km'
+            ? 'វេជ្ជបណ្ឌិតឯកទេស'
+            : 'Specialists'
       }}</span>
     </nav>
 
     <section class="page-header">
       <div class="header-content">
         <h1>
-          {{
-            currentLang() === 'km'
-              ? 'វេជ្ជបណ្ឌិតឯកទេសដែលទំនេរ (Available Specialists)'
-              : 'Available Specialists'
-          }}
+          {{ currentLang() === 'km' ? 'វេជ្ជបណ្ឌិតឯកទេសដែលទំនេរ' : 'Available Specialists' }}
         </h1>
         <span class="count-tag">
           @if (facade.doctors().length === displayedDoctors().length) {
-            View All ({{ facade.doctors().length }})
+            {{
+              currentLang() === 'km'
+                ? 'មើលទាំងអស់ (' + facade.doctors().length + ')'
+                : 'View All (' + facade.doctors().length + ')'
+            }}
           } @else {
-            {{ displayedDoctors().length }} of {{ facade.doctors().length }}
+            {{
+              currentLang() === 'km'
+                ? displayedDoctors().length + ' ក្នុងចំណោម ' + facade.doctors().length
+                : displayedDoctors().length + ' of ' + facade.doctors().length
+            }}
           }
         </span>
       </div>
@@ -70,7 +78,11 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
         <input
           type="search"
           class="search-input"
-          aria-label="Search specialists by name, specialty, or bio..."
+          [attr.aria-label]="
+            currentLang() === 'km'
+              ? 'ស្វែងរកវេជ្ជបណ្ឌិត ជំនាញឯកទេស ឬប្រវត្តិ...'
+              : 'Search specialists by name, specialty, or bio...'
+          "
           [placeholder]="
             currentLang() === 'km'
               ? 'ស្វែងរកវេជ្ជបណ្ឌិត ជំនាញឯកទេស ឬប្រវត្តិ...'
@@ -84,15 +96,21 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
       <div class="dropdown-filters">
         <!-- City Filter Dropdown -->
         <div class="select-wrapper">
-          <label for="city-filter" class="sr-only">Filter by city</label>
+          <label for="city-filter" class="sr-only">{{
+            currentLang() === 'km' ? 'ចម្រាញ់តាមទីក្រុង/ខេត្ត' : 'Filter by city'
+          }}</label>
           <select
             id="city-filter"
             class="filter-select city-select"
             [value]="selectedCity()"
             (change)="onCitySelect($any($event.target).value)"
-            aria-label="Filter by city"
+            [attr.aria-label]="
+              currentLang() === 'km' ? 'ចម្រាញ់តាមទីក្រុង/ខេត្ត' : 'Filter by city'
+            "
           >
-            <option value="ALL">All Cities</option>
+            <option value="ALL">
+              {{ currentLang() === 'km' ? 'គ្រប់ទីក្រុង/ខេត្ត' : 'All Cities' }}
+            </option>
             @for (city of availableCities(); track city.key) {
               <option [value]="city.key">{{ city.label }}</option>
             }
@@ -101,17 +119,25 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
 
         <!-- Hospital Filter Dropdown -->
         <div class="select-wrapper">
-          <label for="hospital-filter" class="sr-only">Filter by hospital</label>
+          <label for="hospital-filter" class="sr-only">{{
+            currentLang() === 'km' ? 'ចម្រាញ់តាមមន្ទីរពេទ្យ' : 'Filter by hospital'
+          }}</label>
           <select
             id="hospital-filter"
             class="filter-select hospital-select"
             [value]="selectedHospitalId()"
             (change)="onHospitalSelect($any($event.target).value)"
-            aria-label="Filter by hospital"
+            [attr.aria-label]="
+              currentLang() === 'km' ? 'ចម្រាញ់តាមមន្ទីរពេទ្យ' : 'Filter by hospital'
+            "
           >
-            <option value="ALL">All Hospitals</option>
+            <option value="ALL">
+              {{ currentLang() === 'km' ? 'គ្រប់មន្ទីរពេទ្យ' : 'All Hospitals' }}
+            </option>
             @for (hospital of filteredHospitalOptions(); track hospital.id) {
-              <option [value]="hospital.id">{{ hospital.name }}</option>
+              <option [value]="hospital.id">
+                {{ formatHospitalName(hospital.name, currentLang()) }}
+              </option>
             }
           </select>
         </div>
@@ -119,32 +145,50 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
     </div>
 
     <!-- Specialty category pills -->
-    <div class="category-pills" role="group" aria-label="Filter by specialty">
+    <div
+      class="category-pills"
+      role="group"
+      [attr.aria-label]="currentLang() === 'km' ? 'ចម្រាញ់តាមជំនាញឯកទេស' : 'Filter by specialty'"
+    >
       @for (category of categories; track category) {
         <button
           type="button"
           [class.active]="facade.categoryFilter() === category"
           (click)="facade.setCategory(category)"
         >
-          {{ category }}
+          {{ formatCategoryLabel(category) }}
         </button>
       }
     </div>
 
     @if (facade.doctorsLoading()) {
-      <ac-ui-spinner label="Loading specialists…" />
+      <ac-ui-spinner
+        [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកបញ្ជីអ្នកឯកទេស…' : 'Loading specialists…'"
+      />
     } @else if (displayedDoctors().length === 0) {
       <ac-ui-empty-state
-        [title]="hasActiveFilters() ? 'No matching specialists' : 'No specialists available'"
+        [title]="
+          hasActiveFilters()
+            ? currentLang() === 'km'
+              ? 'រកមិនឃើញអ្នកឯកទេសដែលត្រូវគ្នាទេ'
+              : 'No matching specialists'
+            : currentLang() === 'km'
+              ? 'មិនមានអ្នកឯកទេសទេ'
+              : 'No specialists available'
+        "
         [message]="
           hasActiveFilters()
-            ? 'No specialists match your search query and selected filter.'
-            : 'No specialists are currently registered at this hospital.'
+            ? currentLang() === 'km'
+              ? 'មិនមានអ្នកឯកទេសណាត្រូវនឹងការស្វែងរក និងតម្រងដែលបានជ្រើសរើសឡើយ។'
+              : 'No specialists match your search query and selected filter.'
+            : currentLang() === 'km'
+              ? 'បច្ចុប្បន្នមិនទាន់មានអ្នកឯកទេសចុះឈ្មោះនៅមន្ទីរពេទ្យនេះនៅឡើយទេ។'
+              : 'No specialists are currently registered at this hospital.'
         "
       >
         @if (hasActiveFilters()) {
           <button type="button" class="clear-filters-btn" (click)="clearFilters()">
-            Clear search & filters
+            {{ currentLang() === 'km' ? 'សម្អាតការស្វែងរក និងតម្រង' : 'Clear search & filters' }}
           </button>
         }
       </ac-ui-empty-state>
@@ -175,11 +219,18 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
               </svg>
-              <span>{{ getDoctorHospitalName(doctor.hospitalId) }}</span>
+              <span>{{
+                formatHospitalName(getDoctorHospitalName(doctor.hospitalId), currentLang())
+              }}</span>
             </div>
 
-            <div class="available-days-group" aria-label="Available days">
-              <span class="days-label">Available:</span>
+            <div
+              class="available-days-group"
+              [attr.aria-label]="currentLang() === 'km' ? 'ថ្ងៃដែលអាចណាត់ជួបបាន' : 'Available days'"
+            >
+              <span class="days-label">{{
+                currentLang() === 'km' ? 'ថ្ងៃទទួលពិគ្រោះ:' : 'Available:'
+              }}</span>
               <div class="days-chips">
                 @for (day of getDayChips(doctor.availableDays); track day) {
                   <span class="day-chip">{{ day }}</span>
@@ -192,7 +243,7 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
             }
             <p class="schedule-info">{{ formatSchedule(doctor) }}</p>
             <button type="button" class="book-button" (click)="facade.openBooking(doctor)">
-              Book Consultation
+              {{ currentLang() === 'km' ? 'កក់ការពិគ្រោះ' : 'Book Consultation' }}
             </button>
           </article>
         }
@@ -533,6 +584,14 @@ export class SpecialistDiscoveryPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   protected readonly i18n = inject(I18nService);
   protected readonly currentLang = this.i18n.currentLang;
+  protected readonly formatHospitalName = formatHospitalName;
+
+  protected formatCategoryLabel(category: string): string {
+    if (category === 'All') {
+      return this.currentLang() === 'km' ? 'ទាំងអស់' : 'All';
+    }
+    return formatSpecialtyBilingual(category, this.currentLang());
+  }
 
   readonly hospitals = signal<readonly HospitalResponse[]>(CAMBODIAN_HOSPITALS_SEED);
   readonly selectedCity = signal('ALL');
@@ -708,13 +767,16 @@ export class SpecialistDiscoveryPage implements OnInit {
       if (match) return match.name;
     }
     return (
-      this.facade.activeHospital()?.name ?? 'National Pediatric Hospital (មន្ទីរពេទ្យកុមារជាតិ)'
+      this.facade.activeHospital()?.name ??
+      (this.currentLang() === 'km' ? 'មន្ទីរពេទ្យកុមារជាតិ' : 'National Pediatric Hospital')
     );
   }
 
   protected getDayChips(availableDays?: string): string[] {
     const days = availableDays ?? '1,2,3,4,5';
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNamesEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNamesKm = ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍'];
+    const dayNames = this.currentLang() === 'km' ? dayNamesKm : dayNamesEn;
     return days
       .split(',')
       .map(Number)
@@ -728,7 +790,9 @@ export class SpecialistDiscoveryPage implements OnInit {
     endHour?: number;
   }): string {
     const days = doctor.availableDays ?? '1,2,3,4,5';
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNamesEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNamesKm = ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍'];
+    const dayNames = this.currentLang() === 'km' ? dayNamesKm : dayNamesEn;
     const activeDays = days
       .split(',')
       .map(Number)
@@ -740,6 +804,9 @@ export class SpecialistDiscoveryPage implements OnInit {
     const end = doctor.endHour ?? 17;
     const timeRange = `${start}:00 - ${end}:00`;
 
+    if (this.currentLang() === 'km') {
+      return activeDays ? `${activeDays} · ${timeRange}` : `ម៉ោងធ្វើការ: ${timeRange}`;
+    }
     return activeDays ? `${activeDays} · ${timeRange}` : `Hours: ${timeRange}`;
   }
 }

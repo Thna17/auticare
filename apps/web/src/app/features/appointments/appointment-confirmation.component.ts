@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import type { AppointmentResponse } from './appointments.types';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { formatHospitalName } from '../hospitals/cambodia-hospitals.data';
 
 @Component({
   standalone: true,
@@ -19,38 +21,56 @@ import type { AppointmentResponse } from './appointments.types';
         </svg>
       </span>
 
-      <h2>Appointment Request Submitted</h2>
+      <h2>
+        {{
+          currentLang() === 'km' ? 'បានបញ្ជូនសំណើសុំការណាត់ជួប' : 'Appointment Request Submitted'
+        }}
+      </h2>
       <p class="lead">
-        Your clinical consultation request has been received. The clinic coordinator will review and
-        confirm your slot.
+        {{
+          currentLang() === 'km'
+            ? 'សំណើសុំការពិគ្រោះព្យាបាលរបស់អ្នកត្រូវបានទទួលហើយ។ អ្នកសម្របសម្រួលគ្លីនិកនឹងពិនិត្យ និងបញ្ជាក់ម៉ោងណាត់ជួបរបស់អ្នក។'
+            : 'Your clinical consultation request has been received. The clinic coordinator will review and confirm your slot.'
+        }}
       </p>
 
       <dl class="summary">
         <div>
-          <dt>Date</dt>
+          <dt>{{ currentLang() === 'km' ? 'កាលបរិច្ឆេទ' : 'Date' }}</dt>
           <dd>{{ formattedDate() }}</dd>
         </div>
         <div>
-          <dt>Time</dt>
+          <dt>{{ currentLang() === 'km' ? 'ម៉ោង' : 'Time' }}</dt>
           <dd>{{ formattedTime() }}</dd>
         </div>
         <div>
-          <dt>Hospital</dt>
-          <dd>{{ appointment().hospitalName }}</dd>
+          <dt>{{ currentLang() === 'km' ? 'មន្ទីរពេទ្យ' : 'Hospital' }}</dt>
+          <dd>{{ formatHospitalName(appointment().hospitalName, currentLang()) }}</dd>
         </div>
         <div>
-          <dt>Specialist</dt>
-          <dd>{{ appointment().doctorName ?? 'Assigned by clinic' }}</dd>
+          <dt>{{ currentLang() === 'km' ? 'អ្នកឯកទេស' : 'Specialist' }}</dt>
+          <dd>
+            {{
+              appointment().doctorName ??
+                (currentLang() === 'km' ? 'ចាត់តាំងដោយគ្លីនិក' : 'Assigned by clinic')
+            }}
+          </dd>
         </div>
         @if (appointment().childName) {
           <div>
-            <dt>Patient</dt>
+            <dt>{{ currentLang() === 'km' ? 'អ្នកជំងឺ' : 'Patient' }}</dt>
             <dd>{{ appointment().childName }}</dd>
           </div>
         }
         @if (appointment().reason) {
           <div class="symptoms-row">
-            <dt>Visit Reason &amp; Notes</dt>
+            <dt>
+              {{
+                currentLang() === 'km'
+                  ? 'មូលហេតុនៃការពិគ្រោះ និងកំណត់ចំណាំ'
+                  : 'Visit Reason & Notes'
+              }}
+            </dt>
             <dd class="symptoms-text">{{ appointment().reason }}</dd>
           </div>
         }
@@ -75,7 +95,7 @@ import type { AppointmentResponse } from './appointments.types';
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            Add to Google Calendar
+            {{ currentLang() === 'km' ? 'បញ្ចូលទៅក្នុងប្រតិទិន Google' : 'Add to Google Calendar' }}
           </button>
           <button type="button" class="export-btn ical-btn" (click)="exportCalendar()">
             <svg
@@ -93,10 +113,12 @@ import type { AppointmentResponse } from './appointments.types';
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
-            Add to iCal (.ics)
+            {{ currentLang() === 'km' ? 'ទាញយកប្រតិទិន iCal (.ics)' : 'Add to iCal (.ics)' }}
           </button>
         </div>
-        <button type="button" class="done-button" (click)="done.emit()">Done</button>
+        <button type="button" class="done-button" (click)="done.emit()">
+          {{ currentLang() === 'km' ? 'រួចរាល់' : 'Done' }}
+        </button>
       </div>
     </div>
   `,
@@ -263,8 +285,13 @@ export class AppointmentConfirmationComponent {
   readonly appointment = input.required<AppointmentResponse>();
   readonly done = output<void>();
 
+  protected readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
+  protected readonly formatHospitalName = formatHospitalName;
+
   protected formattedDate(): string {
-    return new Date(this.appointment().scheduledAt).toLocaleDateString(undefined, {
+    const locale = this.currentLang() === 'km' ? 'km-KH' : undefined;
+    return new Date(this.appointment().scheduledAt).toLocaleDateString(locale, {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
@@ -273,7 +300,8 @@ export class AppointmentConfirmationComponent {
   }
 
   protected formattedTime(): string {
-    return new Date(this.appointment().scheduledAt).toLocaleTimeString(undefined, {
+    const locale = this.currentLang() === 'km' ? 'km-KH' : undefined;
+    return new Date(this.appointment().scheduledAt).toLocaleTimeString(locale, {
       hour: 'numeric',
       minute: '2-digit',
     });
