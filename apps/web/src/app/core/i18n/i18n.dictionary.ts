@@ -289,6 +289,58 @@ export interface TranslationDictionary {
     readonly changePassword: string;
     readonly theme: string;
   };
+  readonly shell: {
+    readonly skipToContent: string;
+    readonly expandSidebar: string;
+    readonly collapseSidebar: string;
+    readonly toggleNav: string;
+    readonly crisisAndUrgent: string;
+    readonly accountSettings: string;
+    readonly helpCenter: string;
+    readonly crisisSupport: string;
+    readonly signOut: string;
+    readonly userAccountMenu: string;
+    readonly unreadNotifications: string;
+    readonly notifications: string;
+    readonly careAndDevelopment: string;
+    readonly directoryAndVisits: string;
+    readonly support: string;
+    readonly overview: string;
+    readonly myChildren: string;
+    readonly screening: string;
+    readonly activities: string;
+    readonly progress: string;
+    readonly appointments: string;
+    readonly schools: string;
+    readonly hospitals: string;
+    readonly familyRecords: string;
+    readonly schoolProfile: string;
+    readonly hospitalProfile: string;
+    readonly students: string;
+    readonly reports: string;
+    readonly schoolReports: string;
+    readonly doctors: string;
+    readonly newScreening: string;
+    readonly createSchoolAccount: string;
+    readonly addActivity: string;
+    readonly manageAppointments: string;
+    readonly parentAccount: string;
+    readonly adminAccount: string;
+    readonly schoolAccount: string;
+    readonly hospitalAccount: string;
+    readonly familyPortal: string;
+    readonly adminPortal: string;
+    readonly educationPortal: string;
+    readonly clinicalCare: string;
+    readonly highContrast: string;
+    readonly calmSensory: string;
+    readonly reducedMotion: string;
+    readonly sensoryPreferenceTitle: string;
+    readonly switchToKhmer: string;
+    readonly switchToEnglish: string;
+    readonly closeDrawer: string;
+    readonly autiCareUser: string;
+  };
 }
 
 export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
@@ -586,6 +638,58 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       saveSuccess: 'ការផ្លាស់ប្តូរត្រូវបានរក្សាទុកដោយជោគជ័យ',
       changePassword: 'ផ្លាស់ប្តូរពាក្យសម្ងាត់',
       theme: 'ពណ៌ និងរូបរាង',
+    },
+    shell: {
+      skipToContent: 'រំលងទៅមាតិកាចម្បង',
+      expandSidebar: 'ពង្រីករបាររុករក (Ctrl+B)',
+      collapseSidebar: 'បង្រួមរបាររុករក (Ctrl+B)',
+      toggleNav: 'ប្តូររបាររុករក (Ctrl+B / ⌘B)',
+      crisisAndUrgent: 'ជំនួយបន្ទាន់ និងការថែទាំ',
+      accountSettings: 'ការកំណត់គណនី',
+      helpCenter: 'មជ្ឈមណ្ឌលជំនួយ',
+      crisisSupport: 'ជំនួយបន្ទាន់',
+      signOut: 'ចាកចេញ',
+      userAccountMenu: 'ម៉ឺនុយគណនីអ្នកប្រើប្រាស់',
+      unreadNotifications: '{{count}} ការជូនដំណឹងមិនទាន់អាន',
+      notifications: 'ការជូនដំណឹង',
+      careAndDevelopment: 'ការថែទាំ និងការអភិវឌ្ឍ',
+      directoryAndVisits: 'សៀវភៅបញ្ជី និងការណាត់',
+      support: 'ការគាំទ្រ',
+      overview: 'ទំព័រដើម',
+      myChildren: 'កុមាររបស់ខ្ញុំ',
+      screening: 'ការវាយតម្លៃ',
+      activities: 'សកម្មភាពលេង',
+      progress: 'ការវិវត្ត',
+      appointments: 'ការណាត់ជួប',
+      schools: 'សាលារៀន',
+      hospitals: 'មន្ទីរពេទ្យ',
+      familyRecords: 'កំណត់ត្រាគ្រួសារ',
+      schoolProfile: 'ព័ត៌មានសាលារៀន',
+      hospitalProfile: 'ព័ត៌មានមន្ទីរពេទ្យ',
+      students: 'សិស្សានុសិស្ស',
+      reports: 'របាយការណ៍',
+      schoolReports: 'របាយការណ៍សាលា',
+      doctors: 'វេជ្ជបណ្ឌិត',
+      newScreening: 'ការវាយតម្លៃថ្មី',
+      createSchoolAccount: 'បង្កើតគណនីសាលា',
+      addActivity: 'បន្ថែមសកម្មភាព',
+      manageAppointments: 'គ្រប់គ្រងការណាត់ជួប',
+      parentAccount: 'គណនីអាណាព្យាបាល',
+      adminAccount: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ',
+      schoolAccount: 'គណនីសាលារៀន',
+      hospitalAccount: 'គណនីមន្ទីរពេទ្យ',
+      familyPortal: 'AutiCare - ផតថលគ្រួសារ',
+      adminPortal: 'AutiCare - ការគ្រប់គ្រងប្រព័ន្ធ',
+      educationPortal: 'AutiCare - ផតថលអប់រំ',
+      clinicalCare: 'AutiCare - ការថែទាំព្យាបាល',
+      highContrast: 'កម្រិតពណ៌ច្បាស់',
+      calmSensory: 'កាត់បន្ថយការភ្ញោច',
+      reducedMotion: 'កាត់បន្ថយចលនា',
+      sensoryPreferenceTitle: 'ចំណូលចិត្តវិញ្ញាណសកម្ម៖ {{mode}}។ ចុចដើម្បីកំណត់ក្នុងការកំណត់។',
+      switchToKhmer: 'ប្តូរទៅភាសាខ្មែរ',
+      switchToEnglish: 'ប្តូរទៅភាសាអង់គ្លេស',
+      closeDrawer: 'បិទម៉ឺនុយ',
+      autiCareUser: 'អ្នកប្រើប្រាស់ AutiCare',
     },
   },
   en: {
@@ -893,6 +997,59 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       saveSuccess: 'Settings saved successfully.',
       changePassword: 'Change Password',
       theme: 'Theme & Display',
+    },
+    shell: {
+      skipToContent: 'Skip to content',
+      expandSidebar: 'Expand navigation sidebar (Ctrl+B)',
+      collapseSidebar: 'Collapse navigation sidebar (Ctrl+B)',
+      toggleNav: 'Toggle navigation (Ctrl+B / ⌘B)',
+      crisisAndUrgent: 'Crisis & Urgent Care',
+      accountSettings: 'Account Settings',
+      helpCenter: 'Help Center',
+      crisisSupport: 'Crisis Support',
+      signOut: 'Sign out',
+      userAccountMenu: 'User account menu',
+      unreadNotifications: '{{count}} unread notifications',
+      notifications: 'Notifications',
+      careAndDevelopment: 'Care & Development',
+      directoryAndVisits: 'Directory & Visits',
+      support: 'Support',
+      overview: 'Overview',
+      myChildren: 'My Children',
+      screening: 'Screening',
+      activities: 'Activities',
+      progress: 'Progress',
+      appointments: 'Appointments',
+      schools: 'Schools',
+      hospitals: 'Hospitals',
+      familyRecords: 'Family Records',
+      schoolProfile: 'School Profile',
+      hospitalProfile: 'Hospital Profile',
+      students: 'Students',
+      reports: 'Reports',
+      schoolReports: 'School Reports',
+      doctors: 'Doctors',
+      newScreening: 'New Screening',
+      createSchoolAccount: 'Create School Account',
+      addActivity: 'Add Activity',
+      manageAppointments: 'Manage Appointments',
+      parentAccount: 'Parent account',
+      adminAccount: 'System administrator',
+      schoolAccount: 'School account',
+      hospitalAccount: 'Hospital account',
+      familyPortal: 'AutiCare Family Portal',
+      adminPortal: 'AutiCare Administration',
+      educationPortal: 'AutiCare Education Portal',
+      clinicalCare: 'AutiCare Clinical Care',
+      highContrast: 'High Contrast',
+      calmSensory: 'Calm Sensory',
+      reducedMotion: 'Reduced Motion',
+      sensoryPreferenceTitle:
+        'Active sensory preference: {{mode}}. Click to configure in Settings.',
+      switchToKhmer: 'Switch language to Khmer',
+      switchToEnglish: 'Switch language to English',
+      closeDrawer: 'Close navigation drawer',
+      autiCareUser: 'AutiCare user',
     },
   },
 };

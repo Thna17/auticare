@@ -12,6 +12,7 @@ import { AuthService } from '../auth/auth.service';
 import { NotificationsStateService } from '../notifications/notifications-state.service';
 import { PreferencesService } from '../preferences/preferences.service';
 import { I18nService } from '../i18n/i18n.service';
+import { DICTIONARY } from '../i18n/i18n.dictionary';
 
 export type NavItem = {
   readonly label: string;
@@ -25,42 +26,18 @@ export type NavSection = {
   readonly items: readonly NavItem[];
 };
 
-const mobileNav: readonly NavItem[] = [
-  { label: 'Home', path: '/dashboard', icon: 'grid' },
-  { label: 'Screening', path: '/screening', icon: 'checklist' },
-  { label: 'Activities', path: '/activities', icon: 'activity' },
-  { label: 'Appointments', path: '/appointments', icon: 'calendar' },
-];
-
-const adminMobileNav: readonly NavItem[] = [
-  { label: 'Home', path: '/dashboard', icon: 'grid' },
-  { label: 'Families', path: '/children', icon: 'family' },
-  { label: 'Directory', path: '/schools/admin', icon: 'school' },
-  { label: 'Settings', path: '/settings', icon: 'settings' },
-];
-
-const schoolMobileNav: readonly NavItem[] = [
-  { label: 'Home', path: '/dashboard', icon: 'grid' },
-  { label: 'Students', path: '/schools/enrollments', icon: 'family' },
-  { label: 'Reports', path: '/schools/reports', icon: 'checklist' },
-  { label: 'Profile', path: '/schools/profile', icon: 'person' },
-];
-
-const hospitalMobileNav: readonly NavItem[] = [
-  { label: 'Home', path: '/hospital/dashboard', icon: 'grid' },
-  { label: 'Appts', path: '/hospital/appointments', icon: 'calendar' },
-  { label: 'Doctors', path: '/hospital/doctors', icon: 'hospital' },
-  { label: 'Profile', path: '/hospital/profile', icon: 'person' },
-];
-
 @Component({
   selector: 'ac-app-shell',
   standalone: true,
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   template: `
-    <a class="skip" href="#main">Skip to content</a>
+    <a class="skip" href="#main">{{ shellTexts().skipToContent }}</a>
 
-    <aside class="sidebar" [class.collapsed]="sidebarCollapsed()" aria-label="Primary navigation">
+    <aside
+      class="sidebar"
+      [class.collapsed]="sidebarCollapsed()"
+      [attr.aria-label]="shellTexts().overview"
+    >
       <header class="sidebar-header">
         <a class="brand" [routerLink]="brandLink()">
           <img
@@ -77,16 +54,10 @@ const hospitalMobileNav: readonly NavItem[] = [
           class="collapse-btn"
           type="button"
           [attr.aria-label]="
-            sidebarCollapsed()
-              ? 'Expand navigation sidebar (Ctrl+B)'
-              : 'Collapse navigation sidebar (Ctrl+B)'
+            sidebarCollapsed() ? shellTexts().expandSidebar : shellTexts().collapseSidebar
           "
           [attr.aria-expanded]="!sidebarCollapsed()"
-          [title]="
-            sidebarCollapsed()
-              ? 'Expand navigation sidebar (Ctrl+B / ⌘B)'
-              : 'Collapse navigation sidebar (Ctrl+B / ⌘B)'
-          "
+          [title]="sidebarCollapsed() ? shellTexts().expandSidebar : shellTexts().collapseSidebar"
           (click)="toggleSidebar()"
         >
           <span class="collapse-icon" [class.collapsed]="sidebarCollapsed()" aria-hidden="true">
@@ -148,7 +119,7 @@ const hospitalMobileNav: readonly NavItem[] = [
         <a
           class="crisis-shortcut"
           routerLink="/crisis"
-          [attr.title]="sidebarCollapsed() ? 'Crisis & Urgent Care' : null"
+          [attr.title]="sidebarCollapsed() ? shellTexts().crisisAndUrgent : null"
         >
           <span class="crisis-icon" aria-hidden="true">
             <svg
@@ -166,14 +137,14 @@ const hospitalMobileNav: readonly NavItem[] = [
               ></path>
             </svg>
           </span>
-          <span class="crisis-label">Crisis & Urgent Care</span>
+          <span class="crisis-label">{{ shellTexts().crisisAndUrgent }}</span>
         </a>
 
         <button
           class="logout-button"
           type="button"
           (click)="logout()"
-          [attr.title]="sidebarCollapsed() ? 'Sign out' : null"
+          [attr.title]="sidebarCollapsed() ? shellTexts().signOut : null"
         >
           <span class="logout-icon" aria-hidden="true">
             <svg
@@ -191,7 +162,7 @@ const hospitalMobileNav: readonly NavItem[] = [
               <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
           </span>
-          <span class="logout-label">Sign out</span>
+          <span class="logout-label">{{ shellTexts().signOut }}</span>
         </button>
       </div>
     </aside>
@@ -204,11 +175,9 @@ const hospitalMobileNav: readonly NavItem[] = [
             type="button"
             (click)="toggleSidebarOrDrawer()"
             [attr.aria-label]="
-              sidebarCollapsed()
-                ? 'Expand navigation sidebar (Ctrl+B)'
-                : 'Collapse navigation sidebar (Ctrl+B)'
+              sidebarCollapsed() ? shellTexts().expandSidebar : shellTexts().collapseSidebar
             "
-            title="Toggle navigation (Ctrl+B / ⌘B)"
+            [title]="shellTexts().toggleNav"
           >
             <span class="toggle-bars" aria-hidden="true">
               <span></span>
@@ -229,15 +198,7 @@ const hospitalMobileNav: readonly NavItem[] = [
           </a>
           <span class="topbar-portal-badge">{{ portalTitle() }}</span>
           @if (sensoryModeActive()) {
-            <a
-              class="sensory-mode-pill"
-              routerLink="/settings"
-              [title]="
-                'Active sensory preference: ' +
-                sensoryModeLabel() +
-                '. Click to configure in Settings.'
-              "
-            >
+            <a class="sensory-mode-pill" routerLink="/settings" [title]="sensoryPreferenceTitle()">
               <span class="sensory-pill-dot" aria-hidden="true"></span>
               <span>{{ sensoryModeLabel() }}</span>
             </a>
@@ -250,14 +211,10 @@ const hospitalMobileNav: readonly NavItem[] = [
             class="topbar-lang-toggle"
             (click)="toggleLanguage()"
             [attr.aria-label]="
-              currentLang() === 'km'
-                ? 'Switch language to English (ប្តូរទៅភាសាអង់គ្លេស)'
-                : 'Switch language to Khmer (ប្តូរទៅភាសាខ្មែរ)'
+              currentLang() === 'km' ? shellTexts().switchToEnglish : shellTexts().switchToKhmer
             "
             [title]="
-              currentLang() === 'km'
-                ? 'ប្តូរទៅភាសាអង់គ្លេស (Switch to English)'
-                : 'ប្តូរទៅភាសាខ្មែរ (Switch to Khmer)'
+              currentLang() === 'km' ? shellTexts().switchToEnglish : shellTexts().switchToKhmer
             "
           >
             <span class="lang-flag" aria-hidden="true">{{
@@ -269,8 +226,8 @@ const hospitalMobileNav: readonly NavItem[] = [
           <a
             [routerLink]="notificationPath()"
             class="topbar-icon-btn notification-btn"
-            aria-label="Notifications"
-            [title]="unreadCount() > 0 ? unreadCount() + ' unread notifications' : 'Notifications'"
+            [attr.aria-label]="shellTexts().notifications"
+            [title]="unreadCount() > 0 ? unreadNotificationTooltip() : shellTexts().notifications"
           >
             <span class="topbar-bell" aria-hidden="true">
               <svg
@@ -302,7 +259,7 @@ const hospitalMobileNav: readonly NavItem[] = [
               (click)="toggleProfileMenu()"
               [attr.aria-expanded]="profileMenuOpen()"
               aria-haspopup="menu"
-              aria-label="User account menu"
+              [attr.aria-label]="shellTexts().userAccountMenu"
             >
               <span class="avatar-circle" aria-hidden="true">{{ initials() }}</span>
               <div class="profile-info">
@@ -327,7 +284,11 @@ const hospitalMobileNav: readonly NavItem[] = [
 
             @if (profileMenuOpen()) {
               <div class="popover-scrim" (click)="closeProfileMenu()" aria-hidden="true"></div>
-              <div class="popover-menu" role="menu" aria-label="Account menu">
+              <div
+                class="popover-menu"
+                role="menu"
+                [attr.aria-label]="shellTexts().userAccountMenu"
+              >
                 <div class="popover-header">
                   <span class="popover-avatar" aria-hidden="true">{{ initials() }}</span>
                   <div class="popover-details">
@@ -343,7 +304,7 @@ const hospitalMobileNav: readonly NavItem[] = [
                   (click)="closeProfileMenu()"
                 >
                   <span class="popover-icon" aria-hidden="true">⚙️</span>
-                  <span>Account Settings</span>
+                  <span>{{ shellTexts().accountSettings }}</span>
                 </a>
                 <a
                   class="popover-item"
@@ -352,7 +313,7 @@ const hospitalMobileNav: readonly NavItem[] = [
                   (click)="closeProfileMenu()"
                 >
                   <span class="popover-icon" aria-hidden="true">❓</span>
-                  <span>Help Center</span>
+                  <span>{{ shellTexts().helpCenter }}</span>
                 </a>
                 <a
                   class="popover-item"
@@ -361,7 +322,7 @@ const hospitalMobileNav: readonly NavItem[] = [
                   (click)="closeProfileMenu()"
                 >
                   <span class="popover-icon" aria-hidden="true">🛡️</span>
-                  <span>Crisis Support</span>
+                  <span>{{ shellTexts().crisisSupport }}</span>
                 </a>
                 <div class="popover-divider"></div>
                 <button
@@ -371,7 +332,7 @@ const hospitalMobileNav: readonly NavItem[] = [
                   (click)="logout()"
                 >
                   <span class="popover-icon" aria-hidden="true">🚪</span>
-                  <span>Sign out</span>
+                  <span>{{ shellTexts().signOut }}</span>
                 </button>
               </div>
             }
@@ -445,7 +406,7 @@ const hospitalMobileNav: readonly NavItem[] = [
             type="button"
             class="drawer-close-btn"
             (click)="closeMobileDrawer()"
-            aria-label="Close navigation drawer"
+            [attr.aria-label]="shellTexts().closeDrawer"
           >
             ✕
           </button>
@@ -493,7 +454,7 @@ const hospitalMobileNav: readonly NavItem[] = [
                 ></path>
               </svg>
             </span>
-            <span class="crisis-label">Crisis & Urgent Care</span>
+            <span class="crisis-label">{{ shellTexts().crisisAndUrgent }}</span>
           </a>
           <button type="button" class="logout-button" (click)="logout()">
             <span class="logout-icon" aria-hidden="true">
@@ -512,7 +473,7 @@ const hospitalMobileNav: readonly NavItem[] = [
                 <line x1="21" y1="12" x2="9" y2="12"></line>
               </svg>
             </span>
-            <span class="logout-label">Sign out</span>
+            <span class="logout-label">{{ shellTexts().signOut }}</span>
           </button>
         </div>
       </aside>
@@ -1832,6 +1793,25 @@ export class AppShellComponent {
     }
   }
 
+  readonly shellTexts = computed(() => {
+    return this.i18n ? this.i18n.dictionary.shell : DICTIONARY[this.currentLang()].shell;
+  });
+
+  protected readonly unreadNotificationTooltip = computed(() => {
+    const unread = this.unreadCount();
+    return (
+      this.i18n?.t('shell.unreadNotifications', { count: unread }) ??
+      `${unread} unread notifications`
+    );
+  });
+
+  protected readonly sensoryPreferenceTitle = computed(() => {
+    return (
+      this.i18n?.t('shell.sensoryPreferenceTitle', { mode: this.sensoryModeLabel() }) ??
+      `Active sensory preference: ${this.sensoryModeLabel()}. Click to configure in Settings.`
+    );
+  });
+
   readonly sensoryModeActive = computed(() => {
     if (!this.preferences) return false;
     return (
@@ -1843,9 +1823,10 @@ export class AppShellComponent {
 
   readonly sensoryModeLabel = computed(() => {
     if (!this.preferences) return '';
-    if (this.preferences.highContrast()) return 'High Contrast';
-    if (this.preferences.calmingPalette()) return 'Calm Sensory';
-    if (this.preferences.reducedMotion()) return 'Reduced Motion';
+    const s = this.shellTexts();
+    if (this.preferences.highContrast()) return s.highContrast;
+    if (this.preferences.calmingPalette()) return s.calmSensory;
+    if (this.preferences.reducedMotion()) return s.reducedMotion;
     return '';
   });
 
@@ -1866,13 +1847,15 @@ export class AppShellComponent {
   });
 
   protected readonly portalTitle = computed(() => {
-    if (this.role() === 'ADMIN') return 'AutiCare Administration';
-    if (this.role() === 'SCHOOL') return 'AutiCare Education Portal';
-    if (this.role() === 'HOSPITAL') return 'AutiCare Clinical Care';
-    return 'AutiCare Family Portal';
+    const s = this.shellTexts();
+    if (this.role() === 'ADMIN') return s.adminPortal;
+    if (this.role() === 'SCHOOL') return s.educationPortal;
+    if (this.role() === 'HOSPITAL') return s.clinicalCare;
+    return s.familyPortal;
   });
 
   protected readonly navSections = computed<readonly NavSection[]>(() => {
+    const s = this.shellTexts();
     const role = this.role();
     const unread = this.unreadCount();
     const badge = unread > 0 ? String(unread) : undefined;
@@ -1880,27 +1863,27 @@ export class AppShellComponent {
     if (role === 'ADMIN') {
       return [
         {
-          title: 'Care & Development',
+          title: s.careAndDevelopment,
           items: [
-            { label: 'Dashboard', path: '/dashboard', icon: 'grid' },
-            { label: 'Family Records', path: '/children', icon: 'children' },
+            { label: s.overview, path: '/dashboard', icon: 'grid' },
+            { label: s.familyRecords, path: '/children', icon: 'children' },
           ],
         },
         {
-          title: 'Directory & Visits',
+          title: s.directoryAndVisits,
           items: [
-            { label: 'Schools', path: '/schools/admin', icon: 'school' },
-            { label: 'Hospitals', path: '/hospitals/admin', icon: 'hospital' },
-            { label: 'School Reports', path: '/schools/reports', icon: 'checklist' },
+            { label: s.schools, path: '/schools/admin', icon: 'school' },
+            { label: s.hospitals, path: '/hospitals/admin', icon: 'hospital' },
+            { label: s.schoolReports, path: '/schools/reports', icon: 'checklist' },
           ],
         },
         {
-          title: 'Support',
+          title: s.support,
           items: [
-            { label: 'Notifications', path: '/notifications', icon: 'bell', badge },
-            { label: 'Crisis Support', path: '/crisis', icon: 'help' },
-            { label: 'Help Center', path: '/support', icon: 'help' },
-            { label: 'Settings', path: '/settings', icon: 'settings' },
+            { label: s.notifications, path: '/notifications', icon: 'bell', badge },
+            { label: s.crisisSupport, path: '/crisis', icon: 'help' },
+            { label: s.helpCenter, path: '/support', icon: 'help' },
+            { label: s.accountSettings, path: '/settings', icon: 'settings' },
           ],
         },
       ];
@@ -1909,24 +1892,24 @@ export class AppShellComponent {
     if (role === 'SCHOOL') {
       return [
         {
-          title: 'Care & Development',
+          title: s.careAndDevelopment,
           items: [
-            { label: 'Dashboard', path: '/dashboard', icon: 'grid' },
-            { label: 'Students', path: '/schools/enrollments', icon: 'children' },
-            { label: 'Reports', path: '/schools/reports', icon: 'report' },
+            { label: s.overview, path: '/dashboard', icon: 'grid' },
+            { label: s.students, path: '/schools/enrollments', icon: 'children' },
+            { label: s.reports, path: '/schools/reports', icon: 'report' },
           ],
         },
         {
-          title: 'Directory & Visits',
-          items: [{ label: 'School Profile', path: '/schools/profile', icon: 'school' }],
+          title: s.directoryAndVisits,
+          items: [{ label: s.schoolProfile, path: '/schools/profile', icon: 'school' }],
         },
         {
-          title: 'Support',
+          title: s.support,
           items: [
-            { label: 'Notifications', path: '/notifications', icon: 'bell', badge },
-            { label: 'Crisis Support', path: '/crisis', icon: 'help' },
-            { label: 'Help Center', path: '/support', icon: 'help' },
-            { label: 'Settings', path: '/settings', icon: 'settings' },
+            { label: s.notifications, path: '/notifications', icon: 'bell', badge },
+            { label: s.crisisSupport, path: '/crisis', icon: 'help' },
+            { label: s.helpCenter, path: '/support', icon: 'help' },
+            { label: s.accountSettings, path: '/settings', icon: 'settings' },
           ],
         },
       ];
@@ -1935,24 +1918,24 @@ export class AppShellComponent {
     if (role === 'HOSPITAL') {
       return [
         {
-          title: 'Care & Development',
+          title: s.careAndDevelopment,
           items: [
-            { label: 'Dashboard', path: '/hospital/dashboard', icon: 'grid' },
-            { label: 'Appointments', path: '/hospital/appointments', icon: 'calendar' },
-            { label: 'Doctors', path: '/hospital/doctors', icon: 'hospital' },
+            { label: s.overview, path: '/hospital/dashboard', icon: 'grid' },
+            { label: s.appointments, path: '/hospital/appointments', icon: 'calendar' },
+            { label: s.doctors, path: '/hospital/doctors', icon: 'hospital' },
           ],
         },
         {
-          title: 'Directory & Visits',
-          items: [{ label: 'Hospital Profile', path: '/hospital/profile', icon: 'person' }],
+          title: s.directoryAndVisits,
+          items: [{ label: s.hospitalProfile, path: '/hospital/profile', icon: 'person' }],
         },
         {
-          title: 'Support',
+          title: s.support,
           items: [
-            { label: 'Notifications', path: '/notifications', icon: 'bell', badge },
-            { label: 'Crisis Support', path: '/crisis', icon: 'help' },
-            { label: 'Help Center', path: '/support', icon: 'help' },
-            { label: 'Settings', path: '/settings', icon: 'settings' },
+            { label: s.notifications, path: '/notifications', icon: 'bell', badge },
+            { label: s.crisisSupport, path: '/crisis', icon: 'help' },
+            { label: s.helpCenter, path: '/support', icon: 'help' },
+            { label: s.accountSettings, path: '/settings', icon: 'settings' },
           ],
         },
       ];
@@ -1961,80 +1944,111 @@ export class AppShellComponent {
     // Default: PARENT
     return [
       {
-        title: 'Care & Development',
+        title: s.careAndDevelopment,
         items: [
-          { label: 'Overview', path: '/dashboard', icon: 'grid' },
-          { label: 'My Children', path: '/children', icon: 'family' },
-          { label: 'Screening', path: '/screening', icon: 'checklist' },
-          { label: 'Activities', path: '/activities', icon: 'activity' },
-          { label: 'Progress', path: '/progress', icon: 'trend' },
+          { label: s.overview, path: '/dashboard', icon: 'grid' },
+          { label: s.myChildren, path: '/children', icon: 'family' },
+          { label: s.screening, path: '/screening', icon: 'checklist' },
+          { label: s.activities, path: '/activities', icon: 'activity' },
+          { label: s.progress, path: '/progress', icon: 'trend' },
         ],
       },
       {
-        title: 'Directory & Visits',
+        title: s.directoryAndVisits,
         items: [
-          { label: 'Appointments', path: '/appointments', icon: 'calendar' },
-          { label: 'Schools', path: '/schools', icon: 'school' },
-          { label: 'Hospitals', path: '/hospitals', icon: 'hospital' },
+          { label: s.appointments, path: '/appointments', icon: 'calendar' },
+          { label: s.schools, path: '/schools', icon: 'school' },
+          { label: s.hospitals, path: '/hospitals', icon: 'hospital' },
         ],
       },
       {
-        title: 'Support',
+        title: s.support,
         items: [
-          { label: 'Notifications', path: '/notifications', icon: 'bell', badge },
-          { label: 'Crisis Support', path: '/crisis', icon: 'help' },
-          { label: 'Help Center', path: '/support', icon: 'help' },
-          { label: 'Settings', path: '/settings', icon: 'settings' },
+          { label: s.notifications, path: '/notifications', icon: 'bell', badge },
+          { label: s.crisisSupport, path: '/crisis', icon: 'help' },
+          { label: s.helpCenter, path: '/support', icon: 'help' },
+          { label: s.accountSettings, path: '/settings', icon: 'settings' },
         ],
       },
     ];
   });
 
-  protected readonly mobileNav = computed(() => {
-    if (this.role() === 'ADMIN') return adminMobileNav;
-    if (this.role() === 'SCHOOL') return schoolMobileNav;
-    if (this.role() === 'HOSPITAL') return hospitalMobileNav;
-    return mobileNav;
+  protected readonly mobileNav = computed<readonly NavItem[]>(() => {
+    const s = this.shellTexts();
+    if (this.role() === 'ADMIN') {
+      return [
+        { label: s.overview, path: '/dashboard', icon: 'grid' },
+        { label: s.familyRecords, path: '/children', icon: 'family' },
+        { label: s.schools, path: '/schools/admin', icon: 'school' },
+        { label: s.accountSettings, path: '/settings', icon: 'settings' },
+      ];
+    }
+    if (this.role() === 'SCHOOL') {
+      return [
+        { label: s.overview, path: '/dashboard', icon: 'grid' },
+        { label: s.students, path: '/schools/enrollments', icon: 'family' },
+        { label: s.reports, path: '/schools/reports', icon: 'checklist' },
+        { label: s.schoolProfile, path: '/schools/profile', icon: 'person' },
+      ];
+    }
+    if (this.role() === 'HOSPITAL') {
+      return [
+        { label: s.overview, path: '/hospital/dashboard', icon: 'grid' },
+        { label: s.appointments, path: '/hospital/appointments', icon: 'calendar' },
+        { label: s.doctors, path: '/hospital/doctors', icon: 'hospital' },
+        { label: s.hospitalProfile, path: '/hospital/profile', icon: 'person' },
+      ];
+    }
+    return [
+      { label: s.overview, path: '/dashboard', icon: 'grid' },
+      { label: s.screening, path: '/screening', icon: 'checklist' },
+      { label: s.activities, path: '/activities', icon: 'activity' },
+      { label: s.appointments, path: '/appointments', icon: 'calendar' },
+    ];
   });
 
   protected readonly mobileAction = computed(() => {
+    const s = this.shellTexts();
     if (this.role() === 'ADMIN') {
-      return { label: 'Create school account', path: '/schools/admin/new' };
+      return { label: s.createSchoolAccount, path: '/schools/admin/new' };
     }
     if (this.role() === 'SCHOOL') {
-      return { label: 'Create activity report', path: '/schools/reports/new' };
+      return { label: s.addActivity, path: '/schools/reports/new' };
     }
     if (this.role() === 'HOSPITAL') {
-      return { label: 'Appointments', path: '/hospital/appointments' };
+      return { label: s.manageAppointments, path: '/hospital/appointments' };
     }
-    return { label: 'Start new screening', path: '/screening' };
+    return { label: s.newScreening, path: '/screening' };
   });
 
   protected readonly primaryAction = computed(() => {
+    const s = this.shellTexts();
     if (this.role() === 'ADMIN') {
-      return { label: 'Create School Account', path: '/schools/admin/new' };
+      return { label: s.createSchoolAccount, path: '/schools/admin/new' };
     }
     if (this.role() === 'SCHOOL') {
-      return { label: 'Add Activity', path: '/schools/reports/new' };
+      return { label: s.addActivity, path: '/schools/reports/new' };
     }
     if (this.role() === 'HOSPITAL') {
-      return { label: 'Manage Appointments', path: '/hospital/appointments' };
+      return { label: s.manageAppointments, path: '/hospital/appointments' };
     }
-    return { label: 'New Screening', path: '/screening' };
+    return { label: s.newScreening, path: '/screening' };
   });
 
   protected readonly accountName = computed(() => {
+    const s = this.shellTexts();
     const parent = this.auth.parent();
-    if (!parent) return 'AutiCare user';
+    if (!parent) return s.autiCareUser;
     if (parent.role === 'ADMIN') return 'Admin Panel';
-    return `${parent.firstName} ${parent.lastName}`.trim() || 'AutiCare user';
+    return `${parent.firstName} ${parent.lastName}`.trim() || s.autiCareUser;
   });
 
   protected readonly roleLabel = computed(() => {
-    if (this.role() === 'ADMIN') return 'System administrator';
-    if (this.role() === 'SCHOOL') return 'School account';
-    if (this.role() === 'HOSPITAL') return 'Hospital account';
-    return 'Parent account';
+    const s = this.shellTexts();
+    if (this.role() === 'ADMIN') return s.adminAccount;
+    if (this.role() === 'SCHOOL') return s.schoolAccount;
+    if (this.role() === 'HOSPITAL') return s.hospitalAccount;
+    return s.parentAccount;
   });
 
   protected readonly initials = computed(() => {
