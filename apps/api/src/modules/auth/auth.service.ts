@@ -13,6 +13,7 @@ import type {
 } from '@auticare/contracts';
 import { AppError, unauthorized } from '../../common/errors/app-error.js';
 import { env, isProduction } from '../../config/env.js';
+import { logger } from '../../config/logger.js';
 import { AuthRepository } from './auth.repository.js';
 import { toParentResponse } from './auth.mapper.js';
 import { PasswordService } from './password.service.js';
@@ -140,11 +141,18 @@ export class AuthService {
     const isTestRun = env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 
     if (!isTestRun && this.passwordResetMailer.isConfigured()) {
-      await this.passwordResetMailer.sendPasswordReset({
-        recipient: parent.email,
-        firstName: parent.firstName,
-        resetUrl: resetUrl.toString(),
-      });
+      void this.passwordResetMailer
+        .sendPasswordReset({
+          recipient: parent.email,
+          firstName: parent.firstName,
+          resetUrl: resetUrl.toString(),
+        })
+        .catch((err: unknown) => {
+          logger.warn(
+            { err, email: parent.email },
+            'Failed to deliver password reset email in background',
+          );
+        });
     }
 
     if (isProduction || (!isTestRun && this.passwordResetMailer.isConfigured())) return { message };

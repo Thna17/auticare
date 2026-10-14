@@ -8,6 +8,7 @@ import type {
 } from '@auticare/contracts';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { env, isProduction } from '../../config/env.js';
+import { logger } from '../../config/logger.js';
 import { prisma } from '../../database/prisma.js';
 import { auditService } from '../audit/audit.service.js';
 import { toParentResponse } from './auth.mapper.js';
@@ -71,12 +72,16 @@ export class InvitationService {
 
     const isTestRun = env.NODE_ENV === 'test' || process.env.VITEST === 'true';
     if (!isTestRun && this.mailer.isConfigured()) {
-      await this.mailer.sendInvitation({
-        recipient: email,
-        firstName: params.firstName,
-        role: params.role,
-        invitationUrl: invitationUrl.toString(),
-      });
+      void this.mailer
+        .sendInvitation({
+          recipient: email,
+          firstName: params.firstName,
+          role: params.role,
+          invitationUrl: invitationUrl.toString(),
+        })
+        .catch((err: unknown) => {
+          logger.warn({ err, email }, 'Failed to deliver invitation email in background');
+        });
     }
 
     await auditService.record({
