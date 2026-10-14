@@ -7,7 +7,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
-export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL';
+export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL' | 'ADMIN';
 
 export const DEMO_CREDENTIALS: Record<
   AuthRoleOption,
@@ -27,6 +27,11 @@ export const DEMO_CREDENTIALS: Record<
     email: 'hospital@auticare.local',
     password: 'AutiCareHospitalPassword123',
     label: 'Demo Hospital Coordinator',
+  },
+  ADMIN: {
+    email: 'admin@auticare.local',
+    password: 'AutiCareAdminPassword123',
+    label: 'Demo Admin',
   },
 };
 
@@ -126,6 +131,27 @@ export const DEMO_CREDENTIALS: Record<
                 </svg>
                 <span>Hospital Coordinator</span>
               </button>
+
+              <button
+                type="button"
+                role="radio"
+                class="role-chip"
+                [class.active]="selectedRole() === 'ADMIN'"
+                [attr.aria-checked]="selectedRole() === 'ADMIN'"
+                (click)="selectRole('ADMIN')"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  />
+                </svg>
+                <span>System Admin</span>
+              </button>
             </div>
           </div>
 
@@ -140,10 +166,15 @@ export const DEMO_CREDENTIALS: Record<
                 <strong>Education Portal:</strong> Manage student enrollments, developmental
                 observation reports, and classroom adaptations.
               </p>
-            } @else {
+            } @else if (selectedRole() === 'HOSPITAL') {
               <p>
                 <strong>Clinical Portal:</strong> Oversee specialist doctor schedules, clinic triage
                 queues, and patient consultations.
+              </p>
+            } @else {
+              <p>
+                <strong>System Administration:</strong> Manage institutions, audit school and
+                hospital registrations, and review platform telemetry.
               </p>
             }
             <button
@@ -436,7 +467,7 @@ export const DEMO_CREDENTIALS: Record<
 
       .role-chips {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 8px;
       }
 
@@ -446,12 +477,12 @@ export const DEMO_CREDENTIALS: Record<
         align-items: center;
         justify-content: center;
         gap: 6px;
-        padding: 10px 6px;
+        padding: 10px 4px;
         border: 1px solid var(--ac-color-border-grey);
         border-radius: 12px;
         background: var(--ac-color-surface);
         color: var(--ac-color-text-body);
-        font-size: 12px;
+        font-size: 11.5px;
         font-weight: var(--ac-font-weight-semibold);
         cursor: pointer;
         text-align: center;

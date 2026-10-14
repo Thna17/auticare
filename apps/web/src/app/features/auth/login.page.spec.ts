@@ -60,6 +60,9 @@ describe('LoginPage', () => {
     component.selectRole('HOSPITAL');
     expect(component.selectedRole()).toBe('HOSPITAL');
 
+    component.selectRole('ADMIN');
+    expect(component.selectedRole()).toBe('ADMIN');
+
     component.selectRole('PARENT');
     expect(component.selectedRole()).toBe('PARENT');
   });
@@ -76,6 +79,11 @@ describe('LoginPage', () => {
     expect(component.selectedRole()).toBe('HOSPITAL');
     expect(component.form.value.email).toBe('hospital@auticare.local');
     expect(component.form.value.password).toBe('AutiCareHospitalPassword123');
+
+    component.fillDemoCredentials('ADMIN');
+    expect(component.selectedRole()).toBe('ADMIN');
+    expect(component.form.value.email).toBe('admin@auticare.local');
+    expect(component.form.value.password).toBe('AutiCareAdminPassword123');
 
     component.fillDemoCredentials('PARENT');
     expect(component.selectedRole()).toBe('PARENT');
@@ -181,6 +189,31 @@ describe('LoginPage', () => {
 
     component.submit();
     expect(router.navigateByUrl).toHaveBeenCalledWith('/schools/enrollments');
+  });
+
+  it('routes ADMIN user to /dashboard', () => {
+    const { component } = createComponent();
+
+    authServiceMock.login.mockReturnValue(
+      of({
+        id: 'a-1',
+        email: 'admin@auticare.local',
+        firstName: 'System',
+        lastName: 'Admin',
+        role: 'ADMIN',
+        mustResetPassword: false,
+        phoneNumber: null,
+        socialMediaAccount: null,
+      }),
+    );
+
+    component.form.setValue({
+      email: 'admin@auticare.local',
+      password: 'AutiCareAdminPassword123',
+    });
+
+    component.submit();
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
   });
 
   it('honors valid returnUrl parameter', () => {

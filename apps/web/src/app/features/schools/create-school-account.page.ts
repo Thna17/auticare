@@ -285,7 +285,11 @@ export class CreateSchoolAccountPage {
     this.message.set(null);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.error.set('Fix the highlighted fields before creating the account.');
+      this.error.set(
+        this.currentLang() === 'km'
+          ? 'សូមបំពេញព័ត៌មានចាំបាច់ទាំងអស់មុននឹងបង្កើតគណនី។'
+          : 'Fix the highlighted fields before creating the account.',
+      );
       return;
     }
 
@@ -308,12 +312,20 @@ export class CreateSchoolAccountPage {
       })
       .subscribe({
         next: (created) => {
-          this.message.set(`Invitation sent for ${created.school.name}.`);
+          this.message.set(
+            this.currentLang() === 'km'
+              ? `ការអញ្ជើញត្រូវបានផ្ញើជូនសាលា ${created.school.name} ដោយជោគជ័យ។`
+              : `Invitation sent for ${created.school.name}.`,
+          );
           this.saving.set(false);
           void this.router.navigateByUrl('/schools/admin');
         },
         error: () => {
-          this.error.set('School account could not be created. Check the email and try again.');
+          this.error.set(
+            this.currentLang() === 'km'
+              ? 'មិនអាចបង្កើតគណនីសាលាបានទេ។ សូមពិនិត្យមើលអ៊ីមែល រួចព្យាយាមម្តងទៀត។'
+              : 'School account could not be created. Check the email and try again.',
+          );
           this.saving.set(false);
         },
       });

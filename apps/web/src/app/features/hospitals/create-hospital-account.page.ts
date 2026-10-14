@@ -290,7 +290,11 @@ export class CreateHospitalAccountPage {
     this.message.set(null);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.error.set('Fix the highlighted fields before creating the account.');
+      this.error.set(
+        this.currentLang() === 'km'
+          ? 'សូមបំពេញព័ត៌មានចាំបាច់ទាំងអស់មុននឹងបង្កើតគណនី។'
+          : 'Fix the highlighted fields before creating the account.',
+      );
       return;
     }
 
@@ -314,12 +318,20 @@ export class CreateHospitalAccountPage {
       })
       .subscribe({
         next: (created) => {
-          this.message.set(`Invitation sent for ${created.hospital.name}.`);
+          this.message.set(
+            this.currentLang() === 'km'
+              ? `ការអញ្ជើញត្រូវបានផ្ញើជូនមន្ទីរពេទ្យ ${created.hospital.name} ដោយជោគជ័យ។`
+              : `Invitation sent for ${created.hospital.name}.`,
+          );
           this.saving.set(false);
           void this.router.navigateByUrl('/hospitals/admin');
         },
         error: () => {
-          this.error.set('Hospital account could not be created. Check the email and try again.');
+          this.error.set(
+            this.currentLang() === 'km'
+              ? 'មិនអាចបង្កើតគណនីមន្ទីរពេទ្យបានទេ។ សូមពិនិត្យមើលអ៊ីមែល រួចព្យាយាមម្តងទៀត។'
+              : 'Hospital account could not be created. Check the email and try again.',
+          );
           this.saving.set(false);
         },
       });
