@@ -127,7 +127,7 @@ export class ParentsRepository {
         });
         return request;
       },
-      { isolationLevel: 'Serializable' },
+      { isolationLevel: 'ReadCommitted' as Prisma.TransactionIsolationLevel },
     );
   }
 

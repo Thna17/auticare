@@ -70,7 +70,7 @@ export class AppointmentsRepository {
         return created;
       },
       {
-        isolationLevel: 'Serializable',
+        isolationLevel: 'ReadCommitted' as Prisma.TransactionIsolationLevel,
       },
     );
   }
