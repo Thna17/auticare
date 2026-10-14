@@ -57,13 +57,81 @@ export class InvitationMailer {
       'If you were not expecting this invitation, please contact support or disregard this email.',
     ].join('\n');
 
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to AutiCare</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f6fa; padding: 36px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(29, 91, 121, 0.08); border: 1px solid #e2e8f0;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #1d5b79 0%, #2e86ab 100%); padding: 32px 36px; text-align: left;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">AutiCare</h1>
+              <p style="margin: 6px 0 0 0; color: #dbeafe; font-size: 13px; font-weight: 500;">Connected Support Continuum for Neurodivergent Children</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px;">
+              <h2 style="margin: 0 0 16px 0; color: #0f172a; font-size: 20px; font-weight: 600;">Welcome, ${escapeHtml(greeting)}!</h2>
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                You have been invited to join <strong>AutiCare</strong> as a <strong>${escapeHtml(roleLabel)}</strong>.
+              </p>
+              <p style="margin: 0 0 28px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Activate your account to collaborate seamlessly with parents, clinical specialists, and educational teams. Click the button below to set up your password:
+              </p>
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 0 28px 0;">
+                <tr>
+                  <td align="center" style="border-radius: 10px; background-color: #1d5b79;">
+                    <a href="${escapeHtml(invitationUrl)}" target="_blank" style="display: inline-block; padding: 14px 32px; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 10px; background-color: #1d5b79;">
+                      Set Up Your Password &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <div style="background-color: #f8fafc; border-left: 4px solid #2e86ab; padding: 14px 16px; border-radius: 6px; margin: 0 0 24px 0;">
+                <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 1.5;">
+                  <strong>Security Note:</strong> This invitation is secure, single-use, and expires in <strong>72 hours</strong>. If the button does not work, copy and paste this link:
+                </p>
+                <p style="margin: 8px 0 0 0; word-break: break-all; color: #1d5b79; font-size: 12px; font-family: monospace;">
+                  ${escapeHtml(invitationUrl)}
+                </p>
+              </div>
+              <p style="margin: 0; color: #94a3b8; font-size: 13px; line-height: 1.5;">
+                If you were not expecting this invitation, you can safely disregard this email or contact support.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f8fafc; padding: 24px 36px; border-top: 1px solid #e2e8f0; text-align: center;">
+              <p style="margin: 0; color: #64748b; font-size: 12px; line-height: 1.5;">
+                &copy; ${new Date().getFullYear()} AutiCare. Empowering every neurodivergent child in Cambodia.
+              </p>
+              <p style="margin: 6px 0 0 0; color: #94a3b8; font-size: 11px;">
+                Phnom Penh, Cambodia &bull; Crisis Resources: Kantha Bopha &amp; TPO Cambodia
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
     try {
       await this.transporter.sendMail({
         from: env.SMTP_FROM ?? env.SMTP_USER,
         to: recipient,
         subject: 'Welcome to AutiCare: Set up your account',
         text,
-        html: `<p>Hello ${escapeHtml(greeting)},</p><p>You have been invited to AutiCare as a <strong>${escapeHtml(roleLabel)}</strong>.</p><p><a href="${escapeHtml(invitationUrl)}">Set up your account and password</a></p><p>This invitation is secure, single-use, and expires in 72 hours.</p>`,
+        html,
       });
     } catch (error) {
       logger.warn(
