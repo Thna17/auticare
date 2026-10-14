@@ -31,16 +31,24 @@ import { I18nService } from '../../core/i18n/i18n.service';
   template: `
     <section class="page-header">
       <div class="header-intro">
-        <p class="eyebrow">Family Profiles & Care</p>
+        <p class="eyebrow">
+          {{ currentLang() === 'km' ? 'ប្រវត្តិរូបគ្រួសារ និងការថែទាំ' : 'Family Profiles & Care' }}
+        </p>
         <div class="title-with-badge">
-          <h1>Children</h1>
+          <h1>{{ currentLang() === 'km' ? 'កុមារ' : 'Children' }}</h1>
           @if (!facade.loading() && facade.children().length > 0) {
-            <span class="child-count-pill">{{ activeChildrenCount() }} registered</span>
+            <span class="child-count-pill">
+              {{ activeChildrenCount() }}
+              {{ currentLang() === 'km' ? 'បានចុះឈ្មោះ' : 'registered' }}
+            </span>
           }
         </div>
         <p class="subtitle">
-          Manage profiles, track developmental trajectories, and coordinate clinical care for each
-          child.
+          {{
+            currentLang() === 'km'
+              ? 'គ្រប់គ្រងប្រវត្តិរូប តាមដានគន្លងការលូតលាស់ និងសម្របសម្រួលការថែទាំគ្លីនិកសម្រាប់កុមារម្នាក់ៗ។'
+              : 'Manage profiles, track developmental trajectories, and coordinate clinical care for each child.'
+          }}
         </p>
       </div>
       <div class="header-actions">
@@ -50,12 +58,20 @@ import { I18nService } from '../../core/i18n/i18n.service';
           [class.active]="showArchived()"
           (click)="toggleArchived()"
         >
-          {{ showArchived() ? 'Hide archived profiles' : 'View archived profiles' }}
+          {{
+            showArchived()
+              ? currentLang() === 'km'
+                ? 'លាក់ប្រវត្តិរូបក្នុងបណ្ណសារ'
+                : 'Hide archived profiles'
+              : currentLang() === 'km'
+                ? 'មើលប្រវត្តិរូបក្នុងបណ្ណសារ'
+                : 'View archived profiles'
+          }}
         </button>
         @if (canCreateChildren()) {
           <a class="create-child-btn" routerLink="/children/new">
             <span class="plus-icon" aria-hidden="true">+</span>
-            <span>Add Child</span>
+            <span>{{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add Child' }}</span>
           </a>
         }
       </div>
@@ -63,7 +79,11 @@ import { I18nService } from '../../core/i18n/i18n.service';
 
     @if (facade.loading()) {
       <div class="state-center">
-        <ac-ui-spinner label="Loading children profiles…" />
+        <ac-ui-spinner
+          [label]="
+            currentLang() === 'km' ? 'កំពុងផ្ទុកប្រវត្តិរូបកុមារ…' : 'Loading children profiles…'
+          "
+        />
       </div>
     } @else if (facade.error()) {
       <ac-ui-message tone="error">{{ facade.error() }}</ac-ui-message>
@@ -71,18 +91,28 @@ import { I18nService } from '../../core/i18n/i18n.service';
       <div class="empty-wrapper">
         <ac-ui-empty-state
           icon="👶"
-          title="No child profiles yet"
-          message="Create your child's profile to track developmental milestones, screening assessments, and clinical support plans."
+          [title]="
+            currentLang() === 'km' ? 'មិនទាន់មានប្រវត្តិរូបកុមារនៅឡើយទេ' : 'No child profiles yet'
+          "
+          [message]="
+            currentLang() === 'km'
+              ? 'បង្កើតប្រវត្តិរូបកូនរបស់អ្នក ដើម្បីតាមដានដំណាក់កាលអភិវឌ្ឍន៍ ការវាយតម្លៃស្គ្រីនីង និងផែនការគាំទ្រគ្លីនិក។'
+              : 'Create a child profile to track developmental milestones, screening assessments, and clinical support plans.'
+          "
         >
           @if (canCreateChildren()) {
             <a class="empty-action-btn" routerLink="/children/new">
-              <span aria-hidden="true">+</span> Create Child Profile
+              <span aria-hidden="true">+</span>
+              {{ currentLang() === 'km' ? 'បង្កើតប្រវត្តិរូបកុមារ' : 'Create Child Profile' }}
             </a>
           }
         </ac-ui-empty-state>
       </div>
     } @else {
-      <section class="child-grid" aria-label="Child profiles">
+      <section
+        class="child-grid"
+        [attr.aria-label]="currentLang() === 'km' ? 'ប្រវត្តិរូបកុមារ' : 'Child profiles'"
+      >
         @for (child of facade.children(); track child.id) {
           <article class="child-card" [class.archived]="child.archivedAt">
             <div class="card-header-row">
@@ -93,13 +123,17 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 <div class="title-row">
                   <h2>{{ fullName(child) }}</h2>
                   @if (child.archivedAt) {
-                    <span class="archived-badge">Archived</span>
+                    <span class="archived-badge">
+                      {{ currentLang() === 'km' ? 'ទុកក្នុងបណ្ណសារ' : 'Archived' }}
+                    </span>
                   }
                 </div>
                 <p class="age-text">
                   <strong>{{ ageLabel(child.dateOfBirth) }}</strong>
                   <span class="birth-dot">&bull;</span>
-                  <span>Born {{ child.dateOfBirth }}</span>
+                  <span>
+                    {{ currentLang() === 'km' ? 'កើតថ្ងៃទី ' : 'Born ' }}{{ child.dateOfBirth }}
+                  </span>
                 </p>
               </div>
             </div>
@@ -115,7 +149,13 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 @if (child.notes) {
                   <p class="notes-text">{{ child.notes }}</p>
                 } @else {
-                  <p class="notes-text muted">No support notes recorded yet.</p>
+                  <p class="notes-text muted">
+                    {{
+                      currentLang() === 'km'
+                        ? 'មិនទាន់មានកំណត់ត្រាគាំទ្រនៅឡើយទេ។'
+                        : 'No support notes recorded yet.'
+                    }}
+                  </p>
                 }
               </div>
 
@@ -125,28 +165,32 @@ import { I18nService } from '../../core/i18n/i18n.service';
                   class="shortcut-chip"
                   routerLink="/screening"
                   [queryParams]="{ childId: child.id }"
-                  title="Screening assessment"
+                  [title]="currentLang() === 'km' ? 'ការវាយតម្លៃស្គ្រីនីង' : 'Screening assessment'"
                 >
                   <span class="shortcut-icon" aria-hidden="true">📋</span>
-                  <span>Screening</span>
+                  <span>{{ currentLang() === 'km' ? 'ការវាយតម្លៃ' : 'Screening' }}</span>
                 </a>
                 <a
                   class="shortcut-chip"
                   routerLink="/progress"
                   [queryParams]="{ childId: child.id }"
-                  title="Developmental progress"
+                  [title]="
+                    currentLang() === 'km' ? 'ការវិវត្តនៃការលូតលាស់' : 'Developmental progress'
+                  "
                 >
                   <span class="shortcut-icon" aria-hidden="true">📈</span>
-                  <span>Progress</span>
+                  <span>{{ currentLang() === 'km' ? 'ការវិវត្ត' : 'Progress' }}</span>
                 </a>
                 <a
                   class="shortcut-chip"
                   routerLink="/activities"
                   [queryParams]="{ childId: child.id }"
-                  title="Developmental activities"
+                  [title]="
+                    currentLang() === 'km' ? 'សកម្មភាពអភិវឌ្ឍន៍' : 'Developmental activities'
+                  "
                 >
                   <span class="shortcut-icon" aria-hidden="true">🎯</span>
-                  <span>Activities</span>
+                  <span>{{ currentLang() === 'km' ? 'សកម្មភាព' : 'Activities' }}</span>
                 </a>
               </div>
             </div>
@@ -159,11 +203,21 @@ import { I18nService } from '../../core/i18n/i18n.service';
                   [disabled]="restoringId() === child.id"
                   (click)="restore(child.id)"
                 >
-                  {{ restoringId() === child.id ? 'Restoring…' : 'Restore' }}
+                  {{
+                    restoringId() === child.id
+                      ? currentLang() === 'km'
+                        ? 'កំពុងស្តារឡើងវិញ…'
+                        : 'Restoring…'
+                      : currentLang() === 'km'
+                        ? 'ស្តារឡើងវិញ'
+                        : 'Restore'
+                  }}
                 </button>
               }
               <a class="profile-link" [routerLink]="['/children', child.id]">
-                <span>View Full Profile</span>
+                <span>
+                  {{ currentLang() === 'km' ? 'មើលប្រវត្តិរូបពេញលេញ' : 'View Full Profile' }}
+                </span>
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                   <path
                     d="M5 12h13M13 6l6 6-6 6"
@@ -704,11 +758,12 @@ export class ChildrenListPage implements OnInit {
   }
 
   getScreeningBadgeLabel(childId: string): string {
+    const isKm = this.currentLang() === 'km';
     const risk = this.screeningRiskMap()[childId];
-    if (risk === 'LOW') return 'Screened: Low Risk';
-    if (risk === 'MODERATE') return 'Screened: Moderate Risk';
-    if (risk === 'HIGH') return 'Screened: High Risk';
-    return 'Screening Recommended';
+    if (risk === 'LOW') return isKm ? 'បានវាយតម្លៃ៖ ហានិភ័យទាប' : 'Screened: Low Risk';
+    if (risk === 'MODERATE') return isKm ? 'បានវាយតម្លៃ៖ ហានិភ័យមធ្យម' : 'Screened: Moderate Risk';
+    if (risk === 'HIGH') return isKm ? 'បានវាយតម្លៃ៖ ហានិភ័យខ្ពស់' : 'Screened: High Risk';
+    return isKm ? 'ណែនាំឱ្យធ្វើការវាយតម្លៃ' : 'Screening Recommended';
   }
 
   toggleArchived() {

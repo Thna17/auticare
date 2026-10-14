@@ -3,6 +3,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { ParentNotificationsPage } from './parent-notifications.page';
 import { SchoolNotificationsPage } from './school-notifications.page';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 /**
  * /notifications renders a different view per role.
@@ -30,8 +31,12 @@ import { SchoolNotificationsPage } from './school-notifications.page';
       }
       @default {
         <ac-ui-empty-state
-          title="No notifications"
-          message="This account type does not have a notification feed."
+          [title]="currentLang() === 'km' ? 'មិនមានការជូនដំណឹងទេ' : 'No notifications'"
+          [message]="
+            currentLang() === 'km'
+              ? 'ប្រភេទគណនីនេះមិនមានផ្ទាំងការជូនដំណឹងទេ។'
+              : 'This account type does not have a notification feed.'
+          "
         />
       }
     }
@@ -40,5 +45,7 @@ import { SchoolNotificationsPage } from './school-notifications.page';
 })
 export class NotificationsPage {
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
   protected readonly role = computed(() => this.auth.parent()?.role ?? null);
 }

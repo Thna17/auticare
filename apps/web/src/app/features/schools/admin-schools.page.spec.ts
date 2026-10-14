@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { AdminSchoolAccountResponse, SchoolResponse } from '@auticare/contracts';
 import { API_BASE_URL } from '../../core/config/api.config';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { AdminSchoolsPage } from './admin-schools.page';
 
 describe('AdminSchoolsPage', () => {
@@ -96,6 +97,7 @@ describe('AdminSchoolsPage', () => {
         { provide: API_BASE_URL, useValue: '/api/v1' },
       ],
     });
+    TestBed.inject(I18nService).setLanguage('en');
     httpTesting = TestBed.inject(HttpTestingController);
   });
 

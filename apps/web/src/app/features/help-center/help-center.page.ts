@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { helpCenterCategories } from './help-center.data';
+import { getHelpCenterCategories, helpCenterCategories } from './help-center.data';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 type FaqItem = {
   readonly categoryId: string;
@@ -9,15 +10,6 @@ type FaqItem = {
   readonly question: string;
   readonly answer: string;
 };
-
-const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
-  category.entries.map((entry) => ({
-    categoryId: category.id,
-    categoryLabel: category.label,
-    question: entry.question,
-    answer: entry.answer,
-  })),
-);
 
 @Component({
   standalone: true,
@@ -34,39 +26,70 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
         <div class="emergency-header">
           <span class="emergency-icon" aria-hidden="true">🆘</span>
           <div class="emergency-title-group">
-            <h2>Crisis &amp; Mental Health Emergency Support</h2>
+            <h2>
+              {{
+                currentLang() === 'km'
+                  ? 'ជំនួយបន្ទាន់សម្រាប់វិបត្តិ និងសុខភាពផ្លូវចិត្ត'
+                  : 'Crisis & Mental Health Emergency Support'
+              }}
+            </h2>
             <p>
-              Immediate 24/7 confidential help for mental health crises, sensory overload, and
-              pediatric emergencies.
+              {{
+                currentLang() === 'km'
+                  ? 'ជំនួយសម្ងាត់បន្ទាន់ ២៤/៧ សម្រាប់វិបត្តិផ្លូវចិត្ត ការលើសចំណុះវិញ្ញាណ និងករណីសង្គ្រោះបន្ទាន់កុមារ។'
+                  : 'Immediate 24/7 confidential help for mental health crises, sensory overload, and pediatric emergencies.'
+              }}
             </p>
           </div>
         </div>
         <div class="emergency-hotlines">
           <div class="hotline-pill">
-            <span class="hotline-name">988 Suicide &amp; Crisis Lifeline</span>
-            <a href="tel:988" class="hotline-link">Call or Text 988</a>
+            <span class="hotline-name">{{
+              currentLang() === 'km'
+                ? 'ខ្សែទូរស័ព្ទទាន់ហេតុការណ៍វិបត្តិ និងការធ្វើអត្តឃាត 988'
+                : '988 Suicide & Crisis Lifeline'
+            }}</span>
+            <a href="tel:988" class="hotline-link">{{
+              currentLang() === 'km' ? 'ទូរស័ព្ទ ឬផ្ញើសារទៅ 988' : 'Call or Text 988'
+            }}</a>
           </div>
           <div class="hotline-pill">
-            <span class="hotline-name">Crisis Text Line</span>
-            <a href="sms:741741?&body=HOME" class="hotline-link">Text HOME to 741741</a>
+            <span class="hotline-name">{{
+              currentLang() === 'km' ? 'ខ្សែផ្ញើសារទាន់ហេតុការណ៍វិបត្តិ' : 'Crisis Text Line'
+            }}</span>
+            <a href="sms:741741?&body=HOME" class="hotline-link">{{
+              currentLang() === 'km' ? 'ផ្ញើសារទៅលេខ 741741' : 'Text HOME to 741741'
+            }}</a>
           </div>
           <div class="hotline-pill">
-            <span class="hotline-name">Autism Response Team</span>
-            <a href="tel:18882884762" class="hotline-link">Call 1-888-288-4762</a>
+            <span class="hotline-name">{{
+              currentLang() === 'km' ? 'ក្រុមឆ្លើយតបជំងឺអូទីស្សឹម' : 'Autism Response Team'
+            }}</span>
+            <a href="tel:18882884762" class="hotline-link">{{
+              currentLang() === 'km' ? 'ទូរស័ព្ទទៅ 1-888-288-4762' : 'Call 1-888-288-4762'
+            }}</a>
           </div>
         </div>
         <div class="emergency-footer">
           <a routerLink="/crisis" class="full-hub-link">
-            <span>View Complete Crisis &amp; Sensory De-escalation Protocol Hub</span>
+            <span>{{
+              currentLang() === 'km'
+                ? 'មើលមជ្ឈមណ្ឌលពិធីការបន្ថយភាពតានតឹងវិញ្ញាណ និងវិបត្តិពេញលេញ'
+                : 'View Complete Crisis & Sensory De-escalation Protocol Hub'
+            }}</span>
             <span aria-hidden="true">→</span>
           </a>
         </div>
       </section>
 
       <header class="head">
-        <h1>Help Center</h1>
+        <h1>{{ currentLang() === 'km' ? 'មជ្ឈមណ្ឌលជំនួយ' : 'Help Center' }}</h1>
         <p class="subtitle">
-          Find answers about screening, schools, appointments, and your account.
+          {{
+            currentLang() === 'km'
+              ? 'ស្វែងរកចម្លើយអំពីការវាយតម្លៃ សាលារៀន ការណាត់ជួប និងគណនីរបស់អ្នក។'
+              : 'Find answers about screening, schools, appointments, and your account.'
+          }}
         </p>
       </header>
 
@@ -86,15 +109,15 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
         <input
           type="search"
           class="search-input"
-          placeholder="Search help articles…"
-          aria-label="Search help articles"
+          [placeholder]="currentLang() === 'km' ? 'ស្វែងរកអត្ថបទជំនួយ…' : 'Search help articles…'"
+          [attr.aria-label]="currentLang() === 'km' ? 'ស្វែងរកអត្ថបទជំនួយ' : 'Search help articles'"
           [value]="query()"
           (input)="onSearch($event)"
         />
       </div>
 
       <div class="pills" role="tablist" aria-label="Help categories">
-        @for (category of categories; track category.id) {
+        @for (category of categories(); track category.id) {
           <button
             type="button"
             class="pill"
@@ -109,7 +132,13 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
       </div>
 
       @if (!filteredItems().length) {
-        <p class="empty" role="status">No help articles match “{{ query() }}”.</p>
+        <p class="empty" role="status">
+          {{
+            currentLang() === 'km'
+              ? 'មិនមានអត្ថបទជំនួយត្រូវនឹង “' + query() + '” ទេ។'
+              : 'No help articles match “' + query() + '”.'
+          }}
+        </p>
       } @else {
         <ul class="faq-list">
           @for (item of filteredItems(); track item.question) {
@@ -153,10 +182,18 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
       <!-- Contact card: soft teal, matching the Screening disclaimer banner style. -->
       <aside class="contact-card">
         <div class="contact-copy">
-          <h2>Still need help?</h2>
-          <p>Can't find what you're looking for? Our support team is happy to help.</p>
+          <h2>{{ currentLang() === 'km' ? 'នៅតែត្រូវការជំនួយ?' : 'Still need help?' }}</h2>
+          <p>
+            {{
+              currentLang() === 'km'
+                ? 'រកមិនឃើញអ្វីដែលអ្នកត្រូវការមែនទេ? ក្រុមការងារគាំទ្ររបស់យើងរីករាយនឹងជួយអ្នក។'
+                : 'Can not find what you are looking for? Our support team is happy to help.'
+            }}
+          </p>
         </div>
-        <a class="contact-btn" href="mailto:support&#64;auticare.local">Contact support</a>
+        <a class="contact-btn" href="mailto:support&#64;auticare.local">{{
+          currentLang() === 'km' ? 'ទាក់ទងផ្នែកគាំទ្រ' : 'Contact support'
+        }}</a>
       </aside>
     </section>
   `,
@@ -466,6 +503,9 @@ const allItems: readonly FaqItem[] = helpCenterCategories.flatMap((category) =>
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HelpCenterPage implements OnInit {
+  private readonly i18n = inject(I18nService, { optional: true });
+  protected readonly currentLang = computed(() => this.i18n?.currentLang?.() ?? 'en');
+
   ngOnInit() {
     if (typeof window !== 'undefined' && window.location.hash === '#emergency') {
       setTimeout(() => {
@@ -474,7 +514,18 @@ export class HelpCenterPage implements OnInit {
       }, 100);
     }
   }
-  readonly categories = helpCenterCategories;
+
+  readonly categories = computed(() => getHelpCenterCategories(this.currentLang()));
+  readonly allItems = computed<readonly FaqItem[]>(() =>
+    this.categories().flatMap((category) =>
+      category.entries.map((entry) => ({
+        categoryId: category.id,
+        categoryLabel: category.label,
+        question: entry.question,
+        answer: entry.answer,
+      })),
+    ),
+  );
 
   readonly query = signal('');
   readonly selectedCategoryId = signal(helpCenterCategories[0]?.id ?? '');
@@ -487,14 +538,15 @@ export class HelpCenterPage implements OnInit {
 
   readonly filteredItems = computed<readonly FaqItem[]>(() => {
     const term = this.query().trim().toLowerCase();
+    const items = this.allItems();
     if (term) {
       // Search matches question or answer text, across all categories.
-      return allItems.filter(
+      return items.filter(
         (item) =>
           item.question.toLowerCase().includes(term) || item.answer.toLowerCase().includes(term),
       );
     }
-    return allItems.filter((item) => item.categoryId === this.selectedCategoryId());
+    return items.filter((item) => item.categoryId === this.selectedCategoryId());
   });
 
   onSearch(event: Event) {

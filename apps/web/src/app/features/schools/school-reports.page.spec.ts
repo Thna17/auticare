@@ -8,6 +8,7 @@ import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL } from '../../core/config/api.config';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { SchoolsApi } from './data-access/schools.api';
 import { SchoolReportsPage } from './school-reports.page';
 
@@ -96,6 +97,7 @@ describe('SchoolReportsPage', () => {
       ],
     }).compileComponents();
 
+    TestBed.inject(I18nService).setLanguage('en');
     fixture = TestBed.createComponent(SchoolReportsPage);
     component = fixture.componentInstance;
     fixture.detectChanges();

@@ -14,6 +14,7 @@ import { SchoolsApi } from './data-access/schools.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
   standalone: true,
@@ -28,15 +29,28 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
   template: `
     <section class="page-header">
       <div>
-        <p class="eyebrow">Administration</p>
-        <h1>Manage schools</h1>
-        <p>Create and review school login accounts linked to school profiles.</p>
+        <p class="eyebrow">
+          {{ currentLang() === 'km' ? 'ការគ្រប់គ្រងប្រព័ន្ធ' : 'Administration' }}
+        </p>
+        <h1>{{ currentLang() === 'km' ? 'គ្រប់គ្រងសាលារៀន' : 'Manage schools' }}</h1>
+        <p>
+          {{
+            currentLang() === 'km'
+              ? 'បង្កើត និងពិនិត្យគណនីចូលប្រើប្រាស់សាលារៀនដែលភ្ជាប់ជាមួយប្រវត្តិរូបសាលា។'
+              : 'Create and review school login accounts linked to school profiles.'
+          }}
+        </p>
       </div>
-      <a routerLink="/schools/admin/new">Create school account</a>
+      <a routerLink="/schools/admin/new">{{
+        currentLang() === 'km' ? 'បង្កើតគណនីសាលា' : 'Create school account'
+      }}</a>
     </section>
 
     @if (loading()) {
-      <ac-ui-card><ac-ui-spinner label="Loading school accounts…" /></ac-ui-card>
+      <ac-ui-card
+        ><ac-ui-spinner
+          [label]="currentLang() === 'km' ? 'កំពុងផ្ទុកគណនីសាលារៀន…' : 'Loading school accounts…'"
+      /></ac-ui-card>
     } @else if (error()) {
       <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     }
@@ -45,10 +59,16 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
     }
     @if (!loading() && !accounts().length) {
       <ac-ui-empty-state
-        title="No school accounts yet"
-        message="A school account lets a school manage its own students, reports and enrollment requests."
+        [title]="currentLang() === 'km' ? 'មិនទាន់មានគណនីសាលារៀននៅឡើយទេ' : 'No school accounts yet'"
+        [message]="
+          currentLang() === 'km'
+            ? 'គណនីសាលារៀនអនុញ្ញាតឱ្យសាលាគ្រប់គ្រងសិស្ស របាយការណ៍ និងសំណើសុំចុះឈ្មោះផ្ទាល់ខ្លួន។'
+            : 'A school account lets a school manage its own students, reports and enrollment requests.'
+        "
       >
-        <a class="cta" routerLink="/schools/admin/new">Create a school account</a>
+        <a class="cta" routerLink="/schools/admin/new">{{
+          currentLang() === 'km' ? 'បង្កើតគណនីសាលារៀន' : 'Create a school account'
+        }}</a>
       </ac-ui-empty-state>
     } @else {
       <section class="grid" aria-label="School accounts">
@@ -57,7 +77,15 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
             <div class="card-header">
               <h2>{{ item.school.name }}</h2>
               <ac-ui-badge [tone]="item.school.isVerified ? 'positive' : 'neutral'">
-                {{ item.school.isVerified ? 'Verified' : 'Unverified' }}
+                {{
+                  item.school.isVerified
+                    ? currentLang() === 'km'
+                      ? 'បានផ្ទៀងផ្ទាត់'
+                      : 'Verified'
+                    : currentLang() === 'km'
+                      ? 'មិនទាន់ផ្ទៀងផ្ទាត់'
+                      : 'Unverified'
+                }}
               </ac-ui-badge>
             </div>
             <p class="meta">{{ item.school.city }} · {{ item.account.email }}</p>
@@ -78,10 +106,16 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
               >
                 {{
                   togglingSchoolId() === item.school.id
-                    ? 'Updating…'
+                    ? currentLang() === 'km'
+                      ? 'កំពុងធ្វើបច្ចុប្បន្នភាព…'
+                      : 'Updating…'
                     : item.school.isVerified
-                      ? 'Revoke Verification'
-                      : 'Verify School'
+                      ? currentLang() === 'km'
+                        ? 'ដកហូតការផ្ទៀងផ្ទាត់'
+                        : 'Revoke Verification'
+                      : currentLang() === 'km'
+                        ? 'ផ្ទៀងផ្ទាត់សាលា'
+                        : 'Verify School'
                 }}
               </button>
               <button
@@ -90,7 +124,15 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
                 [disabled]="resendingEmail() === item.account.email"
                 (click)="resendInvitation(item.account.email)"
               >
-                {{ resendingEmail() === item.account.email ? 'Sending…' : 'Resend Invitation' }}
+                {{
+                  resendingEmail() === item.account.email
+                    ? currentLang() === 'km'
+                      ? 'កំពុងផ្ញើ…'
+                      : 'Sending…'
+                    : currentLang() === 'km'
+                      ? 'ផ្ញើការអញ្ជើញឡើងវិញ'
+                      : 'Resend Invitation'
+                }}
               </button>
             </div>
           </ac-ui-card>
@@ -235,6 +277,8 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
 })
 export class AdminSchoolsPage implements OnInit, OnDestroy {
   private readonly api = inject(SchoolsApi);
+  private readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
   readonly accounts = signal<readonly AdminSchoolAccountResponse[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);

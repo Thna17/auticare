@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it } from 'vitest';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { helpCenterCategories } from './help-center.data';
 import { HelpCenterPage } from './help-center.page';
 
@@ -92,6 +93,7 @@ describe('HelpCenter', () => {
       TestBed.configureTestingModule({
         providers: [provideRouter([])],
       });
+      TestBed.inject(I18nService).setLanguage('en');
       const fixture = TestBed.createComponent(HelpCenterPage);
       fixture.detectChanges();
 
@@ -106,6 +108,7 @@ describe('HelpCenter', () => {
       TestBed.configureTestingModule({
         providers: [provideRouter([])],
       });
+      TestBed.inject(I18nService).setLanguage('en');
       const fixture = TestBed.createComponent(HelpCenterPage);
       fixture.detectChanges();
 

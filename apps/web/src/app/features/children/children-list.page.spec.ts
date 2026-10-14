@@ -10,6 +10,7 @@ import type {
   ScreeningSessionDetailResponse,
 } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { API_BASE_URL } from '../../core/config/api.config';
 import { ChildrenListPage } from './children-list.page';
 
@@ -77,6 +78,7 @@ describe('ChildrenListPage', () => {
     });
 
     httpTesting = TestBed.inject(HttpTestingController);
+    TestBed.inject(I18nService).setLanguage('en');
   });
 
   afterEach(() => {

@@ -16,6 +16,7 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
 import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 interface MetricRow {
   label: string;
@@ -68,30 +69,52 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
     <header class="reports-header" [class.admin-header]="isAdmin()">
       <div class="header-titles">
         <div class="header-badge-row">
-          <span class="header-badge">Clinical Observation Feed</span>
-          <span class="header-badge-sub">Progress Monitoring</span>
+          <span class="header-badge">{{
+            currentLang() === 'km' ? 'បណ្តាញសង្កេតការវិវត្តគ្លីនិក' : 'Clinical Observation Feed'
+          }}</span>
+          <span class="header-badge-sub">{{
+            currentLang() === 'km' ? 'ការតាមដានការវិវត្ត' : 'Progress Monitoring'
+          }}</span>
         </div>
         <h1>
-          {{ isAdmin() ? 'Administrative School Reports Oversight' : 'Activity Reports' }}
+          {{
+            isAdmin()
+              ? currentLang() === 'km'
+                ? 'ការត្រួតពិនិត្យរបាយការណ៍សាលារបស់អ្នកគ្រប់គ្រង'
+                : 'Administrative School Reports Oversight'
+              : currentLang() === 'km'
+                ? 'របាយការណ៍សកម្មភាព'
+                : 'Activity Reports'
+          }}
         </h1>
         <p class="reports-subtitle">
           {{
             isSchoolStaff()
-              ? 'Developmental observation logs, milestones, and therapeutic reports recorded for enrolled students.'
+              ? currentLang() === 'km'
+                ? 'កំណត់ត្រាអង្កេតការវិវត្ត ដំណាក់កាល និងរបាយការណ៍ព្យាបាលដែលបានកត់ត្រាសម្រាប់សិស្សដែលបានចុះឈ្មោះ។'
+                : 'Developmental observation logs, milestones, and therapeutic reports recorded for enrolled students.'
               : isAdmin()
-                ? 'Administrative platform oversight of student activity and developmental reports.'
-                : 'Activity reports recorded by partner schools.'
+                ? currentLang() === 'km'
+                  ? 'ការត្រួតពិនិត្យប្រព័ន្ធរដ្ឋបាលលើសកម្មភាពសិស្ស និងរបាយការណ៍ការវិវត្ត។'
+                  : 'Administrative platform oversight of student activity and developmental reports.'
+                : currentLang() === 'km'
+                  ? 'របាយការណ៍សកម្មភាពដែលបានកត់ត្រាដោយសាលាដៃគូ។'
+                  : 'Activity reports recorded by partner schools.'
           }}
         </p>
       </div>
       @if (isSchoolStaff()) {
-        <a class="btn-new-report" routerLink="/schools/reports/new">＋ New Report</a>
+        <a class="btn-new-report" routerLink="/schools/reports/new">{{
+          currentLang() === 'km' ? '＋ របាយការណ៍ថ្មី' : '＋ New Report'
+        }}</a>
       }
     </header>
 
     <!-- Developmental Domain Filter Pills -->
     <section class="domain-pills-bar" aria-label="Developmental domain filters">
-      <span class="domain-bar-label">Developmental Domain:</span>
+      <span class="domain-bar-label">{{
+        currentLang() === 'km' ? 'ដែននៃការវិវត្ត៖' : 'Developmental Domain:'
+      }}</span>
       <div class="domain-pills-list">
         @for (opt of domainOptions; track opt.id) {
           <button
@@ -101,7 +124,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
             (click)="selectDomain(opt.id)"
           >
             <span class="pill-icon">{{ opt.icon }}</span>
-            <span>{{ opt.label }}</span>
+            <span>{{ getDomainLabel(opt.id) }}</span>
           </button>
         }
       </div>
@@ -110,27 +133,39 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
     <!-- Filters Row -->
     <div class="filters-row">
       <div class="filter-group">
-        <label class="filter-label" for="status-filter">Report Status</label>
+        <label class="filter-label" for="status-filter">{{
+          currentLang() === 'km' ? 'ស្ថានភាពរបាយការណ៍' : 'Report Status'
+        }}</label>
         <select
           id="status-filter"
           class="filter-select"
           [value]="statusFilter()"
           (change)="onStatusChange($event)"
         >
-          <option value="ALL">All Statuses</option>
-          <option value="SUBMITTED">Submitted (Published)</option>
-          <option value="DRAFT">Draft Only</option>
+          <option value="ALL">
+            {{ currentLang() === 'km' ? 'ស្ថានភាពទាំងអស់' : 'All Statuses' }}
+          </option>
+          <option value="SUBMITTED">
+            {{ currentLang() === 'km' ? 'បានដាក់ស្នើ (បោះពុម្ពផ្សាយ)' : 'Submitted (Published)' }}
+          </option>
+          <option value="DRAFT">
+            {{ currentLang() === 'km' ? 'តែសេចក្តីព្រាងប៉ុណ្ណោះ' : 'Draft Only' }}
+          </option>
         </select>
       </div>
       <div class="filter-group">
-        <label class="filter-label" for="child-filter">Enrolled Student</label>
+        <label class="filter-label" for="child-filter">{{
+          currentLang() === 'km' ? 'សិស្សដែលបានចុះឈ្មោះ' : 'Enrolled Student'
+        }}</label>
         <select
           id="child-filter"
           class="filter-select"
           [value]="childFilter()"
           (change)="onChildChange($event)"
         >
-          <option value="">All students ({{ students().length }})</option>
+          <option value="">
+            {{ currentLang() === 'km' ? 'សិស្សទាំងអស់' : 'All students' }} ({{ students().length }})
+          </option>
           @for (student of students(); track student.childId) {
             <option [value]="student.childId">
               {{ student.firstName }} {{ student.lastName }}
@@ -138,14 +173,18 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
           }
         </select>
       </div>
-      <span class="filter-count">{{ pagination()?.total ?? reports().length }} report(s)</span>
+      <span class="filter-count"
+        >{{ pagination()?.total ?? reports().length }}
+        {{ currentLang() === 'km' ? 'របាយការណ៍' : 'report(s)' }}</span
+      >
     </div>
 
     @if (searchQuery()) {
       <div class="active-search-bar" role="status">
         <span class="search-tag">
           <span
-            >Filtering by: <strong>"{{ searchQuery() }}"</strong></span
+            >{{ currentLang() === 'km' ? 'តម្រងតាម៖' : 'Filtering by:' }}
+            <strong>"{{ searchQuery() }}"</strong></span
           >
           <button
             type="button"
@@ -153,7 +192,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
             (click)="clearSearch()"
             aria-label="Clear search"
           >
-            ✕ Clear search
+            {{ currentLang() === 'km' ? '✕ សម្អាតការស្វែងរក' : '✕ Clear search' }}
           </button>
         </span>
       </div>
@@ -165,33 +204,37 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
 
     <!-- States -->
     @if (loading()) {
-      <ac-ui-spinner label="Loading developmental reports…" />
+      <ac-ui-spinner
+        [label]="
+          currentLang() === 'km'
+            ? 'កំពុងផ្ទុករបាយការណ៍ការវិវត្ត…'
+            : 'Loading developmental reports…'
+        "
+      />
     } @else if (error(); as loadError) {
       <ac-ui-message tone="error">
         {{ loadError }}
-        <button type="button" class="retry-btn" (click)="loadReports()">Retry</button>
+        <button type="button" class="retry-btn" (click)="loadReports()">
+          {{ currentLang() === 'km' ? 'ព្យាយាមម្តងទៀត' : 'Retry' }}
+        </button>
       </ac-ui-message>
     } @else if (filteredReports().length === 0) {
       <ac-ui-empty-state
-        title="No reports found"
-        [message]="
-          searchQuery()
-            ? 'No activity reports match &quot;' + searchQuery() + '&quot;.'
-            : statusFilter() !== 'ALL' || childFilter() !== '' || selectedDomain() !== 'ALL'
-              ? 'No reports match the current filters. Try resetting the filters or choosing another domain.'
-              : 'No activity reports have been created yet.'
-        "
+        [title]="currentLang() === 'km' ? 'រកមិនឃើញរបាយការណ៍ទេ' : 'No reports found'"
+        [message]="getEmptyMessage()"
       >
         @if (searchQuery()) {
           <button type="button" class="btn-clear-search-pill" (click)="clearSearch()">
-            Clear search
+            {{ currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear search' }}
           </button>
         } @else if (selectedDomain() !== 'ALL') {
           <button type="button" class="btn-clear-search-pill" (click)="selectDomain('ALL')">
-            Reset domain filter
+            {{ currentLang() === 'km' ? 'កំណត់តម្រងដែនឡើងវិញ' : 'Reset domain filter' }}
           </button>
         } @else if (isSchoolStaff()) {
-          <a routerLink="/schools/reports/new" class="inline-link">Create school report</a>
+          <a routerLink="/schools/reports/new" class="inline-link">{{
+            currentLang() === 'km' ? 'បង្កើតរបាយការណ៍សាលា' : 'Create school report'
+          }}</a>
         }
       </ac-ui-empty-state>
     } @else {
@@ -230,11 +273,21 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
 
               <div class="report-side-block">
                 <span class="status-badge" [class.status-badge--draft]="report.status === 'DRAFT'">
-                  {{ report.status === 'DRAFT' ? 'Draft' : 'Submitted' }}
+                  {{
+                    report.status === 'DRAFT'
+                      ? currentLang() === 'km'
+                        ? 'សេចក្តីព្រាង'
+                        : 'Draft'
+                      : currentLang() === 'km'
+                        ? 'បានដាក់ស្នើ'
+                        : 'Submitted'
+                  }}
                 </span>
                 <span class="report-date">{{ report.activityDate | date: 'MMM d, y' }}</span>
                 @if (report.duration) {
-                  <span class="report-duration">⏱️ {{ report.duration }} min</span>
+                  <span class="report-duration"
+                    >⏱️ {{ report.duration }} {{ currentLang() === 'km' ? 'នាទី' : 'min' }}</span
+                  >
                 }
               </div>
 
@@ -247,15 +300,15 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
                 <a
                   class="report-action report-action--edit"
                   [routerLink]="['/schools/reports', report.id, 'edit']"
-                  title="Edit Report"
-                  aria-label="Edit Report"
+                  [title]="currentLang() === 'km' ? 'កែប្រែរបាយការណ៍' : 'Edit Report'"
+                  [attr.aria-label]="currentLang() === 'km' ? 'កែប្រែរបាយការណ៍' : 'Edit Report'"
                   >✏️</a
                 >
                 <button
                   type="button"
                   class="report-action report-action--delete"
-                  title="Delete Report"
-                  aria-label="Delete Report"
+                  [title]="currentLang() === 'km' ? 'លុបរបាយការណ៍' : 'Delete Report'"
+                  [attr.aria-label]="currentLang() === 'km' ? 'លុបរបាយការណ៍' : 'Delete Report'"
                   [disabled]="deletingId() === report.id"
                   (click)="deleteReport(report.id)"
                 >
@@ -268,17 +321,27 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
               <div class="report-detail">
                 <div class="detail-grid">
                   <section class="detail-section">
-                    <h3>Summary & Objective</h3>
+                    <h3>
+                      {{
+                        currentLang() === 'km' ? 'សេចក្តីសង្ខេប និងគោលបំណង' : 'Summary & Objective'
+                      }}
+                    </h3>
                     <p class="detail-text">{{ report.summary }}</p>
                   </section>
 
                   @if (metricsOf(report).length > 0) {
                     <section class="detail-section">
-                      <h3>Developmental Performance (0–10 Scale)</h3>
+                      <h3>
+                        {{
+                          currentLang() === 'km'
+                            ? 'សមត្ថភាពនៃការវិវត្ត (មាត្រដ្ឋាន ០-១០)'
+                            : 'Developmental Performance (0–10 Scale)'
+                        }}
+                      </h3>
                       <div class="metric-rows">
                         @for (metric of metricsOf(report); track metric.label) {
                           <div class="metric-row">
-                            <span class="metric-label">{{ metric.label }}</span>
+                            <span class="metric-label">{{ getMetricLabel(metric.label) }}</span>
                             <div class="metric-bar-track">
                               <div
                                 class="metric-bar-fill"
@@ -294,7 +357,13 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
 
                   @if (report.teacherObservation) {
                     <section class="detail-section">
-                      <h3>Teacher & Specialist Observations</h3>
+                      <h3>
+                        {{
+                          currentLang() === 'km'
+                            ? 'ការសង្កេតរបស់គ្រូបង្រៀន និងអ្នកជំនាញ'
+                            : 'Teacher & Specialist Observations'
+                        }}
+                      </h3>
                       <blockquote class="detail-quote">
                         {{ report.teacherObservation }}
                       </blockquote>
@@ -303,7 +372,13 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
 
                   @if (report.recommendations) {
                     <section class="detail-section">
-                      <h3>Home & Caregiver Recommendations</h3>
+                      <h3>
+                        {{
+                          currentLang() === 'km'
+                            ? 'អនុសាសន៍សម្រាប់គេហដ្ឋាន និងអាណាព្យាបាល'
+                            : 'Home & Caregiver Recommendations'
+                        }}
+                      </h3>
                       <div class="recommendations-box">
                         <span class="rec-icon">💡</span>
                         <p class="detail-text">{{ report.recommendations }}</p>
@@ -313,7 +388,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
 
                   @if (imagesOf(report).length > 0) {
                     <section class="detail-section">
-                      <h3>Observation Photos</h3>
+                      <h3>{{ currentLang() === 'km' ? 'រូបថតសង្កេត' : 'Observation Photos' }}</h3>
                       <div class="photo-grid">
                         @for (url of imagesOf(report); track url) {
                           <a [href]="url" target="_blank" rel="noopener">
@@ -326,7 +401,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
 
                   @if (documentsOf(report).length > 0) {
                     <section class="detail-section">
-                      <h3>Supporting Documents</h3>
+                      <h3>{{ currentLang() === 'km' ? 'ឯកសារគាំទ្រ' : 'Supporting Documents' }}</h3>
                       <ul class="doc-list">
                         @for (url of documentsOf(report); track url) {
                           <li>
@@ -340,11 +415,18 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
                   }
 
                   <section class="detail-section detail-section--meta">
-                    <h3>Observation Record Details</h3>
+                    <h3>
+                      {{
+                        currentLang() === 'km'
+                          ? 'ព័ត៌មានលម្អិតនៃកំណត់ត្រាសង្កេត'
+                          : 'Observation Record Details'
+                      }}
+                    </h3>
                     <p class="detail-text">
-                      Recorded by
+                      {{ currentLang() === 'km' ? 'កត់ត្រាដោយ' : 'Recorded by' }}
                       <strong>{{ report.reporterFirstName }} {{ report.reporterLastName }}</strong>
-                      · Created on {{ report.createdAt | date: 'MMMM d, y' }}
+                      · {{ currentLang() === 'km' ? 'បង្កើតនៅ' : 'Created on' }}
+                      {{ formatDate(report.createdAt) }}
                     </p>
                   </section>
                 </div>
@@ -358,8 +440,8 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
             [totalPages]="meta.totalPages"
             [total]="meta.total"
             [perPage]="meta.limit"
-            itemNoun="reports"
-            label="Report pages"
+            [itemNoun]="currentLang() === 'km' ? 'របាយការណ៍' : 'reports'"
+            [label]="currentLang() === 'km' ? 'ទំព័ររបាយការណ៍' : 'Report pages'"
             (pageChange)="goToPage($event)"
           />
         }
@@ -942,6 +1024,8 @@ export class SchoolReportsPage implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
 
   readonly domainOptions = DOMAIN_OPTIONS;
   readonly reports = signal<ActivityReportListItem[]>([]);
@@ -963,6 +1047,95 @@ export class SchoolReportsPage implements OnInit {
 
   readonly pagination = signal<PaginationMeta | null>(null);
   readonly page = signal(1);
+
+  getDomainLabel(id: string): string {
+    if (this.currentLang() === 'km') {
+      switch (id) {
+        case 'ALL':
+          return 'ដែនទាំងអស់';
+        case 'Sensory':
+          return 'វិញ្ញាណ និងចលនា';
+        case 'Social':
+          return 'សង្គម និងអារម្មណ៍';
+        case 'Communication':
+          return 'ភាសា និងការនិយាយ';
+        case 'Cognitive':
+          return 'ការយល់ដឹង និងការផ្តោតអារម្មណ៍';
+        case 'Adaptive':
+          return 'ការសម្របខ្លួន និងទម្លាប់';
+        default:
+          return id;
+      }
+    }
+    switch (id) {
+      case 'ALL':
+        return 'All Domains';
+      case 'Sensory':
+        return 'Sensory & Motor';
+      case 'Social':
+        return 'Social & Emotional';
+      case 'Communication':
+        return 'Language & Speech';
+      case 'Cognitive':
+        return 'Cognitive & Focus';
+      case 'Adaptive':
+        return 'Adaptive & Routine';
+      default:
+        return id;
+    }
+  }
+
+  getMetricLabel(label: string): string {
+    if (this.currentLang() === 'km') {
+      switch (label.toLowerCase()) {
+        case 'participation':
+          return 'ការចូលរួម';
+        case 'communication':
+          return 'ការប្រាស្រ័យទាក់ទង';
+        case 'social interaction':
+        case 'socialinteraction':
+          return 'ទំនាក់ទំនងសង្គម';
+        case 'attention':
+          return 'ការយកចិត្តទុកដាក់';
+        case 'emotional regulation':
+        case 'emotionalregulation':
+          return 'ការគ្រប់គ្រងអារម្មណ៍';
+        case 'task completion':
+        case 'taskcompletion':
+          return 'ការបំពេញកិច្ចការ';
+        default:
+          return label;
+      }
+    }
+    return label;
+  }
+
+  getEmptyMessage(): string {
+    if (this.searchQuery()) {
+      return this.currentLang() === 'km'
+        ? `មិនមានរបាយការណ៍សកម្មភាពដែលត្រូវនឹង "${this.searchQuery()}" ទេ។`
+        : `No activity reports match "${this.searchQuery()}".`;
+    }
+    if (
+      this.statusFilter() !== 'ALL' ||
+      this.childFilter() !== '' ||
+      this.selectedDomain() !== 'ALL'
+    ) {
+      return this.currentLang() === 'km'
+        ? 'មិនមានរបាយការណ៍ត្រូវគ្នានឹងតម្រងបច្ចុប្បន្នទេ។ សូមព្យាយាមកំណត់តម្រងឡើងវិញ ឬជ្រើសរើសដែនផ្សេងទៀត។'
+        : 'No reports match the current filters. Try resetting the filters or choosing another domain.';
+    }
+    return this.currentLang() === 'km'
+      ? 'មិនទាន់មានរបាយការណ៍សកម្មភាពត្រូវបានបង្កើតនៅឡើយទេ។'
+      : 'No activity reports have been created yet.';
+  }
+
+  formatDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const locale = this.currentLang() === 'km' ? 'km-KH' : 'en-US';
+    return d.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' });
+  }
 
   readonly filteredReports = computed(() => {
     const domain = this.selectedDomain();

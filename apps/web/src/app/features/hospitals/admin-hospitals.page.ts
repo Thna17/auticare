@@ -6,6 +6,7 @@ import { HospitalsApi } from './data-access/hospitals.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
   standalone: true,
@@ -19,15 +20,30 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
   template: `
     <section class="page-header">
       <div>
-        <p class="eyebrow">Administration</p>
-        <h1>Manage hospitals</h1>
-        <p>Create and review hospital manager login accounts linked to hospital profiles.</p>
+        <p class="eyebrow">
+          {{ currentLang() === 'km' ? 'ការគ្រប់គ្រងប្រព័ន្ធ' : 'Administration' }}
+        </p>
+        <h1>{{ currentLang() === 'km' ? 'គ្រប់គ្រងមន្ទីរពេទ្យ' : 'Manage hospitals' }}</h1>
+        <p>
+          {{
+            currentLang() === 'km'
+              ? 'បង្កើត និងពិនិត្យគណនីចូលប្រើប្រាស់អ្នកគ្រប់គ្រងមន្ទីរពេទ្យដែលភ្ជាប់ជាមួយប្រវត្តិរូបមន្ទីរពេទ្យ។'
+              : 'Create and review hospital manager login accounts linked to hospital profiles.'
+          }}
+        </p>
       </div>
-      <a routerLink="/hospitals/admin/new">Create hospital account</a>
+      <a routerLink="/hospitals/admin/new">{{
+        currentLang() === 'km' ? 'បង្កើតគណនីមន្ទីរពេទ្យ' : 'Create hospital account'
+      }}</a>
     </section>
 
     @if (loading()) {
-      <ac-ui-card><ac-ui-spinner label="Loading hospital accounts…" /></ac-ui-card>
+      <ac-ui-card
+        ><ac-ui-spinner
+          [label]="
+            currentLang() === 'km' ? 'កំពុងផ្ទុកគណនីមន្ទីរពេទ្យ…' : 'Loading hospital accounts…'
+          "
+      /></ac-ui-card>
     } @else if (error()) {
       <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
     }
@@ -36,10 +52,18 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
     }
     @if (!loading() && !accounts().length) {
       <ac-ui-empty-state
-        title="No hospital accounts yet"
-        message="A hospital account lets a hospital manager oversee specialists, appointments, and hospital profiles."
+        [title]="
+          currentLang() === 'km' ? 'មិនទាន់មានគណនីមន្ទីរពេទ្យនៅឡើយទេ' : 'No hospital accounts yet'
+        "
+        [message]="
+          currentLang() === 'km'
+            ? 'គណនីមន្ទីរពេទ្យអនុញ្ញាតឱ្យអ្នកគ្រប់គ្រងមន្ទីរពេទ្យត្រួតពិនិត្យអ្នកឯកទេស ការណាត់ជួប និងប្រវត្តិរូបមន្ទីរពេទ្យ។'
+            : 'A hospital account lets a hospital manager oversee specialists, appointments, and hospital profiles.'
+        "
       >
-        <a class="cta" routerLink="/hospitals/admin/new">Create a hospital account</a>
+        <a class="cta" routerLink="/hospitals/admin/new">{{
+          currentLang() === 'km' ? 'បង្កើតគណនីមន្ទីរពេទ្យ' : 'Create a hospital account'
+        }}</a>
       </ac-ui-empty-state>
     } @else {
       <section class="grid" aria-label="Hospital accounts">
@@ -60,7 +84,15 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
               [disabled]="resendingEmail() === item.account.email"
               (click)="resendInvitation(item.account.email)"
             >
-              {{ resendingEmail() === item.account.email ? 'Sending…' : 'Resend Invitation' }}
+              {{
+                resendingEmail() === item.account.email
+                  ? currentLang() === 'km'
+                    ? 'កំពុងផ្ញើ…'
+                    : 'Sending…'
+                  : currentLang() === 'km'
+                    ? 'ផ្ញើការអញ្ជើញឡើងវិញ'
+                    : 'Resend Invitation'
+              }}
             </button>
           </ac-ui-card>
         }
@@ -144,6 +176,8 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
 })
 export class AdminHospitalsPage implements OnInit {
   private readonly api = inject(HospitalsApi);
+  private readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
   readonly accounts = signal<readonly AdminHospitalAccountResponse[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);

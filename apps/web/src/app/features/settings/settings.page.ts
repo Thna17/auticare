@@ -32,56 +32,62 @@ export type RoleSettingsContext = {
   tipText: string;
 };
 
-export const roleConfigs: Record<string, RoleSettingsContext> = {
+export const getRoleConfigs = (isKm: boolean): Record<string, RoleSettingsContext> => ({
   PARENT: {
-    eyebrow: 'Parent profile',
-    ctaLabel: 'Manage child profiles',
+    eyebrow: isKm ? 'ប្រវត្តិរូបអាណាព្យាបាល' : 'Parent profile',
+    ctaLabel: isKm ? 'គ្រប់គ្រងប្រវត្តិរូបកុមារ' : 'Manage child profiles',
     ctaPath: '/children',
-    workspaceTitle: 'Care workspace',
-    actionTitle: 'Review child profiles',
-    actionLabel: 'Open children',
+    workspaceTitle: isKm ? 'កន្លែងធ្វើការថែទាំ' : 'Care workspace',
+    actionTitle: isKm ? 'ពិនិត្យប្រវត្តិរូបកុមារ' : 'Review child profiles',
+    actionLabel: isKm ? 'បើកបញ្ជីកុមារ' : 'Open children',
     actionPath: '/children',
-    tipTitle: 'Child support tip',
-    tipText:
-      'Keep child support notes specific and practical. Schools and care teams can use clear context more easily than long narrative notes.',
+    tipTitle: isKm ? 'គន្លឹះគាំទ្រកុមារ' : 'Child support tip',
+    tipText: isKm
+      ? 'រក្សាកំណត់ត្រាគាំទ្រកុមារឱ្យជាក់លាក់ និងអនុវត្តបាន។ សាលារៀន និងក្រុមការងារថែទាំអាចប្រើប្រាស់បរិបទច្បាស់លាស់បានងាយស្រួលជាងកំណត់ត្រាពិពណ៌នាវែងអន្លាយ។'
+      : 'Keep child support notes specific and practical. Schools and care teams can use clear context more easily than long narrative notes.',
   },
   SCHOOL: {
-    eyebrow: 'School staff profile',
-    ctaLabel: 'Manage school profile',
+    eyebrow: isKm ? 'ប្រវត្តិរូបបុគ្គលិកសាលា' : 'School staff profile',
+    ctaLabel: isKm ? 'គ្រប់គ្រងប្រវត្តិរូបសាលា' : 'Manage school profile',
     ctaPath: '/schools/profile',
-    workspaceTitle: 'School workspace',
-    actionTitle: 'Student enrollments',
-    actionLabel: 'View enrollments',
+    workspaceTitle: isKm ? 'កន្លែងធ្វើការសាលារៀន' : 'School workspace',
+    actionTitle: isKm ? 'ការចុះឈ្មោះសិស្ស' : 'Student enrollments',
+    actionLabel: isKm ? 'មើលការចុះឈ្មោះ' : 'View enrollments',
     actionPath: '/schools/enrollments',
-    tipTitle: 'Classroom observation tip',
-    tipText:
-      'Document observations right after classroom learning sessions to provide accurate developmental context for parents and specialists.',
+    tipTitle: isKm ? 'គន្លឹះសង្កេតក្នុងថ្នាក់រៀន' : 'Classroom observation tip',
+    tipText: isKm
+      ? 'កត់ត្រាការសង្កេតភ្លាមៗបន្ទាប់ពីវគ្គរៀនក្នុងថ្នាក់ ដើម្បីផ្តល់បរិបទនៃការវិវត្តជាក់លាក់សម្រាប់ឪពុកម្តាយ និងអ្នកឯកទេស។'
+      : 'Document observations right after classroom learning sessions to provide accurate developmental context for parents and specialists.',
   },
   HOSPITAL: {
-    eyebrow: 'Hospital coordinator profile',
-    ctaLabel: 'Manage hospital profile',
+    eyebrow: isKm ? 'ប្រវត្តិរូបអ្នកសម្របសម្រួលមន្ទីរពេទ្យ' : 'Hospital coordinator profile',
+    ctaLabel: isKm ? 'គ្រប់គ្រងប្រវត្តិរូបមន្ទីរពេទ្យ' : 'Manage hospital profile',
     ctaPath: '/hospital/profile',
-    workspaceTitle: 'Hospital workspace',
-    actionTitle: 'Specialist team',
-    actionLabel: 'Manage doctors',
+    workspaceTitle: isKm ? 'កន្លែងធ្វើការមន្ទីរពេទ្យ' : 'Hospital workspace',
+    actionTitle: isKm ? 'ក្រុមវេជ្ជបណ្ឌិតឯកទេស' : 'Specialist team',
+    actionLabel: isKm ? 'គ្រប់គ្រងវេជ្ជបណ្ឌិត' : 'Manage doctors',
     actionPath: '/hospital/doctors',
-    tipTitle: 'Specialist coordination tip',
-    tipText:
-      'Keep doctor schedules and available visit hours up to date to minimize booking delays and appointment rescheduling.',
+    tipTitle: isKm ? 'គន្លឹះសម្របសម្រួលអ្នកឯកទេស' : 'Specialist coordination tip',
+    tipText: isKm
+      ? 'រក្សាកាលវិភាគវេជ្ជបណ្ឌិត និងម៉ោងពិគ្រោះឱ្យទាន់សម័យ ដើម្បីកាត់បន្ថយការពន្យារពេលកក់ និងការកំណត់ពេលណាត់ជួបឡើងវិញ។'
+      : 'Keep doctor schedules and available visit hours up to date to minimize booking delays and appointment rescheduling.',
   },
   ADMIN: {
-    eyebrow: 'System administrator profile',
-    ctaLabel: 'Manage institutions',
+    eyebrow: isKm ? 'ប្រវត្តិរូបអ្នកគ្រប់គ្រងប្រព័ន្ធ' : 'System administrator profile',
+    ctaLabel: isKm ? 'គ្រប់គ្រងស្ថាប័ន' : 'Manage institutions',
     ctaPath: '/schools/admin',
-    workspaceTitle: 'Platform administration',
-    actionTitle: 'Hospital network',
-    actionLabel: 'Manage hospitals',
+    workspaceTitle: isKm ? 'ការគ្រប់គ្រងប្រព័ន្ធ' : 'Platform administration',
+    actionTitle: isKm ? 'បណ្តាញមន្ទីរពេទ្យ' : 'Hospital network',
+    actionLabel: isKm ? 'គ្រប់គ្រងមន្ទីរពេទ្យ' : 'Manage hospitals',
     actionPath: '/hospitals/admin',
-    tipTitle: 'Platform governance note',
-    tipText:
-      'Regularly audit registered schools and hospital partners to preserve verified clinical data integrity and family safety.',
+    tipTitle: isKm ? 'កំណត់ចំណាំអភិបាលកិច្ចប្រព័ន្ធ' : 'Platform governance note',
+    tipText: isKm
+      ? 'ធ្វើសវនកម្មលើសាលារៀន និងមន្ទីរពេទ្យដៃគូដែលបានចុះឈ្មោះជាប្រចាំ ដើម្បីរក្សាភាពត្រឹមត្រូវនៃទិន្នន័យគ្លីនិកដែលបានផ្ទៀងផ្ទាត់ និងសុវត្ថិភាពគ្រួសារ។'
+      : 'Regularly audit registered schools and hospital partners to preserve verified clinical data integrity and family safety.',
   },
-};
+});
+
+export const roleConfigs: Record<string, RoleSettingsContext> = getRoleConfigs(false);
 
 @Component({
   standalone: true,
@@ -110,19 +116,19 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
     <!-- Summary Metrics Grid -->
     <section class="summary-grid" [attr.aria-label]="roleConfig().eyebrow + ' summary'">
       <article>
-        <span>Role</span>
-        <strong>{{ parent()?.role || 'Parent' }}</strong>
+        <span>{{ currentLang() === 'km' ? 'តួនាទី' : 'Role' }}</span>
+        <strong>{{ getRoleDisplay(parent()?.role) }}</strong>
       </article>
       <article>
-        <span>Account status</span>
-        <strong>Active</strong>
+        <span>{{ currentLang() === 'km' ? 'ស្ថានភាពគណនី' : 'Account status' }}</span>
+        <strong>{{ currentLang() === 'km' ? 'សកម្ម' : 'Active' }}</strong>
       </article>
       <article>
-        <span>Security</span>
-        <strong>Protected</strong>
+        <span>{{ currentLang() === 'km' ? 'សុវត្ថិភាព' : 'Security' }}</span>
+        <strong>{{ currentLang() === 'km' ? 'បានការពារ' : 'Protected' }}</strong>
       </article>
       <article>
-        <span>Sensory suite</span>
+        <span>{{ currentLang() === 'km' ? 'ឈុតវិញ្ញាណ' : 'Sensory suite' }}</span>
         <strong class="sensory-status-text">{{ activeSensoryStatus() }}</strong>
       </article>
     </section>
@@ -139,10 +145,15 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               </svg>
             </div>
             <div>
-              <h2 id="account-title">Account details</h2>
+              <h2 id="account-title">
+                {{ currentLang() === 'km' ? 'ព័ត៌មានលម្អិតគណនី' : 'Account details' }}
+              </h2>
               <p>
-                Your profile information is used across child profiles, screening assessments, and
-                school reports.
+                {{
+                  currentLang() === 'km'
+                    ? 'ព័ត៌មានប្រវត្តិរូបរបស់អ្នកត្រូវបានប្រើប្រាស់លើប្រវត្តិរូបកុមារ ការវាយតម្លៃ និងរបាយការណ៍សាលារៀន។'
+                    : 'Your profile information is used across child profiles, screening assessments, and school reports.'
+                }}
               </p>
             </div>
           </header>
@@ -150,28 +161,50 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
           <form [formGroup]="form" (ngSubmit)="save()" acAccessibleForm novalidate>
             <div class="field-grid">
               <ac-ui-field
-                label="First name"
+                [label]="currentLang() === 'km' ? 'នាមខ្លួន' : 'First name'"
                 [required]="true"
-                [error]="showError('firstName') ? 'First name is required.' : null"
+                [error]="
+                  showError('firstName')
+                    ? currentLang() === 'km'
+                      ? 'សូមបញ្ចូលនាមខ្លួន។'
+                      : 'First name is required.'
+                    : null
+                "
               >
                 <input formControlName="firstName" autocomplete="given-name" />
               </ac-ui-field>
               <ac-ui-field
-                label="Last name"
+                [label]="currentLang() === 'km' ? 'គោត្តនាម' : 'Last name'"
                 [required]="true"
-                [error]="showError('lastName') ? 'Last name is required.' : null"
+                [error]="
+                  showError('lastName')
+                    ? currentLang() === 'km'
+                      ? 'សូមបញ្ចូលគោត្តនាម។'
+                      : 'Last name is required.'
+                    : null
+                "
               >
                 <input formControlName="lastName" autocomplete="family-name" />
               </ac-ui-field>
-              <ac-ui-field label="Phone number" [optional]="true">
+              <ac-ui-field
+                [label]="currentLang() === 'km' ? 'លេខទូរស័ព្ទ' : 'Phone number'"
+                [optional]="true"
+              >
                 <input formControlName="phoneNumber" autocomplete="tel" inputmode="tel" />
               </ac-ui-field>
-              <ac-ui-field label="Social media" [optional]="true">
+              <ac-ui-field
+                [label]="currentLang() === 'km' ? 'បណ្តាញសង្គម' : 'Social media'"
+                [optional]="true"
+              >
                 <input formControlName="socialMediaAccount" />
               </ac-ui-field>
               <ac-ui-field
-                label="Email address"
-                hint="Your email is your sign-in and cannot be changed here."
+                [label]="currentLang() === 'km' ? 'អាសយដ្ឋានអ៊ីមែល' : 'Email address'"
+                [hint]="
+                  currentLang() === 'km'
+                    ? 'អ៊ីមែលរបស់អ្នកត្រូវបានប្រើសម្រាប់ចូលគណនី ហើយមិនអាចប្តូរនៅទីនេះបានទេ។'
+                    : 'Your email is your sign-in and cannot be changed here.'
+                "
                 [full]="true"
               >
                 <input [value]="parent()?.email || ''" readonly />
@@ -557,10 +590,19 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               </svg>
             </div>
             <div>
-              <h2 id="accessibility-title">Accessibility preferences</h2>
+              <h2 id="accessibility-title">
+                {{
+                  currentLang() === 'km'
+                    ? 'ចំណូលចិត្តភាពងាយស្រួលប្រើប្រាស់'
+                    : 'Accessibility preferences'
+                }}
+              </h2>
               <p>
-                Customize visual comfort, motion behaviors, typography scaling, and sensory
-                saturation.
+                {{
+                  currentLang() === 'km'
+                    ? 'កែសម្រួលភាពស្រួលភ្នែក ចលនា ទំហំអក្សរ និងពណ៌វិញ្ញាណ។'
+                    : 'Customize visual comfort, motion behaviors, typography scaling, and sensory saturation.'
+                }}
               </p>
             </div>
           </header>
@@ -581,10 +623,14 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                   </svg>
                 </div>
                 <div class="toggle-info">
-                  <span class="toggle-title">Reduced motion</span>
-                  <span class="toggle-desc"
-                    >Minimizes smooth scrolling and non-essential UI animations.</span
-                  >
+                  <span class="toggle-title">{{
+                    currentLang() === 'km' ? 'កាត់បន្ថយចលនា' : 'Reduced motion'
+                  }}</span>
+                  <span class="toggle-desc">{{
+                    currentLang() === 'km'
+                      ? 'កាត់បន្ថយការរមូររលូន និងចលនាដែលមិនចាំបាច់។'
+                      : 'Minimizes smooth scrolling and non-essential UI animations.'
+                  }}</span>
                 </div>
                 <div class="toggle-action">
                   <input type="checkbox" formControlName="reducedMotion" class="toggle-checkbox" />
@@ -600,11 +646,14 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                   </svg>
                 </div>
                 <div class="toggle-info">
-                  <span class="toggle-title">High contrast mode</span>
-                  <span class="toggle-desc"
-                    >Enhances text clarity, outlines, and border contrast across the
-                    workspace.</span
-                  >
+                  <span class="toggle-title">{{
+                    currentLang() === 'km' ? 'កម្រិតពណ៌ខ្ពស់' : 'High contrast mode'
+                  }}</span>
+                  <span class="toggle-desc">{{
+                    currentLang() === 'km'
+                      ? 'បង្កើនភាពច្បាស់នៃអក្សរ គែមបន្ទាត់ និងកម្រិតពណ៌ទូទាំងប្រព័ន្ធ។'
+                      : 'Enhances text clarity, outlines, and border contrast across the workspace.'
+                  }}</span>
                 </div>
                 <div class="toggle-action">
                   <input type="checkbox" formControlName="highContrast" class="toggle-checkbox" />
@@ -623,11 +672,14 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                   </svg>
                 </div>
                 <div class="toggle-info">
-                  <span class="toggle-title">Calming color palette mode</span>
-                  <span class="toggle-desc"
-                    >Low-saturation, soft-tinted sensory friendly palette designed for visual
-                    comfort and reduced sensory fatigue.</span
-                  >
+                  <span class="toggle-title">{{
+                    currentLang() === 'km' ? 'ក្ដារពណ៌ស្រាលស្រទន់' : 'Calming color palette mode'
+                  }}</span>
+                  <span class="toggle-desc">{{
+                    currentLang() === 'km'
+                      ? 'ក្ដារពណ៌ដែលស្រទន់ភ្នែក កាត់បន្ថយភាពនឿយហត់នៃភ្នែក និងវិញ្ញាណ។'
+                      : 'Low-saturation, soft-tinted sensory friendly palette designed for visual comfort and reduced sensory fatigue.'
+                  }}</span>
                 </div>
                 <div class="toggle-action">
                   <input type="checkbox" formControlName="calmingPalette" class="toggle-checkbox" />
@@ -637,10 +689,14 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
               <!-- Font Size Scaling Selector -->
               <div class="font-scale-group">
                 <div class="scale-header">
-                  <span class="toggle-title">Font size scaling</span>
-                  <span class="toggle-desc"
-                    >Responsive typography scale updating root rem base across all pages.</span
-                  >
+                  <span class="toggle-title">{{
+                    currentLang() === 'km' ? 'ទំហំអក្សរ' : 'Font size scaling'
+                  }}</span>
+                  <span class="toggle-desc">{{
+                    currentLang() === 'km'
+                      ? 'ការកែសម្រួលទំហំអក្សរទូទាំងគ្រប់ទំព័រនៃប្រព័ន្ធ។'
+                      : 'Responsive typography scale updating root rem base across all pages.'
+                  }}</span>
                 </div>
                 <div class="font-scale-chips" role="radiogroup" aria-label="Font size scaling">
                   <button
@@ -650,7 +706,9 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                     (click)="setFontSize('normal')"
                   >
                     <span class="chip-sample sample-normal">A</span>
-                    <span class="chip-label">Normal</span>
+                    <span class="chip-label">{{
+                      currentLang() === 'km' ? 'ធម្មតា' : 'Normal'
+                    }}</span>
                     <span class="chip-size">16px</span>
                   </button>
                   <button
@@ -660,7 +718,7 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                     (click)="setFontSize('large')"
                   >
                     <span class="chip-sample sample-large">A</span>
-                    <span class="chip-label">Large</span>
+                    <span class="chip-label">{{ currentLang() === 'km' ? 'ធំ' : 'Large' }}</span>
                     <span class="chip-size">18px</span>
                   </button>
                   <button
@@ -670,7 +728,9 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
                     (click)="setFontSize('xlarge')"
                   >
                     <span class="chip-sample sample-xlarge">A</span>
-                    <span class="chip-label">Extra Large</span>
+                    <span class="chip-label">{{
+                      currentLang() === 'km' ? 'ធំបំផុត' : 'Extra Large'
+                    }}</span>
                     <span class="chip-size">20px</span>
                   </button>
                 </div>
@@ -771,27 +831,42 @@ export const roleConfigs: Record<string, RoleSettingsContext> = {
         <h2>{{ roleConfig().workspaceTitle }}</h2>
 
         <div class="support-row">
-          <span>Next useful action</span>
+          <span>{{
+            currentLang() === 'km' ? 'សកម្មភាពមានប្រយោជន៍បន្ទាប់' : 'Next useful action'
+          }}</span>
           <strong>{{ roleConfig().actionTitle }}</strong>
           <a [routerLink]="roleConfig().actionPath">{{ roleConfig().actionLabel }}</a>
         </div>
 
         <div class="support-row">
-          <span>Security action</span>
-          <strong>Password recovery ready</strong>
-          <a routerLink="/forgot-password">Reset password</a>
+          <span>{{ currentLang() === 'km' ? 'សកម្មភាពសុវត្ថិភាព' : 'Security action' }}</span>
+          <strong>{{
+            currentLang() === 'km' ? 'ការកំណត់ពាក្យសម្ងាត់ឡើងវិញរួចរាល់' : 'Password recovery ready'
+          }}</strong>
+          <a routerLink="/forgot-password">{{
+            currentLang() === 'km' ? 'កំណត់ពាក្យសម្ងាត់ឡើងវិញ' : 'Reset password'
+          }}</a>
         </div>
 
         <div class="sensory-summary-card">
           <div class="summary-card-header">
             <span class="summary-card-icon" aria-hidden="true">🌱</span>
-            <h3>Sensory Environment</h3>
+            <h3>{{ currentLang() === 'km' ? 'បរិយាកាសវិញ្ញាណ' : 'Sensory Environment' }}</h3>
           </div>
           <div class="summary-badge-list">
-            <span class="sensory-badge">Contrast: {{ contrastLabel() }}</span>
-            <span class="sensory-badge">Motion: {{ motionLabel() }}</span>
-            <span class="sensory-badge">Scale: {{ fontScaleLabel() }}</span>
-            <span class="sensory-badge">Palette: {{ paletteLabel() }}</span>
+            <span class="sensory-badge"
+              >{{ currentLang() === 'km' ? 'កម្រិតពណ៌៖ ' : 'Contrast: '
+              }}{{ contrastLabel() }}</span
+            >
+            <span class="sensory-badge"
+              >{{ currentLang() === 'km' ? 'ចលនា៖ ' : 'Motion: ' }}{{ motionLabel() }}</span
+            >
+            <span class="sensory-badge"
+              >{{ currentLang() === 'km' ? 'ទំហំ៖ ' : 'Scale: ' }}{{ fontScaleLabel() }}</span
+            >
+            <span class="sensory-badge"
+              >{{ currentLang() === 'km' ? 'ក្ដារពណ៌៖ ' : 'Palette: ' }}{{ paletteLabel() }}</span
+            >
           </div>
         </div>
 
@@ -1546,8 +1621,37 @@ export class SettingsPage implements OnInit {
 
   readonly roleConfig = computed<RoleSettingsContext>(() => {
     const role = this.parent()?.role ?? 'PARENT';
-    return roleConfigs[role] ?? roleConfigs['PARENT'];
+    const isKm = this.currentLang() === 'km';
+    const configs = getRoleConfigs(isKm);
+    return configs[role] ?? configs['PARENT'];
   });
+
+  getRoleDisplay(role: string | undefined): string {
+    if (this.currentLang() === 'km') {
+      switch (role) {
+        case 'ADMIN':
+          return 'អ្នកគ្រប់គ្រងប្រព័ន្ធ';
+        case 'SCHOOL':
+          return 'បុគ្គលិកសាលា';
+        case 'HOSPITAL':
+          return 'អ្នកសម្របសម្រួលមន្ទីរពេទ្យ';
+        case 'PARENT':
+        default:
+          return 'អាណាព្យាបាល';
+      }
+    }
+    switch (role) {
+      case 'ADMIN':
+        return 'Admin';
+      case 'SCHOOL':
+        return 'School';
+      case 'HOSPITAL':
+        return 'Hospital';
+      case 'PARENT':
+      default:
+        return 'Parent';
+    }
+  }
 
   readonly displayName = computed(() => {
     const parent = this.parent();
@@ -1557,15 +1661,34 @@ export class SettingsPage implements OnInit {
   });
 
   readonly activeSensoryStatus = computed(() => {
-    if (this.currentHighContrast()) return 'High Contrast';
-    if (this.currentCalmingPalette()) return 'Calming Palette';
-    if (this.currentReducedMotion()) return 'Quiet Motion';
-    return 'Standard';
+    const isKm = this.currentLang() === 'km';
+    if (this.currentHighContrast()) return isKm ? 'កម្រិតពណ៌ខ្ពស់' : 'High Contrast';
+    if (this.currentCalmingPalette()) return isKm ? 'ក្ដារពណ៌ស្រាលស្រទន់' : 'Calming Palette';
+    if (this.currentReducedMotion()) return isKm ? 'កាត់បន្ថយចលនា' : 'Quiet Motion';
+    return isKm ? 'ស្តង់ដារ' : 'Standard';
   });
 
-  readonly contrastLabel = computed(() => (this.currentHighContrast() ? 'Enhanced' : 'Standard'));
+  readonly contrastLabel = computed(() => {
+    const isKm = this.currentLang() === 'km';
+    return this.currentHighContrast()
+      ? isKm
+        ? 'បានបង្កើន'
+        : 'Enhanced'
+      : isKm
+        ? 'ស្តង់ដារ'
+        : 'Standard';
+  });
 
-  readonly motionLabel = computed(() => (this.currentReducedMotion() ? 'Reduced' : 'Smooth'));
+  readonly motionLabel = computed(() => {
+    const isKm = this.currentLang() === 'km';
+    return this.currentReducedMotion()
+      ? isKm
+        ? 'បានកាត់បន្ថយ'
+        : 'Reduced'
+      : isKm
+        ? 'រលូន'
+        : 'Smooth';
+  });
 
   readonly fontScaleLabel = computed(() => {
     const scale = this.currentFontSize();
@@ -1574,7 +1697,16 @@ export class SettingsPage implements OnInit {
     return '16px';
   });
 
-  readonly paletteLabel = computed(() => (this.currentCalmingPalette() ? 'Calming' : 'Natural'));
+  readonly paletteLabel = computed(() => {
+    const isKm = this.currentLang() === 'km';
+    return this.currentCalmingPalette()
+      ? isKm
+        ? 'ស្រាលស្រទន់'
+        : 'Calming'
+      : isKm
+        ? 'ធម្មជាតិ'
+        : 'Natural';
+  });
 
   ngOnInit() {
     if (!this.parent()) this.auth.loadCurrentUser().subscribe();

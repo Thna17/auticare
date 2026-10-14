@@ -1097,29 +1097,46 @@ const quickActions: readonly QuickAction[] = [
           <ac-ui-message tone="error">{{ adminDashboardError() }}</ac-ui-message>
         } @else if (adminDashboard(); as adminData) {
           <!-- Stats Summary Grid -->
-          <section class="admin-stats-grid" aria-label="Administrative metrics">
+          <section
+            class="admin-stats-grid"
+            [attr.aria-label]="
+              currentLang() === 'km' ? 'រង្វាស់ស្ថិតិរដ្ឋបាល' : 'Administrative metrics'
+            "
+          >
             <div class="admin-stat-card">
-              <span class="admin-stat-label">Total Families</span>
+              <span class="admin-stat-label">
+                {{ currentLang() === 'km' ? 'គ្រួសារសរុប' : 'Total Families' }}
+              </span>
               <span class="admin-stat-val">{{ adminData.stats.totalFamilies }}</span>
             </div>
             <div class="admin-stat-card">
-              <span class="admin-stat-label">Active Children</span>
+              <span class="admin-stat-label">
+                {{ currentLang() === 'km' ? 'កុមារសកម្ម' : 'Active Children' }}
+              </span>
               <span class="admin-stat-val">{{ adminData.stats.activeChildren }}</span>
             </div>
             <div class="admin-stat-card">
-              <span class="admin-stat-label">Partner Hospitals</span>
+              <span class="admin-stat-label">
+                {{ currentLang() === 'km' ? 'មន្ទីរពេទ្យដៃគូ' : 'Partner Hospitals' }}
+              </span>
               <span class="admin-stat-val">{{ adminData.stats.totalHospitals }}</span>
             </div>
             <div class="admin-stat-card">
-              <span class="admin-stat-label">Partner Schools</span>
+              <span class="admin-stat-label">
+                {{ currentLang() === 'km' ? 'សាលារៀនដៃគូ' : 'Partner Schools' }}
+              </span>
               <span class="admin-stat-val">{{ adminData.stats.totalSchools }}</span>
             </div>
             <div class="admin-stat-card">
-              <span class="admin-stat-label">Total Appointments</span>
+              <span class="admin-stat-label">
+                {{ currentLang() === 'km' ? 'ការណាត់ជួបសរុប' : 'Total Appointments' }}
+              </span>
               <span class="admin-stat-val">{{ adminData.stats.totalAppointments }}</span>
             </div>
             <div class="admin-stat-card">
-              <span class="admin-stat-label">Pending Requests</span>
+              <span class="admin-stat-label">
+                {{ currentLang() === 'km' ? 'សំណើកំពុងរង់ចាំ' : 'Pending Requests' }}
+              </span>
               <span
                 class="admin-stat-val"
                 [class.warning]="adminData.stats.pendingAppointments > 0"
@@ -1134,17 +1151,19 @@ const quickActions: readonly QuickAction[] = [
             <!-- Recent Appointments -->
             <div class="admin-content-card">
               <div class="admin-card-header">
-                <h2>Recent Appointments</h2>
-                <a routerLink="/appointments" class="text-link">View all</a>
+                <h2>{{ currentLang() === 'km' ? 'ការណាត់ជួបថ្មីៗ' : 'Recent Appointments' }}</h2>
+                <a routerLink="/appointments" class="text-link">
+                  {{ currentLang() === 'km' ? 'មើលទាំងអស់' : 'View all' }}
+                </a>
               </div>
               @if (adminData.recentAppointments.length) {
                 <table class="admin-table">
                   <thead>
                     <tr>
-                      <th>Family</th>
-                      <th>Hospital</th>
-                      <th>Date</th>
-                      <th>Status</th>
+                      <th>{{ currentLang() === 'km' ? 'គ្រួសារ' : 'Family' }}</th>
+                      <th>{{ currentLang() === 'km' ? 'មន្ទីរពេទ្យ' : 'Hospital' }}</th>
+                      <th>{{ currentLang() === 'km' ? 'កាលបរិច្ឆេទ' : 'Date' }}</th>
+                      <th>{{ currentLang() === 'km' ? 'ស្ថានភាព' : 'Status' }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1160,7 +1179,19 @@ const quickActions: readonly QuickAction[] = [
                         <td>{{ formatDate(appt.scheduledAt) }}</td>
                         <td>
                           <span class="admin-badge" [class]="appt.status.toLowerCase()">
-                            {{ appt.status }}
+                            {{
+                              currentLang() === 'km'
+                                ? appt.status === 'CONFIRMED'
+                                  ? 'បានបញ្ជាក់'
+                                  : appt.status === 'COMPLETED'
+                                    ? 'បានបញ្ចប់'
+                                    : appt.status === 'REQUESTED'
+                                      ? 'បានស្នើសុំ'
+                                      : appt.status === 'CANCELLED'
+                                        ? 'បានបោះបង់'
+                                        : appt.status
+                                : appt.status
+                            }}
                           </span>
                         </td>
                       </tr>
@@ -1168,14 +1199,22 @@ const quickActions: readonly QuickAction[] = [
                   </tbody>
                 </table>
               } @else {
-                <p class="empty-message">No appointments recorded yet.</p>
+                <p class="empty-message">
+                  {{
+                    currentLang() === 'km'
+                      ? 'មិនទាន់មានការណាត់ជួបនៅឡើយទេ។'
+                      : 'No appointments recorded yet.'
+                  }}
+                </p>
               }
             </div>
 
             <!-- Recent Security & Audit Events -->
             <div class="admin-content-card">
               <div class="admin-card-header">
-                <h2>Recent Audit Events</h2>
+                <h2>
+                  {{ currentLang() === 'km' ? 'កំណត់ហេតុសវនកម្មថ្មីៗ' : 'Recent Audit Events' }}
+                </h2>
               </div>
               @if (adminData.recentAuditEvents.length) {
                 <div class="audit-timeline">
@@ -1185,10 +1224,11 @@ const quickActions: readonly QuickAction[] = [
                         <div class="audit-action">{{ evt.action }}</div>
                         <div class="audit-meta">
                           @if (evt.actorEmail) {
-                            By: {{ evt.actorEmail }}
+                            {{ currentLang() === 'km' ? 'ដោយ៖ ' : 'By: ' }}{{ evt.actorEmail }}
                           }
                           @if (evt.targetEmail) {
-                            | Target: {{ evt.targetEmail }}
+                            | {{ currentLang() === 'km' ? 'គោលដៅ៖ ' : 'Target: '
+                            }}{{ evt.targetEmail }}
                           }
                         </div>
                       </div>
@@ -1197,50 +1237,92 @@ const quickActions: readonly QuickAction[] = [
                   }
                 </div>
               } @else {
-                <p class="empty-message">No audit events recorded.</p>
+                <p class="empty-message">
+                  {{
+                    currentLang() === 'km'
+                      ? 'មិនទាន់មានកំណត់ហេតុសវនកម្មនៅឡើយទេ។'
+                      : 'No audit events recorded.'
+                  }}
+                </p>
               }
             </div>
           </div>
 
-          <section class="admin-overview" aria-label="Administrator management shortcuts">
+          <section
+            class="admin-overview"
+            [attr.aria-label]="
+              currentLang() === 'km'
+                ? 'ផ្លូវកាត់គ្រប់គ្រងរដ្ឋបាល'
+                : 'Administrator management shortcuts'
+            "
+          >
             <article>
               <span class="admin-icon directory" aria-hidden="true"></span>
-              <p class="admin-label">Care directory</p>
-              <h2>Manage Hospitals</h2>
-              <p>
-                Publish hospitals and specialist services so families can make informed care
-                choices.
+              <p class="admin-label">
+                {{ currentLang() === 'km' ? 'បញ្ជីថែទាំ' : 'Care directory' }}
               </p>
-              <a class="primary-button" routerLink="/hospitals">Manage hospitals</a>
+              <h2>{{ currentLang() === 'km' ? 'គ្រប់គ្រងមន្ទីរពេទ្យ' : 'Manage Hospitals' }}</h2>
+              <p>
+                {{
+                  currentLang() === 'km'
+                    ? 'ផ្សព្វផ្សាយមន្ទីរពេទ្យ និងសេវាកម្មឯកទេស ដើម្បីឱ្យក្រុមគ្រួសារអាចធ្វើការសម្រេចចិត្តថែទាំបានត្រឹមត្រូវ។'
+                    : 'Publish hospitals and specialist services so families can make informed care choices.'
+                }}
+              </p>
+              <a class="primary-button" routerLink="/hospitals">
+                {{ currentLang() === 'km' ? 'គ្រប់គ្រងមន្ទីរពេទ្យ' : 'Manage hospitals' }}
+              </a>
             </article>
             <article>
               <span class="admin-icon family" aria-hidden="true"></span>
-              <p class="admin-label">Family records</p>
-              <h2>{{ adminData.stats.activeChildren }} active child profiles</h2>
-              <p>
-                Review child profiles across the service to support the care team with accurate
-                records.
+              <p class="admin-label">
+                {{ currentLang() === 'km' ? 'កំណត់ត្រាគ្រួសារ' : 'Family records' }}
               </p>
-              <a class="text-link" routerLink="/children"
-                >Review child profiles <span aria-hidden="true">-&gt;</span></a
-              >
+              <h2>
+                {{ adminData.stats.activeChildren }}
+                {{ currentLang() === 'km' ? 'ប្រវត្តិរូបកុមារសកម្ម' : 'active child profiles' }}
+              </h2>
+              <p>
+                {{
+                  currentLang() === 'km'
+                    ? 'ពិនិត្យប្រវត្តិរូបកុមារទូទាំងប្រព័ន្ធ ដើម្បីគាំទ្រក្រុមការងារថែទាំជាមួយនឹងកំណត់ត្រាត្រឹមត្រូវ។'
+                    : 'Review child profiles across the service to support the care team with accurate records.'
+                }}
+              </p>
+              <a class="text-link" routerLink="/children">
+                {{ currentLang() === 'km' ? 'ពិនិត្យប្រវត្តិរូបកុមារ' : 'Review child profiles' }}
+                <span aria-hidden="true">-&gt;</span>
+              </a>
             </article>
             <article>
               <span class="admin-icon school" aria-hidden="true"></span>
-              <p class="admin-label">School reporting</p>
-              <h2>Partner Schools</h2>
-              <p>
-                Review school participation and keep the support network aligned around each child.
+              <p class="admin-label">
+                {{ currentLang() === 'km' ? 'របាយការណ៍សាលារៀន' : 'School reporting' }}
               </p>
-              <a class="text-link" routerLink="/schools"
-                >Open schools <span aria-hidden="true">-&gt;</span></a
-              >
+              <h2>{{ currentLang() === 'km' ? 'សាលារៀនដៃគូ' : 'Partner Schools' }}</h2>
+              <p>
+                {{
+                  currentLang() === 'km'
+                    ? 'ពិនិត្យការចូលរួមរបស់សាលារៀន និងរក្សាបណ្តាញគាំទ្រឱ្យស្របគ្នាជុំវិញកុមារម្នាក់ៗ។'
+                    : 'Review school participation and keep the support network aligned around each child.'
+                }}
+              </p>
+              <a class="text-link" routerLink="/schools">
+                {{ currentLang() === 'km' ? 'បើកបញ្ជីសាលារៀន' : 'Open schools' }}
+                <span aria-hidden="true">-&gt;</span>
+              </a>
             </article>
           </section>
         }
       } @else if (isHospital()) {
         <div class="dashboard-state-center">
-          <ac-ui-spinner label="Redirecting to Hospital Dashboard…" />
+          <ac-ui-spinner
+            [label]="
+              currentLang() === 'km'
+                ? 'កំពុងបញ្ជូនទៅផ្ទាំងគ្រប់គ្រងមន្ទីរពេទ្យ…'
+                : 'Redirecting to Hospital Dashboard…'
+            "
+          />
         </div>
       }
 
@@ -1248,25 +1330,46 @@ const quickActions: readonly QuickAction[] = [
         <section>
           <h2>AutiCare</h2>
           <p>
-            Supporting neurodiverse families with personalized care paths and professional
-            resources.
+            {{
+              currentLang() === 'km'
+                ? 'គាំទ្រក្រុមគ្រួសារដែលមានតម្រូវការពិសេស ជាមួយនឹងមាគ៌ាថែទាំផ្ទាល់ខ្លួន និងធនធានជំនាញវិជ្ជាជីវៈ។'
+                : 'Supporting neurodiverse families with personalized care paths and professional resources.'
+            }}
           </p>
         </section>
         <section>
-          <h3>Support</h3>
-          <a routerLink="/support">Emergency Resources</a>
-          <a routerLink="/support">Medical Disclaimer</a>
-          <a routerLink="/support">Contact Support</a>
+          <h3>{{ currentLang() === 'km' ? 'ជំនួយ' : 'Support' }}</h3>
+          <a routerLink="/support">
+            {{ currentLang() === 'km' ? 'ធនធានសង្គ្រោះបន្ទាន់' : 'Emergency Resources' }}
+          </a>
+          <a routerLink="/support">
+            {{
+              currentLang() === 'km' ? 'ការមិនទទួលខុសត្រូវផ្នែកវេជ្ជសាស្ត្រ' : 'Medical Disclaimer'
+            }}
+          </a>
+          <a routerLink="/support">
+            {{ currentLang() === 'km' ? 'ទាក់ទងផ្នែកគាំទ្រ' : 'Contact Support' }}
+          </a>
         </section>
         <section>
-          <h3>Quick Links</h3>
-          <a routerLink="/privacy">Privacy Policy</a>
-          <a routerLink="/terms">Terms of Service</a>
+          <h3>{{ currentLang() === 'km' ? 'តំណភ្ជាប់រហ័ស' : 'Quick Links' }}</h3>
+          <a routerLink="/privacy">
+            {{ currentLang() === 'km' ? 'គោលការណ៍ឯកជនភាព' : 'Privacy Policy' }}
+          </a>
+          <a routerLink="/terms">
+            {{ currentLang() === 'km' ? 'លក្ខខណ្ឌប្រើប្រាស់' : 'Terms of Service' }}
+          </a>
         </section>
         <section>
-          <h3>Stay Connected</h3>
-          <div class="social-row" aria-label="Community links">
-            <a routerLink="/support" aria-label="Share AutiCare">
+          <h3>{{ currentLang() === 'km' ? 'ទំនាក់ទំនងជាមួយយើង' : 'Stay Connected' }}</h3>
+          <div
+            class="social-row"
+            [attr.aria-label]="currentLang() === 'km' ? 'តំណភ្ជាប់សហគមន៍' : 'Community links'"
+          >
+            <a
+              routerLink="/support"
+              [attr.aria-label]="currentLang() === 'km' ? 'ចែករំលែក AutiCare' : 'Share AutiCare'"
+            >
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path
                   d="M18 8a3 3 0 1 0-2.8-4M6 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM8.7 16.3l6.6-3.6M8.7 18.7l6.6 2.6"
@@ -1278,7 +1381,12 @@ const quickActions: readonly QuickAction[] = [
                 />
               </svg>
             </a>
-            <a routerLink="/support" aria-label="Open community support">
+            <a
+              routerLink="/support"
+              [attr.aria-label]="
+                currentLang() === 'km' ? 'បើកការគាំទ្រសហគមន៍' : 'Open community support'
+              "
+            >
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path
                   d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1M12 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1"
@@ -1291,7 +1399,10 @@ const quickActions: readonly QuickAction[] = [
               </svg>
             </a>
           </div>
-          <p class="copyright">(c) {{ currentYear }} AutiCare. All rights reserved.</p>
+          <p class="copyright">
+            (c) {{ currentYear }} AutiCare.
+            {{ currentLang() === 'km' ? 'រក្សាសិទ្ធិគ្រប់យ៉ាង។' : 'All rights reserved.' }}
+          </p>
         </section>
       </footer>
     }
@@ -3769,7 +3880,15 @@ export class DashboardPage implements OnInit {
   }
 
   protected formatDate(dateStr: string): string {
+    const isKm = this.currentLang() === 'km';
     const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`);
+    if (isKm) {
+      return new Intl.DateTimeFormat('km-KH', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(date);
+    }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 

@@ -4,87 +4,125 @@ import { Router, RouterLink } from '@angular/router';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { HospitalsApi } from './data-access/hospitals.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 @Component({
   standalone: true,
   imports: [RouterLink, ReactiveFormsModule, UiCardComponent, UiMessageComponent],
   template: `
     <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-      <a routerLink="/hospitals/admin" class="back-link">← Back to Directory</a>
+      <a routerLink="/hospitals/admin" class="back-link">{{
+        currentLang() === 'km' ? '← ត្រឡប់ទៅបញ្ជីមន្ទីរពេទ្យ' : '← Back to Directory'
+      }}</a>
     </nav>
 
     <section class="page-header">
-      <p class="eyebrow">Administration</p>
-      <h1>Create hospital account</h1>
-      <p>Provision the hospital profile and invite a manager in one action.</p>
+      <p class="eyebrow">
+        {{ currentLang() === 'km' ? 'ការគ្រប់គ្រងប្រព័ន្ធ' : 'Administration' }}
+      </p>
+      <h1>{{ currentLang() === 'km' ? 'បង្កើតគណនីមន្ទីរពេទ្យ' : 'Create hospital account' }}</h1>
+      <p>
+        {{
+          currentLang() === 'km'
+            ? 'បង្កើតប្រវត្តិរូបមន្ទីរពេទ្យ និងអញ្ជើញអ្នកគ្រប់គ្រងក្នុងសកម្មភាពតែមួយ។'
+            : 'Provision the hospital profile and invite a manager in one action.'
+        }}
+      </p>
     </section>
 
     <ac-ui-card>
       <form [formGroup]="form" (ngSubmit)="submit()">
         <fieldset formGroupName="hospital">
-          <legend>Hospital profile</legend>
+          <legend>
+            {{ currentLang() === 'km' ? 'ប្រវត្តិរូបមន្ទីរពេទ្យ' : 'Hospital profile' }}
+          </legend>
           <label>
-            Name
+            {{ currentLang() === 'km' ? 'ឈ្មោះមន្ទីរពេទ្យ' : 'Name' }}
             <input type="text" formControlName="name" />
             @if (showError('hospital.name')) {
-              <span class="field-error">Hospital name is required.</span>
+              <span class="field-error">{{
+                currentLang() === 'km' ? 'សូមបញ្ចូលឈ្មោះមន្ទីរពេទ្យ។' : 'Hospital name is required.'
+              }}</span>
             }
           </label>
           <label>
-            City
+            {{ currentLang() === 'km' ? 'រាជធានី/ខេត្ត' : 'City' }}
             <input type="text" formControlName="city" />
             @if (showError('hospital.city')) {
-              <span class="field-error">City is required.</span>
+              <span class="field-error">{{
+                currentLang() === 'km' ? 'សូមបញ្ចូលរាជធានី ឬខេត្ត។' : 'City is required.'
+              }}</span>
             }
           </label>
           <label>
-            Address
+            {{ currentLang() === 'km' ? 'អាសយដ្ឋាន' : 'Address' }}
             <input type="text" formControlName="address" />
             @if (showError('hospital.address')) {
-              <span class="field-error">Address is required.</span>
+              <span class="field-error">{{
+                currentLang() === 'km' ? 'សូមបញ្ចូលអាសយដ្ឋាន។' : 'Address is required.'
+              }}</span>
             }
           </label>
           <label>
-            Services / Specializations
+            {{ currentLang() === 'km' ? 'សេវាកម្ម / ជំនាញឯកទេស' : 'Services / Specializations' }}
             <textarea rows="3" formControlName="services"></textarea>
             @if (showError('hospital.services')) {
-              <span class="field-error">Services description is required.</span>
+              <span class="field-error">{{
+                currentLang() === 'km'
+                  ? 'សូមបញ្ចូលព័ត៌មានលម្អិតអំពីសេវាកម្ម។'
+                  : 'Services description is required.'
+              }}</span>
             }
           </label>
         </fieldset>
 
         <fieldset formGroupName="account">
-          <legend>Manager account</legend>
+          <legend>{{ currentLang() === 'km' ? 'គណនីអ្នកគ្រប់គ្រង' : 'Manager account' }}</legend>
           <p class="invite-notice">
-            The hospital manager will receive a secure single-use invitation email to set up their
-            password.
+            {{
+              currentLang() === 'km'
+                ? 'អ្នកគ្រប់គ្រងមន្ទីរពេទ្យនឹងទទួលបានអ៊ីមែលអញ្ជើញដែលមានសុវត្ថិភាព ដើម្បីកំណត់ពាក្យសម្ងាត់របស់ពួកគេ។'
+                : 'The hospital manager will receive a secure single-use invitation email to set up their password.'
+            }}
           </p>
           <label>
-            Email
+            {{ currentLang() === 'km' ? 'អ៊ីមែល' : 'Email' }}
             <input type="email" formControlName="email" />
             @if (showError('account.email')) {
-              <span class="field-error">Enter a valid email address.</span>
+              <span class="field-error">{{
+                currentLang() === 'km'
+                  ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលដែលត្រឹមត្រូវ។'
+                  : 'Enter a valid email address.'
+              }}</span>
             }
           </label>
           <label>
-            First name
+            {{ currentLang() === 'km' ? 'នាមខ្លួន' : 'First name' }}
             <input type="text" formControlName="firstName" />
             @if (showError('account.firstName')) {
-              <span class="field-error">First name is required.</span>
+              <span class="field-error">{{
+                currentLang() === 'km' ? 'សូមបញ្ចូលនាមខ្លួន។' : 'First name is required.'
+              }}</span>
             }
           </label>
           <label>
-            Last name
+            {{ currentLang() === 'km' ? 'គោត្តនាម' : 'Last name' }}
             <input type="text" formControlName="lastName" />
             @if (showError('account.lastName')) {
-              <span class="field-error">Last name is required.</span>
+              <span class="field-error">{{
+                currentLang() === 'km' ? 'សូមបញ្ចូលគោត្តនាម។' : 'Last name is required.'
+              }}</span>
             }
           </label>
           <label>
-            Title
+            {{ currentLang() === 'km' ? 'តួនាទី / មុខតំណែង' : 'Title' }}
             <input type="text" formControlName="title" />
             @if (showError('account.title')) {
-              <span class="field-error">Title must be 120 characters or fewer.</span>
+              <span class="field-error">{{
+                currentLang() === 'km'
+                  ? 'តួនាទីមិនត្រូវលើសពី 120 តួអក្សរឡើយ។'
+                  : 'Title must be 120 characters or fewer.'
+              }}</span>
             }
           </label>
         </fieldset>
@@ -98,9 +136,19 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 
         <div class="form-actions">
           <button type="submit" [disabled]="saving()">
-            {{ saving() ? 'Creating…' : 'Create hospital account' }}
+            {{
+              saving()
+                ? currentLang() === 'km'
+                  ? 'កំពុងបង្កើត…'
+                  : 'Creating…'
+                : currentLang() === 'km'
+                  ? 'បង្កើតគណនីមន្ទីរពេទ្យ'
+                  : 'Create hospital account'
+            }}
           </button>
-          <a routerLink="/hospitals/admin" class="cancel-btn">Cancel</a>
+          <a routerLink="/hospitals/admin" class="cancel-btn">{{
+            currentLang() === 'km' ? 'បោះបង់' : 'Cancel'
+          }}</a>
         </div>
       </form>
     </ac-ui-card>
@@ -215,6 +263,8 @@ export class CreateHospitalAccountPage {
   private readonly api = inject(HospitalsApi);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
+  protected readonly currentLang = this.i18n.currentLang;
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);

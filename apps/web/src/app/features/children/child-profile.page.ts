@@ -39,11 +39,17 @@ export type MilestoneFeedItem = {
     ScreeningBadgeComponent,
   ],
   template: `
-    <a class="back-link" routerLink="/children">&larr; Back to children</a>
+    <a class="back-link" routerLink="/children">
+      {{ currentLang() === 'km' ? '← ត្រឡប់ទៅបញ្ជីកុមារ' : '← Back to children' }}
+    </a>
 
     @if (loading()) {
       <div class="state-center">
-        <ac-ui-spinner label="Loading child profile…" />
+        <ac-ui-spinner
+          [label]="
+            currentLang() === 'km' ? 'កំពុងផ្ទុកប្រវត្តិរូបកុមារ…' : 'Loading child profile…'
+          "
+        />
       </div>
     } @else if (error()) {
       <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
@@ -54,24 +60,43 @@ export type MilestoneFeedItem = {
             {{ initials(profile) }}
           </div>
           <div class="identity-details">
-            <p class="eyebrow">Clinical Child Profile</p>
+            <p class="eyebrow">
+              {{ currentLang() === 'km' ? 'ប្រវត្តិរូបគ្លីនិកកុមារ' : 'Clinical Child Profile' }}
+            </p>
             <h1>{{ fullName(profile) }}</h1>
             <p class="hero-subtext">
               <strong>{{ ageLabel(profile.dateOfBirth) }}</strong>
               <span class="dot-sep">&bull;</span>
-              <span>Born {{ profile.dateOfBirth }}</span>
+              <span
+                >{{ currentLang() === 'km' ? 'កើតថ្ងៃទី ' : 'Born '
+                }}{{ profile.dateOfBirth }}</span
+              >
             </p>
             <div class="hero-notes-row">
               @if (profile.notes) {
                 <span
                   class="hero-medical-badge recorded"
-                  title="Support and medical notes recorded"
+                  [title]="
+                    currentLang() === 'km'
+                      ? 'បានកត់ត្រាកំណត់ត្រាវេជ្ជសាស្ត្រ និងការគាំទ្រ'
+                      : 'Support and medical notes recorded'
+                  "
                 >
                   <span class="badge-dot" aria-hidden="true"></span>
-                  Emergency & Sensory Notes Active
+                  {{
+                    currentLang() === 'km'
+                      ? 'មានកំណត់ត្រាវេជ្ជសាស្ត្រ និងសតិអារម្មណ៍សកម្ម'
+                      : 'Emergency & Sensory Notes Active'
+                  }}
                 </span>
               } @else {
-                <span class="hero-medical-badge empty"> No Emergency Medical Notes </span>
+                <span class="hero-medical-badge empty">
+                  {{
+                    currentLang() === 'km'
+                      ? 'គ្មានកំណត់ត្រាវេជ្ជសាស្ត្របន្ទាន់'
+                      : 'No Emergency Medical Notes'
+                  }}
+                </span>
               }
             </div>
           </div>
@@ -109,11 +134,28 @@ export type MilestoneFeedItem = {
       </section>
 
       <!-- Action Toolbar (Prominent sticky care coordinator) -->
-      <nav class="child-action-toolbar" aria-label="Quick actions for child">
+      <nav
+        class="child-action-toolbar"
+        [attr.aria-label]="
+          currentLang() === 'km' ? 'សកម្មភាពរហ័សសម្រាប់កុមារ' : 'Quick actions for child'
+        "
+      >
         <div class="toolbar-content">
           <div class="toolbar-text">
-            <strong>Care Actions for {{ profile.firstName }}</strong>
-            <small>Coordinate clinical screenings and medical consultations</small>
+            <strong>
+              {{
+                currentLang() === 'km'
+                  ? 'សកម្មភាពថែទាំសម្រាប់ ' + profile.firstName
+                  : 'Care Actions for ' + profile.firstName
+              }}
+            </strong>
+            <small>
+              {{
+                currentLang() === 'km'
+                  ? 'សម្របសម្រួលការវាយតម្លៃគ្លីនិក និងការពិគ្រោះយោបល់វេជ្ជសាស្ត្រ'
+                  : 'Coordinate clinical screenings and medical consultations'
+              }}
+            </small>
           </div>
           <div class="toolbar-buttons">
             <a
@@ -122,32 +164,59 @@ export type MilestoneFeedItem = {
               [queryParams]="{ childId: profile.id }"
             >
               <span class="btn-icon" aria-hidden="true">📋</span>
-              <span>Start Screening for {{ profile.firstName }}</span>
+              <span>
+                {{
+                  currentLang() === 'km'
+                    ? 'ចាប់ផ្តើមការវាយតម្លៃសម្រាប់ ' + profile.firstName
+                    : 'Start Screening for ' + profile.firstName
+                }}
+              </span>
             </a>
             <a class="toolbar-btn secondary-action" routerLink="/hospitals">
               <span class="btn-icon" aria-hidden="true">🏥</span>
-              <span>Book Specialist</span>
+              <span>{{ currentLang() === 'km' ? 'កក់គ្រូពេទ្យឯកទេស' : 'Book Specialist' }}</span>
             </a>
           </div>
         </div>
       </nav>
 
       <!-- Quick Metrics Hub Banner -->
-      <section class="summary-grid" aria-label="Child profile summary">
+      <section
+        class="summary-grid"
+        [attr.aria-label]="
+          currentLang() === 'km' ? 'សង្ខេបប្រវត្តិរូបកុមារ' : 'Child profile summary'
+        "
+      >
         <article class="metric-card">
-          <span class="metric-label">Profile Status</span>
+          <span class="metric-label">
+            {{ currentLang() === 'km' ? 'ស្ថានភាពប្រវត្តិរូប' : 'Profile Status' }}
+          </span>
           <strong class="metric-value" [class.archived-val]="profile.archivedAt">
-            {{ profile.archivedAt ? 'Archived' : 'Active' }}
+            {{
+              profile.archivedAt
+                ? currentLang() === 'km'
+                  ? 'ទុកក្នុងបណ្ណសារ'
+                  : 'Archived'
+                : currentLang() === 'km'
+                  ? 'សកម្ម'
+                  : 'Active'
+            }}
           </strong>
         </article>
         <article class="metric-card">
-          <span class="metric-label">Chronological Age</span>
+          <span class="metric-label">
+            {{ currentLang() === 'km' ? 'អាយុតាមកាលកំណត់' : 'Chronological Age' }}
+          </span>
           <strong class="metric-value">{{ ageLabel(profile.dateOfBirth) }}</strong>
         </article>
         <article class="metric-card">
-          <span class="metric-label">Screening Assessment</span>
+          <span class="metric-label">
+            {{ currentLang() === 'km' ? 'ការវាយតម្លៃស្គ្រីនីង' : 'Screening Assessment' }}
+          </span>
           @if (loadingScreening()) {
-            <span class="metric-loading">Loading…</span>
+            <span class="metric-loading">
+              {{ currentLang() === 'km' ? 'កំពុងផ្ទុក…' : 'Loading…' }}
+            </span>
           } @else {
             <div class="badge-wrapper">
               <ac-screening-badge [tone]="riskTone(latestRiskLevel())">
@@ -157,64 +226,123 @@ export type MilestoneFeedItem = {
           }
         </article>
         <article class="metric-card">
-          <span class="metric-label">Support & Care Notes</span>
-          <strong class="metric-value">{{ profile.notes ? 'Recorded' : 'Not added' }}</strong>
+          <span class="metric-label">
+            {{ currentLang() === 'km' ? 'កំណត់ត្រាគាំទ្រ និងការថែទាំ' : 'Support & Care Notes' }}
+          </span>
+          <strong class="metric-value">
+            {{
+              profile.notes
+                ? currentLang() === 'km'
+                  ? 'បានកត់ត្រា'
+                  : 'Recorded'
+                : currentLang() === 'km'
+                  ? 'មិនទាន់បញ្ចូល'
+                  : 'Not added'
+            }}
+          </strong>
         </article>
       </section>
 
       <!-- Dynamic Support Snapshot Section -->
-      <section class="support-snapshot-section" aria-label="Support Snapshot">
+      <section
+        class="support-snapshot-section"
+        [attr.aria-label]="currentLang() === 'km' ? 'ទិដ្ឋភាពទូទៅនៃការគាំទ្រ' : 'Support Snapshot'"
+      >
         <div class="snapshot-header">
-          <h2>Support Snapshot</h2>
-          <p>Key institutional and clinical connections for {{ profile.firstName }}</p>
+          <h2>{{ currentLang() === 'km' ? 'ទិដ្ឋភាពទូទៅនៃការគាំទ្រ' : 'Support Snapshot' }}</h2>
+          <p>
+            {{
+              currentLang() === 'km'
+                ? 'ការតភ្ជាប់ស្ថាប័ន និងគ្លីនិកសំខាន់ៗសម្រាប់ ' + profile.firstName
+                : 'Key institutional and clinical connections for ' + profile.firstName
+            }}
+          </p>
         </div>
         <div class="support-snapshot-grid">
           <!-- Card 1: Active School Enrollment -->
           <article class="snapshot-card school-card">
             <div class="snapshot-card-header">
               <span class="snapshot-icon school-icon" aria-hidden="true">🏫</span>
-              <span class="snapshot-card-eyebrow">School Collaboration</span>
+              <span class="snapshot-card-eyebrow">
+                {{ currentLang() === 'km' ? 'កិច្ចសហការសាលារៀន' : 'School Collaboration' }}
+              </span>
             </div>
-            <strong class="snapshot-card-title">Inclusive Education Partner</strong>
+            <strong class="snapshot-card-title">
+              {{ currentLang() === 'km' ? 'ដៃគូអប់រំបរិយាបន្ន' : 'Inclusive Education Partner' }}
+            </strong>
             <p class="snapshot-card-detail">
-              Connected for developmental progress observations & classroom reports
+              {{
+                currentLang() === 'km'
+                  ? 'បានភ្ជាប់សម្រាប់ការសង្កេតការវិវត្ត និងរបាយការណ៍ក្នុងថ្នាក់រៀន'
+                  : 'Connected for developmental progress observations & classroom reports'
+              }}
             </p>
-            <a class="snapshot-card-link" routerLink="/schools">Explore Schools &rarr;</a>
+            <a class="snapshot-card-link" routerLink="/schools">
+              {{ currentLang() === 'km' ? 'ស្វែងរកសាលារៀន →' : 'Explore Schools →' }}
+            </a>
           </article>
 
           <!-- Card 2: Primary Pediatrician / Care Specialist -->
           <article class="snapshot-card clinic-card">
             <div class="snapshot-card-header">
               <span class="snapshot-icon clinic-icon" aria-hidden="true">🩺</span>
-              <span class="snapshot-card-eyebrow">Clinical Care Team</span>
+              <span class="snapshot-card-eyebrow">
+                {{ currentLang() === 'km' ? 'ក្រុមថែទាំគ្លីនិក' : 'Clinical Care Team' }}
+              </span>
             </div>
-            <strong class="snapshot-card-title">Developmental Pediatrics Specialist</strong>
+            <strong class="snapshot-card-title">
+              {{
+                currentLang() === 'km'
+                  ? 'អ្នកឯកទេសរោគកុមារផ្នែកការលូតលាស់'
+                  : 'Developmental Pediatrics Specialist'
+              }}
+            </strong>
             <p class="snapshot-card-detail">
-              Pediatrician consultation & sensory diagnostic reviews
+              {{
+                currentLang() === 'km'
+                  ? 'ការពិគ្រោះយោបល់ជាមួយគ្រូពេទ្យកុមារ និងការវាយតម្លៃរោគវិនិច្ឆ័យញាណដឹង'
+                  : 'Pediatrician consultation & sensory diagnostic reviews'
+              }}
             </p>
-            <a class="snapshot-card-link" routerLink="/hospitals">Book Specialist &rarr;</a>
+            <a class="snapshot-card-link" routerLink="/hospitals">
+              {{ currentLang() === 'km' ? 'កក់គ្រូពេទ្យឯកទេស →' : 'Book Specialist →' }}
+            </a>
           </article>
 
           <!-- Card 3: Latest Assessment Result -->
           <article class="snapshot-card screening-card">
             <div class="snapshot-card-header">
               <span class="snapshot-icon screening-icon" aria-hidden="true">📊</span>
-              <span class="snapshot-card-eyebrow">Latest Assessment</span>
+              <span class="snapshot-card-eyebrow">
+                {{ currentLang() === 'km' ? 'ការវាយតម្លៃចុងក្រោយ' : 'Latest Assessment' }}
+              </span>
             </div>
             <strong class="snapshot-card-title">{{ riskLabel(latestRiskLevel()) }}</strong>
             <p class="snapshot-card-detail">
-              @if (latestRiskLevel()) {
-                Clinical questionnaire completed with targeted guidance recorded
-              } @else {
-                No clinical assessment completed yet for {{ profile.firstName }}
-              }
+              {{
+                latestRiskLevel()
+                  ? currentLang() === 'km'
+                    ? 'កម្រងសំណួរគ្លីនិកបានបញ្ចប់ ជាមួយការណែនាំគោលដៅដែលបានកត់ត្រា'
+                    : 'Clinical questionnaire completed with targeted guidance recorded'
+                  : currentLang() === 'km'
+                    ? 'មិនទាន់មានការវាយតម្លៃគ្លីនិកសម្រាប់ ' + profile.firstName + ' នៅឡើយទេ'
+                    : 'No clinical assessment completed yet for ' + profile.firstName
+              }}
             </p>
             <a
               class="snapshot-card-link"
               routerLink="/screening"
               [queryParams]="{ childId: profile.id }"
             >
-              {{ latestRiskLevel() ? 'Review Results &rarr;' : 'Start Assessment &rarr;' }}
+              {{
+                latestRiskLevel()
+                  ? currentLang() === 'km'
+                    ? 'ពិនិត្យលទ្ធផល →'
+                    : 'Review Results →'
+                  : currentLang() === 'km'
+                    ? 'ចាប់ផ្តើមវាយតម្លៃ →'
+                    : 'Start Assessment →'
+              }}
             </a>
           </article>
         </div>
@@ -232,10 +360,19 @@ export type MilestoneFeedItem = {
             novalidate
           >
             <header class="form-header">
-              <h2 id="personal-details-heading">Personal Details & Care Notes</h2>
+              <h2 id="personal-details-heading">
+                {{
+                  currentLang() === 'km'
+                    ? 'ព័ត៌មានផ្ទាល់ខ្លួន និងកំណត់ត្រាថែទាំ'
+                    : 'Personal Details & Care Notes'
+                }}
+              </h2>
               <p>
-                Keep core records up to date for clinical screening, hospital bookings, and school
-                collaboration.
+                {{
+                  currentLang() === 'km'
+                    ? 'ធ្វើបច្ចុប្បន្នភាពកំណត់ត្រាស្នូលសម្រាប់ការវាយតម្លៃ ការកក់មន្ទីរពេទ្យ និងកិច្ចសហការសាលារៀន។'
+                    : 'Keep core records up to date for clinical screening, hospital bookings, and school collaboration.'
+                }}
               </p>
             </header>
 
@@ -345,10 +482,29 @@ export type MilestoneFeedItem = {
         </section>
 
         <!-- Right Column: Clinical Care & Developmental Snapshot Hub -->
-        <aside class="hub-col-clinical" aria-label="Clinical Care and Development Hub">
+        <aside
+          class="hub-col-clinical"
+          [attr.aria-label]="
+            currentLang() === 'km'
+              ? 'ទិដ្ឋភាពទូទៅនៃការថែទាំគ្លីនិក និងការអភិវឌ្ឍ'
+              : 'Clinical Care and Development Hub'
+          "
+        >
           <div class="clinical-hub-header">
-            <h2>Clinical Care & Development Snapshot</h2>
-            <p>Access developmental telemetry, progress charts, and home support exercises.</p>
+            <h2>
+              {{
+                currentLang() === 'km'
+                  ? 'ទិដ្ឋភាពទូទៅនៃការថែទាំគ្លីនិក និងការអភិវឌ្ឍ'
+                  : 'Clinical Care & Development Snapshot'
+              }}
+            </h2>
+            <p>
+              {{
+                currentLang() === 'km'
+                  ? 'ពិនិត្យទិន្នន័យការលូតលាស់ គំនូសតាងវឌ្ឍនភាព និងលំហាត់គាំទ្រនៅផ្ទះ។'
+                  : 'Access developmental telemetry, progress charts, and home support exercises.'
+              }}
+            </p>
           </div>
 
           <div class="hub-cards-stack">
@@ -357,14 +513,30 @@ export type MilestoneFeedItem = {
               <div class="card-icon-header">
                 <span class="card-emoji-icon" aria-hidden="true">📋</span>
                 <div class="card-text-header">
-                  <h3>Autism Screening Assessment</h3>
-                  <p>Standardized behavioral & sensory screening questionnaire</p>
+                  <h3>
+                    {{
+                      currentLang() === 'km'
+                        ? 'ការវាយតម្លៃស្គ្រីនីងអូទីសឹម'
+                        : 'Autism Screening Assessment'
+                    }}
+                  </h3>
+                  <p>
+                    {{
+                      currentLang() === 'km'
+                        ? 'កម្រងសំណួរស្គ្រីនីងអាកប្បកិរិយា និងញាណដឹងស្តង់ដារ'
+                        : 'Standardized behavioral & sensory screening questionnaire'
+                    }}
+                  </p>
                 </div>
               </div>
               <div class="card-badge-line">
-                <span class="badge-label-prefix">Current Status:</span>
+                <span class="badge-label-prefix">
+                  {{ currentLang() === 'km' ? 'ស្ថានភាពបច្ចុប្បន្ន៖' : 'Current Status:' }}
+                </span>
                 @if (loadingScreening()) {
-                  <span>Checking records…</span>
+                  <span>
+                    {{ currentLang() === 'km' ? 'កំពុងពិនិត្យកំណត់ត្រា…' : 'Checking records…' }}
+                  </span>
                 } @else {
                   <ac-screening-badge [tone]="riskTone(latestRiskLevel())">
                     {{ riskLabel(latestRiskLevel()) }}
@@ -376,7 +548,9 @@ export type MilestoneFeedItem = {
                 routerLink="/screening"
                 [queryParams]="{ childId: profile.id }"
               >
-                <span>Start Screening</span>
+                <span>
+                  {{ currentLang() === 'km' ? 'ចាប់ផ្តើមការវាយតម្លៃ' : 'Start Screening' }}
+                </span>
               </a>
             </article>
 
@@ -385,19 +559,31 @@ export type MilestoneFeedItem = {
               <div class="card-icon-header">
                 <span class="card-emoji-icon" aria-hidden="true">📈</span>
                 <div class="card-text-header">
-                  <h3>Developmental Trajectory</h3>
-                  <p>Longitudinal progress milestones & observation reports</p>
+                  <h3>
+                    {{ currentLang() === 'km' ? 'គន្លងនៃការអភិវឌ្ឍ' : 'Developmental Trajectory' }}
+                  </h3>
+                  <p>
+                    {{
+                      currentLang() === 'km'
+                        ? 'ដំណាក់កាលវឌ្ឍនភាព និងរបាយការណ៍សង្កេតរយៈពេលវែង'
+                        : 'Longitudinal progress milestones & observation reports'
+                    }}
+                  </p>
                 </div>
               </div>
               <p class="card-desc">
-                Track changes across communication, social, and sensory domains over time.
+                {{
+                  currentLang() === 'km'
+                    ? 'តាមដានការផ្លាស់ប្តូរលើការប្រាស្រ័យទាក់ទង សង្គម និងញាណដឹងតាមពេលវេលា។'
+                    : 'Track changes across communication, social, and sensory domains over time.'
+                }}
               </p>
               <a
                 class="clinical-action-btn"
                 routerLink="/progress"
                 [queryParams]="{ childId: profile.id }"
               >
-                <span>View Progress</span>
+                <span>{{ currentLang() === 'km' ? 'មើលការវិវត្ត' : 'View Progress' }}</span>
               </a>
             </article>
 
@@ -406,20 +592,35 @@ export type MilestoneFeedItem = {
               <div class="card-icon-header">
                 <span class="card-emoji-icon" aria-hidden="true">🎯</span>
                 <div class="card-text-header">
-                  <h3>Recommended Home Activities</h3>
-                  <p>Sensory-friendly developmental exercises and play routines</p>
+                  <h3>
+                    {{
+                      currentLang() === 'km'
+                        ? 'សកម្មភាពណែនាំសម្រាប់អនុវត្តនៅផ្ទះ'
+                        : 'Recommended Home Activities'
+                    }}
+                  </h3>
+                  <p>
+                    {{
+                      currentLang() === 'km'
+                        ? 'លំហាត់អភិវឌ្ឍន៍ និងទម្លាប់លេងដែលស្របតាមញាណដឹង'
+                        : 'Sensory-friendly developmental exercises and play routines'
+                    }}
+                  </p>
                 </div>
               </div>
               <p class="card-desc">
-                Personalized home activities tailored to your child's age band and screening
-                results.
+                {{
+                  currentLang() === 'km'
+                    ? 'សកម្មភាពនៅផ្ទះផ្ទាល់ខ្លួនដែលត្រូវតាមកម្រិតអាយុ និងលទ្ធផលវាយតម្លៃរបស់កូនអ្នក។'
+                    : "Personalized home activities tailored to your child's age band and screening results."
+                }}
               </p>
               <a
                 class="clinical-action-btn"
                 routerLink="/activities"
                 [queryParams]="{ childId: profile.id }"
               >
-                <span>Browse Activities</span>
+                <span>{{ currentLang() === 'km' ? 'ស្វែងរកសកម្មភាព' : 'Browse Activities' }}</span>
               </a>
             </article>
 
@@ -427,10 +628,19 @@ export type MilestoneFeedItem = {
             <div class="care-guidance-card">
               <span class="guidance-icon" aria-hidden="true">💡</span>
               <div>
-                <h4>Clinical Collaboration Note</h4>
+                <h4>
+                  {{
+                    currentLang() === 'km'
+                      ? 'កំណត់សម្គាល់កិច្ចសហការគ្លីនិក'
+                      : 'Clinical Collaboration Note'
+                  }}
+                </h4>
                 <p>
-                  Screening results and observation trajectories are designed to be shared directly
-                  with your pediatrician, speech therapist, or occupational therapist.
+                  {{
+                    currentLang() === 'km'
+                      ? 'លទ្ធផលវាយតម្លៃ និងគន្លងសង្កេតត្រូវបានបង្កើតឡើងដើម្បីចែករំលែកដោយផ្ទាល់ជាមួយគ្រូពេទ្យកុមារ អ្នកព្យាបាលការនិយាយ ឬអ្នកព្យាបាលចលនា។'
+                      : 'Screening results and observation trajectories are designed to be shared directly with your pediatrician, speech therapist, or occupational therapist.'
+                  }}
                 </p>
               </div>
             </div>
@@ -439,13 +649,29 @@ export type MilestoneFeedItem = {
       </div>
 
       <!-- Developmental Milestones Timeline Section -->
-      <section class="milestones-timeline-section" aria-label="Developmental Milestones Timeline">
+      <section
+        class="milestones-timeline-section"
+        [attr.aria-label]="
+          currentLang() === 'km'
+            ? 'បន្ទាត់ពេលវេលានៃដំណាក់កាលអភិវឌ្ឍន៍'
+            : 'Developmental Milestones Timeline'
+        "
+      >
         <div class="timeline-header">
           <div>
-            <h2>Developmental Milestones Timeline</h2>
+            <h2>
+              {{
+                currentLang() === 'km'
+                  ? 'បន្ទាត់ពេលវេលានៃដំណាក់កាលអភិវឌ្ឍន៍'
+                  : 'Developmental Milestones Timeline'
+              }}
+            </h2>
             <p>
-              Chronological feed of clinical screenings, school reports, and home activity
-              milestones
+              {{
+                currentLang() === 'km'
+                  ? 'លំហូរកាលប្បវត្តិនៃការវាយតម្លៃគ្លីនិក របាយការណ៍សាលារៀន និងសកម្មភាពនៅផ្ទះ'
+                  : 'Chronological feed of clinical screenings, school reports, and home activity milestones'
+              }}
             </p>
           </div>
           <a
@@ -453,7 +679,7 @@ export type MilestoneFeedItem = {
             routerLink="/progress"
             [queryParams]="{ childId: profile.id }"
           >
-            Full Progress Trajectory &rarr;
+            {{ currentLang() === 'km' ? 'គន្លងវឌ្ឍនភាពពេញលេញ →' : 'Full Progress Trajectory →' }}
           </a>
         </div>
 
@@ -1413,6 +1639,7 @@ export class ChildProfilePage implements OnInit {
   });
 
   readonly milestonesTimeline = computed<readonly MilestoneFeedItem[]>(() => {
+    const isKm = this.currentLang() === 'km';
     const list: MilestoneFeedItem[] = [];
     const child = this.child();
     const sessions = this.sessions();
@@ -1422,15 +1649,19 @@ export class ChildProfilePage implements OnInit {
         list.push({
           id: `session-${session.id}`,
           type: 'SCREENING',
-          title: `Autism Screening Assessment (${session.ageBand || 'Pediatric'})`,
+          title: isKm
+            ? `ការវាយតម្លៃស្គ្រីនីងអូទីសឹម (${session.ageBand || 'កុមារ'})`
+            : `Autism Screening Assessment (${session.ageBand || 'Pediatric'})`,
           date: this.formatDate(session.submittedAt || session.startedAt),
-          domain: 'Clinical Screening',
+          domain: isKm ? 'ការវាយតម្លៃគ្លីនិក' : 'Clinical Screening',
           domainClass: 'domain-screening',
           description:
             session.result.recommendation ||
-            'Assessment completed with clinical guidance recorded.',
+            (isKm
+              ? 'ការវាយតម្លៃបានបញ្ចប់ ជាមួយការណែនាំគ្លីនិកដែលបានកត់ត្រា។'
+              : 'Assessment completed with clinical guidance recorded.'),
           linkPath: `/screening/result/${session.id}`,
-          linkLabel: 'View Screening Result',
+          linkLabel: isKm ? 'មើលលទ្ធផលវាយតម្លៃ' : 'View Screening Result',
           badge: `${this.riskLabel(session.result.riskLevel)} (${session.result.riskPercentage ?? 0}%)`,
         });
       }
@@ -1440,26 +1671,33 @@ export class ChildProfilePage implements OnInit {
       list.push({
         id: `school-${child.id}`,
         type: 'SCHOOL',
-        title: 'Classroom Developmental Observation Report',
-        date: 'Recent Term',
-        domain: 'School Collaboration',
+        title: isKm
+          ? 'របាយការណ៍សង្កេតការវិវត្តក្នុងថ្នាក់រៀន'
+          : 'Classroom Developmental Observation Report',
+        date: isKm ? 'ឆមាសថ្មីៗ' : 'Recent Term',
+        domain: isKm ? 'កិច្ចសហការសាលារៀន' : 'School Collaboration',
         domainClass: 'domain-school',
-        description:
-          'Educator observation on peer interaction, sensory accommodations, and daily routines.',
+        description: isKm
+          ? 'ការសង្កេតរបស់គ្រូបង្រៀនលើអន្តរកម្មជាមួយមិត្តភក្តិ ការសម្របសម្រួលសតិអារម្មណ៍ និងទម្លាប់ប្រចាំថ្ងៃ។'
+          : 'Educator observation on peer interaction, sensory accommodations, and daily routines.',
         linkPath: '/progress',
-        linkLabel: 'View Observation Progress',
+        linkLabel: isKm ? 'មើលការវិវត្តនៃការសង្កេត' : 'View Observation Progress',
       });
 
       list.push({
         id: `activity-${child.id}`,
         type: 'ACTIVITY',
-        title: 'Home Sensory Integration & Play Routine',
-        date: 'Ongoing Care',
-        domain: 'Sensory Play',
+        title: isKm
+          ? 'ទម្លាប់លេង និងសមាហរណកម្មសតិអារម្មណ៍នៅផ្ទះ'
+          : 'Home Sensory Integration & Play Routine',
+        date: isKm ? 'ការថែទាំបន្ត' : 'Ongoing Care',
+        domain: isKm ? 'ការលេងតាមសតិអារម្មណ៍' : 'Sensory Play',
         domainClass: 'domain-activity',
-        description: 'Recommended calming and visual communication exercises completed at home.',
+        description: isKm
+          ? 'លំហាត់បន្ធូរអារម្មណ៍ និងការទំនាក់ទំនងតាមរូបភាពដែលបានណែនាំសម្រាប់អនុវត្តនៅផ្ទះ។'
+          : 'Recommended calming and visual communication exercises completed at home.',
         linkPath: '/activities',
-        linkLabel: 'Browse Activities',
+        linkLabel: isKm ? 'ស្វែងរកសកម្មភាព' : 'Browse Activities',
       });
     }
 
@@ -1474,8 +1712,16 @@ export class ChildProfilePage implements OnInit {
   }
 
   formatDate(dateStr: string): string {
-    if (!dateStr) return 'Recent';
+    const isKm = this.currentLang() === 'km';
+    if (!dateStr) return isKm ? 'ថ្មីៗ' : 'Recent';
     const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`);
+    if (isKm) {
+      return new Intl.DateTimeFormat('km-KH', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(date);
+    }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
