@@ -585,43 +585,285 @@
       <div class="slide" data-slide="5">
         <div class="slide-header">
           <div class="slide-title-wrap">
-            <h2 class="slide-title">The Four-Tier Care Ecosystem</h2>
-            <span class="speaker-pill">Team Architecture</span>
+            <h2 class="slide-title">User Roles</h2>
+            <span class="speaker-pill">4-Role Architecture</span>
           </div>
-          <span class="brand-tag">Role Separation</span>
+          <span class="brand-tag">Ecosystem Overview</span>
         </div>
-        <div class="slide-body grid-2">
-          <div class="card" style="border-left: 4px solid #0284c7">
-            <div class="card-title">👤 Parent Portal (Hong Thanbratna)</div>
-            <p>
-              Bilingual M-CHAT screening, developmental streak tracking, sensory activities, and
-              hospital specialist appointment booking.
-            </p>
+        <div
+          class="slide-body"
+          style="display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start"
+        >
+          <!-- Left Table (Matches user's green-header table with all 4 roles) -->
+          <div
+            style="
+              background: #ffffff;
+              border-radius: 10px;
+              overflow: hidden;
+              border: 1.5px solid #cbd5e1;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            "
+          >
+            <table
+              style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left"
+            >
+              <thead>
+                <tr
+                  style="
+                    background: #bbf7d0;
+                    color: #14532d;
+                    font-weight: 800;
+                    border-bottom: 1.5px solid #86efac;
+                  "
+                >
+                  <th style="padding: 10px 14px; width: 110px">Role</th>
+                  <th style="padding: 10px 14px">Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid #e2e8f0; background: #f0fdf4">
+                  <td style="padding: 10px 14px; font-weight: 700; color: #0284c7">Parent</td>
+                  <td style="padding: 10px 14px; color: #334155; line-height: 1.35">
+                    Take Khmer M-CHAT screening, manage child profiles, book specialist appointments
+                  </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0">
+                  <td style="padding: 10px 14px; font-weight: 700; color: #16a34a">
+                    Hospital Staff
+                  </td>
+                  <td style="padding: 10px 14px; color: #334155; line-height: 1.35">
+                    Clinical triage, manage doctor capacity, confirm appointments
+                  </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0">
+                  <td style="padding: 10px 14px; font-weight: 700; color: #ca8a04">School Staff</td>
+                  <td style="padding: 10px 14px; color: #334155; line-height: 1.35">
+                    Manage students, create daily IEP activity reports, track accommodations
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 14px; font-weight: 700; color: #7c3aed">Admin</td>
+                  <td style="padding: 10px 14px; color: #334155; line-height: 1.35">
+                    Verify institutional accreditations, oversee directories, monitor system
+                    analytics
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="card" style="border-left: 4px solid #16a34a">
-            <div class="card-title">🏥 Hospital Portal (Mom Sothirak)</div>
-            <p>
-              Clinical intake queue, appointment confirmation, doctor scheduling, and institutional
-              capacity management.
-            </p>
-          </div>
-          <div class="card" style="border-left: 4px solid #eab308">
-            <div class="card-title">🏫 School Portal (Ro Arthiphu)</div>
-            <p>
-              Inclusive enrollment management (3:1 ratio), daily behavioral/sensory IEP progress
-              reports, and transparent parent updates.
-            </p>
-          </div>
-          <div class="card" style="border-left: 4px solid #8b5cf6">
-            <div class="card-title">🛡️ Admin Portal (Chim Lina)</div>
-            <p>
-              Provincial analytics, verified institutional accreditation, security audit trails, and
-              national system governance.
-            </p>
+
+          <!-- Right Flowchart (6-Step User Journey matching the slide cards) -->
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span
+                style="
+                  font-size: 14px;
+                  font-weight: 800;
+                  color: #0f172a;
+                  text-transform: uppercase;
+                  letter-spacing: 0.05em;
+                "
+                >Parent Journey (6 Steps)</span
+              >
+              <span
+                style="
+                  font-size: 12px;
+                  font-weight: 700;
+                  background: #e0f2fe;
+                  color: #0369a1;
+                  padding: 3px 10px;
+                  border-radius: 9999px;
+                "
+                >Presenter: Hong Thanbratna</span
+              >
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px">
+              <div
+                style="
+                  background: #eff6ff;
+                  border: 1.5px solid #bfdbfe;
+                  border-radius: 10px;
+                  padding: 12px;
+                  text-align: center;
+                "
+              >
+                <div
+                  style="
+                    background: #0284c7;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    font-size: 12px;
+                    font-weight: 800;
+                    margin: 0 auto 6px;
+                    display: grid;
+                    place-items: center;
+                  "
+                >
+                  1
+                </div>
+                <strong style="font-size: 13px; color: #0f172a; display: block"
+                  >Register & Profile</strong
+                >
+                <span style="font-size: 11px; color: #64748b">Sign up & add child Sam</span>
+              </div>
+              <div
+                style="
+                  background: #f0fdf4;
+                  border: 1.5px solid #bbf7d0;
+                  border-radius: 10px;
+                  padding: 12px;
+                  text-align: center;
+                "
+              >
+                <div
+                  style="
+                    background: #16a34a;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    font-size: 12px;
+                    font-weight: 800;
+                    margin: 0 auto 6px;
+                    display: grid;
+                    place-items: center;
+                  "
+                >
+                  2
+                </div>
+                <strong style="font-size: 13px; color: #0f172a; display: block"
+                  >Early M-CHAT Screening</strong
+                >
+                <span style="font-size: 11px; color: #64748b">Pure Khmer assessment</span>
+              </div>
+              <div
+                style="
+                  background: #faf5ff;
+                  border: 1.5px solid #e9d5ff;
+                  border-radius: 10px;
+                  padding: 12px;
+                  text-align: center;
+                "
+              >
+                <div
+                  style="
+                    background: #9333ea;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    font-size: 12px;
+                    font-weight: 800;
+                    margin: 0 auto 6px;
+                    display: grid;
+                    place-items: center;
+                  "
+                >
+                  3
+                </div>
+                <strong style="font-size: 13px; color: #0f172a; display: block"
+                  >Book Hospital Specialist</strong
+                >
+                <span style="font-size: 11px; color: #64748b">National Pediatric Hospital</span>
+              </div>
+              <div
+                style="
+                  background: #fff7ed;
+                  border: 1.5px solid #fed7aa;
+                  border-radius: 10px;
+                  padding: 12px;
+                  text-align: center;
+                "
+              >
+                <div
+                  style="
+                    background: #ea580c;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    font-size: 12px;
+                    font-weight: 800;
+                    margin: 0 auto 6px;
+                    display: grid;
+                    place-items: center;
+                  "
+                >
+                  4
+                </div>
+                <strong style="font-size: 13px; color: #0f172a; display: block"
+                  >Browse Inclusive Schools</strong
+                >
+                <span style="font-size: 11px; color: #64748b">Rabbit School (3:1 ratio)</span>
+              </div>
+              <div
+                style="
+                  background: #ecfeff;
+                  border: 1.5px solid #a5f3fc;
+                  border-radius: 10px;
+                  padding: 12px;
+                  text-align: center;
+                "
+              >
+                <div
+                  style="
+                    background: #0891b2;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    font-size: 12px;
+                    font-weight: 800;
+                    margin: 0 auto 6px;
+                    display: grid;
+                    place-items: center;
+                  "
+                >
+                  5
+                </div>
+                <strong style="font-size: 13px; color: #0f172a; display: block"
+                  >View Daily IEP Reports</strong
+                >
+                <span style="font-size: 11px; color: #64748b">Teacher sensory updates</span>
+              </div>
+              <div
+                style="
+                  background: #f8fafc;
+                  border: 1.5px solid #cbd5e1;
+                  border-radius: 10px;
+                  padding: 12px;
+                  text-align: center;
+                "
+              >
+                <div
+                  style="
+                    background: #475569;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    font-size: 12px;
+                    font-weight: 800;
+                    margin: 0 auto 6px;
+                    display: grid;
+                    place-items: center;
+                  "
+                >
+                  6
+                </div>
+                <strong style="font-size: 13px; color: #0f172a; display: block"
+                  >Track Progress Charts</strong
+                >
+                <span style="font-size: 11px; color: #64748b">Milestone tracking</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="slide-footer">
-          <span>Role-Based Access Control (RBAC)</span>
+          <span>Role-Based Access Control (RBAC) • 4 Portals</span>
           <span class="slide-num">Slide 5 / 14</span>
         </div>
       </div>
