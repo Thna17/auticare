@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env } from '../../config/env.js';
+import { logger } from '../../config/logger.js';
 
 type InvitationEmail = {
   recipient: string;
@@ -19,6 +20,9 @@ export class InvitationMailer {
           user: env.SMTP_USER!,
           pass: env.SMTP_PASS!,
         },
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
       })
     : undefined;
 
@@ -53,13 +57,20 @@ export class InvitationMailer {
       'If you were not expecting this invitation, please contact support or disregard this email.',
     ].join('\n');
 
-    await this.transporter.sendMail({
-      from: env.SMTP_FROM ?? env.SMTP_USER,
-      to: recipient,
-      subject: 'Welcome to AutiCare: Set up your account',
-      text,
-      html: `<p>Hello ${escapeHtml(greeting)},</p><p>You have been invited to AutiCare as a <strong>${escapeHtml(roleLabel)}</strong>.</p><p><a href="${escapeHtml(invitationUrl)}">Set up your account and password</a></p><p>This invitation is secure, single-use, and expires in 72 hours.</p>`,
-    });
+    try {
+      await this.transporter.sendMail({
+        from: env.SMTP_FROM ?? env.SMTP_USER,
+        to: recipient,
+        subject: 'Welcome to AutiCare: Set up your account',
+        text,
+        html: `<p>Hello ${escapeHtml(greeting)},</p><p>You have been invited to AutiCare as a <strong>${escapeHtml(roleLabel)}</strong>.</p><p><a href="${escapeHtml(invitationUrl)}">Set up your account and password</a></p><p>This invitation is secure, single-use, and expires in 72 hours.</p>`,
+      });
+    } catch (error) {
+      logger.warn(
+        { err: error, recipient, role },
+        'Failed to deliver invitation email via SMTP; account provisioning completed',
+      );
+    }
   }
 }
 

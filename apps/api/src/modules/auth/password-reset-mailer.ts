@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env } from '../../config/env.js';
+import { logger } from '../../config/logger.js';
 
 type PasswordResetEmail = {
   recipient: string;
@@ -18,6 +19,9 @@ export class PasswordResetMailer {
           user: env.SMTP_USER!,
           pass: env.SMTP_PASS!,
         },
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
       })
     : undefined;
 
@@ -39,13 +43,20 @@ export class PasswordResetMailer {
       'This link expires in 30 minutes. If you did not request a reset, you can ignore this email.',
     ].join('\n');
 
-    await this.transporter.sendMail({
-      from: env.SMTP_FROM ?? env.SMTP_USER,
-      to: recipient,
-      subject: 'Reset your AutiCare password',
-      text,
-      html: `<p>Hello ${escapeHtml(greeting)},</p><p>We received a request to reset your AutiCare password.</p><p><a href="${escapeHtml(resetUrl)}">Reset your password</a></p><p>This link expires in 30 minutes. If you did not request a reset, you can ignore this email.</p>`,
-    });
+    try {
+      await this.transporter.sendMail({
+        from: env.SMTP_FROM ?? env.SMTP_USER,
+        to: recipient,
+        subject: 'Reset your AutiCare password',
+        text,
+        html: `<p>Hello ${escapeHtml(greeting)},</p><p>We received a request to reset your AutiCare password.</p><p><a href="${escapeHtml(resetUrl)}">Reset your password</a></p><p>This link expires in 30 minutes. If you did not request a reset, you can ignore this email.</p>`,
+      });
+    } catch (error) {
+      logger.warn(
+        { err: error, recipient },
+        'Failed to deliver password reset email via SMTP; request handled safely',
+      );
+    }
   }
 }
 
