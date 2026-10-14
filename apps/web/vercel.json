@@ -2,7 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "ng build",
   "outputDirectory": "dist/web/browser",
-  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/:path*",

@@ -92,7 +92,7 @@ describe('HospitalDashboardPage', () => {
       hospitalName: 'Children Hospital',
       doctorId: 'doc_2',
       doctorName: 'Dr. Alan Turing',
-      scheduledAt: '2026-10-14T11:00:00.000Z',
+      scheduledAt: '2026-10-01T11:00:00.000Z',
       status: 'COMPLETED',
       reason: 'Follow-up behavioral review',
       rejectionReason: null,
