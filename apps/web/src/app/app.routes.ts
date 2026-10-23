@@ -8,6 +8,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/public/landing.page').then((m) => m.LandingPage),
   },
   {
+    path: 'landing',
+    redirectTo: '',
+    pathMatch: 'full',
+  },
+  {
     path: 'privacy',
     loadComponent: () => import('./features/public/privacy.page').then((m) => m.PrivacyPage),
   },

@@ -467,8 +467,120 @@ const KM_AUTISM_NOTES = [
               currentLang() === 'km' ? 'ចុះឈ្មោះ' : 'Signup'
             }}</a>
           }
+
+          <button
+            type="button"
+            class="mobile-menu-toggle"
+            (click)="toggleMobileMenu()"
+            [attr.aria-expanded]="mobileMenuOpen()"
+            [attr.aria-label]="
+              mobileMenuOpen()
+                ? currentLang() === 'km'
+                  ? 'បិទម៉ឺនុយ'
+                  : 'Close navigation menu'
+                : currentLang() === 'km'
+                  ? 'បើកម៉ឺនុយ'
+                  : 'Open navigation menu'
+            "
+            aria-controls="mobile-nav-drawer"
+          >
+            <span class="hamburger-bar top" [class.open]="mobileMenuOpen()"></span>
+            <span class="hamburger-bar mid" [class.open]="mobileMenuOpen()"></span>
+            <span class="hamburger-bar bot" [class.open]="mobileMenuOpen()"></span>
+          </button>
         </div>
       </header>
+
+      <!-- Mobile Navigation Drawer -->
+      @if (mobileMenuOpen()) {
+        <div class="mobile-drawer-backdrop" (click)="closeMobileMenu()" aria-hidden="true"></div>
+        <aside
+          id="mobile-nav-drawer"
+          class="mobile-drawer"
+          role="dialog"
+          aria-modal="true"
+          [attr.aria-label]="currentLang() === 'km' ? 'ម៉ឺនុយចល័ត' : 'Mobile navigation'"
+        >
+          <div class="mobile-drawer-header">
+            <a class="brand" routerLink="/" (click)="closeMobileMenu()" aria-label="AutiCare home">
+              <img
+                src="/images/auticare-logo.jpg"
+                alt=""
+                aria-hidden="true"
+                width="32"
+                height="30"
+              />
+              <span>AutiCare</span>
+            </a>
+            <button
+              type="button"
+              class="mobile-drawer-close"
+              (click)="closeMobileMenu()"
+              [attr.aria-label]="currentLang() === 'km' ? 'បិទម៉ឺនុយ' : 'Close menu'"
+            >
+              ✕
+            </button>
+          </div>
+
+          <nav class="mobile-drawer-nav" aria-label="Mobile navigation links">
+            <a href="#home" (click)="scrollToSection('home', $event)">
+              <span class="drawer-icon" aria-hidden="true">🏠</span>
+              <span>{{ currentLang() === 'km' ? 'ទំព័រដើម' : 'Home' }}</span>
+            </a>
+            <a href="#progression" (click)="scrollToSection('progression', $event)">
+              <span class="drawer-icon" aria-hidden="true">✨</span>
+              <span>{{ currentLang() === 'km' ? 'លក្ខណៈពិសេស' : 'Features' }}</span>
+            </a>
+            <a href="#how-it-works" (click)="scrollToSection('how-it-works', $event)">
+              <span class="drawer-icon" aria-hidden="true">🧭</span>
+              <span>{{ currentLang() === 'km' ? 'ដំណើរការ' : 'How it works' }}</span>
+            </a>
+            <a href="#support" (click)="scrollToSection('support', $event)">
+              <span class="drawer-icon" aria-hidden="true">🛠️</span>
+              <span>{{ currentLang() === 'km' ? 'ស្វែងរកជំនួយ' : 'Find support' }}</span>
+            </a>
+            <a href="#activities" (click)="scrollToSection('activities', $event)">
+              <span class="drawer-icon" aria-hidden="true">🎨</span>
+              <span>{{ currentLang() === 'km' ? 'សកម្មភាពលេង' : 'Activities' }}</span>
+            </a>
+            <a href="#testimonials" (click)="scrollToSection('testimonials', $event)">
+              <span class="drawer-icon" aria-hidden="true">💬</span>
+              <span>{{ currentLang() === 'km' ? 'មតិអ្នកប្រើប្រាស់' : 'Testimonials' }}</span>
+            </a>
+            <a href="#about-autism" (click)="scrollToSection('about-autism', $event)">
+              <span class="drawer-icon" aria-hidden="true">💙</span>
+              <span>{{ currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism' }}</span>
+            </a>
+          </nav>
+
+          <div class="mobile-drawer-footer">
+            @if (isAuthenticated()) {
+              <a
+                class="mobile-drawer-primary-btn"
+                [routerLink]="dashboardPath()"
+                (click)="closeMobileMenu()"
+              >
+                {{ currentLang() === 'km' ? 'ទៅកាន់ផ្ទាំងគ្រប់គ្រង' : 'Go to Dashboard' }}
+              </a>
+            } @else {
+              <a
+                class="mobile-drawer-primary-btn"
+                routerLink="/register"
+                (click)="closeMobileMenu()"
+              >
+                {{ currentLang() === 'km' ? 'ចុះឈ្មោះបង្កើតគណនី' : 'Sign Up Free' }}
+              </a>
+              <a
+                class="mobile-drawer-secondary-btn"
+                routerLink="/login"
+                (click)="closeMobileMenu()"
+              >
+                {{ currentLang() === 'km' ? 'ចូលប្រើគណនី' : 'Login' }}
+              </a>
+            }
+          </div>
+        </aside>
+      }
 
       <!-- High-Impact Hero Section -->
       <section id="home" class="hero-section">
@@ -2359,25 +2471,230 @@ const KM_AUTISM_NOTES = [
         text-align: center;
       }
 
+      .mobile-menu-toggle {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 1px solid var(--ac-color-border-grey);
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        cursor: pointer;
+        transition: all 160ms ease;
+      }
+
+      .mobile-menu-toggle:hover {
+        background: var(--ac-color-surface-info);
+        border-color: var(--ac-color-action);
+      }
+
+      .hamburger-bar {
+        display: block;
+        width: 18px;
+        height: 2px;
+        background: var(--ac-color-text-strong);
+        border-radius: 999px;
+        transition:
+          transform 200ms ease,
+          opacity 200ms ease;
+      }
+
+      .hamburger-bar.top.open {
+        transform: translateY(7px) rotate(45deg);
+      }
+
+      .hamburger-bar.mid.open {
+        opacity: 0;
+      }
+
+      .hamburger-bar.bot.open {
+        transform: translateY(-7px) rotate(-45deg);
+      }
+
+      /* Mobile Drawer Overlay */
+      .mobile-drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgb(15 23 42 / 0.45);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        animation: fadeIn 180ms ease-out;
+      }
+
+      .mobile-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(340px, 86vw);
+        background: var(--ac-color-surface);
+        z-index: 1000;
+        box-shadow: -8px 0 32px rgb(15 23 42 / 0.2);
+        display: flex;
+        flex-direction: column;
+        padding: 20px 18px 24px;
+        overflow-y: auto;
+        animation: slideInRight 220ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+
+      .mobile-drawer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--ac-color-border-slate);
+      }
+
+      .mobile-drawer-header .brand {
+        font-size: 22px;
+      }
+
+      .mobile-drawer-close {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        border: 1px solid var(--ac-color-border-slate);
+        background: var(--ac-color-surface-slate);
+        color: var(--ac-color-text-strong);
+        font-size: 16px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition: all 160ms ease;
+      }
+
+      .mobile-drawer-close:hover {
+        background: var(--ac-color-surface-info);
+        border-color: var(--ac-color-action);
+      }
+
+      .mobile-drawer-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 16px 0;
+        flex: 1;
+      }
+
+      .mobile-drawer-nav a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-strong);
+        text-decoration: none;
+        min-height: 44px;
+        transition:
+          background 140ms ease,
+          color 140ms ease;
+      }
+
+      .mobile-drawer-nav a:hover,
+      .mobile-drawer-nav a:focus-visible {
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-action-deep);
+      }
+
+      .drawer-icon {
+        font-size: 18px;
+        width: 24px;
+        display: inline-flex;
+        justify-content: center;
+      }
+
+      .mobile-drawer-footer {
+        margin-top: auto;
+        padding-top: 16px;
+        border-top: 1px solid var(--ac-color-border-slate);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .mobile-drawer-primary-btn {
+        height: 48px;
+        border-radius: 12px;
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
+        font-size: 15px;
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgb(41 74 90 / 0.16);
+      }
+
+      .mobile-drawer-secondary-btn {
+        height: 46px;
+        border-radius: 12px;
+        border: 1px solid var(--ac-color-border-grey);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
+        font-size: 15px;
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+      }
+
       @media (max-width: 1024px) {
         .hero-section {
           grid-template-columns: 1fr;
+          gap: 36px;
+          padding: 48px clamp(20px, 4vw, 40px) 44px;
         }
 
         .progression-card {
           grid-template-columns: 1fr;
+          gap: 28px;
+          padding: 32px 24px;
         }
 
         .process-section {
           grid-template-columns: 1fr;
+          gap: 40px;
+          padding: 56px clamp(20px, 4vw, 40px);
         }
 
         .activities-section {
           grid-template-columns: 1fr;
+          gap: 36px;
+          padding: 56px clamp(20px, 4vw, 40px);
         }
 
         .site-footer {
           grid-template-columns: 1fr 1fr;
+          gap: 32px;
         }
       }
 
@@ -2386,20 +2703,403 @@ const KM_AUTISM_NOTES = [
           display: none;
         }
 
-        .site-header {
-          grid-template-columns: 1fr auto;
+        .mobile-menu-toggle {
+          display: inline-flex;
         }
 
-        .site-footer {
+        .site-header {
+          min-height: 64px;
+          padding: 0 16px;
+          gap: 12px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .brand,
+        .footer-brand {
+          font-size: 22px;
+          gap: 8px;
+        }
+
+        .brand img,
+        .footer-brand img {
+          width: 30px;
+          height: 30px;
+        }
+
+        .header-actions {
+          gap: 8px;
+        }
+
+        .header-actions .login-link {
+          display: none;
+        }
+
+        .topbar-lang-toggle {
+          height: 38px;
+          padding: 4px 10px;
+          font-size: 12px;
+        }
+
+        .topbar-lang-toggle .lang-text {
+          font-size: 12px;
+        }
+
+        .signup-link,
+        .dashboard-link {
+          height: 38px;
+          padding: 0 14px;
+          font-size: 13px;
+          border-radius: 10px;
+        }
+
+        .user-avatar {
+          width: 36px;
+          height: 36px;
+          font-size: 13px;
+        }
+
+        .hero-section {
+          padding: 32px 16px 36px;
+          gap: 28px;
+        }
+
+        .hero-copy {
+          gap: 16px;
+        }
+
+        .hero-trust-badge-pill {
+          font-size: 12px;
+          padding: 5px 12px;
+          max-width: 100%;
+          line-height: 1.4;
+        }
+
+        .hero-section h1 {
+          font-size: clamp(26px, 6.2vw, 36px);
+          line-height: 1.22;
+          letter-spacing: -0.01em;
+          word-break: break-word;
+        }
+
+        .hero-subtitle {
+          font-size: 15px;
+          line-height: 1.5;
+        }
+
+        .medical-note {
+          padding: 10px 12px;
+          gap: 10px;
+          font-size: 12px;
+          border-radius: 10px;
+        }
+
+        .hero-actions {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          gap: 10px;
+          margin-top: 4px;
+        }
+
+        .primary-action,
+        .secondary-action {
+          width: 100%;
+          height: 48px;
+          font-size: 15px;
+          padding: 0 16px;
+          border-radius: 12px;
+          justify-content: center;
+          text-align: center;
+        }
+
+        .trust-strip {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 4px;
+          padding-top: 14px;
+        }
+
+        .hero-media {
+          border-radius: 16px;
+          box-shadow: 0 12px 32px rgb(41 74 90 / 0.1);
+        }
+
+        .section-heading {
+          margin-bottom: 24px;
+          gap: 8px;
+        }
+
+        .section-heading h2 {
+          font-size: clamp(22px, 5.2vw, 28px);
+          line-height: 1.28;
+        }
+
+        .section-heading p {
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .progression-section {
+          padding: 44px 16px;
+        }
+
+        .stepper-tabs {
+          display: flex;
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scroll-snap-type: x mandatory;
+          gap: 8px;
+          padding: 4px 4px 12px;
+          justify-content: flex-start;
+          scrollbar-width: none;
+        }
+
+        .stepper-tabs::-webkit-scrollbar {
+          display: none;
+        }
+
+        .stepper-tab {
+          flex-shrink: 0;
+          scroll-snap-align: start;
+          padding: 8px 14px;
+          font-size: 13px;
+          border-radius: var(--ac-radius-pill);
+        }
+
+        .progression-card {
+          padding: 20px 16px;
+          border-radius: 18px;
+          gap: 20px;
+        }
+
+        .progression-card-content h3 {
+          font-size: 20px;
+          line-height: 1.3;
+        }
+
+        .step-subtitle {
+          font-size: 14px;
+        }
+
+        .step-desc {
+          font-size: 13.5px;
+        }
+
+        .step-highlights li {
+          font-size: 13px;
+          gap: 8px;
+        }
+
+        .step-cta-btn {
+          width: 100%;
+          height: 46px;
+          justify-content: center;
+          font-size: 14px;
+          border-radius: 10px;
+        }
+
+        .visual-body {
+          padding: 16px;
+          min-height: 140px;
+        }
+
+        .tools-section {
+          padding: 44px 16px;
+        }
+
+        .tool-grid {
           grid-template-columns: 1fr;
+          gap: 14px;
+        }
+
+        .tool-card {
+          padding: 20px 16px;
+          border-radius: 16px;
+          gap: 10px;
+        }
+
+        .process-section {
+          padding: 44px 16px;
+          gap: 28px;
+        }
+
+        .step-list {
+          margin-top: 18px;
+          gap: 16px;
+        }
+
+        .step-list li {
+          gap: 12px;
+        }
+
+        .step-list li > span {
+          width: 28px;
+          height: 28px;
+          font-size: 13px;
+        }
+
+        .step-list h3 {
+          font-size: 15px;
+        }
+
+        .step-list p {
+          font-size: 13px;
+        }
+
+        .product-preview {
+          border-radius: 16px;
+        }
+
+        .preview-body {
+          grid-template-columns: 1fr;
+          gap: 10px;
+          padding: 14px;
+        }
+
+        .preview-panel.large {
+          grid-column: span 1;
+        }
+
+        .activities-section {
+          padding: 44px 16px;
+          gap: 24px;
+        }
+
+        .activities-section h2 {
+          font-size: clamp(22px, 5.2vw, 28px);
+        }
+
+        .activity-list article {
+          padding: 12px 14px;
+          font-size: 13.5px;
+          border-radius: 12px;
+          gap: 10px;
+        }
+
+        .testimonials-section {
+          padding: 44px 16px;
+        }
+
+        .testimonials-carousel {
+          gap: 20px;
         }
 
         .testimonial-card {
-          padding: 32px 24px;
+          padding: 24px 16px 20px;
+          border-radius: 18px;
+        }
+
+        .quote-icon {
+          font-size: 42px;
+          margin-bottom: 4px;
         }
 
         .testimonial-text {
-          font-size: 16px;
+          font-size: 15px;
+          line-height: 1.55;
+          margin-bottom: 16px;
+        }
+
+        .author-avatar {
+          width: 40px;
+          height: 40px;
+          font-size: 14px;
+        }
+
+        .author-details strong {
+          font-size: 15px;
+        }
+
+        .author-details span {
+          font-size: 13px;
+        }
+
+        .carousel-btn {
+          width: 44px;
+          height: 44px;
+        }
+
+        .trust-badges-section {
+          padding: 44px 16px;
+        }
+
+        .trust-cards-grid {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+
+        .trust-card {
+          padding: 20px 16px;
+          border-radius: 16px;
+        }
+
+        .autism-section {
+          padding: 44px 16px;
+        }
+
+        .autism-grid {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+
+        .autism-grid article {
+          padding: 20px 16px;
+          border-radius: 16px;
+        }
+
+        .cta-section {
+          padding: 48px 16px;
+          gap: 16px;
+        }
+
+        .cta-section h2 {
+          font-size: clamp(24px, 5.5vw, 32px);
+          line-height: 1.25;
+        }
+
+        .cta-section p {
+          font-size: 15px;
+        }
+
+        .cta-section a {
+          width: 100%;
+          max-width: 300px;
+          height: 48px;
+          font-size: 15px;
+        }
+
+        .site-footer {
+          padding: 40px 16px 24px;
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+
+        .site-footer nav a {
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+        }
+
+        .footer-brand {
+          font-size: 22px;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .brand span {
+          font-size: 19px;
+        }
+
+        .topbar-lang-toggle .lang-text {
+          display: none;
+        }
+
+        .header-actions .signup-link {
+          display: none;
         }
       }
     `,
@@ -2432,6 +3132,7 @@ export class LandingPage {
 
   readonly activeProgressionStep = signal(0);
   readonly activeTestimonial = signal(0);
+  readonly mobileMenuOpen = signal(false);
   readonly currentYear = new Date().getFullYear();
 
   readonly isAuthenticated = computed(() => this.auth.isAuthenticated());
@@ -2472,6 +3173,14 @@ export class LandingPage {
     this.i18n.toggleLanguage();
   }
 
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
+
   selectProgressionStep(index: number) {
     this.activeProgressionStep.set(index);
   }
@@ -2492,6 +3201,7 @@ export class LandingPage {
 
   scrollToSection(sectionId: string, event: Event) {
     event.preventDefault();
+    this.closeMobileMenu();
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
