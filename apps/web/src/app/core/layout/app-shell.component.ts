@@ -1258,14 +1258,45 @@ export type NavSection = {
           padding: 24px 16px calc(88px + env(safe-area-inset-bottom, 0px));
         }
 
+        .topbar-actions {
+          gap: 8px;
+        }
+
+        .profile-chip {
+          padding: 3px 8px 3px 4px;
+          gap: 6px;
+        }
+
+        .user-role-tag {
+          display: none;
+        }
+
+        .user-display-name {
+          max-width: 80px;
+          font-size: 12px;
+        }
+
+        .topbar-lang-toggle {
+          padding: 4px 8px;
+          height: 34px;
+          font-size: 12px;
+          gap: 4px;
+        }
+
+        .topbar-icon-btn {
+          width: 36px;
+          height: 36px;
+        }
+
         .mobile-nav {
           position: fixed;
           z-index: 30;
           left: 0;
           right: 0;
           bottom: 0;
-          min-height: 62px;
-          padding-bottom: env(safe-area-inset-bottom, 0px);
+          min-height: 64px;
+          padding-top: 4px;
+          padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
           border-top: 1px solid var(--ac-color-border);
           background: rgb(255 255 255 / 0.95);
           backdrop-filter: blur(16px);
@@ -1274,6 +1305,7 @@ export type NavSection = {
           grid-template-columns: 1fr 1fr 64px 1fr 1fr;
           align-items: center;
           box-shadow: 0 -4px 20px rgb(15 23 42 / 0.08);
+          box-sizing: border-box;
         }
 
         .mobile-nav a {
@@ -1283,13 +1315,25 @@ export type NavSection = {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 3px;
-          padding: 8px 4px;
+          gap: 2px;
+          padding: 6px 2px 8px;
           text-decoration: none;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: var(--ac-font-weight-medium);
-          line-height: 1.1;
+          line-height: 1.2;
           transition: color var(--ac-motion-fast);
+          min-width: 0;
+        }
+
+        .mobile-label {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+          text-align: center;
+          font-size: 10px;
+          letter-spacing: -0.01em;
+          padding: 0 2px;
         }
 
         .mobile-nav a.active {
@@ -1312,14 +1356,14 @@ export type NavSection = {
         }
 
         .mobile-action {
-          width: 52px;
-          height: 52px;
+          width: 50px;
+          height: 50px;
           border-radius: var(--ac-radius-pill);
           background: var(--ac-color-action);
           color: var(--ac-color-text-on-action) !important;
           place-self: center;
-          transform: translateY(-16px);
-          box-shadow: 0 8px 20px rgb(61 99 117 / 0.35);
+          transform: translateY(-14px);
+          box-shadow: 0 6px 18px rgb(61 99 117 / 0.35);
           display: grid;
           place-items: center;
           transition:
@@ -1328,7 +1372,7 @@ export type NavSection = {
         }
 
         .mobile-action:active {
-          transform: translateY(-14px) scale(0.96);
+          transform: translateY(-12px) scale(0.96);
         }
 
         .topbar-brand {
@@ -1337,6 +1381,16 @@ export type NavSection = {
 
         .topbar-portal-badge {
           display: none;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .topbar-brand-title {
+          display: none;
+        }
+
+        .user-display-name {
+          max-width: 60px;
         }
       }
 
