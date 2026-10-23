@@ -425,9 +425,9 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
       .visibility-button {
         position: absolute;
         top: 50%;
-        right: 10px;
-        width: 36px;
-        height: 36px;
+        right: 8px;
+        width: 44px;
+        height: 44px;
         border: 0;
         border-radius: 999px;
         background: transparent;
@@ -599,6 +599,63 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
         .step-label {
           display: none;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .auth-page {
+          padding: 16px 12px;
+        }
+
+        .auth-card {
+          padding: 24px 16px 20px;
+          border-radius: 18px;
+          gap: 20px;
+        }
+
+        h1 {
+          font-size: 22px;
+        }
+
+        header p {
+          font-size: 14px;
+        }
+
+        .steps-progress {
+          padding: 10px 12px;
+        }
+
+        input {
+          height: 52px;
+          padding: 0 16px;
+        }
+
+        .password-field input {
+          padding-right: 50px;
+        }
+
+        .submit-button {
+          height: 52px;
+          font-size: 15px;
+        }
+
+        .password-requirements {
+          padding: 10px 12px;
+          font-size: 12px;
+        }
+
+        .success-card {
+          padding: 20px 16px;
+          gap: 12px;
+        }
+
+        footer {
+          padding-top: 16px;
+        }
+
+        footer a {
+          display: inline-block;
+          padding: 6px;
         }
       }
     `,

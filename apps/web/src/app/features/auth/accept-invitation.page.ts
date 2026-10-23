@@ -442,9 +442,9 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
       .visibility-button {
         position: absolute;
         top: 50%;
-        right: 10px;
-        width: 36px;
-        height: 36px;
+        right: 8px;
+        width: 44px;
+        height: 44px;
         border: 0;
         border-radius: 999px;
         background: transparent;
@@ -625,6 +625,53 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
         h1 {
           font-size: 22px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .auth-page {
+          padding: 16px 12px;
+        }
+
+        .auth-card {
+          padding: 24px 16px 20px;
+          border-radius: 18px;
+          gap: 20px;
+        }
+
+        h1 {
+          font-size: 20px;
+        }
+
+        .invite-description {
+          font-size: 13px;
+        }
+
+        input[type='text'],
+        input[type='password'] {
+          height: 52px;
+          padding: 0 16px;
+        }
+
+        .password-field input {
+          padding-right: 50px;
+        }
+
+        .password-note {
+          padding: 10px 12px;
+          font-size: 12px;
+        }
+
+        .submit-btn,
+        .primary-link {
+          height: 50px;
+          font-size: 15px;
+        }
+
+        .success-card,
+        .error-state-card {
+          padding: 20px 16px;
+          gap: 12px;
         }
       }
     `,

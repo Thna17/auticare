@@ -530,9 +530,15 @@ export const DEMO_CREDENTIALS: Record<
       .demo-fill-btn {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         margin-top: 8px;
-        padding: 5px 10px;
+        padding: 6px 12px;
+        max-width: 100%;
+        box-sizing: border-box;
+        text-align: left;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
         background: var(--ac-color-action-tint);
         color: var(--ac-color-action-mid);
         border: 1px dashed var(--ac-color-action-mid);
@@ -550,8 +556,14 @@ export const DEMO_CREDENTIALS: Record<
       }
 
       .demo-fill-btn svg {
-        width: 14px;
-        height: 14px;
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+
+      .demo-fill-btn span {
+        min-width: 0;
+        line-height: 1.35;
       }
 
       /* Form */
@@ -620,9 +632,9 @@ export const DEMO_CREDENTIALS: Record<
       .visibility-button {
         position: absolute;
         top: 50%;
-        right: 12px;
-        width: 38px;
-        height: 38px;
+        right: 8px;
+        width: 44px;
+        height: 44px;
         border: 0;
         border-radius: 999px;
         background: transparent;
@@ -899,11 +911,11 @@ export const DEMO_CREDENTIALS: Record<
         }
 
         .brand {
-          margin-bottom: 28px;
+          margin-bottom: 24px;
         }
 
         .login-header {
-          margin-bottom: 22px;
+          margin-bottom: 20px;
         }
 
         .login-header h1 {
@@ -911,23 +923,130 @@ export const DEMO_CREDENTIALS: Record<
         }
 
         .role-chips {
-          grid-template-columns: 1fr;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
         }
 
         .role-chip {
           flex-direction: row;
           justify-content: flex-start;
-          padding: 10px 14px;
+          align-items: center;
+          padding: 10px 12px;
+          min-height: 48px;
+          font-size: 12px;
+          text-align: left;
+          gap: 8px;
+        }
+
+        .role-chip span {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          line-height: 1.25;
         }
 
         .login-footer {
           flex-direction: column;
-          gap: 10px;
+          gap: 12px;
           text-align: center;
         }
 
         .login-footer nav {
-          gap: 16px;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 12px 18px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .form-panel {
+          padding: 24px 16px;
+        }
+
+        .brand {
+          margin-bottom: 20px;
+        }
+
+        .login-header {
+          margin-bottom: 16px;
+        }
+
+        .login-header h1 {
+          font-size: 22px;
+        }
+
+        .login-header p {
+          font-size: 14px;
+        }
+
+        .role-chip {
+          padding: 9px 10px;
+          font-size: 11.5px;
+        }
+
+        .role-hint {
+          padding: 10px 12px;
+          margin-bottom: 20px;
+          font-size: 12.5px;
+        }
+
+        input {
+          height: 52px;
+          padding: 0 16px;
+        }
+
+        .password-field input {
+          padding-right: 50px;
+        }
+
+        .submit-button {
+          height: 52px;
+          font-size: 16px;
+        }
+
+        .divider {
+          margin: 24px 0 18px;
+          gap: 12px;
+        }
+
+        .create-account {
+          font-size: 14px;
+        }
+
+        .create-account a {
+          display: inline-block;
+          padding: 4px;
+        }
+
+        .trust-note {
+          margin-top: 24px;
+          padding-top: 16px;
+          font-size: 12px;
+          gap: 8px;
+        }
+
+        .login-footer {
+          padding: 16px 14px 28px;
+          font-size: 12px;
+        }
+
+        .login-footer nav {
+          gap: 8px 14px;
+        }
+
+        .login-footer a {
+          display: inline-block;
+          padding: 4px 2px;
+        }
+      }
+
+      @media (max-width: 360px) {
+        .role-chips {
+          grid-template-columns: 1fr;
+        }
+
+        .role-chip {
+          padding: 10px 12px;
         }
       }
     `,

@@ -654,9 +654,9 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
       .visibility-button {
         position: absolute;
         top: 50%;
-        right: 10px;
-        width: 36px;
-        height: 36px;
+        right: 8px;
+        width: 44px;
+        height: 44px;
         border: 0;
         border-radius: 999px;
         background: transparent;
@@ -1060,11 +1060,11 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         }
 
         .brand {
-          margin-bottom: 28px;
+          margin-bottom: 24px;
         }
 
         .intro {
-          margin-bottom: 22px;
+          margin-bottom: 20px;
         }
 
         .intro h1 {
@@ -1073,21 +1073,132 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
         .role-chips {
           grid-template-columns: 1fr;
+          gap: 8px;
         }
 
         .role-chip {
           flex-direction: row;
           justify-content: flex-start;
+          align-items: center;
           padding: 10px 14px;
+          min-height: 48px;
+          gap: 10px;
+          text-align: left;
         }
 
         .password-grid {
           grid-template-columns: 1fr;
+          gap: 16px;
         }
 
         .signin-footer {
           margin-top: 32px;
           padding-top: 24px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .form-panel {
+          padding: 24px 16px;
+        }
+
+        .brand {
+          margin-bottom: 20px;
+        }
+
+        .intro {
+          margin-bottom: 16px;
+        }
+
+        .intro h1 {
+          font-size: 22px;
+        }
+
+        .intro p {
+          font-size: 14px;
+        }
+
+        .role-selector {
+          margin-bottom: 18px;
+        }
+
+        .role-chip {
+          padding: 10px 12px;
+          font-size: 11.5px;
+        }
+
+        .register-form {
+          gap: 16px;
+        }
+
+        ac-ui-field input {
+          height: 52px;
+          padding: 0 16px;
+        }
+
+        .password-field input {
+          padding-right: 50px;
+        }
+
+        .password-note {
+          padding: 12px;
+          gap: 8px;
+          font-size: 12px;
+        }
+
+        .terms {
+          grid-template-columns: 22px minmax(0, 1fr);
+          gap: 10px;
+          font-size: 13.5px;
+          line-height: 1.4;
+        }
+
+        .terms input {
+          width: 22px;
+          height: 22px;
+        }
+
+        .submit-button {
+          height: 52px;
+          font-size: 16px;
+        }
+
+        .institutional-onboarding-card {
+          padding: 24px 16px;
+          gap: 14px;
+        }
+
+        .institutional-onboarding-card h2 {
+          font-size: 18px;
+        }
+
+        .institutional-onboarding-card p {
+          font-size: 13px;
+        }
+
+        .invite-action-box {
+          width: 100%;
+        }
+
+        .invite-cta-btn {
+          height: 48px;
+          font-size: 14px;
+          padding: 0 14px;
+          text-align: center;
+        }
+
+        .signin-footer {
+          margin-top: 24px;
+          padding-top: 18px;
+          font-size: 14px;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        .signin-footer a {
+          display: inline-block;
+          padding: 4px;
         }
       }
     `,
