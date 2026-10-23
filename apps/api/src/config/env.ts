@@ -16,6 +16,11 @@ if (process.env.NODE_ENV === 'test') {
   process.env.JWT_REFRESH_SECRET ??= 'test_refresh_secret_with_32_characters_minimum';
 }
 
+const emptyStringToUndefined = (val: unknown) =>
+  typeof val === 'string' && val.trim() === '' ? undefined : val;
+
+const optionalTrimmedString = z.preprocess(emptyStringToUndefined, z.string().min(1).optional());
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -27,30 +32,33 @@ const envSchema = z
     JWT_REFRESH_SECRET: z.string().min(32),
     ACCESS_TOKEN_TTL: z.string().default('15m'),
     REFRESH_TOKEN_TTL: z.string().default('7d'),
-    COOKIE_DOMAIN: z.string().optional(),
+    COOKIE_DOMAIN: z.preprocess(emptyStringToUndefined, z.string().optional()),
     LOG_LEVEL: z.string().default('info'),
     STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
-    STORAGE_S3_BUCKET: z.string().optional(),
+    STORAGE_S3_BUCKET: optionalTrimmedString,
     STORAGE_S3_REGION: z.string().default('us-east-1'),
-    STORAGE_S3_ENDPOINT: z.string().optional(),
-    STORAGE_S3_ACCESS_KEY_ID: z.string().optional(),
-    STORAGE_S3_SECRET_ACCESS_KEY: z.string().optional(),
+    STORAGE_S3_ENDPOINT: optionalTrimmedString,
+    STORAGE_S3_ACCESS_KEY_ID: optionalTrimmedString,
+    STORAGE_S3_SECRET_ACCESS_KEY: optionalTrimmedString,
     STORAGE_UPLOAD_RETENTION_HOURS: z.coerce.number().int().positive().default(24),
-    SMTP_HOST: z.string().min(1).optional(),
-    SMTP_PORT: z.coerce.number().int().min(1).max(65535).optional(),
-    SMTP_USER: z.string().min(1).optional(),
-    SMTP_PASS: z.string().min(1).optional(),
-    SMTP_FROM: z.string().min(1).optional(),
+    SMTP_HOST: optionalTrimmedString,
+    SMTP_PORT: z.preprocess(
+      (val) => (val === '' || val === undefined || val === null ? undefined : val),
+      z.coerce.number().int().min(1).max(65535).optional(),
+    ),
+    SMTP_USER: optionalTrimmedString,
+    SMTP_PASS: optionalTrimmedString,
+    SMTP_FROM: optionalTrimmedString,
   })
   .superRefine((value, context) => {
-    const configuredFields = [value.SMTP_HOST, value.SMTP_PORT, value.SMTP_USER, value.SMTP_PASS];
-    const configuredCount = configuredFields.filter((field) => field !== undefined).length;
-
-    if (configuredCount > 0 && configuredCount < configuredFields.length) {
-      context.addIssue({
-        code: 'custom',
-        message: 'SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS must be configured together.',
-      });
+    const hasAnySmtpCredential = Boolean(value.SMTP_HOST || value.SMTP_USER || value.SMTP_PASS);
+    if (hasAnySmtpCredential) {
+      if (!value.SMTP_HOST || !value.SMTP_PORT || !value.SMTP_USER || !value.SMTP_PASS) {
+        context.addIssue({
+          code: 'custom',
+          message: 'SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS must be configured together.',
+        });
+      }
     }
 
     if (value.STORAGE_DRIVER === 's3') {

@@ -31,8 +31,33 @@ export const createApp = () => {
   app.disable('x-powered-by');
   app.use(requestIdMiddleware);
   app.use(pinoHttp({ logger }));
-  app.use(helmet());
-  app.use(cors({ origin: env.APP_ORIGIN, credentials: true }));
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || origin === env.APP_ORIGIN) {
+          return callback(null, true);
+        }
+        if (!isProduction) {
+          try {
+            const url = new URL(origin);
+            if (
+              url.hostname === 'localhost' ||
+              url.hostname === '127.0.0.1' ||
+              /^192\.168\.\d+\.\d+$/.test(url.hostname) ||
+              /^10\.\d+\.\d+\.\d+$/.test(url.hostname) ||
+              /^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(url.hostname)
+            ) {
+              return callback(null, true);
+            }
+          } catch {
+            // malformed URL
+          }
+        }
+        return callback(null, false);
+      },
+      credentials: true,
+    }),
+  );
   app.use(compression());
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
