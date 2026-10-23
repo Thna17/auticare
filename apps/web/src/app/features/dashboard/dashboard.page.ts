@@ -29,7 +29,7 @@ export type QuickAction = {
   readonly descriptionKm: string;
   readonly descriptionEn: string;
   readonly path: string;
-  readonly icon: 'screening' | 'activity' | 'hospital' | 'progress';
+  readonly icon: 'screening' | 'activity' | 'hospital' | 'progress' | 'crisis';
   readonly gradientClass: string;
   readonly timeEstimateKm?: string;
   readonly timeEstimateEn?: string;
@@ -85,9 +85,9 @@ const quickActions: readonly QuickAction[] = [
     descriptionKm: 'ធនធានគាំទ្របន្ទាន់ ជំនួយផ្លូវចិត្ត និងខ្សែទូរស័ព្ទជំនួយ',
     descriptionEn: 'Emergency support resources, hotlines & emotional guidance',
     path: '/crisis-resources',
-    icon: 'hospital',
+    icon: 'crisis',
     gradientClass: 'gradient-trajectory',
-    timeEstimateKm: 'ជំនួយបន្ទាន់',
+    timeEstimateKm: 'ជំនួយ ២៤/៧',
     timeEstimateEn: '24/7 Help',
   },
 ];
@@ -562,7 +562,11 @@ const quickActions: readonly QuickAction[] = [
 
         <!-- Quick Action Cards (4-column grid on desktop, 2-column on mobile) -->
         <section class="bento-quick-actions" aria-labelledby="quick-actions-title">
-          <h2 id="quick-actions-title" class="sr-only">Quick Actions</h2>
+          <div class="quick-actions-header">
+            <h2 id="quick-actions-title">
+              {{ currentLang() === 'km' ? 'សកម្មភាពរហ័ស' : 'Quick Actions' }}
+            </h2>
+          </div>
           @for (action of quickActions; track action.path) {
             <a class="quick-card {{ action.gradientClass }}" [routerLink]="action.path">
               <div class="quick-icon-wrapper">
@@ -606,6 +610,19 @@ const quickActions: readonly QuickAction[] = [
                       <line x1="16" y1="2" x2="16" y2="6" />
                       <line x1="8" y1="2" x2="8" y2="6" />
                       <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  } @else if (action.icon === 'crisis') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="22"
+                      height="22"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      <path d="M12 8v4" />
+                      <path d="M12 16h.01" />
                     </svg>
                   } @else {
                     <svg
@@ -2337,6 +2354,19 @@ const quickActions: readonly QuickAction[] = [
       }
 
       /* ─── QUICK ACTIONS (4 COLUMNS) ─── */
+      .quick-actions-header {
+        grid-column: 1 / -1;
+        margin-bottom: 4px;
+      }
+
+      .quick-actions-header h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ac-color-text-strong);
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+
       .bento-quick-actions {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -3264,6 +3294,109 @@ const quickActions: readonly QuickAction[] = [
       }
 
       @media (max-width: 640px) {
+        .dashboard-hero-wrapper {
+          margin-bottom: 18px;
+        }
+
+        .hero-content {
+          gap: 16px;
+        }
+
+        .hero-text-block {
+          min-width: 0;
+          width: 100%;
+        }
+
+        .hero-text-block h1 {
+          font-size: 22px;
+          line-height: 1.35;
+          margin-bottom: 6px;
+          word-break: break-word;
+        }
+
+        .greeting-subtext {
+          font-size: 0.9em;
+          font-weight: 500;
+        }
+
+        .hero-subtitle {
+          font-size: 13.5px;
+          line-height: 1.5;
+          margin-bottom: 14px;
+        }
+
+        .hero-actions-block {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+        }
+
+        .child-switcher {
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          padding: 12px 14px;
+          border-radius: 18px;
+          gap: 12px;
+        }
+
+        .child-avatar {
+          width: 44px;
+          height: 44px;
+          font-size: 18px;
+        }
+
+        .hero-add-child-btn {
+          width: 100%;
+          justify-content: center;
+          height: 46px;
+          border-radius: 14px;
+          box-sizing: border-box;
+        }
+
+        .priority-alerts-container {
+          margin-bottom: 20px;
+          gap: 10px;
+        }
+
+        .priority-alert-card {
+          display: grid;
+          grid-template-columns: 36px minmax(0, 1fr);
+          align-items: start;
+          gap: 12px;
+          padding: 14px;
+          border-radius: 16px;
+        }
+
+        .alert-icon-wrap {
+          width: 36px;
+          height: 36px;
+        }
+
+        .alert-body {
+          grid-column: 2;
+        }
+
+        .alert-title {
+          font-size: 13.5px;
+        }
+
+        .alert-desc {
+          font-size: 12.5px;
+          line-height: 1.45;
+        }
+
+        .alert-action-btn {
+          grid-column: 1 / -1;
+          width: 100%;
+          justify-content: center;
+          height: 42px;
+          margin-top: 4px;
+          box-sizing: border-box;
+        }
+
         .bento-grid {
           grid-template-columns: 1fr;
           gap: 16px;
@@ -3279,12 +3412,32 @@ const quickActions: readonly QuickAction[] = [
 
         .bento-quick-actions {
           grid-template-columns: 1fr;
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+
+        .quick-actions-header h2 {
+          font-size: 17px;
+        }
+
+        .quick-card {
+          padding: 14px 16px;
           gap: 12px;
+          border-radius: 16px;
+        }
+
+        .quick-card-text strong {
+          font-size: 14.5px;
+        }
+
+        .quick-card-text small {
+          font-size: 12px;
+          line-height: 1.4;
         }
 
         .card {
           border-radius: 18px;
-          padding: 22px;
+          padding: 20px;
         }
 
         .weekly-card {
@@ -3293,20 +3446,20 @@ const quickActions: readonly QuickAction[] = [
 
         .bar-chart {
           height: 112px;
-          gap: 10px;
+          gap: 8px;
           padding-top: 22px;
         }
 
         .bar-chart span {
-          width: 30px;
+          width: 28px;
         }
 
         .screening-card {
           grid-template-columns: 1fr;
           justify-items: center;
           text-align: center;
-          gap: 22px;
-          margin-bottom: 148px;
+          gap: 20px;
+          margin-bottom: 0;
         }
 
         .screening-copy {
@@ -3316,19 +3469,20 @@ const quickActions: readonly QuickAction[] = [
         .screening-copy h2,
         .action-card h2,
         .appointment-card h2 {
-          font-size: 24px;
+          font-size: 22px;
         }
 
         .appointment-top {
           align-items: flex-start;
           flex-direction: column;
+          gap: 8px;
         }
 
         .dashboard-footer {
           grid-template-columns: 1fr;
-          margin-top: 62px;
-          gap: 26px;
-          padding-bottom: 16px;
+          margin-top: 40px;
+          gap: 24px;
+          padding-bottom: 24px;
         }
 
         .page-layout {
@@ -3344,6 +3498,39 @@ const quickActions: readonly QuickAction[] = [
 
         .stats-grid {
           grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-text-block h1 {
+          font-size: 20px;
+        }
+
+        .card {
+          border-radius: 16px;
+          padding: 16px;
+        }
+
+        .quick-card {
+          padding: 12px 14px;
+          gap: 10px;
+        }
+
+        .quick-card-text strong {
+          font-size: 14px;
+        }
+
+        .quick-card-text small {
+          font-size: 11.5px;
+        }
+
+        .progress-wrap {
+          width: 130px;
+          height: 130px;
+        }
+
+        .progress-wrap strong {
+          font-size: 26px;
         }
       }
 
