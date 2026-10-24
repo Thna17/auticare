@@ -454,24 +454,24 @@ const KM_AUTISM_NOTES = [
                 {{ userInitials() }}
               </span>
             } @else {
-              <a class="login-link" routerLink="/login">{{
-                currentLang() === 'km' ? 'ចូលប្រើ' : 'Login'
-              }}</a>
               <a class="signup-link" routerLink="/register">
                 <span>{{ currentLang() === 'km' ? 'ចុះឈ្មោះ' : 'Signup' }}</span>
+              </a>
+              <a class="login-link" routerLink="/login">
                 <svg
                   viewBox="0 0 20 20"
-                  width="15"
-                  height="15"
+                  width="16"
+                  height="16"
                   fill="currentColor"
                   aria-hidden="true"
                 >
                   <path
                     fill-rule="evenodd"
-                    d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z"
+                    d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-7 9a7 7 0 1 1 14 0H3Z"
                     clip-rule="evenodd"
                   />
                 </svg>
+                <span>{{ currentLang() === 'km' ? 'ចូលប្រើ' : 'Login' }}</span>
               </a>
             }
 
@@ -1247,29 +1247,36 @@ const KM_AUTISM_NOTES = [
         background: var(--ac-color-background);
       }
 
-      /* ==================== MODERN HIGH-END NAVBAR ==================== */
+      /* ==================== FLOATING PILL NAVBAR ==================== */
       .site-header {
         position: sticky;
-        top: 0;
-        z-index: 100;
+        top: 18px;
+        z-index: 1000;
         width: 100%;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(20px) saturate(190%);
-        -webkit-backdrop-filter: blur(20px) saturate(190%);
-        border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-        box-shadow: 0 4px 24px -4px rgba(15, 23, 42, 0.04);
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 0 clamp(16px, 3.5vw, 40px);
+        background: transparent;
+        pointer-events: none;
       }
 
       .nav-shell {
-        max-width: 1320px;
+        pointer-events: auto;
+        max-width: 1240px;
         margin: 0 auto;
-        padding: 0 clamp(20px, 3.5vw, 48px);
-        height: 72px;
+        height: 64px;
+        background: #ffffff;
+        border-radius: 9999px;
+        box-shadow:
+          0 12px 32px -4px rgba(15, 23, 42, 0.08),
+          0 2px 8px rgba(15, 23, 42, 0.04),
+          0 0 0 1px rgba(0, 0, 0, 0.04);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 20px;
+        padding: 0 10px 0 22px;
+        gap: 12px;
+        transition:
+          box-shadow 0.25s ease,
+          transform 0.25s ease;
       }
 
       /* Brand Identity */
@@ -1277,26 +1284,26 @@ const KM_AUTISM_NOTES = [
       .footer-brand {
         display: inline-flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         text-decoration: none;
         flex-shrink: 0;
       }
 
       .brand-logo-frame {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
+        width: 34px;
+        height: 34px;
+        border-radius: 9999px;
         overflow: hidden;
         display: grid;
         place-items: center;
         background: #ffffff;
-        box-shadow: 0 2px 10px rgba(14, 116, 144, 0.14);
-        border: 1px solid rgba(14, 116, 144, 0.16);
-        transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 2px 8px rgba(234, 56, 76, 0.15);
+        border: 1px solid rgba(234, 56, 76, 0.18);
+        transition: transform 0.22s ease;
       }
 
       .brand:hover .brand-logo-frame {
-        transform: scale(1.06) rotate(-2deg);
+        transform: scale(1.08) rotate(-3deg);
       }
 
       .brand-logo-frame img,
@@ -1307,62 +1314,57 @@ const KM_AUTISM_NOTES = [
       }
 
       .brand-text {
-        font-size: 24px;
+        font-size: 22px;
         font-weight: 800;
-        letter-spacing: -0.03em;
-        background: linear-gradient(135deg, #0f766e 0%, #0e7490 50%, #0369a1 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.025em;
+        color: #ea384c;
         line-height: 1;
       }
 
-      /* Floating Central Pill Dock for Desktop Navigation */
+      /* Floating Center Pill Navigation */
       .desktop-nav {
         display: flex;
         align-items: center;
         gap: 2px;
-        background: rgba(241, 245, 249, 0.72);
-        padding: 4px 6px;
-        border-radius: 999px;
-        border: 1px solid rgba(226, 232, 240, 0.85);
-        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+        background: transparent;
+        padding: 0;
+        border: none;
+        box-shadow: none;
       }
 
       .desktop-nav a {
         display: inline-flex;
         align-items: center;
-        padding: 7px 13px;
-        border-radius: 999px;
-        color: #475569;
+        padding: 7px 11px;
+        border-radius: 9999px;
+        color: #4b5563;
         font-size: 13.5px;
         font-weight: 500;
         white-space: nowrap;
         text-decoration: none;
         line-height: 1.25;
-        transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.18s ease;
       }
 
       .desktop-nav a:hover {
-        color: #0e7490;
-        background: #ffffff;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-        font-weight: 600;
-        transform: translateY(-0.5px);
+        color: #111827;
+        background: rgba(0, 0, 0, 0.04);
       }
 
       .desktop-nav a[aria-current='page'],
       .desktop-nav a.active {
-        color: #0e7490;
-        background: #ffffff;
+        color: #ea384c;
+        background: #fee2e2;
         font-weight: 600;
-        box-shadow: 0 2px 8px rgba(14, 116, 144, 0.08);
+        padding: 7px 15px;
+        box-shadow: none;
       }
 
       /* Header Actions */
       .header-actions {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         flex-shrink: 0;
       }
 
@@ -1372,28 +1374,26 @@ const KM_AUTISM_NOTES = [
         gap: 6px;
         padding: 0 12px;
         height: 38px;
-        border: 1px solid rgba(203, 213, 225, 0.85);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.85);
-        color: #1e293b;
+        border: 1px solid #e2e8f0;
+        border-radius: 9999px;
+        background: #f8fafc;
+        color: #475569;
         font-family: inherit;
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition: all 0.18s ease;
       }
 
       .topbar-lang-toggle:hover {
         background: #ffffff;
-        border-color: #0e7490;
-        color: #0e7490;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 10px rgba(14, 116, 144, 0.12);
+        border-color: #cbd5e1;
+        color: #0f172a;
       }
 
       .topbar-lang-toggle:focus-visible {
-        outline: 2px solid #0e7490;
+        outline: 2px solid #ea384c;
         outline-offset: 2px;
       }
 
@@ -1408,77 +1408,76 @@ const KM_AUTISM_NOTES = [
         font-weight: 600;
       }
 
-      .login-link {
+      .signup-link {
         height: 38px;
         padding: 0 14px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border-radius: 999px;
-        color: #334155;
-        font-size: 13.5px;
+        border-radius: 9999px;
+        color: #4b5563;
+        font-size: 14px;
         font-weight: 600;
         text-decoration: none;
         transition: all 0.18s ease;
       }
 
-      .login-link:hover {
-        color: #0e7490;
-        background: rgba(14, 116, 144, 0.08);
+      .signup-link:hover {
+        color: #ea384c;
+        background: #fee2e2;
       }
 
-      .signup-link,
+      /* Prominent Coral-Red Pill Button matching reference image */
+      .login-link,
       .dashboard-link {
-        height: 38px;
-        padding: 0 18px;
+        height: 42px;
+        padding: 0 20px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #0e7490 0%, #0369a1 100%);
+        gap: 8px;
+        border-radius: 9999px;
+        background: #ea384c;
         color: #ffffff;
-        font-size: 13.5px;
+        font-size: 14px;
         font-weight: 600;
         text-decoration: none;
-        box-shadow: 0 3px 12px rgba(14, 116, 144, 0.28);
+        box-shadow: 0 4px 14px rgba(234, 56, 76, 0.35);
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      .signup-link:hover,
+      .login-link:hover,
       .dashboard-link:hover {
-        background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
+        background: #d92d40;
         transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(14, 116, 144, 0.38);
+        box-shadow: 0 6px 18px rgba(234, 56, 76, 0.45);
+        color: #ffffff;
       }
 
-      .signup-link:active,
+      .login-link:active,
       .dashboard-link:active {
         transform: translateY(0);
       }
 
-      .signup-link svg,
+      .login-link svg,
       .dashboard-link svg {
-        transition: transform 0.2s ease;
-      }
-
-      .signup-link:hover svg,
-      .dashboard-link:hover svg {
-        transform: translateX(2px);
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
       }
 
       .user-avatar {
         width: 38px;
         height: 38px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #0e7490, #38bdf8);
-        color: #ffffff;
+        border-radius: 9999px;
+        background: #fee2e2;
+        color: #ea384c;
+        border: 2px solid #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         display: grid;
         place-items: center;
-        font-size: 13.5px;
         font-weight: 700;
-        box-shadow: 0 2px 8px rgba(14, 116, 144, 0.25);
-        border: 2px solid #ffffff;
+        font-size: 13.5px;
         flex-shrink: 0;
       }
 
@@ -2605,31 +2604,31 @@ const KM_AUTISM_NOTES = [
 
       .mobile-drawer-primary-btn {
         height: 48px;
-        border-radius: 12px;
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
+        border-radius: 9999px;
+        background: #ea384c;
+        color: #ffffff;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 0 20px;
         font-size: 15px;
-        font-weight: var(--ac-font-weight-semibold);
+        font-weight: 600;
         text-decoration: none;
-        box-shadow: 0 4px 14px rgb(41 74 90 / 0.16);
+        box-shadow: 0 4px 14px rgba(234, 56, 76, 0.35);
       }
 
       .mobile-drawer-secondary-btn {
         height: 46px;
-        border-radius: 12px;
-        border: 1px solid var(--ac-color-border-grey);
-        background: var(--ac-color-surface);
-        color: var(--ac-color-text-strong);
+        border-radius: 9999px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #334155;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 0 20px;
         font-size: 15px;
-        font-weight: var(--ac-font-weight-semibold);
+        font-weight: 600;
         text-decoration: none;
       }
 
@@ -2664,7 +2663,7 @@ const KM_AUTISM_NOTES = [
         }
       }
 
-      @media (max-width: 1080px) {
+      @media (max-width: 1180px) {
         .desktop-nav {
           display: none;
         }
@@ -2674,12 +2673,13 @@ const KM_AUTISM_NOTES = [
         }
 
         .site-header {
-          min-height: 64px;
+          top: 12px;
+          padding: 0 16px;
         }
 
         .nav-shell {
-          height: 64px;
-          padding: 0 20px;
+          height: 60px;
+          padding: 0 10px 0 18px;
           gap: 12px;
         }
 
@@ -2688,35 +2688,6 @@ const KM_AUTISM_NOTES = [
         }
 
         .brand-logo-frame {
-          width: 35px;
-          height: 35px;
-          border-radius: 10px;
-        }
-
-        .header-actions {
-          gap: 10px;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .nav-shell {
-          padding: 0 16px;
-          gap: 10px;
-        }
-
-        .brand,
-        .footer-brand {
-          font-size: 20px;
-          gap: 8px;
-        }
-
-        .brand-text {
-          font-size: 20px;
-        }
-
-        .brand-logo-frame,
-        .brand img,
-        .footer-brand img {
           width: 32px;
           height: 32px;
         }
@@ -2724,14 +2695,52 @@ const KM_AUTISM_NOTES = [
         .header-actions {
           gap: 8px;
         }
+      }
+
+      @media (max-width: 768px) {
+        .site-header {
+          top: 10px;
+          padding: 0 12px;
+        }
+
+        .nav-shell {
+          height: 56px;
+          padding: 0 8px 0 14px;
+          gap: 8px;
+        }
+
+        .brand,
+        .footer-brand {
+          font-size: 19px;
+          gap: 8px;
+        }
+
+        .brand-text {
+          font-size: 19px;
+        }
+
+        .brand-logo-frame,
+        .brand img,
+        .footer-brand img {
+          width: 30px;
+          height: 30px;
+        }
+
+        .header-actions {
+          gap: 6px;
+        }
 
         .header-actions .login-link {
           display: none;
         }
 
+        .header-actions .signup-link {
+          display: none;
+        }
+
         .topbar-lang-toggle {
-          height: 36px;
-          padding: 0 10px;
+          height: 34px;
+          padding: 0 8px;
           font-size: 12px;
         }
 
@@ -2739,18 +2748,16 @@ const KM_AUTISM_NOTES = [
           font-size: 12px;
         }
 
-        .signup-link,
         .dashboard-link {
-          height: 36px;
-          padding: 0 14px;
-          font-size: 13px;
-          border-radius: 999px;
+          height: 34px;
+          padding: 0 12px;
+          font-size: 12.5px;
         }
 
         .user-avatar {
-          width: 34px;
-          height: 34px;
-          font-size: 12.5px;
+          width: 32px;
+          height: 32px;
+          font-size: 12px;
         }
 
         .hero-section {
