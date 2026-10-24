@@ -1485,11 +1485,13 @@ const KM_AUTISM_NOTES = [
 
       /* Hero Section */
       .hero-section {
+        min-height: 100svh;
+        box-sizing: border-box;
         display: grid;
         grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
         align-items: center;
         gap: 56px;
-        padding: 72px clamp(24px, 5vw, 72px) 64px;
+        padding: 40px clamp(24px, 5vw, 72px) 64px;
         background: linear-gradient(
           135deg,
           rgb(250 248 242 / 0.95) 0%,
@@ -1500,24 +1502,24 @@ const KM_AUTISM_NOTES = [
       .hero-copy {
         display: flex;
         flex-direction: column;
-        gap: 22px;
-        max-width: 620px;
+        gap: 24px;
+        max-width: 640px;
       }
 
       .hero-section h1 {
-        font-size: clamp(40px, 4.8vw, 58px);
-        line-height: 1.14;
-        font-weight: 800;
+        font-size: clamp(48px, 5.8vw, 68px);
+        line-height: 1.08;
+        font-weight: 900;
         color: var(--ac-color-text-strong);
-        letter-spacing: -0.025em;
+        letter-spacing: -0.03em;
         text-wrap: balance;
       }
 
       .hero-subtitle {
-        font-size: clamp(17px, 1.8vw, 20px);
+        font-size: clamp(18px, 2vw, 22px);
         line-height: 1.6;
         color: var(--ac-color-text-body);
-        max-width: 540px;
+        max-width: 560px;
       }
 
       .hero-actions {
@@ -2636,6 +2638,8 @@ const KM_AUTISM_NOTES = [
 
       @media (max-width: 1024px) {
         .hero-section {
+          min-height: 100svh;
+          box-sizing: border-box;
           grid-template-columns: 1fr;
           gap: 36px;
           padding: 48px clamp(20px, 4vw, 40px) 44px;
@@ -2778,8 +2782,13 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-section {
-          padding: 38px 16px 44px;
+          min-height: 100svh;
+          box-sizing: border-box;
+          padding: 36px 16px 48px;
           gap: 28px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
           background: linear-gradient(
             180deg,
             rgb(250 248 242 / 0.98) 0%,
@@ -2788,18 +2797,18 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-copy {
-          gap: 18px;
+          gap: 20px;
           text-align: center;
           align-items: center;
           margin: 0 auto;
         }
 
         .hero-section h1 {
-          font-size: clamp(34px, 8.8vw, 44px);
-          line-height: 1.15;
-          font-weight: 800;
+          font-size: clamp(38px, 10.5vw, 54px);
+          line-height: 1.1;
+          font-weight: 900;
           color: #0f172a;
-          letter-spacing: -0.025em;
+          letter-spacing: -0.03em;
           text-wrap: balance;
           text-align: center;
           word-break: normal;
@@ -2807,12 +2816,12 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-subtitle {
-          font-size: 16px;
+          font-size: clamp(16.5px, 4.4vw, 19px);
           line-height: 1.55;
           color: #475569;
           margin: 0 auto;
           text-align: center;
-          max-width: 460px;
+          max-width: 480px;
         }
 
         .hero-actions {
