@@ -3378,8 +3378,8 @@ const KM_AUTISM_NOTES = [
         .hero-section {
           min-height: 100svh;
           box-sizing: border-box;
-          padding: 14px 16px 24px;
-          gap: 14px;
+          padding: 42px 16px 28px;
+          gap: 18px;
           display: flex;
           flex-direction: column;
           justify-content: flex-start;
@@ -3391,7 +3391,7 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-copy {
-          gap: 12px;
+          gap: 14px;
           text-align: center;
           align-items: center;
           margin: 0 auto;
@@ -3423,8 +3423,8 @@ const KM_AUTISM_NOTES = [
           flex-direction: row;
           justify-content: center;
           width: 100%;
-          gap: 10px;
-          margin-top: 2px;
+          gap: 12px;
+          margin-top: 4px;
           align-items: center;
         }
 
