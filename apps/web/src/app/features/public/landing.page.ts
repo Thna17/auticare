@@ -1630,10 +1630,10 @@ const KM_AUTISM_NOTES = [
         min-height: 100svh;
         box-sizing: border-box;
         display: grid;
-        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.16fr);
         align-items: center;
-        gap: 56px;
-        padding: 40px clamp(24px, 5vw, 72px) 64px;
+        gap: 44px;
+        padding: 32px clamp(20px, 4.5vw, 64px) 48px;
         background: linear-gradient(
           135deg,
           rgb(250 248 242 / 0.95) 0%,
@@ -1728,37 +1728,37 @@ const KM_AUTISM_NOTES = [
         align-items: center;
         justify-content: center;
         width: 100%;
-        max-width: 600px;
+        max-width: 720px;
         margin: 0 auto;
-        padding: 24px 18px;
+        padding: 20px 14px;
         box-sizing: border-box;
       }
 
       /* Pastel Mint Organic Blob Background */
       .hero-blob-backdrop {
         position: absolute;
-        top: 3%;
-        left: 0;
-        width: 98%;
-        height: 94%;
+        top: 1%;
+        left: -1%;
+        width: 102%;
+        height: 101%;
         background: linear-gradient(
           135deg,
           rgb(167 243 208 / 0.7) 0%,
           rgb(187 247 208 / 0.45) 100%
         );
-        border-radius: 46% 54% 38% 62% / 52% 44% 56% 48%;
+        border-radius: 46px 88px 46px 80px;
         z-index: 1;
         pointer-events: none;
-        transform: rotate(-3deg);
+        transform: rotate(-2deg);
         filter: blur(1px);
       }
 
-      /* Organic Pebble Image Frame */
+      /* Organic Pebble Image Frame - Expanded to Display Full Image */
       .hero-frame-container {
         position: relative;
         z-index: 2;
         width: 100%;
-        border-radius: 44% 56% 60% 40% / 46% 48% 52% 54%;
+        border-radius: 40px 80px 40px 68px;
         overflow: hidden;
         background: #ffffff;
         box-shadow:
@@ -1771,8 +1771,8 @@ const KM_AUTISM_NOTES = [
         width: 100%;
         height: auto;
         aspect-ratio: 1411 / 1115;
-        object-fit: cover;
-        transform: scale(1.02);
+        object-fit: contain;
+        background: #ffffff;
       }
 
       /* Playful Top-Right Hand-Drawn Heart Doodle */
@@ -3144,9 +3144,9 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-media {
-          max-width: min(370px, 90vw);
+          max-width: min(440px, 94vw);
           margin: 0 auto;
-          padding: 8px 6px 12px;
+          padding: 8px 6px 14px;
           box-shadow: none;
           border: none;
           border-radius: 0;
@@ -3154,13 +3154,17 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-frame-container {
-          border-radius: 44% 56% 58% 42% / 46% 48% 52% 54%;
-          max-height: 225px;
+          border-radius: 28px 52px 28px 44px;
+          max-height: none;
         }
 
         .hero-frame-container img {
-          max-height: 225px;
-          object-fit: cover;
+          max-height: none;
+          width: 100%;
+          height: auto;
+          aspect-ratio: 1411 / 1115;
+          object-fit: contain;
+          background: #ffffff;
         }
 
         .hero-floating-badge {
