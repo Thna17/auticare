@@ -1404,7 +1404,7 @@ const KM_AUTISM_NOTES = [
         pointer-events: auto;
         max-width: 1240px;
         margin: 0 auto;
-        height: 64px;
+        height: 70px;
         background: #ffffff;
         border-radius: 9999px;
         box-shadow:
@@ -1414,7 +1414,7 @@ const KM_AUTISM_NOTES = [
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 10px 0 22px;
+        padding: 0 12px 0 24px;
         gap: 12px;
         transition:
           box-shadow 0.25s ease,
@@ -1432,8 +1432,8 @@ const KM_AUTISM_NOTES = [
       }
 
       .brand-logo-frame {
-        width: 34px;
-        height: 34px;
+        width: 38px;
+        height: 38px;
         border-radius: 9999px;
         overflow: hidden;
         display: grid;
@@ -1456,7 +1456,7 @@ const KM_AUTISM_NOTES = [
       }
 
       .brand-text {
-        font-size: 23px;
+        font-size: 24px;
         font-weight: 800;
         letter-spacing: -0.03em;
         background: linear-gradient(135deg, #0f766e 0%, #0e7490 50%, #0369a1 100%);
@@ -1469,7 +1469,7 @@ const KM_AUTISM_NOTES = [
       .desktop-nav {
         display: flex;
         align-items: center;
-        gap: 2px;
+        gap: 3px;
         background: transparent;
         padding: 0;
         border: none;
@@ -1479,10 +1479,10 @@ const KM_AUTISM_NOTES = [
       .desktop-nav a {
         display: inline-flex;
         align-items: center;
-        padding: 7px 11px;
+        padding: 8px 13px;
         border-radius: 9999px;
         color: #4b5563;
-        font-size: 13.5px;
+        font-size: 14.5px;
         font-weight: 500;
         white-space: nowrap;
         text-decoration: none;
@@ -1500,7 +1500,7 @@ const KM_AUTISM_NOTES = [
         color: #0e7490;
         background: rgba(14, 116, 144, 0.1);
         font-weight: 600;
-        padding: 7px 15px;
+        padding: 8px 16px;
         box-shadow: none;
       }
 
@@ -1508,22 +1508,22 @@ const KM_AUTISM_NOTES = [
       .header-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
         flex-shrink: 0;
       }
 
       .topbar-lang-toggle {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 0 12px;
-        height: 38px;
+        gap: 7px;
+        padding: 0 14px;
+        height: 42px;
         border: 1px solid #e2e8f0;
         border-radius: 9999px;
         background: #f8fafc;
         color: #475569;
         font-family: inherit;
-        font-size: 13px;
+        font-size: 13.5px;
         font-weight: 600;
         cursor: pointer;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -1542,25 +1542,25 @@ const KM_AUTISM_NOTES = [
       }
 
       .topbar-lang-toggle .lang-flag {
-        font-size: 15px;
+        font-size: 16px;
         line-height: 1;
       }
 
       .topbar-lang-toggle .lang-text {
-        font-size: 13px;
+        font-size: 13.5px;
         line-height: 1;
         font-weight: 600;
       }
 
       .signup-link {
-        height: 38px;
-        padding: 0 14px;
+        height: 42px;
+        padding: 0 16px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         border-radius: 9999px;
         color: #4b5563;
-        font-size: 14px;
+        font-size: 14.5px;
         font-weight: 600;
         text-decoration: none;
         transition: all 0.18s ease;
@@ -1574,8 +1574,8 @@ const KM_AUTISM_NOTES = [
       /* Prominent Pill Button with AutiCare Original Brand Palette */
       .login-link,
       .dashboard-link {
-        height: 42px;
-        padding: 0 20px;
+        height: 46px;
+        padding: 0 22px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1583,7 +1583,7 @@ const KM_AUTISM_NOTES = [
         border-radius: 9999px;
         background: linear-gradient(135deg, #0e7490 0%, #0369a1 100%);
         color: #ffffff;
-        font-size: 14px;
+        font-size: 14.5px;
         font-weight: 600;
         text-decoration: none;
         box-shadow: 0 4px 14px rgba(14, 116, 144, 0.28);
@@ -3006,35 +3006,40 @@ const KM_AUTISM_NOTES = [
 
       @media (max-width: 768px) {
         .site-header {
-          top: 10px;
-          padding: 0 12px;
+          top: 14px;
+          padding: 0 16px;
         }
 
         .nav-shell {
-          height: 56px;
-          padding: 0 8px 0 14px;
-          gap: 8px;
+          height: 66px;
+          padding: 0 12px 0 20px;
+          gap: 12px;
         }
 
         .brand,
         .footer-brand {
-          font-size: 19px;
-          gap: 8px;
+          font-size: 22px;
+          gap: 10px;
         }
 
         .brand-text {
-          font-size: 19px;
+          font-size: 23px;
+          font-weight: 800;
         }
 
-        .brand-logo-frame,
+        .brand-logo-frame {
+          width: 38px;
+          height: 38px;
+        }
+
         .brand img,
         .footer-brand img {
-          width: 30px;
-          height: 30px;
+          width: 38px;
+          height: 38px;
         }
 
         .header-actions {
-          gap: 6px;
+          gap: 9px;
         }
 
         .header-actions .login-link {
@@ -3046,25 +3051,36 @@ const KM_AUTISM_NOTES = [
         }
 
         .topbar-lang-toggle {
-          height: 34px;
-          padding: 0 8px;
-          font-size: 12px;
+          height: 44px;
+          padding: 0 15px;
+          gap: 8px;
+          font-size: 14px;
+        }
+
+        .topbar-lang-toggle .lang-flag {
+          font-size: 17px;
         }
 
         .topbar-lang-toggle .lang-text {
-          font-size: 12px;
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .mobile-menu-toggle {
+          width: 46px;
+          height: 46px;
         }
 
         .dashboard-link {
-          height: 34px;
-          padding: 0 12px;
-          font-size: 12.5px;
+          height: 42px;
+          padding: 0 16px;
+          font-size: 14px;
         }
 
         .user-avatar {
-          width: 32px;
-          height: 32px;
-          font-size: 12px;
+          width: 38px;
+          height: 38px;
+          font-size: 14px;
         }
 
         .hero-section {
@@ -3090,11 +3106,11 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-section h1 {
-          font-size: clamp(28px, 7.8vw, 38px);
-          line-height: 1.12;
+          font-size: clamp(36px, 10.2vw, 52px);
+          line-height: 1.18;
           font-weight: 900;
           color: #0f172a;
-          letter-spacing: -0.03em;
+          letter-spacing: -0.025em;
           text-wrap: balance;
           text-align: center;
           word-break: normal;
@@ -3102,12 +3118,12 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-subtitle {
-          font-size: clamp(14px, 3.8vw, 16px);
-          line-height: 1.45;
+          font-size: clamp(16px, 4.3vw, 18.5px);
+          line-height: 1.52;
           color: #475569;
           margin: 0 auto;
           text-align: center;
-          max-width: 440px;
+          max-width: 490px;
         }
 
         .hero-actions {
