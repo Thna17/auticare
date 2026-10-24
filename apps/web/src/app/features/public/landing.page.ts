@@ -631,16 +631,158 @@ const KM_AUTISM_NOTES = [
         </div>
 
         <div class="hero-media">
-          <picture>
-            <source srcset="/images/signup-hero.webp" type="image/webp" />
-            <img
-              src="/images/signup-hero.png"
-              alt="Parent and child developmental support illustration"
-              width="1376"
-              height="768"
-              fetchpriority="high"
-            />
-          </picture>
+          <!-- Background Organic Pastel Blob -->
+          <div class="hero-blob-backdrop" aria-hidden="true"></div>
+
+          <!-- Top-Right Playful Doodle Heart -->
+          <div class="hero-doodle-heart" aria-hidden="true">
+            <svg width="46" height="42" viewBox="0 0 46 42" fill="none">
+              <path
+                d="M23 37C23 37 6 25 6 14C6 8 10.5 4 16.5 4C20 4 22 6 23 7.5C24 6 26 4 29.5 4C35.5 4 40 8 40 14C40 25 23 37 23 37Z"
+                fill="none"
+                stroke="#f59e0b"
+                stroke-width="3.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M38 27C40.5 28 42.5 27 44.5 25"
+                stroke="#f59e0b"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+
+          <!-- Playful Joy Tick Marks -->
+          <div class="hero-doodle-ticks" aria-hidden="true">
+            <svg width="26" height="20" viewBox="0 0 26 20" fill="none">
+              <path
+                d="M6 16C8 11 11 7 15 3"
+                stroke="#10b981"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+              <path
+                d="M17 18C19 13 21 10 24 6"
+                stroke="#10b981"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+
+          <!-- Organic Pebble-Framed Photo -->
+          <div class="hero-frame-container">
+            <picture>
+              <source srcset="/images/signup-hero.webp" type="image/webp" />
+              <img
+                src="/images/signup-hero.png"
+                alt="Mother and child smiling while building blocks together"
+                width="1411"
+                height="1115"
+                fetchpriority="high"
+              />
+            </picture>
+          </div>
+
+          <!-- Floating Support & Futures Pill Badge -->
+          <div class="hero-floating-badge" role="status">
+            <div class="badge-icon-wrap" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                <circle
+                  cx="11"
+                  cy="7"
+                  r="4"
+                  stroke="#0d9488"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M4 21C4 16.5 7.5 13.5 11.5 13.5"
+                  stroke="#0d9488"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M16.5 14C15 12.5 13 14 15 16L16.5 17.5L18 16C20 14 18 12.5 16.5 14Z"
+                  fill="#10b981"
+                  stroke="#0d9488"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M19.5 21C19.5 18.5 18 16.5 16 16.5"
+                  stroke="#0d9488"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div class="badge-text-wrap">
+              <span class="badge-line-1">
+                {{ currentLang() === 'km' ? 'ការគាំទ្រកាន់តែប្រសើរ' : 'Better support.' }}
+              </span>
+              <span class="badge-line-2">
+                {{ currentLang() === 'km' ? 'អនាគតកាន់តែភ្លឺស្វាង' : 'Brighter futures.' }}
+              </span>
+            </div>
+            <div class="badge-heart-wrap" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="#f59e0b">
+                <path
+                  d="M10 18.25C10 18.25 1.5 12.8 1.5 6.75C1.5 3.75 3.8 1.5 6.75 1.5C8.4 1.5 9.5 2.5 10 3.25C10.5 2.5 11.6 1.5 13.25 1.5C16.2 1.5 18.5 3.75 18.5 6.75C18.5 12.8 10 18.25 10 18.25Z"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Bottom-Right Botanical Leaf Illustration -->
+          <div class="hero-botanical-leaf" aria-hidden="true">
+            <svg width="74" height="74" viewBox="0 0 74 74" fill="none">
+              <path
+                d="M16 68C28 60 46 44 50 20"
+                stroke="#86efac"
+                stroke-width="4.5"
+                stroke-linecap="round"
+              />
+              <ellipse
+                cx="30"
+                cy="24"
+                rx="11"
+                ry="6.5"
+                transform="rotate(-30 30 24)"
+                fill="#86efac"
+                fill-opacity="0.85"
+              />
+              <ellipse
+                cx="26"
+                cy="46"
+                rx="11"
+                ry="6.5"
+                transform="rotate(-15 26 46)"
+                fill="#86efac"
+                fill-opacity="0.85"
+              />
+              <ellipse
+                cx="50"
+                cy="20"
+                rx="9"
+                ry="5.5"
+                transform="rotate(-45 50 20)"
+                fill="#86efac"
+                fill-opacity="0.85"
+              />
+              <ellipse
+                cx="54"
+                cy="40"
+                rx="10"
+                ry="6"
+                transform="rotate(35 54 40)"
+                fill="#86efac"
+                fill-opacity="0.85"
+              />
+            </svg>
+          </div>
         </div>
       </section>
 
@@ -1579,20 +1721,164 @@ const KM_AUTISM_NOTES = [
         transform: translateY(-1px);
       }
 
+      /* Modern Organic Blob Hero Frame & Floating Card */
       .hero-media {
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow:
-          0 24px 60px rgb(41 74 90 / 0.14),
-          0 0 0 1px rgba(15, 23, 42, 0.06);
-        border: 1px solid var(--ac-color-border-slate);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 24px 18px;
+        box-sizing: border-box;
       }
 
-      .hero-media img {
+      /* Pastel Mint Organic Blob Background */
+      .hero-blob-backdrop {
+        position: absolute;
+        top: 3%;
+        left: 0;
+        width: 98%;
+        height: 94%;
+        background: linear-gradient(
+          135deg,
+          rgb(167 243 208 / 0.7) 0%,
+          rgb(187 247 208 / 0.45) 100%
+        );
+        border-radius: 46% 54% 38% 62% / 52% 44% 56% 48%;
+        z-index: 1;
+        pointer-events: none;
+        transform: rotate(-3deg);
+        filter: blur(1px);
+      }
+
+      /* Organic Pebble Image Frame */
+      .hero-frame-container {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        border-radius: 44% 56% 60% 40% / 46% 48% 52% 54%;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow:
+          0 24px 50px -12px rgba(15, 23, 42, 0.16),
+          0 0 0 1px rgba(255, 255, 255, 0.85);
+      }
+
+      .hero-frame-container img {
         display: block;
         width: 100%;
         height: auto;
+        aspect-ratio: 1411 / 1115;
         object-fit: cover;
+        transform: scale(1.02);
+      }
+
+      /* Playful Top-Right Hand-Drawn Heart Doodle */
+      .hero-doodle-heart {
+        position: absolute;
+        top: -6px;
+        right: 18px;
+        z-index: 3;
+        pointer-events: none;
+        animation: heroDoodleFloat 4s ease-in-out infinite alternate;
+      }
+
+      /* Playful Tick Marks over boy */
+      .hero-doodle-ticks {
+        position: absolute;
+        top: 24%;
+        left: 40%;
+        z-index: 3;
+        pointer-events: none;
+        opacity: 0.9;
+      }
+
+      /* Floating Care Badge */
+      .hero-floating-badge {
+        position: absolute;
+        bottom: 12px;
+        right: 4px;
+        z-index: 4;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px 12px 14px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 999px;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        box-shadow:
+          0 16px 36px -6px rgba(15, 23, 42, 0.16),
+          0 2px 8px rgba(15, 23, 42, 0.04);
+        transition:
+          transform 200ms ease,
+          box-shadow 200ms ease;
+      }
+
+      .hero-floating-badge:hover {
+        transform: translateY(-2px);
+        box-shadow:
+          0 20px 40px -6px rgba(15, 23, 42, 0.2),
+          0 4px 12px rgba(15, 23, 42, 0.06);
+      }
+
+      .badge-icon-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgb(204 251 241 / 0.65);
+        color: #0d9488;
+        flex-shrink: 0;
+      }
+
+      .badge-text-wrap {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+        text-align: left;
+      }
+
+      .badge-line-1,
+      .badge-line-2 {
+        font-size: 13.5px;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+      }
+
+      .badge-heart-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #f59e0b;
+        margin-left: 2px;
+        flex-shrink: 0;
+      }
+
+      /* Botanical Leaf Illustration at Bottom Right */
+      .hero-botanical-leaf {
+        position: absolute;
+        bottom: -20px;
+        right: -16px;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.88;
+      }
+
+      @keyframes heroDoodleFloat {
+        0% {
+          transform: translateY(0) rotate(0deg);
+        }
+        100% {
+          transform: translateY(-4px) rotate(3deg);
+        }
       }
 
       /* Section Common Headings */
@@ -2784,8 +3070,8 @@ const KM_AUTISM_NOTES = [
         .hero-section {
           min-height: 100svh;
           box-sizing: border-box;
-          padding: 36px 16px 48px;
-          gap: 28px;
+          padding: 16px 16px 20px;
+          gap: 14px;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -2797,15 +3083,15 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-copy {
-          gap: 20px;
+          gap: 12px;
           text-align: center;
           align-items: center;
           margin: 0 auto;
         }
 
         .hero-section h1 {
-          font-size: clamp(38px, 10.5vw, 54px);
-          line-height: 1.1;
+          font-size: clamp(28px, 7.8vw, 38px);
+          line-height: 1.12;
           font-weight: 900;
           color: #0f172a;
           letter-spacing: -0.03em;
@@ -2816,30 +3102,33 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-subtitle {
-          font-size: clamp(16.5px, 4.4vw, 19px);
-          line-height: 1.55;
+          font-size: clamp(14px, 3.8vw, 16px);
+          line-height: 1.45;
           color: #475569;
           margin: 0 auto;
           text-align: center;
-          max-width: 480px;
+          max-width: 440px;
         }
 
         .hero-actions {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
+          justify-content: center;
           width: 100%;
-          gap: 12px;
-          margin-top: 6px;
+          gap: 10px;
+          margin-top: 2px;
           align-items: center;
         }
 
         .primary-action,
         .secondary-action {
-          width: 100%;
-          height: 52px;
-          font-size: 16px;
+          width: auto;
+          flex: 1;
+          max-width: 200px;
+          height: 44px;
+          font-size: 14.5px;
           font-weight: 600;
-          padding: 0 20px;
+          padding: 0 16px;
           border-radius: 999px;
           justify-content: center;
           text-align: center;
@@ -2847,7 +3136,7 @@ const KM_AUTISM_NOTES = [
         }
 
         .primary-action {
-          box-shadow: 0 10px 24px -4px rgba(41, 74, 90, 0.28);
+          box-shadow: 0 8px 18px -4px rgba(41, 74, 90, 0.28);
         }
 
         .secondary-action {
@@ -2855,13 +3144,61 @@ const KM_AUTISM_NOTES = [
         }
 
         .hero-media {
-          margin-top: 4px;
-          border-radius: 20px;
-          overflow: hidden;
-          box-shadow:
-            0 20px 40px -12px rgba(15, 23, 42, 0.15),
-            0 0 0 1px rgba(226, 232, 240, 0.85);
+          max-width: min(370px, 90vw);
+          margin: 0 auto;
+          padding: 8px 6px 12px;
+          box-shadow: none;
           border: none;
+          border-radius: 0;
+          overflow: visible;
+        }
+
+        .hero-frame-container {
+          border-radius: 44% 56% 58% 42% / 46% 48% 52% 54%;
+          max-height: 225px;
+        }
+
+        .hero-frame-container img {
+          max-height: 225px;
+          object-fit: cover;
+        }
+
+        .hero-floating-badge {
+          bottom: 2px;
+          right: -2px;
+          padding: 6px 12px 6px 8px;
+          gap: 8px;
+          border-radius: 999px;
+        }
+
+        .badge-icon-wrap {
+          width: 26px;
+          height: 26px;
+        }
+
+        .badge-icon-wrap svg {
+          width: 17px;
+          height: 17px;
+        }
+
+        .badge-line-1,
+        .badge-line-2 {
+          font-size: 10.5px;
+        }
+
+        .badge-heart-wrap svg {
+          width: 13px;
+          height: 13px;
+        }
+
+        .hero-doodle-heart svg {
+          width: 32px;
+          height: 28px;
+        }
+
+        .hero-botanical-leaf svg {
+          width: 46px;
+          height: 46px;
         }
 
         .section-heading {
