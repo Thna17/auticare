@@ -1297,8 +1297,8 @@ const KM_AUTISM_NOTES = [
         display: grid;
         place-items: center;
         background: #ffffff;
-        box-shadow: 0 2px 8px rgba(234, 56, 76, 0.15);
-        border: 1px solid rgba(234, 56, 76, 0.18);
+        box-shadow: 0 2px 10px rgba(14, 116, 144, 0.14);
+        border: 1px solid rgba(14, 116, 144, 0.16);
         transition: transform 0.22s ease;
       }
 
@@ -1314,10 +1314,12 @@ const KM_AUTISM_NOTES = [
       }
 
       .brand-text {
-        font-size: 22px;
+        font-size: 23px;
         font-weight: 800;
-        letter-spacing: -0.025em;
-        color: #ea384c;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, #0f766e 0%, #0e7490 50%, #0369a1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         line-height: 1;
       }
 
@@ -1347,14 +1349,14 @@ const KM_AUTISM_NOTES = [
       }
 
       .desktop-nav a:hover {
-        color: #111827;
-        background: rgba(0, 0, 0, 0.04);
+        color: #0e7490;
+        background: rgba(14, 116, 144, 0.06);
       }
 
       .desktop-nav a[aria-current='page'],
       .desktop-nav a.active {
-        color: #ea384c;
-        background: #fee2e2;
+        color: #0e7490;
+        background: rgba(14, 116, 144, 0.1);
         font-weight: 600;
         padding: 7px 15px;
         box-shadow: none;
@@ -1388,12 +1390,12 @@ const KM_AUTISM_NOTES = [
 
       .topbar-lang-toggle:hover {
         background: #ffffff;
-        border-color: #cbd5e1;
-        color: #0f172a;
+        border-color: #0e7490;
+        color: #0e7490;
       }
 
       .topbar-lang-toggle:focus-visible {
-        outline: 2px solid #ea384c;
+        outline: 2px solid #0e7490;
         outline-offset: 2px;
       }
 
@@ -1423,11 +1425,11 @@ const KM_AUTISM_NOTES = [
       }
 
       .signup-link:hover {
-        color: #ea384c;
-        background: #fee2e2;
+        color: #0e7490;
+        background: rgba(14, 116, 144, 0.08);
       }
 
-      /* Prominent Coral-Red Pill Button matching reference image */
+      /* Prominent Pill Button with AutiCare Original Brand Palette */
       .login-link,
       .dashboard-link {
         height: 42px;
@@ -1437,20 +1439,20 @@ const KM_AUTISM_NOTES = [
         justify-content: center;
         gap: 8px;
         border-radius: 9999px;
-        background: #ea384c;
+        background: linear-gradient(135deg, #0e7490 0%, #0369a1 100%);
         color: #ffffff;
         font-size: 14px;
         font-weight: 600;
         text-decoration: none;
-        box-shadow: 0 4px 14px rgba(234, 56, 76, 0.35);
+        box-shadow: 0 4px 14px rgba(14, 116, 144, 0.28);
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       .login-link:hover,
       .dashboard-link:hover {
-        background: #d92d40;
+        background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
         transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(234, 56, 76, 0.45);
+        box-shadow: 0 6px 18px rgba(14, 116, 144, 0.38);
         color: #ffffff;
       }
 
@@ -1470,10 +1472,10 @@ const KM_AUTISM_NOTES = [
         width: 38px;
         height: 38px;
         border-radius: 9999px;
-        background: #fee2e2;
-        color: #ea384c;
+        background: linear-gradient(135deg, #0e7490, #38bdf8);
+        color: #ffffff;
         border: 2px solid #ffffff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 8px rgba(14, 116, 144, 0.25);
         display: grid;
         place-items: center;
         font-weight: 700;
@@ -2605,7 +2607,7 @@ const KM_AUTISM_NOTES = [
       .mobile-drawer-primary-btn {
         height: 48px;
         border-radius: 9999px;
-        background: #ea384c;
+        background: linear-gradient(135deg, #0e7490 0%, #0369a1 100%);
         color: #ffffff;
         display: inline-flex;
         align-items: center;
@@ -2614,7 +2616,7 @@ const KM_AUTISM_NOTES = [
         font-size: 15px;
         font-weight: 600;
         text-decoration: none;
-        box-shadow: 0 4px 14px rgba(234, 56, 76, 0.35);
+        box-shadow: 0 4px 14px rgba(14, 116, 144, 0.28);
       }
 
       .mobile-drawer-secondary-btn {
