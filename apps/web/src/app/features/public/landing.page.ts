@@ -2641,6 +2641,21 @@ const KM_AUTISM_NOTES = [
           padding: 48px clamp(20px, 4vw, 40px) 44px;
         }
 
+        .hero-copy {
+          text-align: center;
+          align-items: center;
+          margin: 0 auto;
+        }
+
+        .hero-section h1,
+        .hero-subtitle {
+          text-align: center;
+        }
+
+        .hero-actions {
+          justify-content: center;
+        }
+
         .progression-card {
           grid-template-columns: 1fr;
           gap: 28px;
@@ -2774,6 +2789,9 @@ const KM_AUTISM_NOTES = [
 
         .hero-copy {
           gap: 18px;
+          text-align: center;
+          align-items: center;
+          margin: 0 auto;
         }
 
         .hero-section h1 {
@@ -2783,6 +2801,7 @@ const KM_AUTISM_NOTES = [
           color: #0f172a;
           letter-spacing: -0.025em;
           text-wrap: balance;
+          text-align: center;
           word-break: normal;
           overflow-wrap: break-word;
         }
@@ -2791,7 +2810,9 @@ const KM_AUTISM_NOTES = [
           font-size: 16px;
           line-height: 1.55;
           color: #475569;
-          margin: 0;
+          margin: 0 auto;
+          text-align: center;
+          max-width: 460px;
         }
 
         .hero-actions {
@@ -2800,6 +2821,7 @@ const KM_AUTISM_NOTES = [
           width: 100%;
           gap: 12px;
           margin-top: 6px;
+          align-items: center;
         }
 
         .primary-action,
