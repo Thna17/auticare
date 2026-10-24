@@ -3378,7 +3378,7 @@ const KM_AUTISM_NOTES = [
         .hero-section {
           min-height: 100svh;
           box-sizing: border-box;
-          padding: 42px 16px 28px;
+          padding: 59px 16px 28px;
           gap: 18px;
           display: flex;
           flex-direction: column;
