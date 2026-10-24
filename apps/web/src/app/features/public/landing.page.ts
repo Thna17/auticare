@@ -528,38 +528,266 @@ const KM_AUTISM_NOTES = [
               (click)="closeMobileMenu()"
               [attr.aria-label]="currentLang() === 'km' ? 'បិទម៉ឺនុយ' : 'Close menu'"
             >
-              ✕
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
 
           <nav class="mobile-drawer-nav" aria-label="Mobile navigation links">
             <a href="#home" (click)="scrollToSection('home', $event)">
-              <span class="drawer-icon" aria-hidden="true">🏠</span>
-              <span>{{ currentLang() === 'km' ? 'ទំព័រដើម' : 'Home' }}</span>
+              <span class="drawer-icon" aria-hidden="true">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </span>
+              <span class="drawer-label">{{ currentLang() === 'km' ? 'ទំព័រដើម' : 'Home' }}</span>
+              <span class="drawer-arrow" aria-hidden="true">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
             </a>
             <a href="#progression" (click)="scrollToSection('progression', $event)">
-              <span class="drawer-icon" aria-hidden="true">✨</span>
-              <span>{{ currentLang() === 'km' ? 'លក្ខណៈពិសេស' : 'Features' }}</span>
+              <span class="drawer-icon" aria-hidden="true">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect width="7" height="9" x="3" y="3" rx="1.5" />
+                  <rect width="7" height="5" x="14" y="3" rx="1.5" />
+                  <rect width="7" height="9" x="14" y="12" rx="1.5" />
+                  <rect width="7" height="5" x="3" y="16" rx="1.5" />
+                </svg>
+              </span>
+              <span class="drawer-label">{{
+                currentLang() === 'km' ? 'លក្ខណៈពិសេស' : 'Features'
+              }}</span>
+              <span class="drawer-arrow" aria-hidden="true">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
             </a>
             <a href="#how-it-works" (click)="scrollToSection('how-it-works', $event)">
-              <span class="drawer-icon" aria-hidden="true">🧭</span>
-              <span>{{ currentLang() === 'km' ? 'ដំណើរការ' : 'How it works' }}</span>
+              <span class="drawer-icon" aria-hidden="true">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                </svg>
+              </span>
+              <span class="drawer-label">{{
+                currentLang() === 'km' ? 'ដំណើរការ' : 'How it works'
+              }}</span>
+              <span class="drawer-arrow" aria-hidden="true">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
             </a>
             <a href="#support" (click)="scrollToSection('support', $event)">
-              <span class="drawer-icon" aria-hidden="true">🛠️</span>
-              <span>{{ currentLang() === 'km' ? 'ស្វែងរកជំនួយ' : 'Find support' }}</span>
+              <span class="drawer-icon" aria-hidden="true">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </span>
+              <span class="drawer-label">{{
+                currentLang() === 'km' ? 'ស្វែងរកជំនួយ' : 'Find support'
+              }}</span>
+              <span class="drawer-arrow" aria-hidden="true">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
             </a>
             <a href="#activities" (click)="scrollToSection('activities', $event)">
-              <span class="drawer-icon" aria-hidden="true">🎨</span>
-              <span>{{ currentLang() === 'km' ? 'សកម្មភាពលេង' : 'Activities' }}</span>
+              <span class="drawer-icon" aria-hidden="true">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <path d="m9 16 2 2 4-4" />
+                </svg>
+              </span>
+              <span class="drawer-label">{{
+                currentLang() === 'km' ? 'សកម្មភាពលេង' : 'Activities'
+              }}</span>
+              <span class="drawer-arrow" aria-hidden="true">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
             </a>
             <a href="#testimonials" (click)="scrollToSection('testimonials', $event)">
-              <span class="drawer-icon" aria-hidden="true">💬</span>
-              <span>{{ currentLang() === 'km' ? 'មតិអ្នកប្រើប្រាស់' : 'Testimonials' }}</span>
+              <span class="drawer-icon" aria-hidden="true">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </span>
+              <span class="drawer-label">{{
+                currentLang() === 'km' ? 'មតិអ្នកប្រើប្រាស់' : 'Testimonials'
+              }}</span>
+              <span class="drawer-arrow" aria-hidden="true">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
             </a>
             <a href="#about-autism" (click)="scrollToSection('about-autism', $event)">
-              <span class="drawer-icon" aria-hidden="true">💙</span>
-              <span>{{ currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism' }}</span>
+              <span class="drawer-icon" aria-hidden="true">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+                  />
+                </svg>
+              </span>
+              <span class="drawer-label">{{
+                currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism'
+              }}</span>
+              <span class="drawer-arrow" aria-hidden="true">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
             </a>
           </nav>
 
@@ -2787,9 +3015,9 @@ const KM_AUTISM_NOTES = [
         right: 0;
         bottom: 0;
         width: min(340px, 86vw);
-        background: var(--ac-color-surface);
+        background: #ffffff;
         z-index: 1000;
-        box-shadow: -8px 0 32px rgb(15 23 42 / 0.2);
+        box-shadow: -10px 0 36px rgba(15, 23, 42, 0.18);
         display: flex;
         flex-direction: column;
         padding: 20px 18px 24px;
@@ -2819,37 +3047,44 @@ const KM_AUTISM_NOTES = [
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding-bottom: 16px;
-        border-bottom: 1px solid var(--ac-color-border-slate);
+        padding-bottom: 18px;
+        border-bottom: 1px solid #f1f5f9;
       }
 
       .mobile-drawer-header .brand {
         font-size: 22px;
+        gap: 10px;
       }
 
       .mobile-drawer-close {
-        width: 40px;
-        height: 40px;
-        border-radius: 999px;
-        border: 1px solid var(--ac-color-border-slate);
-        background: var(--ac-color-surface-slate);
-        color: var(--ac-color-text-strong);
-        font-size: 16px;
+        width: 38px;
+        height: 38px;
+        border-radius: 9999px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #64748b;
         display: grid;
         place-items: center;
         cursor: pointer;
-        transition: all 160ms ease;
+        transition: all 180ms ease;
       }
 
       .mobile-drawer-close:hover {
-        background: var(--ac-color-surface-info);
-        border-color: var(--ac-color-action);
+        background: #f1f5f9;
+        color: #0f172a;
+        border-color: #cbd5e1;
+        transform: scale(1.04);
+      }
+
+      .mobile-drawer-close svg {
+        width: 18px;
+        height: 18px;
       }
 
       .mobile-drawer-nav {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
         padding: 16px 0;
         flex: 1;
       }
@@ -2857,36 +3092,78 @@ const KM_AUTISM_NOTES = [
       .mobile-drawer-nav a {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px 14px;
-        border-radius: 12px;
+        gap: 13px;
+        padding: 10px 12px;
+        border-radius: 14px;
         font-size: 15px;
-        font-weight: var(--ac-font-weight-semibold);
-        color: var(--ac-color-text-strong);
+        font-weight: 600;
+        color: #1e293b;
         text-decoration: none;
-        min-height: 44px;
-        transition:
-          background 140ms ease,
-          color 140ms ease;
+        min-height: 48px;
+        box-sizing: border-box;
+        transition: all 180ms ease;
       }
 
       .mobile-drawer-nav a:hover,
       .mobile-drawer-nav a:focus-visible {
-        background: var(--ac-color-surface-info);
-        color: var(--ac-color-action-deep);
+        background: rgba(14, 116, 144, 0.06);
+        color: #0e7490;
       }
 
       .drawer-icon {
-        font-size: 18px;
-        width: 24px;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: rgba(14, 116, 144, 0.08);
+        color: #0e7490;
         display: inline-flex;
+        align-items: center;
         justify-content: center;
+        flex-shrink: 0;
+        transition: all 180ms ease;
+      }
+
+      .drawer-icon svg {
+        width: 19px;
+        height: 19px;
+      }
+
+      .mobile-drawer-nav a:hover .drawer-icon,
+      .mobile-drawer-nav a:focus-visible .drawer-icon {
+        background: #0e7490;
+        color: #ffffff;
+        transform: scale(1.04);
+        box-shadow: 0 4px 12px rgba(14, 116, 144, 0.25);
+      }
+
+      .drawer-label {
+        flex: 1;
+        letter-spacing: -0.01em;
+      }
+
+      .drawer-arrow {
+        color: #94a3b8;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 180ms ease;
+      }
+
+      .drawer-arrow svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .mobile-drawer-nav a:hover .drawer-arrow {
+        color: #0e7490;
+        transform: translateX(3px);
       }
 
       .mobile-drawer-footer {
         margin-top: auto;
-        padding-top: 16px;
-        border-top: 1px solid var(--ac-color-border-slate);
+        padding-top: 18px;
+        border-top: 1px solid #f1f5f9;
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -2905,13 +3182,20 @@ const KM_AUTISM_NOTES = [
         font-weight: 600;
         text-decoration: none;
         box-shadow: 0 4px 14px rgba(14, 116, 144, 0.28);
+        transition: all 180ms ease;
+      }
+
+      .mobile-drawer-primary-btn:hover {
+        background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
+        box-shadow: 0 6px 18px rgba(14, 116, 144, 0.38);
+        transform: translateY(-1px);
       }
 
       .mobile-drawer-secondary-btn {
         height: 46px;
         border-radius: 9999px;
         border: 1px solid #e2e8f0;
-        background: #f8fafc;
+        background: #ffffff;
         color: #334155;
         display: inline-flex;
         align-items: center;
@@ -2920,6 +3204,14 @@ const KM_AUTISM_NOTES = [
         font-size: 15px;
         font-weight: 600;
         text-decoration: none;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        transition: all 180ms ease;
+      }
+
+      .mobile-drawer-secondary-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
       }
 
       @media (max-width: 1024px) {
