@@ -777,7 +777,7 @@ export interface EnrollmentViewModel {
 
       .header-text h1 {
         margin: 0 0 6px 0;
-        font-size: 26px;
+        font-size: var(--ac-type-page-title);
         font-weight: 800;
         color: var(--ac-color-text-slate-strong);
         letter-spacing: -0.02em;

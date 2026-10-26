@@ -711,8 +711,6 @@ const formatAge = (dateOfBirth: string, isKm = false): string => {
       }
 
       .result {
-        max-width: 780px;
-        margin: 0 auto;
         display: flex;
         flex-direction: column;
         gap: 22px;

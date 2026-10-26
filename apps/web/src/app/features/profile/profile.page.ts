@@ -130,8 +130,6 @@ const COPY = {
     `
       :host {
         display: block;
-        max-width: 880px;
-        margin: 0 auto;
       }
 
       .page-head {

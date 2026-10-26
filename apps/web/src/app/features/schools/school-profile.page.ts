@@ -624,7 +624,7 @@ const PRESET_FACILITIES: readonly string[] = [
       }
       h1 {
         margin: 0;
-        font-size: 26px;
+        font-size: var(--ac-type-page-title);
         font-weight: 800;
         color: var(--ac-color-text-slate-strong);
         letter-spacing: -0.02em;

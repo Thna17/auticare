@@ -214,22 +214,23 @@ type FaqItem = {
       }
 
       .help {
-        max-width: 760px;
-        margin: 0 auto;
         display: flex;
         flex-direction: column;
         gap: 20px;
       }
       .head h1 {
         margin: 0 0 8px;
-        color: var(--hc-teal);
-        font-size: 34px;
-        font-weight: 800;
+        color: var(--ac-color-text-strong);
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-title);
+        font-weight: var(--ac-font-weight-bold);
       }
       .subtitle {
         margin: 0;
         color: var(--hc-text-muted);
-        font-size: 16px;
+        font-size: var(--ac-type-page-subtitle);
+        line-height: var(--ac-line-body);
+        max-width: 62ch;
       }
 
       /* Search input */

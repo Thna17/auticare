@@ -806,9 +806,7 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
     `
       :host {
         display: block;
-        max-width: 1040px;
-        margin: 0 auto;
-        padding: 0 8px 48px;
+        padding-bottom: 48px;
       }
 
       .page-header {

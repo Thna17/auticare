@@ -116,8 +116,6 @@ const COPY = {
     `
       :host {
         display: block;
-        max-width: 1080px;
-        margin: 0 auto;
       }
 
       .page-head {

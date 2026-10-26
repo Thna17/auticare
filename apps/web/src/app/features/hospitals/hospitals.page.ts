@@ -324,8 +324,9 @@ const SERVICE_FILTER_OPTIONS = [
         flex-wrap: wrap;
       }
       .header-content h1 {
-        font-size: 28px;
-        color: var(--ac-color-action-darkest);
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-title);
+        color: var(--ac-color-text-strong);
         margin-bottom: 6px;
       }
       .header-content p {

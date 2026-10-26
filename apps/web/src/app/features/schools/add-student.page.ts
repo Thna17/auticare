@@ -142,7 +142,7 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
 
       .header-text h1 {
         margin: 0 0 8px 0;
-        font-size: 28px;
+        font-size: var(--ac-type-page-title);
         font-weight: 700;
         color: var(--ac-color-text-slate-strong);
       }

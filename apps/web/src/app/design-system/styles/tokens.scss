@@ -288,8 +288,8 @@
   --ac-font-weight-medium: 500;
   --ac-font-weight-semibold: 600;
   --ac-font-weight-bold: 700;
-  --ac-type-page-title: clamp(2rem, 4vw, 2.75rem);
-  --ac-type-page-subtitle: 1.0625rem;
+  --ac-type-page-title: clamp(1.625rem, 1.2rem + 1.2vw, 2rem);
+  --ac-type-page-subtitle: 1rem;
   --ac-type-section-title: 1.5rem;
   --ac-type-card-title: 1.375rem;
   --ac-type-body: 1rem;

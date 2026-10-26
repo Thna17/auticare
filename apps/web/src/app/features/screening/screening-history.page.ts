@@ -310,8 +310,6 @@ type TimelineItem = {
       }
 
       .history {
-        max-width: 820px;
-        margin: 0 auto;
         display: flex;
         flex-direction: column;
         gap: 24px;

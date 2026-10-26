@@ -234,8 +234,6 @@ const COPY = {
       :host {
         display: flex;
         flex-direction: column;
-        max-width: 820px;
-        margin: 0 auto;
         min-height: calc(100vh - 160px);
       }
 
