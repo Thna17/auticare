@@ -63,6 +63,35 @@ describe('ScreeningPage', () => {
     expect(fixture.componentInstance.selectedChildId()).toBe('child_1');
   });
 
+  it('puts start and history in a compact toolbar, and continue only when a draft exists', () => {
+    TestBed.inject(I18nService).setLanguage('en');
+    const fixture = TestBed.createComponent(ScreeningPage);
+    fixture.detectChanges();
+
+    httpTesting.expectOne('/api/v1/children').flush({ data: mockChildren });
+    httpTesting.expectOne('/api/v1/screening/children/child_1/sessions').flush({
+      data: [
+        {
+          id: 'session_1',
+          childId: 'child_1',
+          status: 'DRAFT',
+          startedAt: '2026-10-20T00:00:00.000Z',
+        },
+      ],
+    });
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const actions = element.querySelector('.head-actions');
+    expect(actions?.querySelector('.btn-start')?.textContent).toContain('Start screening');
+    expect(actions?.querySelector('.link-history')?.textContent).toContain('History');
+    expect(actions?.querySelector('.btn-continue')?.textContent).toContain('Continue');
+    expect(element.querySelector('.draft-note')?.textContent).toContain('in progress');
+    // The old full-width action card is gone.
+    expect(element.querySelector('.action-card')).toBeNull();
+    expect(element.querySelectorAll('.child-grid ac-child-select-card').length).toBe(2);
+  });
+
   it('selects requested child when childId query param matches', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({

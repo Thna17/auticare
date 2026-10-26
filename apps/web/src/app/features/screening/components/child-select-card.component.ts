@@ -56,51 +56,66 @@ const formatChildAge = (dateOfBirth: string, isKm = false): string => {
   `,
   styles: [
     `
+      /* Size knobs default to the compact card; a host page can enlarge it. */
+      :host {
+        display: block;
+      }
       .card {
         position: relative;
-        width: 116px;
-        min-height: 132px;
+        width: var(--scr-card-width, 116px);
+        height: 100%;
+        min-height: var(--scr-card-min-height, 132px);
         flex: 0 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 8px;
-        padding: 18px 12px 16px;
+        padding: var(--scr-card-padding, 18px 12px 16px);
         border: 2px solid var(--scr-banner-border);
         border-radius: var(--scr-radius);
         background: var(--scr-surface);
         cursor: pointer;
         transition:
           border-color 160ms ease,
-          box-shadow 160ms ease;
+          box-shadow 160ms ease,
+          transform 160ms ease;
       }
       .card:hover {
         border-color: var(--scr-avatar-bg);
+        transform: translateY(-2px);
       }
       .card.selected {
         border-color: var(--scr-teal);
         box-shadow: var(--scr-shadow-card);
+      }
+      :host-context(.reduced-motion) .card:hover {
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .card:hover {
+          transform: none;
+        }
       }
       .card:focus-visible {
         outline: 3px solid var(--scr-teal);
         outline-offset: 2px;
       }
       .avatar {
-        width: 52px;
-        height: 52px;
+        width: var(--scr-card-avatar, 52px);
+        height: var(--scr-card-avatar, 52px);
         border-radius: 999px;
         background: var(--scr-avatar-bg);
         color: var(--scr-teal-ink);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 22px;
+        font-size: calc(var(--scr-card-avatar, 52px) * 0.42);
         font-weight: 800;
       }
       .name {
         color: var(--scr-text);
         font-weight: 700;
-        font-size: 15px;
+        font-size: var(--scr-card-name, 15px);
         line-height: 1.2;
         text-align: center;
       }

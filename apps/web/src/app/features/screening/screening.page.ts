@@ -22,14 +22,56 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
   template: `
     <section class="intro">
       <header class="head">
-        <h1>{{ isKm() ? 'ការវាយតម្លៃអូទីសឹម' : 'Autism Screening' }}</h1>
-        <p class="subtitle">
-          {{
-            isKm()
-              ? 'ការគាំទ្រព័ត៌មានដើម្បីជួយអ្នកយល់ដឹងពីការលូតលាស់របស់កូនអ្នក។'
-              : "Informational support to help you understand your child's development."
-          }}
-        </p>
+        <div class="head-text">
+          <h1>{{ isKm() ? 'ការវាយតម្លៃអូទីសឹម' : 'Autism Screening' }}</h1>
+          <p class="subtitle">
+            {{
+              isKm()
+                ? 'ការគាំទ្រព័ត៌មានដើម្បីជួយអ្នកយល់ដឹងពីការលូតលាស់របស់កូនអ្នក។'
+                : "Informational support to help you understand your child's development."
+            }}
+          </p>
+        </div>
+
+        @if (!loading() && !error() && children().length > 0) {
+          <div class="head-actions">
+            <button type="button" class="btn-ghost link-history" (click)="viewHistory()">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5M12 7v5l3 2" />
+              </svg>
+              {{ isKm() ? 'ប្រវត្តិ' : 'History' }}
+            </button>
+            @if (draftSession(); as draft) {
+              <button
+                type="button"
+                class="btn-ghost btn-continue"
+                (click)="continueSession(draft)"
+                [title]="
+                  isKm()
+                    ? 'ការវាយតម្លៃបានចាប់ផ្តើម ' + formatDate(draft.startedAt)
+                    : 'Screening started ' + formatDate(draft.startedAt)
+                "
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+                {{ isKm() ? 'បន្ត' : 'Continue' }}
+              </button>
+            }
+            <button
+              type="button"
+              class="btn-start"
+              [disabled]="!selectedChildId()"
+              (click)="startNew()"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 4v16l13-8Z" />
+              </svg>
+              {{ isKm() ? 'ចាប់ផ្តើមការវាយតម្លៃ' : 'Start screening' }}
+            </button>
+          </div>
+        }
       </header>
 
       <ac-screening-info-banner>
@@ -83,10 +125,23 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
         </section>
       } @else {
         <section class="select-child" role="group" aria-labelledby="select-child-label">
-          <p id="select-child-label" class="section-label">
-            {{ isKm() ? 'ជ្រើសរើសកុមារ' : 'SELECT CHILD' }}
-          </p>
-          <div class="child-row">
+          <div class="select-head">
+            <h2 id="select-child-label" class="section-label">
+              {{ isKm() ? 'ជ្រើសរើសកុមារ' : 'Select child' }}
+            </h2>
+            @if (draftSession(); as draft) {
+              <p class="draft-note">
+                <span class="draft-dot" aria-hidden="true"></span>
+                {{
+                  isKm()
+                    ? 'មានការវាយតម្លៃមិនទាន់បញ្ចប់ ចាប់ផ្តើម ' + formatDate(draft.startedAt)
+                    : 'Screening in progress · started ' + formatDate(draft.startedAt)
+                }}
+              </p>
+            }
+          </div>
+
+          <div class="child-grid">
             @for (child of children(); track child.id) {
               <ac-child-select-card
                 [child]="child"
@@ -97,102 +152,35 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
             <a class="add-child" routerLink="/children/new">
               <span class="add-plus" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
-                  <line
-                    x1="12"
-                    y1="5"
-                    x2="12"
-                    y2="19"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                  />
-                  <line
-                    x1="5"
-                    y1="12"
-                    x2="19"
-                    y2="12"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                  />
+                  <path d="M12 5v14M5 12h14" />
                 </svg>
               </span>
-              <span class="add-label">{{ isKm() ? 'បន្ថែម' : 'Add Child' }}</span>
+              <span class="add-label">{{ isKm() ? 'បន្ថែមកុមារ' : 'Add child' }}</span>
             </a>
           </div>
-        </section>
-
-        <section class="action-card">
-          @if (draftSession(); as draft) {
-            <div class="last-activity">
-              <div class="last-copy">
-                <p class="section-label">{{ isKm() ? 'សកម្មភាពចុងក្រោយ' : 'LAST ACTIVITY' }}</p>
-                <p class="last-meta">
-                  {{
-                    isKm()
-                      ? 'ការវាយតម្លៃបានចាប់ផ្តើម ' + formatDate(draft.startedAt)
-                      : 'Screening started ' + formatDate(draft.startedAt)
-                  }}
-                </p>
-              </div>
-              <button type="button" class="btn-continue" (click)="continueSession(draft)">
-                {{ isKm() ? 'បន្ត' : 'Continue' }}
-              </button>
-            </div>
-            <div class="divider">
-              <span>{{ isKm() ? 'ឬ' : 'OR' }}</span>
-            </div>
-          }
-
-          <button
-            type="button"
-            class="btn-primary"
-            [disabled]="!selectedChildId()"
-            (click)="startNew()"
-          >
-            {{ isKm() ? 'ចាប់ផ្តើមការវាយតម្លៃថ្មី' : 'Start new screening' }}
-          </button>
-
-          <button type="button" class="link-history" (click)="viewHistory()">
-            {{ isKm() ? 'មើលប្រវត្តិនៃការវាយតម្លៃ' : 'View screening history' }}
-          </button>
         </section>
 
         <footer class="foot">
           <span class="foot-item">
             <svg class="foot-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
-              <path
-                d="M12 7.5V12l3 2"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7.5V12l3 2" />
             </svg>
             {{ isKm() ? 'ចំណាយពេលប្រហែល ១០-១៥ នាទី' : 'Takes approx. 10-15 mins' }}
           </span>
           <span class="foot-item">
             <svg class="foot-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <rect
-                x="5"
-                y="10.5"
-                width="14"
-                height="9"
-                rx="2"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              />
-              <path
-                d="M8 10.5V8a4 4 0 0 1 8 0v2.5"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              />
+              <rect x="5" y="10.5" width="14" height="9" rx="2" />
+              <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
             </svg>
             {{ isKm() ? 'ឯកជនភាព និងសុវត្ថិភាព' : 'Private and secure' }}
+          </span>
+          <span class="foot-item">
+            <svg class="foot-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3a9 9 0 1 0 9 9" />
+              <path d="M21 3 12 12M15 3h6v6" />
+            </svg>
+            {{ isKm() ? 'អាចបន្តពេលក្រោយបាន' : 'Save and continue later' }}
           </span>
         </footer>
       }
@@ -200,9 +188,8 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
   `,
   styles: [
     `
-      /* Named constants for this feature. Values mirror the app shell's existing
-         hardcoded hex/px exactly (there is no token system). Child components in
-         this feature inherit these custom properties. */
+      /* Named constants for this feature. Child components in this feature
+         inherit these custom properties. */
       :host {
         --scr-teal: var(--ac-color-action);
         --scr-teal-ink: var(--ac-color-ink-f);
@@ -217,30 +204,125 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
         --scr-shadow-btn: 0 10px 26px rgb(61 99 117 / 0.18);
         --scr-shadow-card: 0 12px 30px rgb(41 74 90 / 0.08);
         --scr-error: var(--ac-color-alert-text);
+
+        /* The child cards are the main choice on this page, so they are large. */
+        --scr-card-width: 100%;
+        --scr-card-min-height: 188px;
+        --scr-card-padding: 26px 16px 22px;
+        --scr-card-avatar: 72px;
+        --scr-card-name: 18px;
         display: block;
       }
 
       .intro {
-        max-width: 720px;
-        margin: 0 auto;
         display: flex;
         flex-direction: column;
         gap: 28px;
       }
 
+      /* ---- Header with the toolbar actions ---- */
       .head {
-        text-align: center;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px 24px;
+        flex-wrap: wrap;
       }
+
+      .head-text {
+        min-width: 0;
+        flex: 1 1 360px;
+      }
+
       .head h1 {
         margin: 0 0 8px;
-        color: var(--scr-teal);
-        font-size: 34px;
-        font-weight: 800;
+        color: var(--ac-color-text-strong);
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-title);
+        font-weight: var(--ac-font-weight-bold);
       }
       .subtitle {
         margin: 0;
         color: var(--scr-text-muted);
-        font-size: 16px;
+        font-size: var(--ac-type-page-subtitle);
+        line-height: var(--ac-line-body);
+        max-width: 62ch;
+      }
+
+      .head-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding-top: 4px;
+      }
+
+      .btn-ghost,
+      .btn-start {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        padding: 0 16px;
+        border-radius: 10px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+          background 160ms ease,
+          border-color 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      .btn-ghost svg,
+      .btn-start svg {
+        width: 17px;
+        height: 17px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .btn-ghost {
+        border: 1px solid var(--scr-banner-border);
+        background: var(--scr-surface);
+        color: var(--scr-teal);
+      }
+      .btn-ghost:hover {
+        background: var(--scr-banner-bg);
+        border-color: var(--scr-avatar-bg);
+      }
+
+      .btn-start {
+        border: 1px solid var(--scr-teal);
+        background: var(--scr-teal);
+        color: var(--ac-color-text-on-action);
+        box-shadow: var(--ac-shadow-sm);
+      }
+      .btn-start svg {
+        fill: currentColor;
+        stroke-width: 1.5;
+        width: 14px;
+        height: 14px;
+      }
+      .btn-start:hover:not(:disabled) {
+        background: var(--ac-color-action-deep);
+        box-shadow: var(--ac-shadow-hover);
+      }
+      .btn-start:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      .btn-ghost:focus-visible,
+      .btn-start:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
 
       .status {
@@ -252,42 +334,74 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
         color: var(--scr-error);
       }
 
+      /* ---- Child selection ---- */
+      .select-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px 16px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+
       .section-label {
-        margin: 0 0 12px;
+        margin: 0;
         color: var(--scr-text-muted);
         font-size: 12px;
         font-weight: 800;
         letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
 
-      .child-row {
-        display: flex;
-        gap: 14px;
-        overflow-x: auto;
-        padding-bottom: 4px;
+      .draft-note {
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--scr-text);
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .draft-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--ac-color-warning);
+      }
+
+      .child-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        gap: 16px;
       }
 
       .add-child {
-        width: 116px;
-        min-height: 132px;
-        flex: 0 0 auto;
+        min-height: var(--scr-card-min-height);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
         border: 2px dashed var(--scr-banner-border);
         border-radius: var(--scr-radius);
-        background: var(--scr-surface);
+        background: transparent;
         color: var(--scr-teal);
         text-decoration: none;
+        transition:
+          border-color 160ms ease,
+          background 160ms ease;
       }
       .add-child:hover {
         border-color: var(--scr-avatar-bg);
+        background: var(--scr-surface);
+      }
+      .add-child:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
       .add-plus {
-        width: 44px;
-        height: 44px;
+        width: 56px;
+        height: 56px;
         border-radius: 999px;
         background: var(--scr-banner-bg);
         display: flex;
@@ -295,71 +409,20 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
         justify-content: center;
       }
       .add-plus svg {
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
       }
       .add-label {
         color: var(--scr-text);
         font-weight: 700;
-        font-size: 15px;
+        font-size: 16px;
       }
 
-      .action-card {
-        background: var(--scr-surface);
-        border: 1px solid var(--scr-banner-border);
-        border-radius: var(--scr-radius);
-        box-shadow: var(--scr-shadow-card);
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-      }
-
-      .last-activity {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-      }
-      .last-copy {
-        min-width: 0;
-      }
-      .last-meta {
-        margin: 0;
-        color: var(--scr-text);
-        font-weight: 600;
-      }
-      .btn-continue {
-        flex: 0 0 auto;
-        min-height: 44px;
-        padding: 0 22px;
-        border: 2px solid var(--scr-teal);
-        border-radius: var(--scr-radius);
-        background: var(--scr-surface);
-        color: var(--scr-teal);
-        font-weight: 700;
-        cursor: pointer;
-      }
-      .btn-continue:hover {
-        background: var(--scr-banner-bg);
-      }
-
-      .divider {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: var(--scr-text-muted);
-        font-weight: 700;
-        font-size: 12px;
-      }
-      .divider::before,
-      .divider::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: var(--scr-divider);
-      }
-
+      /* ---- Empty state ---- */
       .screening-onboarding-card {
         background: var(--scr-surface);
         border: 1px solid var(--scr-banner-border);
@@ -397,43 +460,30 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
       }
 
       .btn-primary {
-        min-height: 56px;
+        min-height: 48px;
         border: 0;
         border-radius: var(--scr-radius);
         background: var(--scr-teal);
         color: var(--ac-color-text-on-action);
         font-weight: 700;
-        font-size: 16px;
+        font-size: 15px;
         cursor: pointer;
         box-shadow: var(--scr-shadow-btn);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         text-decoration: none;
-        padding: 0 28px;
+        padding: 0 24px;
         box-sizing: border-box;
       }
-      .btn-primary:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-        box-shadow: none;
-      }
 
-      .link-history {
-        align-self: center;
-        border: 0;
-        background: none;
-        color: var(--scr-teal);
-        font-weight: 700;
-        cursor: pointer;
-        text-decoration: underline;
-      }
-
+      /* ---- What to expect ---- */
       .foot {
         display: flex;
-        justify-content: center;
-        gap: 32px;
+        gap: 12px 28px;
         flex-wrap: wrap;
+        padding-top: 18px;
+        border-top: 1px solid var(--scr-divider);
         color: var(--scr-text-muted);
       }
       .foot-item {
@@ -446,11 +496,24 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
       .foot-icon {
         width: 18px;
         height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
 
       @media (max-width: 560px) {
-        .foot {
-          gap: 16px;
+        .head-actions {
+          width: 100%;
+        }
+        .btn-start {
+          flex: 1;
+          justify-content: center;
+        }
+        .child-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
         }
       }
     `,
