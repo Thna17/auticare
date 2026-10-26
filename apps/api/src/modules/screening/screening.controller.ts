@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import { ageBands } from '@auticare/contracts';
-import type { AgeBand } from '@auticare/contracts';
+import { ageBands, screeningFormKinds } from '@auticare/contracts';
+import type { AgeBand, ScreeningFormKind } from '@auticare/contracts';
 import { created, ok } from '../../common/http/response.js';
 import { ScreeningService } from './screening.service.js';
 
@@ -16,8 +16,16 @@ const parseAgeBand = (value: unknown): AgeBand | undefined =>
     ? (value as AgeBand)
     : undefined;
 
+const parseFormKind = (value: unknown): ScreeningFormKind | undefined =>
+  typeof value === 'string' && (screeningFormKinds as readonly string[]).includes(value)
+    ? (value as ScreeningFormKind)
+    : undefined;
+
 export const listScreeningQuestions = async (req: Request, res: Response) =>
-  ok(res, await service.listQuestions(parseAgeBand(req.query.ageBand)));
+  ok(
+    res,
+    await service.listQuestions(parseAgeBand(req.query.ageBand), parseFormKind(req.query.formKind)),
+  );
 
 export const createScreeningSession = async (req: Request, res: Response) =>
   created(res, await service.createSession(req.auth!, req.body));
@@ -33,3 +41,18 @@ export const getScreeningSession = async (req: Request, res: Response) =>
 
 export const listChildScreeningSessions = async (req: Request, res: Response) =>
   ok(res, await service.listSessionsForChild(req.auth!, requiredParam(req.params.childId)));
+
+/**
+ * GET /api/v1/screening/children/:childId/latest?formKind=SHORT
+ * Returns the newest completed session of that kind, or `data: null` when the
+ * child has not been assessed with it. Null is a state, not a failure.
+ */
+export const getLatestChildScreening = async (req: Request, res: Response) =>
+  ok(
+    res,
+    await service.getLatestCompleted(
+      req.auth!,
+      requiredParam(req.params.childId),
+      parseFormKind(req.query.formKind) ?? 'SHORT',
+    ),
+  );

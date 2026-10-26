@@ -1,7 +1,10 @@
 import { z } from 'zod';
+import { screeningFormKinds } from '@auticare/contracts';
 
 export const createScreeningSessionRequestSchema = z.object({
   childId: z.string().min(1),
+  // Omitted means FULL, so every existing client keeps its current behaviour.
+  formKind: z.enum(screeningFormKinds).optional(),
 });
 export type CreateScreeningSessionRequest = z.infer<typeof createScreeningSessionRequestSchema>;
 

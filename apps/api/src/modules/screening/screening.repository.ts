@@ -3,6 +3,7 @@ import type {
   Screening,
   ScreeningAnswer,
   ScreeningCategoryScore,
+  ScreeningFormKind,
   ScreeningQuestion,
   ScreeningResult,
 } from '@prisma/client';
@@ -28,16 +29,19 @@ export class ScreeningRepository {
     return prisma.child.findUnique({ where: { id: childId } });
   }
 
-  listActiveQuestions(): Promise<ScreeningQuestion[]> {
+  listActiveQuestions(formKind?: ScreeningFormKind): Promise<ScreeningQuestion[]> {
     return prisma.screeningQuestion.findMany({
-      where: { isActive: true },
+      where: { isActive: true, ...(formKind ? { formKind } : {}) },
       orderBy: { displayOrder: 'asc' },
     });
   }
 
-  listActiveQuestionsForBand(ageBand: AgeBand): Promise<ScreeningQuestion[]> {
+  listActiveQuestionsForBand(
+    ageBand: AgeBand,
+    formKind: ScreeningFormKind,
+  ): Promise<ScreeningQuestion[]> {
     return prisma.screeningQuestion.findMany({
-      where: { isActive: true, ageBand },
+      where: { isActive: true, ageBand, formKind },
       orderBy: { displayOrder: 'asc' },
     });
   }
@@ -46,8 +50,27 @@ export class ScreeningRepository {
     return prisma.screeningQuestion.findUnique({ where: { id: questionId } });
   }
 
-  createSession(childId: string, ageBand: AgeBand): Promise<Screening> {
-    return prisma.screening.create({ data: { childId, ageBand } });
+  createSession(
+    childId: string,
+    ageBand: AgeBand,
+    formKind: ScreeningFormKind,
+  ): Promise<Screening> {
+    return prisma.screening.create({ data: { childId, ageBand, formKind } });
+  }
+
+  /**
+   * The child's most recent ANALYZED session of a given form kind. Used by the
+   * post-login flow to decide whether the short assessment has been answered.
+   */
+  findLatestCompletedSession(
+    childId: string,
+    formKind: ScreeningFormKind,
+  ): Promise<ScreeningSessionRecord | null> {
+    return prisma.screening.findFirst({
+      where: { childId, formKind, status: 'ANALYZED' },
+      orderBy: { submittedAt: 'desc' },
+      include: sessionInclude,
+    });
   }
 
   findSessionById(sessionId: string): Promise<ScreeningSessionRecord | null> {

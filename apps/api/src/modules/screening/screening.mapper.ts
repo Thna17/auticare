@@ -9,6 +9,7 @@ export type ScreeningSessionResponse = {
   childId: string;
   status: Screening['status'];
   ageBand: Screening['ageBand'];
+  formKind: Screening['formKind'];
   startedAt: string;
   submittedAt: string | null;
   createdAt: string;
@@ -21,6 +22,7 @@ export type ScreeningQuestionResponse = {
   category: string;
   displayOrder: number;
   polarity: ScreeningQuestion['polarity'];
+  formKind: ScreeningQuestion['formKind'];
 };
 
 export type ScreeningAnswerResponse = {
@@ -72,6 +74,7 @@ export const toScreeningSessionResponse = (session: Screening): ScreeningSession
   childId: session.childId,
   status: session.status,
   ageBand: session.ageBand,
+  formKind: session.formKind,
   startedAt: session.startedAt.toISOString(),
   submittedAt: session.submittedAt?.toISOString() ?? null,
   createdAt: session.createdAt.toISOString(),
@@ -86,6 +89,7 @@ export const toScreeningQuestionResponse = (
   category: question.category,
   displayOrder: question.displayOrder,
   polarity: question.polarity,
+  formKind: question.formKind,
 });
 
 export const toScreeningAnswerResponse = (answer: ScreeningAnswer): ScreeningAnswerResponse => ({

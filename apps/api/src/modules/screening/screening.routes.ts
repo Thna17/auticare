@@ -3,6 +3,7 @@ import { validateBody } from '../../common/middleware/validate.js';
 import { requireAuth, requireRole } from '../auth/index.js';
 import {
   createScreeningSession,
+  getLatestChildScreening,
   getScreeningSession,
   listChildScreeningSessions,
   listScreeningQuestions,
@@ -16,6 +17,8 @@ import {
 
 export const screeningRoutes = Router();
 screeningRoutes.use(requireAuth);
+// ?ageBand=TODDLER&formKind=SHORT — formKind defaults to FULL so the existing
+// screens keep being served the long instrument.
 screeningRoutes.get('/questions', requireRole('PARENT'), listScreeningQuestions);
 screeningRoutes.post(
   '/sessions',
@@ -36,3 +39,4 @@ screeningRoutes.get(
   requireRole('PARENT'),
   listChildScreeningSessions,
 );
+screeningRoutes.get('/children/:childId/latest', requireRole('PARENT'), getLatestChildScreening);

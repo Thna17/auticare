@@ -1,4 +1,4 @@
-import type { AgeBand, UserRole } from '@auticare/contracts';
+import type { AgeBand, ScreeningFormKind, UserRole } from '@auticare/contracts';
 import { screeningDisclaimer } from '@auticare/contracts';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { DeterministicScoringEngine } from './scoring-engine.js';
@@ -31,16 +31,34 @@ const ageInYears = (dateOfBirth: Date, at: Date = new Date()): number => {
 const bandForAge = (dateOfBirth: Date, at: Date = new Date()): AgeBand =>
   ageInYears(dateOfBirth, at) < 4 ? 'TODDLER' : 'PRESCHOOL';
 
+/**
+ * The next step suggested by a short assessment, scaled by band.
+ *
+ * The wording matters as much as the logic: each of these is a suggestion, never
+ * a verdict, and the elevated band points at a person rather than at more
+ * screening. Full-form sessions keep the original generic recommendation so
+ * existing behaviour and stored results are unaffected.
+ */
+const shortFormRecommendation = (riskLevel: 'LOW' | 'MODERATE' | 'HIGH'): string => {
+  if (riskLevel === 'HIGH') {
+    return 'Several of the areas we asked about are worth a professional look. Booking an appointment with a paediatric or developmental specialist is the best next step. This screening is not a diagnosis.';
+  }
+  if (riskLevel === 'MODERATE') {
+    return 'Some of the areas we asked about are worth watching. Try a few age-appropriate activities at home over the next few weeks, keep a record of what you notice, and consider booking an appointment so a professional can look properly. This screening is not a diagnosis.';
+  }
+  return 'Nothing in these answers stands out as a concern right now. Keep playing, talking and reading together, and come back to the full screening if something changes. This screening is not a diagnosis.';
+};
+
 export class ScreeningService {
   constructor(
     private readonly repository = new ScreeningRepository(),
     private readonly scoringEngine = new DeterministicScoringEngine(),
   ) {}
 
-  async listQuestions(ageBand?: AgeBand) {
+  async listQuestions(ageBand?: AgeBand, formKind?: ScreeningFormKind) {
     const questions = ageBand
-      ? await this.repository.listActiveQuestionsForBand(ageBand)
-      : await this.repository.listActiveQuestions();
+      ? await this.repository.listActiveQuestionsForBand(ageBand, formKind ?? 'FULL')
+      : await this.repository.listActiveQuestions(formKind);
     return questions.map(toScreeningQuestionResponse);
   }
 
@@ -48,10 +66,20 @@ export class ScreeningService {
     const child = await this.assertChildOwnership(actor, input.childId);
     // Age band is computed from the child's date of birth at session-creation time.
     const ageBand = bandForAge(child.dateOfBirth);
+    const formKind: ScreeningFormKind = input.formKind ?? 'FULL';
     const [session, questions] = await Promise.all([
-      this.repository.createSession(input.childId, ageBand),
-      this.repository.listActiveQuestionsForBand(ageBand),
+      this.repository.createSession(input.childId, ageBand, formKind),
+      this.repository.listActiveQuestionsForBand(ageBand, formKind),
     ]);
+    // A form kind with no active questions would produce a session that can never
+    // be submitted, so say so here rather than at submit time.
+    if (questions.length === 0) {
+      throw new AppError(
+        'VALIDATION_ERROR',
+        'No screening questions are configured for this age group.',
+        400,
+      );
+    }
     return {
       session: toScreeningSessionResponse(session),
       questions: questions.map(toScreeningQuestionResponse),
@@ -71,6 +99,19 @@ export class ScreeningService {
         400,
       );
     }
+    // A session may only be answered with its own question set. Without this, a
+    // short session could be filled with answers to long-form items, which would
+    // produce a percentage that means nothing.
+    if (
+      question.formKind !== session.formKind ||
+      (session.ageBand !== null && question.ageBand !== session.ageBand)
+    ) {
+      throw new AppError(
+        'VALIDATION_ERROR',
+        'That question does not belong to this screening session.',
+        400,
+      );
+    }
     const answer = await this.repository.upsertAnswer({
       screeningId: sessionId,
       questionId: input.questionId,
@@ -86,7 +127,7 @@ export class ScreeningService {
     }
     const child = await this.childFor(session);
     const ageBand = session.ageBand ?? bandForAge(child.dateOfBirth);
-    const questions = await this.repository.listActiveQuestionsForBand(ageBand);
+    const questions = await this.repository.listActiveQuestionsForBand(ageBand, session.formKind);
     const answeredQuestionIds = new Set(session.answers.map((answer) => answer.questionId));
     const allAnswered =
       questions.length > 0 && questions.every((question) => answeredQuestionIds.has(question.id));
@@ -116,7 +157,10 @@ export class ScreeningService {
         score: score.score,
         riskPercentage: score.riskPercentage,
         riskLevel: score.riskLevel,
-        recommendation: score.recommendation,
+        recommendation:
+          session.formKind === 'SHORT'
+            ? shortFormRecommendation(score.riskLevel)
+            : score.recommendation,
         disclaimer: screeningDisclaimer,
         analysisVersion: score.analysisVersion,
       },
@@ -149,6 +193,21 @@ export class ScreeningService {
     await this.assertChildOwnership(actor, childId);
     const sessions = await this.repository.listSessionsForChild(childId);
     return sessions.map(toScreeningSessionDetailResponse);
+  }
+
+  /**
+   * The child's most recent completed session of one form kind, or null.
+   *
+   * The post-login flow asks for SHORT to decide whether to run the assessment;
+   * the dashboard asks for SHORT to render the current concern band. Returning
+   * null rather than throwing is deliberate — "not answered yet" is a normal
+   * state, not an error.
+   */
+  async getLatestCompleted(actor: Actor, childId: string, formKind: ScreeningFormKind) {
+    await this.assertChildOwnership(actor, childId);
+    const session = await this.repository.findLatestCompletedSession(childId, formKind);
+    if (!session) return null;
+    return this.buildResultResponse(session);
   }
 
   private async buildResultResponse(session: ScreeningSessionRecord) {
