@@ -346,6 +346,14 @@ export interface TranslationDictionary {
     readonly switchToEnglish: string;
     readonly closeDrawer: string;
     readonly autiCareUser: string;
+    // The five parent-facing areas the app is organised by after the update.
+    readonly dashboard: string;
+    readonly aiAssistant: string;
+    readonly documents: string;
+    readonly profile: string;
+    readonly settings: string;
+    readonly askAutiCare: string;
+    readonly observations: string;
   };
 }
 
@@ -702,6 +710,13 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       switchToEnglish: 'ប្តូរទៅភាសាអង់គ្លេស',
       closeDrawer: 'បិទម៉ឺនុយ',
       autiCareUser: 'អ្នកប្រើប្រាស់ AutiCare',
+      dashboard: 'ផ្ទាំងគ្រប់គ្រង',
+      aiAssistant: 'ជំនួយការ AI',
+      documents: 'ឯកសារ',
+      profile: 'ព័ត៌មានផ្ទាល់ខ្លួន',
+      settings: 'ការកំណត់',
+      askAutiCare: 'សួរ AutiCare',
+      observations: 'ការសង្កេត',
     },
   },
   en: {
@@ -1068,6 +1083,13 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       switchToEnglish: 'Switch language to English',
       closeDrawer: 'Close navigation drawer',
       autiCareUser: 'AutiCare user',
+      dashboard: 'Dashboard',
+      aiAssistant: 'AI Assistant',
+      documents: 'Documents',
+      profile: 'Profile',
+      settings: 'Settings',
+      askAutiCare: 'Ask AutiCare',
+      observations: 'Observations',
     },
   },
 };
