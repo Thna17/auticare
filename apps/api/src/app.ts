@@ -26,6 +26,10 @@ import { screeningRoutes } from './modules/screening/index.js';
 import { parentsRoutes } from './modules/parents/index.js';
 import { activitiesRoutes } from './modules/activities/index.js';
 import { dashboardRoutes } from './modules/dashboard/index.js';
+import { observationsRoutes } from './modules/observations/index.js';
+import { aiRoutes } from './modules/ai/index.js';
+import { insightsRoutes } from './modules/insights/index.js';
+import { guidanceRoutes } from './modules/guidance/index.js';
 export const createApp = () => {
   const app = express();
   app.disable('x-powered-by');
@@ -86,6 +90,10 @@ export const createApp = () => {
   app.use('/api/v1/parents', parentsRoutes);
   app.use('/api/v1/activities', activitiesRoutes);
   app.use('/api/v1/dashboard', dashboardRoutes);
+  app.use('/api/v1/observations', observationsRoutes);
+  app.use('/api/v1/ai', aiRoutes);
+  app.use('/api/v1/insights', insightsRoutes);
+  app.use('/api/v1/guidance', guidanceRoutes);
   // NOTE: uploads are deliberately NOT served statically. They are files about
   // children, and express.static has no notion of who is asking. Downloads go
   // through GET /api/v1/schools/reports/:id/attachments/:filename, which
