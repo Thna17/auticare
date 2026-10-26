@@ -49,6 +49,18 @@ const envSchema = z
     SMTP_USER: optionalTrimmedString,
     SMTP_PASS: optionalTrimmedString,
     SMTP_FROM: optionalTrimmedString,
+    /**
+     * Model provider, deliberately provider-agnostic: any OpenAI-compatible
+     * chat-completions endpoint. Nothing here is assumed to be a particular
+     * vendor — no key means the assistant reports itself as unconfigured and the
+     * rest of the app keeps working.
+     */
+    AI_BASE_URL: optionalTrimmedString,
+    AI_API_KEY: optionalTrimmedString,
+    AI_MODEL: optionalTrimmedString,
+    AI_TIMEOUT_MS: z.coerce.number().int().positive().max(120000).default(20000),
+    AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.3),
+    AI_MAX_DAILY_MESSAGES: z.coerce.number().int().positive().max(500).default(40),
   })
   .superRefine((value, context) => {
     const hasAnySmtpCredential = Boolean(value.SMTP_HOST || value.SMTP_USER || value.SMTP_PASS);
@@ -83,6 +95,16 @@ const envSchema = z
           message: 'STORAGE_S3_SECRET_ACCESS_KEY is required when STORAGE_DRIVER is "s3".',
         });
       }
+    }
+
+    // Base URL and model must arrive together: one without the other would let
+    // the assistant claim to be configured and then fail on every request.
+    if (Boolean(value.AI_BASE_URL) !== Boolean(value.AI_MODEL)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['AI_BASE_URL'],
+        message: 'AI_BASE_URL and AI_MODEL must be configured together.',
+      });
     }
 
     if (value.NODE_ENV === 'production') {
