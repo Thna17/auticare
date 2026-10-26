@@ -35,6 +35,7 @@ export const createApp = () => {
   app.disable('x-powered-by');
   app.use(requestIdMiddleware);
   app.use(pinoHttp({ logger }));
+  app.use(helmet());
   app.use(
     cors({
       origin: (origin, callback) => {
