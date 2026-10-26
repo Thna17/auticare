@@ -2,339 +2,118 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { NavIconComponent } from '../../core/layout/nav-icon.component';
 
-interface ProgressionStep {
-  readonly id: string;
-  readonly stepNumber: string;
-  readonly badge: string;
-  readonly title: string;
-  readonly subtitle: string;
-  readonly description: string;
-  readonly highlights: readonly string[];
-  readonly ctaLabel: string;
-  readonly ctaLink: string;
-}
-
-interface Testimonial {
-  readonly quote: string;
-  readonly author: string;
-  readonly role: string;
-  readonly avatarInitials: string;
-}
-
-interface TrustBadge {
+type LandingFeature = {
   readonly title: string;
   readonly description: string;
   readonly icon: string;
-}
+};
 
-const EN_PROGRESSION_STEPS: readonly ProgressionStep[] = [
+/** The four things the app does for a family, as the planner describes them. */
+const EN_FEATURES: readonly LandingFeature[] = [
   {
-    id: 'screening',
-    stepNumber: '01',
-    badge: 'Screening',
-    title: 'Evidence-Based Developmental Screening',
-    subtitle: 'M-CHAT-aligned assessment with gentle clarity',
+    title: 'A three-minute check-in',
     description:
-      'Gentle questionnaires observing communication, social interaction, and sensory cues with domain-by-domain clarity.',
-    highlights: [
-      'Calming, distraction-free assessment',
-      'Downloadable summary for your pediatrician',
-    ],
-    ctaLabel: 'Explore Screening Tools',
-    ctaLink: '/screening',
-  },
-  {
-    id: 'care-plan',
-    stepNumber: '02',
-    badge: 'Activities',
-    title: 'Daily Milestones & Sensory Play',
-    subtitle: 'Routines tailored directly to your child',
-    description:
-      'Turn screening insights into joyful daily progress with sensory-friendly play and communication prompts.',
-    highlights: [
-      'Filtered by sensory intensity and daily living',
-      'Parent reflection notes and milestone tracker',
-    ],
-    ctaLabel: 'Browse Activity Library',
-    ctaLink: '/activities',
-  },
-  {
-    id: 'specialists',
-    stepNumber: '03',
-    badge: 'Specialists',
-    title: 'Specialist Discovery & Booking',
-    subtitle: 'Connect with developmental pediatricians and therapists',
-    description:
-      'Find accredited pediatricians, speech therapists, and occupational therapists with your child’s history organized.',
-    highlights: [
-      'Verified hospitals and licensed specialists',
-      'Real-time appointment requests and tracking',
-    ],
-    ctaLabel: 'Find Hospital Specialists',
-    ctaLink: '/hospitals',
-  },
-  {
-    id: 'schools',
-    stepNumber: '04',
-    badge: 'Schools',
-    title: 'Inclusive Education Collaboration',
-    subtitle: 'Bridge home routines with classroom support',
-    description:
-      'Search specialized schools with autism support programs, small class sizes, and shared teacher observation logs.',
-    highlights: [
-      'Specialized school directory and program filters',
-      'Shared observation reports with teachers',
-    ],
-    ctaLabel: 'Explore Inclusive Schools',
-    ctaLink: '/schools',
-  },
-];
-
-const KM_PROGRESSION_STEPS: readonly ProgressionStep[] = [
-  {
-    id: 'screening',
-    stepNumber: '01',
-    badge: 'ការវាយតម្លៃ',
-    title: 'ការវាយតម្លៃការលូតលាស់ M-CHAT',
-    subtitle: 'កម្រងសំណួរតាមដានការលូតលាស់ប្រកបដោយភាពទន់ភ្លន់',
-    description: 'ឆ្លើយកម្រងសំណួរងាយៗតាមដានការប្រាស្រ័យទាក់ទង ទំនាក់ទំនងសង្គម និងវិញ្ញាណរបស់កុមារ។',
-    highlights: ['កម្រងសំណួរងាយស្រួលឆ្លើយ គ្មានការរំខាន', 'ទាញយករបាយការណ៍សង្ខេបសម្រាប់វេជ្ជបណ្ឌិត'],
-    ctaLabel: 'ស្វែងយល់ពីការវាយតម្លៃ',
-    ctaLink: '/screening',
-  },
-  {
-    id: 'care-plan',
-    stepNumber: '02',
-    badge: 'សកម្មភាព',
-    title: 'សកម្មភាពលេងបែបវិញ្ញាណ និងការវិវត្ត',
-    subtitle: 'ទម្លាប់លេងដែលរៀបចំសម្រាប់តម្រូវការជាក់ស្តែង',
-    description:
-      'បង្វែរការវាយតម្លៃទៅជាភាពរីកចម្រើនប្រចាំថ្ងៃ ជាមួយគំនិតលេងសម្រួលវិញ្ញាណ និងលំហាត់និយាយ។',
-    highlights: [
-      'គំនិតលេងសម្រួលដល់វិញ្ញាណ និងជីវិតប្រចាំថ្ងៃ',
-      'តាមដានការបញ្ចប់សកម្មភាព និងការវិវត្ត',
-    ],
-    ctaLabel: 'មើលបណ្ណាល័យសកម្មភាព',
-    ctaLink: '/activities',
-  },
-  {
-    id: 'specialists',
-    stepNumber: '03',
-    badge: 'អ្នកជំនាញ',
-    title: 'ស្វែងរក និងកក់វេជ្ជបណ្ឌិតឯកទេស',
-    subtitle: 'តភ្ជាប់ជាមួយវេជ្ជបណ្ឌិតកុមារ និងអ្នកព្យាបាល',
-    description:
-      'ស្វែងរកវេជ្ជបណ្ឌិតការលូតលាស់កុមារ អ្នកព្យាបាលការនិយាយ និងមុខងារដោយមានប្រវត្តិកុមាររួចជាស្រេច។',
-    highlights: [
-      'មន្ទីរពេទ្យដៃគូ និងអ្នកជំនាញមានអាជ្ញាប័ណ្ណ',
-      'កក់ និងតាមដានការណាត់ជួបយ៉ាងងាយស្រួល',
-    ],
-    ctaLabel: 'ស្វែងរកវេជ្ជបណ្ឌិតជំនាញ',
-    ctaLink: '/hospitals',
-  },
-  {
-    id: 'schools',
-    stepNumber: '04',
-    badge: 'ការអប់រំ',
-    title: 'ការសហការជាមួយសាលារៀនបរិយាបន្ន',
-    subtitle: 'ភ្ជាប់ទម្លាប់នៅផ្ទះជាមួយការគាំទ្រក្នុងថ្នាក់រៀន',
-    description:
-      'ស្វែងរកសាលាដែលមានកម្មវិធីគាំទ្រអូទីសឹម និងផ្លាស់ប្តូររបាយការណ៍សង្កេតជាមួយគ្រូបង្រៀន។',
-    highlights: ['បញ្ជីសាលាបរិយាបន្នដែលបានផ្ទៀងផ្ទាត់', 'ផ្លាស់ប្តូររបាយការណ៍សង្កេតជាមួយគ្រូ'],
-    ctaLabel: 'ស្វែងរកសាលារៀនបរិយាបន្ន',
-    ctaLink: '/schools',
-  },
-];
-
-const EN_TESTIMONIALS: readonly Testimonial[] = [
-  {
-    quote:
-      'AutiCare gave our family clarity instead of anxiety. Having our screening history and observations in one place made pediatric visits calm and productive.',
-    author: 'Elena Rostova',
-    role: 'Parent of 4-year-old',
-    avatarInitials: 'ER',
-  },
-  {
-    quote:
-      'Consistent observation records between home and school save weeks during evaluations. Families arrive informed, calm, and prepared.',
-    author: 'Dr. Marcus Chen',
-    role: 'Developmental Pediatrician',
-    avatarInitials: 'MC',
-  },
-  {
-    quote:
-      'Sharing classroom observations directly with parents bridges home routines and classroom accommodations effortlessly.',
-    author: 'Sarah Jenkins, M.Ed.',
-    role: 'Inclusion Coordinator',
-    avatarInitials: 'SJ',
-  },
-];
-
-const KM_TESTIMONIALS: readonly Testimonial[] = [
-  {
-    quote:
-      'AutiCare ជួយឱ្យគ្រួសារយើងមានភាពស្ងប់ចិត្ត។ ការមានប្រវត្តិវាយតម្លៃនៅកន្លែងតែមួយ ធ្វើឱ្យការពិគ្រោះជាមួយគ្រូពេទ្យកាន់តែច្បាស់លាស់។',
-    author: 'Elena Rostova',
-    role: 'មាតាបិតាកុមារអាយុ ៤ ឆ្នាំ',
-    avatarInitials: 'ER',
-  },
-  {
-    quote:
-      'កំណត់ត្រាសង្កេតច្បាស់លាស់រវាងផ្ទះ និងសាលារៀន ជួយសន្សំពេលវេលាក្នុងគ្លីនិក។ គ្រួសារមកដល់ដោយមានព័ត៌មានគ្រប់គ្រាន់។',
-    author: 'Dr. Marcus Chen',
-    role: 'វេជ្ជបណ្ឌិតឯកទេសការលូតលាស់កុមារ',
-    avatarInitials: 'MC',
-  },
-  {
-    quote:
-      'ការចែករំលែករបាយការណ៍សង្កេតពីថ្នាក់រៀនដោយផ្ទាល់ជាមួយឪពុកម្តាយ ជួយសម្រួលដល់ការគាំទ្រកុមារឱ្យកាន់តែមានប្រសិទ្ធភាព។',
-    author: 'Sarah Jenkins, M.Ed.',
-    role: 'អ្នកសម្របសម្រួលការអប់រំបរិយាបន្ន',
-    avatarInitials: 'SJ',
-  },
-];
-
-const EN_TRUST_BADGES: readonly TrustBadge[] = [
-  {
-    title: 'Evidence-Based Framework',
-    description: 'Screening aligned with validated pediatric guidelines and M-CHAT principles.',
-    icon: 'shield',
-  },
-  {
-    title: '100% Private Family Data',
-    description: 'Zero third-party ads or brokers. All records belong strictly to your family.',
-    icon: 'lock',
-  },
-  {
-    title: 'Multidisciplinary Care',
-    description: 'Brings parents, pediatricians, therapists, and educators onto one platform.',
-    icon: 'users',
-  },
-  {
-    title: 'Sensory-Friendly Design',
-    description: 'Calm colors, legible typography, and zero sensory overload.',
-    icon: 'heart',
-  },
-];
-
-const KM_TRUST_BADGES: readonly TrustBadge[] = [
-  {
-    title: 'ស្តង់ដារផ្អែកលើភស្តុតាង',
-    description: 'ការវាយតម្លៃស្របតាមគោលការណ៍ M-CHAT និងការអភិវឌ្ឍកុមារ។',
-    icon: 'shield',
-  },
-  {
-    title: 'ឯកជនភាព ១០០%',
-    description: 'ទិន្នន័យត្រូវបានការពារយ៉ាងតឹងរ៉ឹង ដោយគ្មានការចែករំលែកពាណិជ្ជកម្ម។',
-    icon: 'lock',
-  },
-  {
-    title: 'កិច្ចសហការជាក្រុម',
-    description: 'ភ្ជាប់ទំនាក់ទំនងរវាងឪពុកម្តាយ វេជ្ជបណ្ឌិត និងគ្រូបង្រៀន។',
-    icon: 'users',
-  },
-  {
-    title: 'ការរចនាទន់ភ្លន់',
-    description: 'ពណ៌ស្រទន់ គ្មានការរំខាន និងងាយស្រួលប្រើប្រាស់។',
-    icon: 'heart',
-  },
-];
-
-const EN_TOOLS = [
-  {
-    title: 'Developmental Screening',
-    description: 'Gentle M-CHAT questionnaires to spot strengths and support needs.',
+      'Ten simple questions give you a starting point: a concern band in plain words, never a diagnosis.',
     icon: 'checklist',
   },
   {
-    title: 'Specialist Directory',
-    description: 'Find accredited pediatric clinics, hospitals, and therapists.',
-    icon: 'map',
+    title: 'Ask AutiCare',
+    description:
+      'Ask anything in Khmer or English and get a calm, careful answer, with a doctor referral when it matters.',
+    icon: 'ai',
   },
   {
-    title: 'Daily Activities',
-    description: 'Sensory-friendly play and routine ideas tailored for home.',
-    icon: 'activity',
-  },
-  {
-    title: 'Milestone Tracking',
-    description: 'Calm, structured progress records in one organized workspace.',
+    title: 'Daily notes and patterns',
+    description:
+      'Record sleep, eating or sensory moments in seconds. Over the weeks, AutiCare shows you the patterns.',
     icon: 'trend',
   },
-] as const;
-
-const KM_TOOLS = [
   {
-    title: 'ការវាយតម្លៃការលូតលាស់',
-    description: 'កម្រងសំណួរ M-CHAT ស្វែងយល់ពីចំណុចខ្លាំង និងតម្រូវការគាំទ្រ។',
+    title: 'Guidance you can trust',
+    description:
+      'Routines and strategies drawn from reviewed autism resources, each one showing where it came from.',
+    icon: 'shield',
+  },
+];
+
+const KM_FEATURES: readonly LandingFeature[] = [
+  {
+    title: 'ការពិនិត្យខ្លីបីនាទី',
+    description:
+      'សំណួរងាយៗដប់ ផ្តល់ចំណុចចាប់ផ្តើម៖ កម្រិតនៃការព្រួយបារម្ភជាពាក្យសាមញ្ញ មិនមែនជាការធ្វើរោគវិនិច្ឆ័យទេ។',
     icon: 'checklist',
   },
   {
-    title: 'ស្វែងរកអ្នកជំនាញ',
-    description: 'រុករកមន្ទីរពេទ្យ គ្លីនិក និងអ្នកព្យាបាលឯកទេសនៅកម្ពុជា។',
-    icon: 'map',
+    title: 'សួរ AutiCare',
+    description:
+      'សួរអ្វីក៏បានជាភាសាខ្មែរ ឬអង់គ្លេស ហើយទទួលបានចម្លើយច្បាស់ និងប្រុងប្រយ័ត្ន ព្រមទាំងណែនាំឱ្យជួបគ្រូពេទ្យនៅពេលចាំបាច់។',
+    icon: 'ai',
   },
   {
-    title: 'សកម្មភាពប្រចាំថ្ងៃ',
-    description: 'គំនិតលេងសម្រួលវិញ្ញាណ និងការបង្កើតទម្លាប់ល្អនៅផ្ទះ។',
-    icon: 'activity',
-  },
-  {
-    title: 'តាមដានការរីកចម្រើន',
-    description: 'កត់ត្រាវឌ្ឍនភាព និងចំណុចសំខាន់ៗនៃការលូតលាស់។',
+    title: 'កំណត់ត្រាប្រចាំថ្ងៃ និងគំរូ',
+    description:
+      'កត់ត្រាការគេង ការញ៉ាំ ឬប្រតិកម្មវិញ្ញាណក្នុងរយៈពេលប៉ុន្មានវិនាទី។ យូរៗទៅ AutiCare បង្ហាញគំរូដែលកើតឡើង។',
     icon: 'trend',
   },
-] as const;
+  {
+    title: 'ការណែនាំដែលអាចទុកចិត្តបាន',
+    description:
+      'ទម្លាប់ និងយុទ្ធសាស្ត្រដែលដកស្រង់ពីធនធានអូទីសឹមដែលបានពិនិត្យ ហើយនីមួយៗបង្ហាញប្រភពរបស់វា។',
+    icon: 'shield',
+  },
+];
 
 const EN_STEPS = [
   {
-    title: 'Create child profile',
-    description: 'Add basic details to personalize screening and activity recommendations.',
+    title: 'Add your child',
+    description: 'A first name and a date of birth are all it takes to begin.',
   },
   {
-    title: 'Complete quick screening',
-    description: 'Answer gentle questions on communication, social play, and sensory cues.',
+    title: 'Take the short check-in',
+    description: 'About three minutes, and you see plainly where things stand.',
   },
   {
-    title: 'Receive practical guidance',
-    description: 'Access tailored daily routines, activity prompts, and local resources.',
+    title: 'Note what you see',
+    description: 'Record everyday moments, and ask AutiCare whenever you are unsure.',
   },
   {
-    title: 'Coordinate with experts',
-    description: 'Share organized observation records with doctors and educators.',
+    title: 'Bring it to the specialist',
+    description: 'Book a hospital visit and show dated notes instead of trying to remember.',
   },
 ] as const;
 
 const KM_STEPS = [
   {
-    title: 'បង្កើតប្រវត្តិរូបកុមារ',
-    description: 'បញ្ចូលព័ត៌មានមូលដ្ឋានដើម្បីកំណត់ការវាយតម្លៃសមស្រប។',
+    title: 'បន្ថែមព័ត៌មានកូនរបស់អ្នក',
+    description: 'មានតែឈ្មោះ និងថ្ងៃខែឆ្នាំកំណើតប៉ុណ្ណោះ ក៏អាចចាប់ផ្តើមបាន។',
   },
   {
-    title: 'បំពេញការវាយតម្លៃដំបូង',
-    description: 'ឆ្លើយសំណួរងាយៗតាមដានការប្រាស្រ័យទាក់ទង និងការលេង។',
+    title: 'ធ្វើការពិនិត្យខ្លី',
+    description: 'ប្រហែលបីនាទី ហើយអ្នកនឹងឃើញស្ថានភាពយ៉ាងច្បាស់។',
   },
   {
-    title: 'ទទួលបានការណែនាំជាក់ស្តែង',
-    description: 'ពិនិត្យសកម្មភាពលេង និងធនធានគាំទ្រដែលបានណែនាំ។',
+    title: 'កត់ត្រាអ្វីដែលអ្នកឃើញ',
+    description: 'កត់ត្រាពេលវេលាប្រចាំថ្ងៃ ហើយសួរ AutiCare នៅពេលអ្នកមិនប្រាកដ។',
   },
   {
-    title: 'សហការជាមួយអ្នកជំនាញ',
-    description: 'ចែករំលែកកំណត់ត្រាសង្កេតជាមួយវេជ្ជបណ្ឌិត និងសាលារៀន។',
+    title: 'យកទៅបង្ហាញអ្នកជំនាញ',
+    description: 'ណាត់ជួបមន្ទីរពេទ្យ ហើយបង្ហាញកំណត់ត្រាមានកាលបរិច្ឆេទ ជំនួសឱ្យការចងចាំ។',
   },
 ] as const;
 
-const EN_ACTIVITY_HIGHLIGHTS = [
-  'Sensory-friendly play ideas',
-  'Communication practice prompts',
-  'Routine-building activities',
+/** Short facts shown under the hero instead of a separate trust section. */
+const EN_TRUST_POINTS = [
+  'Screening support, not a diagnosis',
+  'Your family data stays private',
+  'Khmer and English',
 ] as const;
 
-const KM_ACTIVITY_HIGHLIGHTS = [
-  'គំនិតលេងសម្រួលដល់វិញ្ញាណ',
-  'លំហាត់អនុវត្តការប្រាស្រ័យទាក់ទង',
-  'សកម្មភាពបង្កើតទម្លាប់ប្រចាំថ្ងៃ',
+const KM_TRUST_POINTS = [
+  'ជំនួយការវាយតម្លៃ មិនមែនការធ្វើរោគវិនិច្ឆ័យ',
+  'ទិន្នន័យគ្រួសាររបស់អ្នករក្សាជាឯកជន',
+  'ភាសាខ្មែរ និងអង់គ្លេស',
 ] as const;
 
 const EN_AUTISM_NOTES = [
@@ -369,7 +148,7 @@ const KM_AUTISM_NOTES = [
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NavIconComponent],
   template: `
     <main class="landing-page">
       <header class="site-header">
@@ -391,20 +170,11 @@ const KM_AUTISM_NOTES = [
             <a href="#home" aria-current="page" (click)="scrollToSection('home', $event)">{{
               currentLang() === 'km' ? 'ទំព័រដើម' : 'Home'
             }}</a>
-            <a href="#progression" (click)="scrollToSection('progression', $event)">{{
+            <a href="#features" (click)="scrollToSection('features', $event)">{{
               currentLang() === 'km' ? 'លក្ខណៈពិសេស' : 'Features'
             }}</a>
             <a href="#how-it-works" (click)="scrollToSection('how-it-works', $event)">{{
               currentLang() === 'km' ? 'ដំណើរការ' : 'How it works'
-            }}</a>
-            <a href="#support" (click)="scrollToSection('support', $event)">{{
-              currentLang() === 'km' ? 'ស្វែងរកជំនួយ' : 'Find support'
-            }}</a>
-            <a href="#activities" (click)="scrollToSection('activities', $event)">{{
-              currentLang() === 'km' ? 'សកម្មភាពលេង' : 'Activities'
-            }}</a>
-            <a href="#testimonials" (click)="scrollToSection('testimonials', $event)">{{
-              currentLang() === 'km' ? 'មតិអ្នកប្រើប្រាស់' : 'Testimonials'
             }}</a>
             <a href="#about-autism" (click)="scrollToSection('about-autism', $event)">{{
               currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism'
@@ -578,7 +348,7 @@ const KM_AUTISM_NOTES = [
                 </svg>
               </span>
             </a>
-            <a href="#progression" (click)="scrollToSection('progression', $event)">
+            <a href="#features" (click)="scrollToSection('features', $event)">
               <span class="drawer-icon" aria-hidden="true">
                 <svg
                   width="19"
@@ -632,112 +402,6 @@ const KM_AUTISM_NOTES = [
               </span>
               <span class="drawer-label">{{
                 currentLang() === 'km' ? 'ដំណើរការ' : 'How it works'
-              }}</span>
-              <span class="drawer-arrow" aria-hidden="true">
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </span>
-            </a>
-            <a href="#support" (click)="scrollToSection('support', $event)">
-              <span class="drawer-icon" aria-hidden="true">
-                <svg
-                  width="19"
-                  height="19"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </span>
-              <span class="drawer-label">{{
-                currentLang() === 'km' ? 'ស្វែងរកជំនួយ' : 'Find support'
-              }}</span>
-              <span class="drawer-arrow" aria-hidden="true">
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </span>
-            </a>
-            <a href="#activities" (click)="scrollToSection('activities', $event)">
-              <span class="drawer-icon" aria-hidden="true">
-                <svg
-                  width="19"
-                  height="19"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                  <path d="m9 16 2 2 4-4" />
-                </svg>
-              </span>
-              <span class="drawer-label">{{
-                currentLang() === 'km' ? 'សកម្មភាពលេង' : 'Activities'
-              }}</span>
-              <span class="drawer-arrow" aria-hidden="true">
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </span>
-            </a>
-            <a href="#testimonials" (click)="scrollToSection('testimonials', $event)">
-              <span class="drawer-icon" aria-hidden="true">
-                <svg
-                  width="19"
-                  height="19"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-              </span>
-              <span class="drawer-label">{{
-                currentLang() === 'km' ? 'មតិអ្នកប្រើប្រាស់' : 'Testimonials'
               }}</span>
               <span class="drawer-arrow" aria-hidden="true">
                 <svg
@@ -856,6 +520,18 @@ const KM_AUTISM_NOTES = [
               {{ currentLang() === 'km' ? 'របៀបដែលកម្មវិធីដំណើរការ' : 'Learn how it works' }}
             </a>
           </div>
+
+          <ul
+            class="hero-trust"
+            [attr.aria-label]="currentLang() === 'km' ? 'ការធានា' : 'Our promises'"
+          >
+            @for (point of trustPoints(); track point) {
+              <li>
+                <ac-nav-icon name="check" />
+                <span>{{ point }}</span>
+              </li>
+            }
+          </ul>
         </div>
 
         <div class="hero-media">
@@ -1014,192 +690,32 @@ const KM_AUTISM_NOTES = [
         </div>
       </section>
 
-      <!-- Interactive Feature Progression: Screening -> Care Plan -> Hospital Specialists -> School Collaboration -->
-      <section id="progression" class="progression-section" aria-labelledby="progression-title">
+      <!-- Features -->
+      <section id="features" class="tools-section" aria-labelledby="tools-title">
         <div class="section-heading">
           <p class="section-kicker">
-            {{ currentLang() === 'km' ? 'ដំណើរការថែទាំរួមគ្នា' : 'Unified Care Journey' }}
+            {{ currentLang() === 'km' ? 'អ្វីដែលអ្នកទទួលបាន' : 'What you get' }}
           </p>
-          <h2 id="progression-title">
-            {{
-              currentLang() === 'km'
-                ? 'របៀបដែល AutiCare ណែនាំដំណើរការថែទាំ'
-                : 'How AutiCare Guides Your Care Journey'
-            }}
-          </h2>
-          <p>
-            {{
-              currentLang() === 'km'
-                ? 'ដំណើរការច្បាស់លាស់ ចាប់ពីការវាយតម្លៃ រហូតដល់ការសហការជាមួយអ្នកជំនាញ។'
-                : 'A clear, simple progression from screening to specialist collaboration.'
-            }}
-          </p>
-        </div>
-
-        <!-- Interactive Stepper Tabs -->
-        <div class="stepper-tabs" role="tablist" aria-label="Care progression steps">
-          @for (step of progressionSteps(); track step.id; let i = $index) {
-            <button
-              type="button"
-              role="tab"
-              class="stepper-tab"
-              [class.active]="activeProgressionStep() === i"
-              [attr.aria-selected]="activeProgressionStep() === i"
-              (click)="selectProgressionStep(i)"
-            >
-              <span class="tab-number">{{ step.stepNumber }}</span>
-              <span class="tab-label">{{ step.badge }}</span>
-            </button>
-          }
-        </div>
-
-        <!-- Active Step Card -->
-        @if (currentProgressionStep(); as active) {
-          <article class="progression-card" role="tabpanel">
-            <div class="progression-card-content">
-              <div class="step-meta">
-                <span class="step-badge">{{ active.badge }}</span>
-                <span class="step-order">{{
-                  currentLang() === 'km'
-                    ? 'ជំហាន ' + active.stepNumber + ' នៃ ០៤'
-                    : 'Step ' + active.stepNumber + ' of 04'
-                }}</span>
-              </div>
-              <h3>{{ active.title }}</h3>
-              <p class="step-desc">{{ active.description }}</p>
-
-              <ul class="step-highlights">
-                @for (item of active.highlights; track item) {
-                  <li>
-                    <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-                      <path
-                        d="M5 10l3 3 7-7"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.2"
-                        stroke-linecap="round"
-                      />
-                    </svg>
-                    <span>{{ item }}</span>
-                  </li>
-                }
-              </ul>
-
-              <div class="step-action-row">
-                <a [routerLink]="active.ctaLink" class="step-cta-btn">
-                  <span>{{ active.ctaLabel }}</span>
-                  <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-                    <path
-                      d="M4 10h11M11 5l5 5-5 5"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                    />
-                  </svg>
-                </a>
-              </div>
-            </div>
-
-            <div class="progression-card-visual" aria-hidden="true">
-              <div class="visual-box">
-                <div class="visual-header"><span></span><span></span><span></span></div>
-                <div class="visual-body">
-                  @if (active.id === 'screening') {
-                    <div class="mock-score-card">
-                      <span class="mock-label">{{
-                        currentLang() === 'km' ? 'ការវាយតម្លៃការលូតលាស់' : 'Developmental Screening'
-                      }}</span>
-                      <div class="mock-risk-meter">
-                        <div class="mock-risk-bar"></div>
-                      </div>
-                      <span class="mock-status">{{
-                        currentLang() === 'km'
-                          ? 'កម្រិតហានិភ័យទាប · បញ្ចប់ ៨៥%'
-                          : 'Low Heuristic Risk · 85% Completed'
-                      }}</span>
-                    </div>
-                  } @else if (active.id === 'care-plan') {
-                    <div class="mock-activity-card">
-                      <span class="mock-tag">{{
-                        currentLang() === 'km' ? 'ការលេងបែបវិញ្ញាណ' : 'Sensory Play'
-                      }}</span>
-                      <h4>
-                        {{
-                          currentLang() === 'km'
-                            ? 'ការស្វែងយល់ពីវត្ថុធាតុ និងជ្រុងស្ងប់ស្ងាត់'
-                            : 'Texture Discovery & Calming Corner'
-                        }}
-                      </h4>
-                      <span class="mock-time">{{
-                        currentLang() === 'km'
-                          ? '១៥ នាទី · វិញ្ញាណទន់ភ្លន់'
-                          : '15 mins · Gentle Sensory'
-                      }}</span>
-                    </div>
-                  } @else if (active.id === 'specialists') {
-                    <div class="mock-doctor-card">
-                      <div class="mock-avatar">MC</div>
-                      <div class="mock-doc-info">
-                        <strong>Dr. Marcus Chen</strong>
-                        <span>{{
-                          currentLang() === 'km'
-                            ? 'វេជ្ជសាស្ត្រការលូតលាស់កុមារ'
-                            : 'Developmental Pediatrics'
-                        }}</span>
-                      </div>
-                    </div>
-                  } @else {
-                    <div class="mock-school-card">
-                      <span class="mock-badge">{{
-                        currentLang() === 'km'
-                          ? 'សាលាបរិយាបន្នដែលបានផ្ទៀងផ្ទាត់'
-                          : 'Verified Inclusive School'
-                      }}</span>
-                      <h4>
-                        {{
-                          currentLang() === 'km'
-                            ? 'សាលារៀនពិសេសពន្លឺថ្ងៃ'
-                            : 'Sunrise Special Learning Academy'
-                        }}
-                      </h4>
-                      <span>{{
-                        currentLang() === 'km'
-                          ? 'សមាមាត្រសិស្សនិងគ្រូ ១:៤'
-                          : '1:4 Student-to-Teacher Ratio'
-                      }}</span>
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-          </article>
-        }
-      </section>
-
-      <!-- Tools Section -->
-      <section id="support" class="tools-section" aria-labelledby="tools-title">
-        <div class="section-heading">
           <h2 id="tools-title">
             {{
               currentLang() === 'km'
-                ? 'ឧបករណ៍សំខាន់ៗសម្រាប់ការលូតលាស់'
-                : 'Core tools for development'
+                ? 'ជំនួយសម្រាប់ពេលវេលារវាងការកត់សម្គាល់ និងការជួបអ្នកជំនាញ'
+                : 'Help for the weeks between noticing and being seen'
             }}
           </h2>
           <p>
             {{
               currentLang() === 'km'
-                ? 'រៀបចំការងារគាំទ្រសំខាន់ៗឱ្យមានរបៀបរៀបរយ និងងាយស្រួលតាមដាន។'
-                : 'Essential support tools organized for clarity and calm family routines.'
+                ? 'AutiCare មិនជំនួសអ្នកជំនាញទេ។ វាជួយឱ្យពេលរង់ចាំមិនទទេ។'
+                : 'AutiCare does not replace a specialist. It makes the waiting time less empty.'
             }}
           </p>
         </div>
 
         <div class="tool-grid">
-          @for (tool of tools(); track tool.title) {
+          @for (tool of features(); track tool.title) {
             <article class="tool-card">
-              <span class="tool-icon" [class]="tool.icon" aria-hidden="true"></span>
+              <span class="tool-icon" aria-hidden="true"><ac-nav-icon [name]="tool.icon" /></span>
               <h3>{{ tool.title }}</h3>
               <p>{{ tool.description }}</p>
             </article>
@@ -1260,213 +776,6 @@ const KM_AUTISM_NOTES = [
               </section>
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- Activities Section -->
-      <section id="activities" class="activities-section" aria-labelledby="activities-title">
-        <div>
-          <p class="section-kicker">{{ currentLang() === 'km' ? 'សកម្មភាព' : 'Activities' }}</p>
-          <h2 id="activities-title">
-            {{
-              currentLang() === 'km'
-                ? 'បង្វែរគោលដៅទៅជាទម្លាប់ប្រចាំថ្ងៃ'
-                : 'Turn support goals into practical routines'
-            }}
-          </h2>
-          <p>
-            {{
-              currentLang() === 'km'
-                ? 'គំនិតលេងសាមញ្ញ និងទម្លាប់ប្រចាំថ្ងៃដែលងាយស្រួលអនុវត្តនៅផ្ទះ។'
-                : 'Simple, practical play routines you can easily use at home.'
-            }}
-          </p>
-        </div>
-
-        <div class="activity-list">
-          @for (activity of activityHighlights(); track activity) {
-            <article>
-              <span aria-hidden="true"></span>
-              <p>{{ activity }}</p>
-            </article>
-          }
-        </div>
-      </section>
-
-      <!-- Testimonials Carousel Section -->
-      <section id="testimonials" class="testimonials-section" aria-labelledby="testimonials-title">
-        <div class="section-heading">
-          <p class="section-kicker">
-            {{ currentLang() === 'km' ? 'សំឡេងពីសហគមន៍របស់យើង' : 'Voices of Our Community' }}
-          </p>
-          <h2 id="testimonials-title">
-            {{
-              currentLang() === 'km'
-                ? 'ទទួលបានការទុកចិត្តពីគ្រួសារ និងអ្នកជំនាញ'
-                : 'Trusted by Families, Clinicians & Educators'
-            }}
-          </h2>
-          <p>
-            {{
-              currentLang() === 'km'
-                ? 'រឿងរ៉ាវពិតពីឪពុកម្តាយ និងអ្នកជំនាញដែលរួមដំណើជាមួយគ្នា។'
-                : 'Real stories from parents and professionals building brighter futures together.'
-            }}
-          </p>
-        </div>
-
-        <div class="testimonials-carousel">
-          @if (currentTestimonial(); as item) {
-            <article class="testimonial-card">
-              <div class="quote-icon" aria-hidden="true">“</div>
-              <p class="testimonial-text">{{ item.quote }}</p>
-
-              <footer class="testimonial-author-row">
-                <div class="author-avatar">{{ item.avatarInitials }}</div>
-                <div class="author-details">
-                  <strong>{{ item.author }}</strong>
-                  <span>{{ item.role }}</span>
-                </div>
-              </footer>
-            </article>
-          }
-
-          <div class="carousel-controls">
-            <button
-              type="button"
-              class="carousel-btn prev"
-              [attr.aria-label]="currentLang() === 'km' ? 'មតិមុន' : 'Previous testimonial'"
-              (click)="prevTestimonial()"
-            >
-              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-                <path
-                  d="M13 16l-6-6 6-6"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                />
-              </svg>
-            </button>
-
-            <div class="carousel-dots" role="tablist" aria-label="Testimonial slides">
-              @for (item of testimonials(); track item.author; let idx = $index) {
-                <button
-                  type="button"
-                  class="carousel-dot"
-                  [class.active]="activeTestimonial() === idx"
-                  [attr.aria-label]="
-                    currentLang() === 'km'
-                      ? 'ទៅកាន់មតិទី ' + (idx + 1)
-                      : 'Go to testimonial ' + (idx + 1)
-                  "
-                  (click)="setTestimonial(idx)"
-                ></button>
-              }
-            </div>
-
-            <button
-              type="button"
-              class="carousel-btn next"
-              [attr.aria-label]="currentLang() === 'km' ? 'មតិបន្ទាប់' : 'Next testimonial'"
-              (click)="nextTestimonial()"
-            >
-              <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-                <path
-                  d="M7 4l6 6-6 6"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Clinical Accreditation & Trust Badges Section -->
-      <section class="trust-badges-section" aria-labelledby="trust-title">
-        <div class="section-heading">
-          <h2 id="trust-title">
-            {{
-              currentLang() === 'km'
-                ? 'បង្កើតឡើងដោយសុចរិតភាព និងសុវត្ថិភាព'
-                : 'Built with Clinical Integrity & Safety First'
-            }}
-          </h2>
-          <p>
-            {{
-              currentLang() === 'km'
-                ? 'សុវត្ថិភាព និងឯកជនភាពគ្រួសារជាចម្បង។'
-                : 'Safety, privacy, and clinical standards come first.'
-            }}
-          </p>
-        </div>
-
-        <div class="trust-cards-grid">
-          @for (badge of trustBadges(); track badge.title) {
-            <article class="trust-card">
-              <div class="trust-card-icon" aria-hidden="true">
-                @if (badge.icon === 'shield') {
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <path
-                      d="M12 2l7 3.5v6c0 5-3.5 9-7 10.5-3.5-1.5-7-5.5-7-10.5v-6L12 2z"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    />
-                    <path
-                      d="M9 12l2 2 4-4"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                    />
-                  </svg>
-                } @else if (badge.icon === 'lock') {
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <rect
-                      x="4"
-                      y="10"
-                      width="16"
-                      height="11"
-                      rx="2"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    />
-                    <path
-                      d="M8 10V7a4 4 0 0 1 8 0v3"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    />
-                  </svg>
-                } @else if (badge.icon === 'users') {
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <path
-                      d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    />
-                  </svg>
-                } @else {
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <path
-                      d="M12 21s-7-4.4-9.1-8.3C.9 8 .7 4.8 3.2 3.2c2.2-1.4 5-.6 6.4 1.5L12 8l2.4-3.3c1.5-2.1 4.2-2.9 6.4-1.5 2.5 1.6 2.3 4.8.3 8.5C19 15.6 12 20 12 20Z"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    />
-                  </svg>
-                }
-              </div>
-              <h3>{{ badge.title }}</h3>
-              <p>{{ badge.description }}</p>
-            </article>
-          }
         </div>
       </section>
 
@@ -2139,287 +1448,7 @@ const KM_AUTISM_NOTES = [
         color: var(--ac-color-text-body);
       }
 
-      /* Interactive Feature Progression Section */
-      .progression-section {
-        padding: 72px clamp(24px, 5vw, 72px);
-        background: var(--ac-color-surface);
-        border-top: 1px solid var(--ac-color-border-slate);
-        border-bottom: 1px solid var(--ac-color-border-slate);
-      }
-
-      .stepper-tabs {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 36px;
-      }
-
-      .stepper-tab {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 18px;
-        border-radius: var(--ac-radius-pill);
-        border: 1px solid var(--ac-color-border-grey);
-        background: var(--ac-color-surface);
-        color: var(--ac-color-text-body);
-        font-size: 14px;
-        font-weight: var(--ac-font-weight-semibold);
-        cursor: pointer;
-        transition: all 160ms ease;
-      }
-
-      .stepper-tab:hover {
-        border-color: var(--ac-color-action);
-        background: var(--ac-color-surface-info);
-      }
-
-      .stepper-tab.active {
-        border-color: var(--ac-color-action);
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-        box-shadow: 0 4px 14px rgb(41 74 90 / 0.16);
-      }
-
-      .tab-number {
-        font-size: 12px;
-        font-weight: var(--ac-font-weight-bold);
-        opacity: 0.8;
-      }
-
-      .progression-card {
-        display: grid;
-        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-        gap: 40px;
-        align-items: center;
-        background: var(--ac-color-surface-info);
-        border: 1px solid var(--ac-color-border-info);
-        border-radius: 24px;
-        padding: 44px;
-        max-width: 1040px;
-        margin: 0 auto;
-        box-shadow: 0 12px 32px rgb(41 74 90 / 0.08);
-      }
-
-      .progression-card-content {
-        display: grid;
-        gap: 14px;
-      }
-
-      .step-meta {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .step-badge {
-        font-size: 12px;
-        font-weight: var(--ac-font-weight-bold);
-        padding: 4px 10px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-      }
-
-      .step-order {
-        font-size: 13px;
-        color: var(--ac-color-text-muted);
-        font-weight: var(--ac-font-weight-semibold);
-      }
-
-      .progression-card-content h3 {
-        font-size: clamp(22px, 2.4vw, 28px);
-        line-height: 1.25;
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text-strong);
-      }
-
-      .step-subtitle {
-        font-size: 16px;
-        font-weight: var(--ac-font-weight-semibold);
-        color: var(--ac-color-action-deep);
-      }
-
-      .step-desc {
-        font-size: 15px;
-        line-height: 1.55;
-        color: var(--ac-color-text-body);
-      }
-
-      .step-highlights {
-        list-style: none;
-        padding: 0;
-        margin: 8px 0;
-        display: grid;
-        gap: 10px;
-      }
-
-      .step-highlights li {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 14px;
-        color: var(--ac-color-text-strong);
-      }
-
-      .step-highlights svg {
-        width: 18px;
-        height: 18px;
-        color: var(--ac-color-green-600);
-        flex-shrink: 0;
-      }
-
-      .step-action-row {
-        margin-top: 10px;
-      }
-
-      .step-cta-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        height: 48px;
-        border-radius: 12px;
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-        padding: 0 22px;
-        font-size: 15px;
-        font-weight: var(--ac-font-weight-semibold);
-        text-decoration: none;
-        transition: background 160ms ease;
-      }
-
-      .step-cta-btn svg {
-        width: 16px;
-        height: 16px;
-      }
-
-      .step-cta-btn:hover {
-        background: var(--ac-color-action-alt);
-      }
-
-      .visual-box {
-        border-radius: 16px;
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-slate);
-        overflow: hidden;
-        box-shadow: 0 8px 24px rgb(41 74 90 / 0.1);
-      }
-
-      .visual-header {
-        height: 28px;
-        background: var(--ac-color-surface-slate);
-        border-bottom: 1px solid var(--ac-color-border-slate);
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 0 12px;
-      }
-
-      .visual-header span {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: var(--ac-color-border-grey);
-      }
-
-      .visual-body {
-        padding: 24px;
-        display: grid;
-        place-items: center;
-        min-height: 180px;
-      }
-
-      .mock-score-card,
-      .mock-activity-card,
-      .mock-doctor-card,
-      .mock-school-card {
-        width: 100%;
-        display: grid;
-        gap: 8px;
-      }
-
-      .mock-label {
-        font-size: 13px;
-        font-weight: var(--ac-font-weight-semibold);
-        color: var(--ac-color-text-muted);
-      }
-
-      .mock-risk-meter {
-        height: 10px;
-        border-radius: 999px;
-        background: var(--ac-color-border-slate);
-        overflow: hidden;
-      }
-
-      .mock-risk-bar {
-        width: 85%;
-        height: 100%;
-        background: var(--ac-color-green-600);
-      }
-
-      .mock-status {
-        font-size: 13px;
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-green-700);
-      }
-
-      .mock-tag {
-        font-size: 11px;
-        font-weight: var(--ac-font-weight-bold);
-        padding: 2px 8px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-surface-info);
-        color: var(--ac-color-action-deep);
-        width: fit-content;
-      }
-
-      .mock-activity-card h4,
-      .mock-school-card h4 {
-        font-size: 16px;
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text-strong);
-      }
-
-      .mock-time,
-      .mock-school-card span {
-        font-size: 13px;
-        color: var(--ac-color-text-muted);
-      }
-
-      .mock-doctor-card {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-      }
-
-      .mock-avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: 999px;
-        background: var(--ac-color-primary);
-        color: var(--ac-color-text-strong);
-        display: grid;
-        place-items: center;
-        font-weight: bold;
-      }
-
-      .mock-doc-info {
-        display: grid;
-        gap: 2px;
-      }
-
-      .mock-doc-info strong {
-        font-size: 15px;
-      }
-
-      .mock-doc-info span {
-        font-size: 13px;
-        color: var(--ac-color-text-muted);
-      }
-
-      /* Tools Section */
+      /* Features section (class names kept from the old "Core tools" grid) */
       .tools-section {
         padding: 72px clamp(24px, 5vw, 72px);
       }
@@ -2596,230 +1625,6 @@ const KM_AUTISM_NOTES = [
 
       .preview-bars span:first-child {
         background: var(--ac-color-action);
-      }
-
-      /* Activities Section */
-      .activities-section {
-        padding: 72px clamp(24px, 5vw, 72px);
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        align-items: center;
-        gap: 48px;
-      }
-
-      .activities-section h2 {
-        font-size: 32px;
-        font-weight: var(--ac-font-weight-bold);
-        margin: 8px 0 14px;
-      }
-
-      .activities-section p {
-        font-size: 16px;
-        line-height: 1.6;
-        color: var(--ac-color-text-body);
-      }
-
-      .activity-list {
-        display: grid;
-        gap: 16px;
-      }
-
-      .activity-list article {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-slate);
-        border-radius: 14px;
-        padding: 18px 22px;
-        font-size: 16px;
-        font-weight: var(--ac-font-weight-semibold);
-      }
-
-      .activity-list article span {
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: var(--ac-color-action);
-      }
-
-      /* Testimonials Section */
-      .testimonials-section {
-        padding: 72px clamp(24px, 5vw, 72px);
-        background: var(--ac-color-surface-info);
-        border-top: 1px solid var(--ac-color-border-info);
-        border-bottom: 1px solid var(--ac-color-border-info);
-      }
-
-      .testimonials-carousel {
-        max-width: 820px;
-        margin: 0 auto;
-        display: grid;
-        gap: 28px;
-      }
-
-      .testimonial-card {
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-slate);
-        border-radius: 24px;
-        padding: 44px 48px;
-        box-shadow: 0 12px 36px rgb(41 74 90 / 0.08);
-        position: relative;
-      }
-
-      .quote-icon {
-        font-size: 64px;
-        line-height: 1;
-        font-family: Georgia, serif;
-        color: var(--ac-color-primary);
-        margin-bottom: 12px;
-      }
-
-      .testimonial-text {
-        font-size: 19px;
-        line-height: 1.6;
-        font-style: italic;
-        color: var(--ac-color-text-strong);
-        margin-bottom: 24px;
-      }
-
-      .testimonial-author-row {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        border-top: 1px solid var(--ac-color-border-slate);
-        padding-top: 20px;
-      }
-
-      .author-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 999px;
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-        display: grid;
-        place-items: center;
-        font-size: 16px;
-        font-weight: bold;
-      }
-
-      .author-details {
-        display: grid;
-        gap: 2px;
-      }
-
-      .author-details strong {
-        font-size: 16px;
-        color: var(--ac-color-text-strong);
-      }
-
-      .author-details span {
-        font-size: 14px;
-        color: var(--ac-color-text-muted);
-      }
-
-      .carousel-controls {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 20px;
-      }
-
-      .carousel-btn {
-        width: 42px;
-        height: 42px;
-        border-radius: 999px;
-        border: 1px solid var(--ac-color-border-grey);
-        background: var(--ac-color-surface);
-        color: var(--ac-color-text-strong);
-        display: grid;
-        place-items: center;
-        cursor: pointer;
-        transition:
-          background 160ms ease,
-          border-color 160ms ease;
-      }
-
-      .carousel-btn svg {
-        width: 18px;
-        height: 18px;
-      }
-
-      .carousel-btn:hover {
-        background: var(--ac-color-surface-info);
-        border-color: var(--ac-color-action);
-      }
-
-      .carousel-dots {
-        display: flex;
-        gap: 8px;
-      }
-
-      .carousel-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        border: 0;
-        background: var(--ac-color-border-grey);
-        cursor: pointer;
-        padding: 0;
-        transition:
-          background 160ms ease,
-          transform 160ms ease;
-      }
-
-      .carousel-dot.active {
-        width: 24px;
-        background: var(--ac-color-action);
-      }
-
-      /* Trust Badges Section */
-      .trust-badges-section {
-        padding: 72px clamp(24px, 5vw, 72px);
-      }
-
-      .trust-cards-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 24px;
-      }
-
-      .trust-card {
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-slate);
-        border-radius: 20px;
-        padding: 32px 24px;
-        text-align: center;
-        display: grid;
-        justify-items: center;
-        gap: 12px;
-      }
-
-      .trust-card-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 999px;
-        background: var(--ac-color-surface-info);
-        color: var(--ac-color-action-deep);
-        display: grid;
-        place-items: center;
-      }
-
-      .trust-card-icon svg {
-        width: 24px;
-        height: 24px;
-      }
-
-      .trust-card h3 {
-        font-size: 17px;
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text-strong);
-      }
-
-      .trust-card p {
-        font-size: 14px;
-        line-height: 1.5;
-        color: var(--ac-color-text-body);
       }
 
       /* About Autism */
@@ -3238,21 +2043,9 @@ const KM_AUTISM_NOTES = [
           justify-content: center;
         }
 
-        .progression-card {
-          grid-template-columns: 1fr;
-          gap: 28px;
-          padding: 32px 24px;
-        }
-
         .process-section {
           grid-template-columns: 1fr;
           gap: 40px;
-          padding: 56px clamp(20px, 4vw, 40px);
-        }
-
-        .activities-section {
-          grid-template-columns: 1fr;
-          gap: 36px;
           padding: 56px clamp(20px, 4vw, 40px);
         }
 
@@ -3378,7 +2171,7 @@ const KM_AUTISM_NOTES = [
         .hero-section {
           min-height: 100svh;
           box-sizing: border-box;
-          padding: 59px 16px 28px;
+          padding: 100px 16px 28px;
           gap: 18px;
           display: flex;
           flex-direction: column;
@@ -3528,71 +2321,6 @@ const KM_AUTISM_NOTES = [
           line-height: 1.5;
         }
 
-        .progression-section {
-          padding: 44px 16px;
-        }
-
-        .stepper-tabs {
-          display: flex;
-          flex-wrap: nowrap;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          scroll-snap-type: x mandatory;
-          gap: 8px;
-          padding: 4px 4px 12px;
-          justify-content: flex-start;
-          scrollbar-width: none;
-        }
-
-        .stepper-tabs::-webkit-scrollbar {
-          display: none;
-        }
-
-        .stepper-tab {
-          flex-shrink: 0;
-          scroll-snap-align: start;
-          padding: 8px 14px;
-          font-size: 13px;
-          border-radius: var(--ac-radius-pill);
-        }
-
-        .progression-card {
-          padding: 20px 16px;
-          border-radius: 18px;
-          gap: 20px;
-        }
-
-        .progression-card-content h3 {
-          font-size: 20px;
-          line-height: 1.3;
-        }
-
-        .step-subtitle {
-          font-size: 14px;
-        }
-
-        .step-desc {
-          font-size: 13.5px;
-        }
-
-        .step-highlights li {
-          font-size: 13px;
-          gap: 8px;
-        }
-
-        .step-cta-btn {
-          width: 100%;
-          height: 46px;
-          justify-content: center;
-          font-size: 14px;
-          border-radius: 10px;
-        }
-
-        .visual-body {
-          padding: 16px;
-          min-height: 140px;
-        }
-
         .tools-section {
           padding: 44px 16px;
         }
@@ -3648,79 +2376,6 @@ const KM_AUTISM_NOTES = [
 
         .preview-panel.large {
           grid-column: span 1;
-        }
-
-        .activities-section {
-          padding: 44px 16px;
-          gap: 24px;
-        }
-
-        .activities-section h2 {
-          font-size: clamp(22px, 5.2vw, 28px);
-        }
-
-        .activity-list article {
-          padding: 12px 14px;
-          font-size: 13.5px;
-          border-radius: 12px;
-          gap: 10px;
-        }
-
-        .testimonials-section {
-          padding: 44px 16px;
-        }
-
-        .testimonials-carousel {
-          gap: 20px;
-        }
-
-        .testimonial-card {
-          padding: 24px 16px 20px;
-          border-radius: 18px;
-        }
-
-        .quote-icon {
-          font-size: 42px;
-          margin-bottom: 4px;
-        }
-
-        .testimonial-text {
-          font-size: 15px;
-          line-height: 1.55;
-          margin-bottom: 16px;
-        }
-
-        .author-avatar {
-          width: 40px;
-          height: 40px;
-          font-size: 14px;
-        }
-
-        .author-details strong {
-          font-size: 15px;
-        }
-
-        .author-details span {
-          font-size: 13px;
-        }
-
-        .carousel-btn {
-          width: 44px;
-          height: 44px;
-        }
-
-        .trust-badges-section {
-          padding: 44px 16px;
-        }
-
-        .trust-cards-grid {
-          grid-template-columns: 1fr;
-          gap: 14px;
-        }
-
-        .trust-card {
-          padding: 20px 16px;
-          border-radius: 16px;
         }
 
         .autism-section {
@@ -3788,6 +2443,42 @@ const KM_AUTISM_NOTES = [
           display: none;
         }
       }
+
+      /* Trust points under the hero (replaces the trust-badge section) */
+      .hero-trust {
+        list-style: none;
+        margin: 22px 0 0;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 22px;
+      }
+
+      .hero-trust li {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ac-color-text-body);
+      }
+
+      .hero-trust ac-nav-icon {
+        width: 18px;
+        height: 18px;
+        color: var(--ac-color-green-teal);
+      }
+
+      .tool-icon ac-nav-icon {
+        width: 22px;
+        height: 22px;
+      }
+
+      @media (max-width: 768px) {
+        .hero-trust {
+          justify-content: center;
+        }
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -3798,41 +2489,19 @@ export class LandingPage {
 
   readonly currentLang = computed(() => this.i18n.currentLang());
 
-  readonly tools = computed(() => (this.currentLang() === 'km' ? KM_TOOLS : EN_TOOLS));
-  readonly steps = computed(() => (this.currentLang() === 'km' ? KM_STEPS : EN_STEPS));
-  readonly activityHighlights = computed(() =>
-    this.currentLang() === 'km' ? KM_ACTIVITY_HIGHLIGHTS : EN_ACTIVITY_HIGHLIGHTS,
+  readonly features = computed(() => (this.currentLang() === 'km' ? KM_FEATURES : EN_FEATURES));
+  readonly trustPoints = computed(() =>
+    this.currentLang() === 'km' ? KM_TRUST_POINTS : EN_TRUST_POINTS,
   );
+  readonly steps = computed(() => (this.currentLang() === 'km' ? KM_STEPS : EN_STEPS));
   readonly autismNotes = computed(() =>
     this.currentLang() === 'km' ? KM_AUTISM_NOTES : EN_AUTISM_NOTES,
   );
-  readonly progressionSteps = computed(() =>
-    this.currentLang() === 'km' ? KM_PROGRESSION_STEPS : EN_PROGRESSION_STEPS,
-  );
-  readonly testimonials = computed(() =>
-    this.currentLang() === 'km' ? KM_TESTIMONIALS : EN_TESTIMONIALS,
-  );
-  readonly trustBadges = computed(() =>
-    this.currentLang() === 'km' ? KM_TRUST_BADGES : EN_TRUST_BADGES,
-  );
-
-  readonly activeProgressionStep = signal(0);
-  readonly activeTestimonial = signal(0);
   readonly mobileMenuOpen = signal(false);
   readonly currentYear = new Date().getFullYear();
 
   readonly isAuthenticated = computed(() => this.auth.isAuthenticated());
   readonly currentParent = computed(() => this.auth.parent());
-
-  readonly currentProgressionStep = computed(() => {
-    const list = this.progressionSteps();
-    return list[this.activeProgressionStep()] ?? list[0];
-  });
-
-  readonly currentTestimonial = computed(() => {
-    const list = this.testimonials();
-    return list[this.activeTestimonial()] ?? list[0];
-  });
 
   readonly dashboardPath = computed(() => {
     const role = this.currentParent()?.role;
@@ -3865,24 +2534,6 @@ export class LandingPage {
 
   closeMobileMenu(): void {
     this.mobileMenuOpen.set(false);
-  }
-
-  selectProgressionStep(index: number) {
-    this.activeProgressionStep.set(index);
-  }
-
-  nextTestimonial() {
-    const count = this.testimonials().length;
-    this.activeTestimonial.update((curr) => (curr + 1) % count);
-  }
-
-  prevTestimonial() {
-    const count = this.testimonials().length;
-    this.activeTestimonial.update((curr) => (curr === 0 ? count - 1 : curr - 1));
-  }
-
-  setTestimonial(index: number) {
-    this.activeTestimonial.set(index);
   }
 
   scrollToSection(sectionId: string, event: Event) {

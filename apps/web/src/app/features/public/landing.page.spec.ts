@@ -69,8 +69,8 @@ describe('LandingPage', () => {
     expect(ctaLink?.textContent?.trim()).toBe('បង្កើតគណនី');
     expect(ctaLink?.getAttribute('href')).toBe('/register');
 
-    const kicker = compiled.querySelector('.progression-section .section-kicker');
-    expect(kicker?.textContent?.trim()).toBe('ដំណើរការថែទាំរួមគ្នា');
+    const kicker = compiled.querySelector('#features .section-kicker');
+    expect(kicker?.textContent?.trim()).toBe('អ្វីដែលអ្នកទទួលបាន');
   });
 
   it('switches to clean English when toggleLanguage() is triggered', () => {
@@ -96,8 +96,21 @@ describe('LandingPage', () => {
     const ctaLink = compiled.querySelector('.cta-section a');
     expect(ctaLink?.textContent?.trim()).toBe('Create account');
 
-    const kicker = compiled.querySelector('.progression-section .section-kicker');
-    expect(kicker?.textContent?.trim()).toBe('Unified Care Journey');
+    const kicker = compiled.querySelector('#features .section-kicker');
+    expect(kicker?.textContent?.trim()).toBe('What you get');
+
+    const featureTitles = Array.from(compiled.querySelectorAll('#features .tool-card h3')).map(
+      (node) => node.textContent?.trim(),
+    );
+    expect(featureTitles).toEqual([
+      'A three-minute check-in',
+      'Ask AutiCare',
+      'Daily notes and patterns',
+      'Guidance you can trust',
+    ]);
+    expect(compiled.querySelector('.hero-trust')?.textContent).toContain(
+      'Screening support, not a diagnosis',
+    );
   });
 
   it('renders Go to Dashboard and user avatar when user is authenticated as PARENT', () => {
@@ -142,19 +155,24 @@ describe('LandingPage', () => {
     expect(heroPrimary?.getAttribute('href')).toBe('/hospital/dashboard');
   });
 
-  it('supports selecting progression steps and rotating testimonials', () => {
+  it('keeps a short page: five sections, and the menu only links to sections that exist', () => {
     fixture = TestBed.createComponent(LandingPage);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    expect(component.activeProgressionStep()).toBe(0);
-    component.selectProgressionStep(2);
-    expect(component.activeProgressionStep()).toBe(2);
+    const compiled = fixture.nativeElement as HTMLElement;
+    const sectionIds = Array.from(compiled.querySelectorAll('main > section')).map((el) => el.id);
+    expect(sectionIds).toEqual(['home', 'features', 'how-it-works', 'about-autism', 'start']);
 
-    expect(component.activeTestimonial()).toBe(0);
-    component.nextTestimonial();
-    expect(component.activeTestimonial()).toBe(1);
-    component.prevTestimonial();
-    expect(component.activeTestimonial()).toBe(0);
+    // No invented testimonials or unbacked accreditation claims.
+    expect(compiled.querySelector('#testimonials')).toBeNull();
+    expect(compiled.querySelector('.trust-badges-section')).toBeNull();
+
+    const navTargets = Array.from(compiled.querySelectorAll('.desktop-nav a')).map((a) =>
+      a.getAttribute('href'),
+    );
+    expect(navTargets).toEqual(['#home', '#features', '#how-it-works', '#about-autism']);
+    for (const target of navTargets) {
+      expect(compiled.querySelector(target as string)).toBeTruthy();
+    }
   });
 });
