@@ -70,6 +70,30 @@ const COPY = {
       OTHER: 'Other',
     },
     loadError: 'This summary could not be loaded.',
+    nextStep: 'Your next step',
+    orAsk: 'Or ask AutiCare a question',
+    next: {
+      checkin: {
+        title: 'Start with a three-minute check-in',
+        body: 'Ten simple questions give you a starting point you can compare against later.',
+        cta: 'Start the check-in',
+      },
+      book: {
+        title: 'A professional look is the right next step',
+        body: 'The check-in suggested several areas worth a closer look. Booking early means less time waiting.',
+        cta: 'Book an appointment',
+      },
+      record: {
+        title: (name: string) => `Note one thing ${name} did today`,
+        body: 'One sentence a day is enough. After a few notes, patterns start to appear here.',
+        cta: 'Record a note',
+      },
+      ask: {
+        title: 'Have a question about this week?',
+        body: 'Ask in Khmer or English. Answers are plain, sourced, and never a diagnosis.',
+        cta: 'Ask AutiCare',
+      },
+    },
   },
   km: {
     bandTitle: 'ស្ថានភាពបច្ចុប្បន្ន',
@@ -121,6 +145,30 @@ const COPY = {
       OTHER: 'ផ្សេងៗ',
     },
     loadError: 'មិនអាចផ្ទុកសេចក្តីសង្ខេបនេះបានទេ។',
+    nextStep: 'ជំហានបន្ទាប់របស់អ្នក',
+    orAsk: 'ឬសួរ AutiCare នូវសំណួរមួយ',
+    next: {
+      checkin: {
+        title: 'ចាប់ផ្តើមជាមួយការពិនិត្យខ្លីបីនាទី',
+        body: 'សំណួរងាយៗដប់ ផ្តល់ឱ្យអ្នកនូវចំណុចចាប់ផ្តើមដែលអាចប្រៀបធៀបនៅពេលក្រោយ។',
+        cta: 'ចាប់ផ្តើមការពិនិត្យ',
+      },
+      book: {
+        title: 'ការពិនិត្យដោយអ្នកជំនាញ គឺជាជំហានបន្ទាប់ដ៏ត្រឹមត្រូវ',
+        body: 'ការពិនិត្យបានបង្ហាញផ្នែកជាច្រើនដែលគួរមើលឱ្យកាន់តែច្បាស់។ ការណាត់ជួបឆាប់ ជួយកាត់បន្ថយពេលរង់ចាំ។',
+        cta: 'ណាត់ជួបគ្រូពេទ្យ',
+      },
+      record: {
+        title: (name: string) => `កត់ត្រារឿងមួយដែល ${name} បានធ្វើថ្ងៃនេះ`,
+        body: 'មួយប្រយោគក្នុងមួយថ្ងៃគឺគ្រប់គ្រាន់។ បន្ទាប់ពីកំណត់ត្រាពីរបី គំរូនឹងចាប់ផ្តើមលេចឡើងនៅទីនេះ។',
+        cta: 'កត់ត្រាថ្មី',
+      },
+      ask: {
+        title: 'មានសំណួរអំពីសប្តាហ៍នេះទេ?',
+        body: 'សួរជាភាសាខ្មែរ ឬអង់គ្លេស។ ចម្លើយច្បាស់ មានប្រភព និងមិនមែនជាការធ្វើរោគវិនិច្ឆ័យទេ។',
+        cta: 'សួរ AutiCare',
+      },
+    },
   },
 };
 
@@ -144,6 +192,32 @@ const INSIGHT_DAYS = 28;
     } @else if (error()) {
       <p class="load-error">{{ error() }}</p>
     } @else {
+      <!-- One suggested next action, not a menu of ten. -->
+      @if (nextStep(); as step) {
+        <section
+          class="next-card"
+          [class.next-ask]="step.kind === 'ask'"
+          aria-labelledby="next-heading"
+        >
+          <div class="next-text">
+            <p class="next-eyebrow">{{ copy().nextStep }}</p>
+            <h2 id="next-heading">{{ step.title }}</h2>
+            <p class="next-body">{{ step.body }}</p>
+          </div>
+          <div class="next-actions">
+            <a class="next-cta" [routerLink]="step.link">
+              {{ step.cta }}
+              <span class="arrow" aria-hidden="true">→</span>
+            </a>
+            @if (step.kind !== 'ask') {
+              <a class="ask-link" routerLink="/ai">
+                <span class="ai-dot" aria-hidden="true"></span>{{ copy().orAsk }}
+              </a>
+            }
+          </div>
+        </section>
+      }
+
       <div class="grid">
         <!-- Concern band -->
         <section
@@ -160,8 +234,7 @@ const INSIGHT_DAYS = 28;
             <p class="band-line">{{ band().line }}</p>
 
             @if (areas().length > 0) {
-              <div class="areas" aria-label="Areas we asked about">
-                <p class="areas-label">{{ copy().areas }}</p>
+              <div class="areas" [attr.aria-label]="copy().areas">
                 @for (area of areas(); track area.category) {
                   <div class="area">
                     <span class="area-name">{{ area.category }}</span>
@@ -182,9 +255,9 @@ const INSIGHT_DAYS = 28;
               {{ copy().fullResult }} →
             </a>
           } @else {
+            <!-- The next-step card above already carries the button. -->
             <h2 id="band-heading">{{ copy().notAssessedTitle }}</h2>
             <p class="band-line">{{ copy().notAssessedBody }}</p>
-            <a class="link" routerLink="/welcome">{{ copy().retake }} →</a>
           }
         </section>
 
@@ -192,32 +265,24 @@ const INSIGHT_DAYS = 28;
         <section class="card pattern-card" aria-labelledby="patterns-heading">
           <p class="card-eyebrow">{{ copy().patternsTitle }}</p>
 
-          @if (insight(); as data) {
-            @if (data.observationCount === 0) {
-              <h2 id="patterns-heading">{{ copy().patternsEmptyTitle }}</h2>
-              <p class="band-line">{{ copy().patternsEmptyBody }}</p>
-            } @else {
-              <p class="window">
-                {{ copy().countLabel(data.observationCount, data.distinctDays) }} ·
-                {{ copy().windowLabel(INSIGHT_DAYS) }}
-              </p>
-              <ul class="lines">
-                @for (line of patternLines(); track line) {
-                  <li>{{ line }}</li>
-                }
-              </ul>
-            }
+          @if (insight()?.observationCount) {
+            <p class="window">
+              {{ copy().countLabel(insight()!.observationCount, insight()!.distinctDays) }} ·
+              {{ copy().windowLabel(INSIGHT_DAYS) }}
+            </p>
+            <ul class="lines">
+              @for (line of patternLines(); track line) {
+                <li>{{ line }}</li>
+              }
+            </ul>
+            <a class="link" routerLink="/observations">{{ copy().seeAll }} →</a>
           } @else {
             <h2 id="patterns-heading">{{ copy().patternsEmptyTitle }}</h2>
             <p class="band-line">{{ copy().patternsEmptyBody }}</p>
-          }
-
-          <div class="card-actions">
-            <a class="primary-link" routerLink="/observations">{{ copy().record }}</a>
-            @if (insight()?.observationCount) {
-              <a class="link" routerLink="/observations">{{ copy().seeAll }} →</a>
+            @if (nextStep()?.kind !== 'record') {
+              <a class="link" routerLink="/observations">{{ copy().record }} →</a>
             }
-          </div>
+          }
 
           <p class="fine">{{ copy().disclaimer }}</p>
         </section>
@@ -227,10 +292,128 @@ const INSIGHT_DAYS = 28;
   styles: [
     `
       :host {
-        display: block;
-        margin: 22px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+
+        --a-primary: var(--ac-color-action);
+        --a-ink: var(--ac-color-text-strong);
+        --a-muted: var(--ac-color-text-muted);
+        --a-line: var(--ac-color-border);
       }
 
+      /* ---- Next step ---- */
+      .next-card {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px 32px;
+        flex-wrap: wrap;
+        padding: 26px 28px;
+        border-radius: var(--ac-radius-lg);
+        background: var(--ac-color-surface-info);
+        border: 1px solid var(--ac-color-border-info);
+        animation: rise 0.45s ease both;
+      }
+
+      .next-text {
+        flex: 1 1 320px;
+        min-width: 0;
+      }
+
+      .next-eyebrow {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--a-primary);
+      }
+
+      .next-card h2 {
+        margin: 0;
+        font-size: clamp(19px, 2.2vw, 23px);
+        line-height: 1.3;
+        color: var(--a-ink);
+      }
+
+      .next-body {
+        margin: 6px 0 0;
+        font-size: 15px;
+        line-height: 1.55;
+        color: var(--a-muted);
+        max-width: 56ch;
+      }
+
+      .next-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .next-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 22px;
+        border-radius: 999px;
+        background: var(--a-primary);
+        color: var(--ac-color-text-on-action);
+        font-weight: 700;
+        font-size: 15px;
+        text-decoration: none;
+        box-shadow: var(--ac-shadow-sm);
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease;
+      }
+
+      .next-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--ac-shadow-hover);
+      }
+
+      .next-cta:hover .arrow {
+        transform: translateX(3px);
+      }
+
+      .next-cta:focus-visible,
+      .ask-link:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 3px;
+      }
+
+      .arrow {
+        transition: transform 0.18s ease;
+      }
+
+      .ask-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--a-primary);
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .ask-link:hover {
+        text-decoration: underline;
+      }
+
+      .ai-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--a-primary);
+      }
+
+      /* ---- Cards ---- */
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -239,44 +422,53 @@ const INSIGHT_DAYS = 28;
 
       .card {
         background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border);
+        border: 1px solid var(--a-line);
         border-radius: var(--ac-radius-lg);
-        padding: 22px;
         box-shadow: var(--ac-shadow-xs);
+        padding: 22px 24px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
+        animation: rise 0.45s ease both;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          border-color 0.2s ease;
+      }
+
+      .card:nth-child(2) {
+        animation-delay: 0.08s;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--ac-shadow-hover);
       }
 
       .card-eyebrow {
         margin: 0;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        font-size: var(--ac-type-label);
+        font-size: 12px;
         font-weight: 700;
-        color: var(--ac-color-text-muted);
+        color: var(--a-muted);
       }
 
       h2 {
         margin: 2px 0 0;
         font-size: var(--ac-type-card-title);
-        color: var(--ac-color-text-strong);
+        color: var(--a-ink);
         line-height: 1.35;
       }
 
       .chip {
         display: inline-block;
-        padding: 5px 12px;
-        border-radius: var(--ac-radius-pill);
-        font-size: var(--ac-type-label);
-        letter-spacing: 0.02em;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
         background: var(--ac-color-blue-surface-soft);
         color: var(--ac-color-action-darkest);
-      }
-
-      .band-high .chip {
-        background: var(--ac-color-alert-surface);
-        color: var(--ac-color-alert-text);
       }
 
       .band-moderate .chip {
@@ -284,41 +476,38 @@ const INSIGHT_DAYS = 28;
         color: var(--ac-color-amber-dark);
       }
 
+      .band-high .chip {
+        background: var(--ac-color-alert-surface);
+        color: var(--ac-color-alert-text);
+      }
+
       .band-line {
         margin: 0;
-        color: var(--ac-color-text-muted);
+        color: var(--a-muted);
         line-height: 1.6;
-        font-size: var(--ac-type-body);
+        font-size: 15px;
       }
 
       .window {
         margin: 0;
-        font-size: var(--ac-type-meta);
-        color: var(--ac-color-text-muted);
+        font-size: 13px;
+        color: var(--a-muted);
       }
 
       .areas {
-        margin: 8px 0 4px;
+        margin: 4px 0;
         display: flex;
         flex-direction: column;
-        gap: 6px;
-      }
-
-      .areas-label {
-        margin: 0 0 2px;
-        font-size: var(--ac-type-label);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--ac-color-text-muted);
+        gap: 9px;
       }
 
       .area {
         display: grid;
-        grid-template-columns: 1fr 90px;
+        grid-template-columns: minmax(0, 1fr) 110px;
         align-items: center;
-        gap: 10px;
-        font-size: var(--ac-type-meta);
-        color: var(--ac-color-text-strong);
+        gap: 12px;
+        font-size: 14px;
+        color: var(--a-ink);
       }
 
       .area-name {
@@ -329,8 +518,8 @@ const INSIGHT_DAYS = 28;
 
       .bar {
         display: block;
-        height: 7px;
-        border-radius: var(--ac-radius-pill);
+        height: 8px;
+        border-radius: 999px;
         background: var(--ac-color-surface-slate);
         overflow: hidden;
       }
@@ -338,8 +527,10 @@ const INSIGHT_DAYS = 28;
       .bar-fill {
         display: block;
         height: 100%;
-        border-radius: var(--ac-radius-pill);
+        border-radius: 999px;
         background: var(--ac-color-green-teal);
+        transform-origin: left;
+        animation: grow 0.8s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
       }
 
       .bar-fill.lv-moderate {
@@ -351,40 +542,22 @@ const INSIGHT_DAYS = 28;
       }
 
       .lines {
-        margin: 2px 0 0;
+        margin: 0;
         padding-left: 18px;
         display: flex;
         flex-direction: column;
         gap: 6px;
-        color: var(--ac-color-text-strong);
+        color: var(--a-ink);
         line-height: 1.55;
-        font-size: var(--ac-type-body);
-      }
-
-      .card-actions {
-        margin-top: auto;
-        padding-top: 10px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        flex-wrap: wrap;
-      }
-
-      .primary-link {
-        display: inline-block;
-        padding: 9px 16px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-        font-weight: 700;
-        font-size: var(--ac-type-meta);
-        text-decoration: none;
+        font-size: 15px;
       }
 
       .link {
-        color: var(--ac-color-action);
+        margin-top: auto;
+        padding-top: 4px;
+        color: var(--a-primary);
         font-weight: 700;
-        font-size: var(--ac-type-meta);
+        font-size: 14px;
         text-decoration: none;
       }
 
@@ -394,14 +567,67 @@ const INSIGHT_DAYS = 28;
 
       .fine {
         margin: 0;
-        font-size: 11px;
-        color: var(--ac-color-text-muted);
+        font-size: 12px;
+        color: var(--a-muted);
         line-height: 1.5;
       }
 
       .load-error {
         color: var(--ac-color-alert-text);
         font-size: var(--ac-type-meta);
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+      }
+
+      @keyframes grow {
+        from {
+          transform: scaleX(0);
+        }
+      }
+
+      @media (max-width: 640px) {
+        .next-card {
+          padding: 22px 20px;
+        }
+
+        .next-actions,
+        .next-cta {
+          width: 100%;
+        }
+
+        .next-cta {
+          justify-content: center;
+        }
+      }
+
+      /* Honour both the OS setting and AutiCare's own reduced-motion preference. */
+      @media (prefers-reduced-motion: reduce) {
+        .next-card,
+        .card,
+        .bar-fill {
+          animation: none;
+        }
+
+        .card:hover,
+        .next-cta:hover {
+          transform: none;
+        }
+      }
+
+      :host-context(.reduced-motion) .next-card,
+      :host-context(.reduced-motion) .card,
+      :host-context(.reduced-motion) .bar-fill {
+        animation: none;
+      }
+
+      :host-context(.reduced-motion) .card:hover,
+      :host-context(.reduced-motion) .next-cta:hover {
+        transform: none;
       }
     `,
   ],
@@ -410,6 +636,8 @@ const INSIGHT_DAYS = 28;
 export class ParentAnalysisComponent {
   /** The child currently selected on the dashboard, or null before it loads. */
   readonly childId = input<string | null>(null);
+  /** First name, used only in on-screen copy; it is never sent anywhere. */
+  readonly childName = input<string>('');
 
   private readonly i18n = inject(I18nService);
   private readonly insightsApi = inject(InsightsApi);
@@ -422,6 +650,8 @@ export class ParentAnalysisComponent {
   protected readonly assessment = signal<ScreeningSessionResultResponse | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  /** Held apart from `loading` so the next step never flashes "take the check-in" first. */
+  private readonly assessmentLoaded = signal(false);
 
   constructor() {
     effect(() => {
@@ -445,7 +675,7 @@ export class ParentAnalysisComponent {
     (this.assessment()?.result?.categoryBreakdown ?? [])
       .slice()
       .sort((a, b) => b.riskPercentage - a.riskPercentage)
-      .slice(0, 4)
+      .slice(0, 3)
       .map((area) => ({
         category: area.category,
         riskLevel: area.riskLevel,
@@ -483,8 +713,34 @@ export class ParentAnalysisComponent {
     // Never leave the card empty when there are records but no cluster: say the
     // plain thing rather than implying there is nothing to notice.
     return lines.length > 0
-      ? lines
+      ? lines.slice(0, 3)
       : [copy.trend.STABLE(copy.categories[data.patterns[0]?.category ?? 'OTHER'])];
+  });
+
+  /**
+   * The single action the overview leads with, in the order the planner gives:
+   * no check-in yet → take it; an elevated band → booking comes first; nothing
+   * recorded → record; otherwise the assistant.
+   */
+  protected readonly nextStep = computed(() => {
+    if (!this.assessmentLoaded()) return null;
+    const next = this.copy().next;
+    const latest = this.assessment();
+
+    if (!latest) return { kind: 'checkin', ...next.checkin, link: '/welcome' } as const;
+    if (latest.result?.riskLevel === 'HIGH') {
+      return { kind: 'book', ...next.book, link: '/appointments' } as const;
+    }
+    if (!this.insight()?.observationCount) {
+      const name = this.childName() || (this.i18n.currentLang() === 'km' ? 'កូន' : 'your child');
+      return {
+        kind: 'record',
+        ...next.record,
+        title: next.record.title(name),
+        link: '/observations',
+      } as const;
+    }
+    return { kind: 'ask', ...next.ask, link: '/ai' } as const;
   });
 
   private bandLevel(): RiskLevel {
@@ -502,6 +758,7 @@ export class ParentAnalysisComponent {
   private load(childId: string): void {
     this.loading.set(true);
     this.error.set(null);
+    this.assessmentLoaded.set(false);
 
     // Minutes east of UTC: the API uses that convention for local-day bucketing.
     const tzOffsetMinutes = -new Date().getTimezoneOffset();
@@ -517,8 +774,14 @@ export class ParentAnalysisComponent {
     });
 
     this.screeningApi.getLatest(childId, 'SHORT').subscribe({
-      next: (latest) => this.assessment.set(latest),
-      error: () => this.assessment.set(null),
+      next: (latest) => {
+        this.assessment.set(latest);
+        this.assessmentLoaded.set(true);
+      },
+      error: () => {
+        this.assessment.set(null);
+        this.assessmentLoaded.set(true);
+      },
     });
   }
 }

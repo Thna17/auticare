@@ -24,75 +24,6 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { I18nService } from '../../core/i18n/i18n.service';
 
-export type QuickAction = {
-  readonly titleKm: string;
-  readonly titleEn: string;
-  readonly descriptionKm: string;
-  readonly descriptionEn: string;
-  readonly path: string;
-  readonly icon: 'screening' | 'activity' | 'hospital' | 'progress' | 'crisis';
-  readonly gradientClass: string;
-  readonly timeEstimateKm?: string;
-  readonly timeEstimateEn?: string;
-};
-
-export type PriorityAlert = {
-  readonly id: string;
-  readonly title: string;
-  readonly description: string;
-  readonly actionPath: string;
-  readonly actionLabel: string;
-  readonly tone: 'caution' | 'info' | 'alert' | 'neutral';
-  readonly icon: 'clipboard' | 'calendar' | 'hospital' | 'sparkles' | 'child';
-};
-
-const quickActions: readonly QuickAction[] = [
-  {
-    titleKm: 'ចាប់ផ្តើមការវាយតម្លៃ',
-    titleEn: 'Start Screening',
-    descriptionKm: 'វាយតម្លៃដំណាក់កាលលូតលាស់ និងការឆ្លើយតបញាណដឹង',
-    descriptionEn: 'Assess developmental milestones & sensory response',
-    path: '/screening',
-    icon: 'screening',
-    gradientClass: 'gradient-screening',
-    timeEstimateKm: '5 នាទី',
-    timeEstimateEn: '5m',
-  },
-  {
-    titleKm: 'សកម្មភាពញាណដឹង',
-    titleEn: 'Sensory Activities',
-    descriptionKm: 'សកម្មភាពលូតលាស់ និងការលេងសម្របសម្រួលញាណនៅផ្ទះ',
-    descriptionEn: 'Home-based developmental activities & sensory play',
-    path: '/activities',
-    icon: 'activity',
-    gradientClass: 'gradient-milestone',
-    timeEstimateKm: 'លេងប្រចាំថ្ងៃ',
-    timeEstimateEn: 'Daily Play',
-  },
-  {
-    titleKm: 'កក់ការពិគ្រោះយោបល់',
-    titleEn: 'Book Specialist',
-    descriptionKm: 'ពិគ្រោះជាមួយវេជ្ជបណ្ឌិតឯកទេសកុមារ អ្នកព្យាបាលការនិយាយ និងចលករ',
-    descriptionEn: 'Consult pediatricians, SLTs & occupational therapists',
-    path: '/hospitals',
-    icon: 'hospital',
-    gradientClass: 'gradient-hospital',
-    timeEstimateKm: 'ឯកទេសកុមារ',
-    timeEstimateEn: 'Pediatrics',
-  },
-  {
-    titleKm: 'ជំនួយបន្ទាន់',
-    titleEn: 'Crisis Help',
-    descriptionKm: 'ធនធានគាំទ្របន្ទាន់ ជំនួយផ្លូវចិត្ត និងខ្សែទូរស័ព្ទជំនួយ',
-    descriptionEn: 'Emergency support resources, hotlines & emotional guidance',
-    path: '/crisis-resources',
-    icon: 'crisis',
-    gradientClass: 'gradient-trajectory',
-    timeEstimateKm: 'ជំនួយ ២៤/៧',
-    timeEstimateEn: '24/7 Help',
-  },
-];
-
 @Component({
   standalone: true,
   imports: [
@@ -312,787 +243,134 @@ const quickActions: readonly QuickAction[] = [
         </main>
       </div>
     } @else {
-      <!-- PARENT DASHBOARD: MODERNIZED BENTO GRID -->
-      <section class="dashboard-hero-wrapper" aria-label="Dashboard Welcome">
-        <div class="hero-content">
-          <div class="hero-text-block">
-            <div class="hero-meta-bar">
-              <span class="hero-date-badge">{{ activeDateFormatted() }}</span>
-              @if (isParent() && selectedChild(); as child) {
-                <div class="care-context-pill-wrapper">
-                  <button
-                    type="button"
-                    class="care-context-pill"
-                    (click)="toggleChildDropdown()"
-                    [attr.aria-expanded]="childDropdownOpen()"
-                    [attr.aria-label]="
-                      currentLang() === 'km' ? 'កំពុងមើលការថែទាំកុមារ' : 'Viewing care for child'
-                    "
-                  >
-                    <span class="care-dot" aria-hidden="true"></span>
-                    <span class="care-label">
-                      {{
-                        currentLang() === 'km' ? 'កំពុងមើលការថែទាំសម្រាប់៖ ' : 'Viewing care for: '
-                      }}<strong>{{ child.firstName }}</strong>
-                    </span>
-                    <span class="care-chevron" aria-hidden="true">▼</span>
-                  </button>
-                  @if (childDropdownOpen() && activeChildren().length > 0) {
-                    <div class="care-dropdown-menu" role="menu">
-                      @for (c of activeChildren(); track c.id) {
-                        <button
-                          type="button"
-                          class="care-dropdown-item"
-                          [class.active]="selectedChild()?.id === c.id"
-                          (click)="onSelectChild(c.id); closeChildDropdown()"
-                        >
-                          <span class="dropdown-item-avatar">{{ childInitials(c) }}</span>
-                          <div class="dropdown-item-info">
-                            <strong>{{ childFullName(c) }}</strong>
-                            <small>{{ ageLabel(c.dateOfBirth) }}</small>
-                          </div>
-                          @if (selectedChild()?.id === c.id) {
-                            <span class="dropdown-item-check" aria-hidden="true">✓</span>
-                          }
-                        </button>
-                      }
-                      <div class="dropdown-separator"></div>
-                      <a
-                        routerLink="/children/new"
-                        class="dropdown-add-link"
-                        (click)="closeChildDropdown()"
-                      >
-                        +
-                        {{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add another child' }}
-                      </a>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-            <h1>
-              @if (currentLang() === 'km') {
-                <span class="greeting-km">សូមស្វាគមន៍មកកាន់ AutiCare</span>
-                <span class="greeting-subtext">, {{ parentFirstName() }}</span>
-              } @else {
-                <span class="greeting-en">Welcome to AutiCare</span>
-                <span class="greeting-subtext">
-                  · Good {{ dayPart() }}, {{ parentFirstName() }}</span
-                >
-              }
-            </h1>
-            <p class="hero-subtitle">
-              @if (isParent()) {
-                {{
-                  currentLang() === 'km'
-                    ? 'សូមស្វាគមន៍មកកាន់ AutiCare។'
-                    : 'Welcome back to AutiCare.'
-                }}
-                @if (selectedChild(); as child) {
-                  {{
-                    currentLang() === 'km'
-                      ? ' នេះជាព័ត៌មានលម្អិត និងវឌ្ឍនភាពថ្ងៃនេះសម្រាប់ ' + child.firstName + '។'
-                      : " Here's what's happening with " + child.firstName + ' today.'
-                  }}
+      @if (!isParent()) {
+        <section class="dashboard-hero-wrapper" aria-label="Dashboard Welcome">
+          <div class="hero-content">
+            <div class="hero-text-block">
+              <div class="hero-meta-bar">
+                <span class="hero-date-badge">{{ activeDateFormatted() }}</span>
+              </div>
+              <h1>
+                @if (currentLang() === 'km') {
+                  <span class="greeting-km">សូមស្វាគមន៍មកកាន់ AutiCare</span>
+                  <span class="greeting-subtext">, {{ parentFirstName() }}</span>
                 } @else {
-                  {{
-                    currentLang() === 'km'
-                      ? ' បង្កើតប្រវត្តិកុមារដើម្បីកំណត់ផ្ទាំងគ្រប់គ្រងផ្ទាល់ខ្លួនរបស់អ្នក។'
-                      : ' Create a child profile to personalize your care dashboard.'
-                  }}
+                  <span class="greeting-en">Welcome to AutiCare</span>
+                  <span class="greeting-subtext">
+                    · Good {{ dayPart() }}, {{ parentFirstName() }}</span
+                  >
                 }
-              } @else {
+              </h1>
+              <p class="hero-subtitle">
                 {{
                   currentLang() === 'km'
                     ? 'គ្រប់គ្រងបញ្ជីថែទាំ និងពិនិត្យកំណត់ត្រាគាំទ្រគ្រួសារពីកន្លែងតែមួយ។'
                     : 'Manage the care directory and review family support records from one place.'
                 }}
-              }
-            </p>
-            @if (isParent() && hasMultipleChildren()) {
-              <div class="child-selector-pills" role="radiogroup" aria-label="Select child profile">
-                @for (c of activeChildren(); track c.id) {
-                  <button
-                    type="button"
-                    class="child-pill"
-                    [class.active]="selectedChild()?.id === c.id"
-                    [attr.aria-pressed]="selectedChild()?.id === c.id"
-                    (click)="onSelectChild(c.id)"
-                  >
-                    <span class="pill-dot" aria-hidden="true"></span>
-                    {{ c.firstName }}
-                  </button>
-                }
-              </div>
-            }
+              </p>
+            </div>
           </div>
-
-          <div class="hero-actions-block">
-            @if (isParent() && selectedChild(); as child) {
-              <a class="child-switcher" [routerLink]="['/children', child.id]">
-                <span class="child-avatar" aria-hidden="true">{{ childInitials(child) }}</span>
-                <span>
-                  <strong>{{ childFullName(child) }}, {{ ageLabel(child.dateOfBirth) }}</strong>
-                  <small>{{ currentLang() === 'km' ? 'បើកប្រវត្តិរូប' : 'Open profile' }}</small>
-                </span>
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="m8 10 4 4 4-4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.4"
-                  />
-                </svg>
-              </a>
-              <a
-                class="hero-add-child-btn"
-                routerLink="/children/new"
-                [title]="currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add child profile'"
-              >
-                <span class="hero-add-icon" aria-hidden="true">+</span>
-                <span>{{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add Child' }}</span>
-              </a>
-            } @else if (isParent()) {
-              <a class="child-switcher empty" routerLink="/children">
-                <span class="child-avatar" aria-hidden="true">+</span>
-                <span>
-                  <strong>{{
-                    currentLang() === 'km' ? 'មិនទាន់បានជ្រើសរើសកុមារ' : 'No child selected'
-                  }}</strong>
-                  <small>{{
-                    currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add child profile'
-                  }}</small>
-                </span>
-              </a>
-              <a
-                class="hero-add-child-btn"
-                routerLink="/children/new"
-                [title]="currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add child profile'"
-              >
-                <span class="hero-add-icon" aria-hidden="true">+</span>
-                <span>{{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add Child' }}</span>
-              </a>
-            }
-          </div>
-        </div>
-      </section>
+        </section>
+      }
 
       @if (childrenError()) {
         <ac-ui-message tone="error">{{ childrenError() }}</ac-ui-message>
       }
 
       @if (isParent()) {
-        <!-- Analysis: where things stand, and what the recorded days add up to. -->
-        <ac-parent-analysis [childId]="selectedChild()?.id ?? null" />
+        <!-- PARENT OVERVIEW: a greeting, one next step, two calm cards. -->
+        <div class="parent-overview">
+          <header class="ov-hero">
+            <div class="ov-hero-text">
+              <span class="hero-date-badge">{{ activeDateFormatted() }}</span>
+              <h1>
+                @if (currentLang() === 'km') {
+                  សួស្តី {{ parentFirstName() }}
+                } @else {
+                  Good {{ dayPart() }}, {{ parentFirstName() }}
+                }
+              </h1>
+              <p class="ov-subtitle">
+                @if (selectedChild(); as child) {
+                  {{
+                    currentLang() === 'km'
+                      ? 'នេះជាអ្វីដែលកំពុងកើតឡើងជាមួយ ' + child.firstName + ' ថ្ងៃនេះ។'
+                      : "Here's what's happening with " + child.firstName + ' today.'
+                  }}
+                } @else {
+                  {{
+                    currentLang() === 'km'
+                      ? 'បង្កើតប្រវត្តិកុមារដើម្បីចាប់ផ្តើម។'
+                      : 'Add a child profile to get started.'
+                  }}
+                }
+              </p>
+            </div>
 
-        <!-- Priority Action Alerts Ticker -->
-        @if (priorityAlerts().length > 0) {
-          <section class="priority-alerts-container" aria-label="Priority action alerts">
-            @for (alert of priorityAlerts(); track alert.id) {
-              <div class="priority-alert-card" [class]="'tone-' + alert.tone">
-                <div class="alert-icon-wrap" aria-hidden="true">
-                  @if (alert.icon === 'clipboard') {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path
-                        d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6m-6 9 2 2 4-4"
-                      />
-                    </svg>
-                  } @else if (alert.icon === 'calendar') {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                  } @else if (alert.icon === 'hospital') {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h6M12 6v6" />
-                    </svg>
-                  } @else if (alert.icon === 'child') {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <circle cx="12" cy="7" r="4" />
-                      <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
-                    </svg>
-                  } @else {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                  }
-                </div>
-                <div class="alert-body">
-                  <strong class="alert-title">{{ alert.title }}</strong>
-                  <p class="alert-desc">{{ alert.description }}</p>
-                </div>
-                <a class="alert-action-btn" [routerLink]="alert.actionPath">
-                  {{ alert.actionLabel }} &rarr;
-                </a>
-              </div>
-            }
-          </section>
-        }
-
-        <!-- Quick Action Cards (4-column grid on desktop, 2-column on mobile) -->
-        <section class="bento-quick-actions" aria-labelledby="quick-actions-title">
-          <div class="quick-actions-header">
-            <h2 id="quick-actions-title">
-              {{ currentLang() === 'km' ? 'សកម្មភាពរហ័ស' : 'Quick Actions' }}
-            </h2>
-          </div>
-          @for (action of quickActions; track action.path) {
-            <a class="quick-card {{ action.gradientClass }}" [routerLink]="action.path">
-              <div class="quick-icon-wrapper">
-                <span class="quick-icon" [class]="action.icon" aria-hidden="true">
-                  @if (action.icon === 'screening') {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="22"
-                      height="22"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path
-                        d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6m-6 9 2 2 4-4"
-                      />
-                    </svg>
-                  } @else if (action.icon === 'activity') {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="22"
-                      height="22"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path
-                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                      />
-                    </svg>
-                  } @else if (action.icon === 'hospital') {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="22"
-                      height="22"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                  } @else if (action.icon === 'crisis') {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="22"
-                      height="22"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      <path d="M12 8v4" />
-                      <path d="M12 16h.01" />
-                    </svg>
-                  } @else {
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="22"
-                      height="22"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                    </svg>
-                  }
-                </span>
-              </div>
-              <div class="quick-card-text">
-                <div class="quick-card-title-row">
-                  <strong>{{ currentLang() === 'km' ? action.titleKm : action.titleEn }}</strong>
-                  @if (
-                    currentLang() === 'km' ? action.timeEstimateKm : action.timeEstimateEn;
-                    as est
-                  ) {
-                    <span class="quick-card-badge">{{ est }}</span>
-                  }
-                </div>
-                <small>{{
-                  currentLang() === 'km' ? action.descriptionKm : action.descriptionEn
-                }}</small>
-              </div>
-              <span class="quick-card-arrow" aria-hidden="true">&rarr;</span>
-            </a>
-          }
-        </section>
-
-        @if (parentDashboardLoading()) {
-          <div class="dashboard-state-center">
-            <ac-ui-spinner label="Loading your personalized dashboard…" />
-          </div>
-        } @else if (parentDashboardError()) {
-          <ac-ui-message tone="error">{{ parentDashboardError() }}</ac-ui-message>
-        } @else if (parentDashboard(); as data) {
-          <section class="bento-grid" aria-label="Parent dashboard overview">
-            <!-- Screening Card (Spans 7 cols on desktop) -->
-            <article class="card screening-card bento-tile-screening">
-              @if (data.screeningSummary.hasScreening) {
-                <div
-                  class="progress-wrap"
+            @if (selectedChild(); as child) {
+              <div class="care-context-pill-wrapper">
+                <button
+                  type="button"
+                  class="care-context-pill"
+                  (click)="toggleChildDropdown()"
+                  [attr.aria-expanded]="childDropdownOpen()"
                   [attr.aria-label]="
-                    (currentLang() === 'km' ? 'កម្រិតហានិភ័យ ' : 'Screening risk ') +
-                    (data.screeningSummary.riskPercentage ?? 0) +
-                    (currentLang() === 'km' ? ' ភាគរយ' : ' percent')
+                    currentLang() === 'km' ? 'កំពុងមើលការថែទាំកុមារ' : 'Viewing care for child'
                   "
                 >
-                  <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
-                    <circle cx="60" cy="60" r="48" class="progress-track"></circle>
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="48"
-                      class="progress-value"
-                      [style.stroke-dashoffset]="
-                        getDashOffset(data.screeningSummary.riskPercentage)
-                      "
-                    ></circle>
-                  </svg>
-                  <div>
-                    <strong>{{ data.screeningSummary.riskPercentage ?? 0 }}%</strong>
-                    <span>{{ currentLang() === 'km' ? 'កម្រិតហានិភ័យ' : 'Risk Level' }}</span>
-                  </div>
-                </div>
-
-                <div class="screening-copy">
-                  <span class="status-pill">
-                    {{ currentLang() === 'km' ? 'ស្ថានភាព៖ ' : 'Status: '
-                    }}{{ formatRiskLevel(data.screeningSummary.riskLevel) }}
+                  <span class="dropdown-item-avatar" aria-hidden="true">{{
+                    childInitials(child)
+                  }}</span>
+                  <span class="care-label">
+                    {{ currentLang() === 'km' ? 'កំពុងមើលការថែទាំសម្រាប់៖ ' : 'Viewing care for: '
+                    }}<strong>{{ child.firstName }}</strong>
                   </span>
-                  <h2>
-                    {{
-                      currentLang() === 'km'
-                        ? 'ការគាំទ្រត្រូវបានកំណត់ (' +
-                          formatRiskLevel(data.screeningSummary.riskLevel) +
-                          ')'
-                        : (data.screeningSummary.riskLevel ?? 'Completed') + ' Support Identified'
-                    }}
-                  </h2>
-                  <p>
-                    @if (data.screeningSummary.completedDate) {
-                      {{ currentLang() === 'km' ? 'បានបញ្ចប់នៅ ' : 'Completed on '
-                      }}{{ formatDate(data.screeningSummary.completedDate) }}.
-                    }
-                    {{
-                      data.screeningSummary.recommendation ||
-                        (currentLang() === 'km'
-                          ? 'លទ្ធផលវាយតម្លៃត្រូវបានកត់ត្រា និងអាចពិនិត្យឡើងវិញបាន។'
-                          : 'Screening results recorded and available for review.')
-                    }}
-                  </p>
-                  @if (data.screeningSummary.sessionId) {
-                    <a
-                      class="primary-button"
-                      [routerLink]="['/screening/result', data.screeningSummary.sessionId]"
-                    >
-                      {{ currentLang() === 'km' ? 'មើលលទ្ធផល' : 'View results' }}
-                    </a>
-                  } @else {
-                    <a class="primary-button" routerLink="/screening">
-                      {{ currentLang() === 'km' ? 'មើលការវាយតម្លៃ' : 'View screening' }}
-                    </a>
-                  }
-                </div>
-              } @else {
-                <div class="screening-empty">
-                  <span class="status-pill">
-                    {{ currentLang() === 'km' ? 'មិនមានកំណត់ត្រាវាយតម្លៃ' : 'No Screening Record' }}
-                  </span>
-                  <h2>
-                    {{
-                      currentLang() === 'km'
-                        ? 'មិនទាន់បានបញ្ចប់ការវាយតម្លៃនៅឡើយទេ'
-                        : 'No screening completed yet'
-                    }}
-                  </h2>
-                  <p>
-                    @if (data.selectedChild) {
-                      {{
-                        currentLang() === 'km'
-                          ? 'បំពេញកម្រងសំណួរវាយតម្លៃបឋមសម្រាប់ ' +
-                            data.selectedChild.firstName +
-                            ' ដើម្បីកំណត់ចំណុចខ្លាំង និងតម្រូវការគាំទ្រ។'
-                          : 'Complete an initial screening questionnaire for ' +
-                            data.selectedChild.firstName +
-                            ' to identify strengths and support areas.'
-                      }}
-                    } @else {
-                      {{
-                        currentLang() === 'km'
-                          ? 'បន្ថែមទិន្នន័យកុមារ និងបំពេញការវាយតម្លៃដើម្បីតាមដានដំណាក់កាលលូតលាស់។'
-                          : 'Add a child profile and complete a screening to track developmental milestones.'
-                      }}
-                    }
-                  </p>
-                  <a class="primary-button" routerLink="/screening">
-                    {{ currentLang() === 'km' ? 'ចាប់ផ្តើមការវាយតម្លៃ' : 'Start screening' }}
-                  </a>
-                </div>
-              }
-            </article>
-
-            <!-- Upcoming Schedule Widget (Spans 5 cols on desktop) -->
-            <article class="card appointment-card bento-tile-schedule">
-              <div class="appointment-top">
-                <span class="schedule-eyebrow">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path
-                      d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  {{ currentLang() === 'km' ? 'ការណាត់ជួបខាងមុខ' : 'Upcoming Appointment' }}
-                </span>
-                @if (data.upcomingAppointment; as appt) {
-                  <div class="schedule-top-badges">
-                    <span class="countdown-badge">{{
-                      getAppointmentCountdown(appt.scheduledAt)
-                    }}</span>
-                    <strong class="status-tag">{{ formatAppointmentStatus(appt.status) }}</strong>
-                  </div>
-                }
-              </div>
-
-              @if (data.upcomingAppointment; as appt) {
-                <h2>{{ appt.hospitalName }}</h2>
-                <p>
-                  @if (appt.doctorName) {
-                    {{
-                      currentLang() === 'km'
-                        ? 'ការពិគ្រោះយោបល់ជាមួយ ' + appt.doctorName
-                        : 'Consultation with ' + appt.doctorName
-                    }}
-                    @if (appt.specialty) {
-                      ({{ appt.specialty }})
-                    }
-                  } @else {
-                    {{
-                      appt.reason ||
-                        (currentLang() === 'km'
-                          ? 'ការណាត់ជួបនៅមន្ទីរពេទ្យ'
-                          : 'Hospital Appointment')
-                    }}
-                  }
-                </p>
-                <div class="appointment-meta">
-                  <span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                      <path
-                        d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                      />
-                    </svg>
-                    {{ formatDate(appt.scheduledAt) }}
-                  </span>
-                  <span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                      <path
-                        d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                      />
-                    </svg>
-                    {{ formatTime(appt.scheduledAt) }}
-                  </span>
-                </div>
-                <div class="appointment-footer-actions">
-                  <a class="reschedule-action-link" routerLink="/appointments">
-                    {{ currentLang() === 'km' ? 'គ្រប់គ្រងការណាត់ជួប' : 'Manage appointments' }}
-                    &rarr;
-                  </a>
-                </div>
-              } @else {
-                <div class="appointment-empty">
-                  <h2>
-                    {{
-                      currentLang() === 'km'
-                        ? 'មិនមានការណាត់ជួបខាងមុខទេ'
-                        : 'No upcoming appointments'
-                    }}
-                  </h2>
-                  <p>
-                    {{
-                      currentLang() === 'km'
-                        ? 'កក់ការពិគ្រោះយោបល់ការលូតលាស់ជាមួយមន្ទីរពេទ្យដែលបានបញ្ជាក់នៅក្នុងតំបន់របស់អ្នក។'
-                        : 'Book developmental consultations with verified hospitals in your area.'
-                    }}
-                  </p>
-                  <a class="text-link" routerLink="/hospitals">
-                    {{ currentLang() === 'km' ? 'ស្វែងរកអ្នកផ្តល់ការថែទាំ' : 'Find care provider' }}
-                    <span aria-hidden="true">-&gt;</span>
-                  </a>
-                </div>
-              }
-            </article>
-
-            <!-- Children Carousel / Roster (Spans full 12 cols on desktop) -->
-            @if (data.children && data.children.length > 0) {
-              <article class="card bento-tile-children" aria-label="Children Roster">
-                <div class="children-roster-header">
-                  <div>
-                    <h2>
-                      {{
-                        currentLang() === 'km' ? 'បញ្ជីកុមារក្នុងគ្រួសារ' : 'Family Children Roster'
-                      }}
-                    </h2>
-                    <span class="roster-count"
-                      >{{ data.children.length }}
-                      {{ currentLang() === 'km' ? 'បានចុះឈ្មោះ' : 'registered' }}</span
-                    >
-                  </div>
-                  <a routerLink="/children" class="roster-manage-link"
-                    >{{
-                      currentLang() === 'km' ? 'គ្រប់គ្រងប្រវត្តិរូប' : 'Manage profiles'
-                    }}
-                    &rarr;</a
-                  >
-                </div>
-                <div class="children-roster-grid">
-                  @for (c of data.children; track c.id) {
-                    <div
-                      class="roster-child-card"
-                      [class.active-child]="selectedChild()?.id === c.id"
-                      (click)="onSelectChild(c.id)"
-                    >
-                      <span class="roster-avatar" aria-hidden="true">{{ childInitials(c) }}</span>
-                      <div class="roster-details">
-                        <strong class="roster-child-name">{{ childFullName(c) }}</strong>
-                        <span class="roster-child-age">{{ ageLabel(c.dateOfBirth) }}</span>
-                      </div>
-                      <div class="roster-status-chip">
-                        @if (selectedChild()?.id === c.id && data.screeningSummary.hasScreening) {
-                          <span class="roster-badge screened">{{
-                            formatRiskLevel(data.screeningSummary.riskLevel)
-                          }}</span>
-                        } @else {
-                          <span class="roster-badge">{{
-                            selectedChild()?.id === c.id
-                              ? currentLang() === 'km'
-                                ? 'សកម្ម'
-                                : 'Active'
-                              : currentLang() === 'km'
-                                ? 'ប្តូរ'
-                                : 'Switch'
-                          }}</span>
+                  <span class="care-chevron" aria-hidden="true">▼</span>
+                </button>
+                @if (childDropdownOpen() && activeChildren().length > 0) {
+                  <div class="care-dropdown-menu" role="menu">
+                    @for (c of activeChildren(); track c.id) {
+                      <button
+                        type="button"
+                        class="care-dropdown-item"
+                        [class.active]="selectedChild()?.id === c.id"
+                        (click)="onSelectChild(c.id); closeChildDropdown()"
+                      >
+                        <span class="dropdown-item-avatar">{{ childInitials(c) }}</span>
+                        <div class="dropdown-item-info">
+                          <strong>{{ childFullName(c) }}</strong>
+                          <small>{{ ageLabel(c.dateOfBirth) }}</small>
+                        </div>
+                        @if (selectedChild()?.id === c.id) {
+                          <span class="dropdown-item-check" aria-hidden="true">✓</span>
                         }
-                      </div>
-                      <a
-                        class="roster-arrow-btn"
-                        [routerLink]="['/children', c.id]"
-                        (click)="$event.stopPropagation()"
-                        [title]="currentLang() === 'km' ? 'មើលប្រវត្តិរូប' : 'View profile'"
-                      >
-                        &rsaquo;
-                      </a>
-                    </div>
-                  }
-                  <a class="roster-add-card" routerLink="/children/new">
-                    <span class="roster-add-plus">+</span>
-                    <span>{{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add child' }}</span>
-                  </a>
-                </div>
-              </article>
-            }
-
-            <!-- Weekly Progress Card (Spans 7 cols on desktop) -->
-            <article class="card weekly-card bento-tile-progress">
-              <div class="section-title">
-                <div class="title-with-streak">
-                  <h2>
-                    {{ currentLang() === 'km' ? 'វឌ្ឍនភាពប្រចាំសប្តាហ៍' : 'Weekly Progress' }}
-                  </h2>
-                  @if (data.weeklyProgress.totalCompletedThisWeek > 0) {
-                    <span class="streak-badge">
-                      <span class="streak-icon" aria-hidden="true">🔥</span>
-                      <span
-                        >{{ data.weeklyProgress.totalCompletedThisWeek }}
-                        {{
-                          currentLang() === 'km' ? 'សកម្មភាពបន្តបន្ទាប់' : 'Day Activity Streak'
-                        }}</span
-                      >
-                    </span>
-                  }
-                </div>
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M4 17 9 12l3 3 7-8M16 7h3v3"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.2"
-                  />
-                </svg>
-              </div>
-              <div
-                class="bar-chart"
-                [attr.aria-label]="
-                  currentLang() === 'km'
-                    ? data.weeklyProgress.totalCompletedThisWeek +
-                      ' សកម្មភាពបានបញ្ចប់ក្នុងសប្តាហ៍នេះ'
-                    : data.weeklyProgress.totalCompletedThisWeek + ' activities completed this week'
-                "
-              >
-                @for (day of data.weeklyProgress.days; track day.day) {
-                  <div class="bar-col">
-                    <span [style.--bar-height.%]="day.percentage" [class.active]="day.count > 0">
-                      @if (day.count > 0) {
-                        <strong>{{ day.count }}</strong>
-                      }
-                    </span>
-                    <small class="bar-day-name">{{ formatDayName(day.day) }}</small>
+                      </button>
+                    }
+                    <div class="dropdown-separator"></div>
+                    <a
+                      [routerLink]="['/children', child.id]"
+                      class="dropdown-add-link"
+                      (click)="closeChildDropdown()"
+                    >
+                      {{ currentLang() === 'km' ? 'បើកប្រវត្តិរូប' : 'Open profile' }}
+                    </a>
+                    <a
+                      routerLink="/children/new"
+                      class="dropdown-add-link"
+                      (click)="closeChildDropdown()"
+                    >
+                      +
+                      {{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add another child' }}
+                    </a>
                   </div>
                 }
               </div>
-              @if (data.weeklyProgress.totalCompletedThisWeek > 0) {
-                <p>
-                  <strong>
-                    {{ data.weeklyProgress.totalCompletedThisWeek }}
-                    {{ currentLang() === 'km' ? 'សកម្មភាពបានបញ្ចប់' : 'activities' }}
-                  </strong>
-                  {{
-                    currentLang() === 'km'
-                      ? ' ក្នុងសប្តាហ៍នេះ។ បន្តការចូលរួមដ៏ល្អនេះ!'
-                      : ' completed this week. Keep up the great engagement!'
-                  }}
-                </p>
-              } @else {
-                <p>
-                  {{
-                    currentLang() === 'km'
-                      ? 'មិនទាន់មានសកម្មភាពដែលបានបញ្ចប់នៅសប្តាហ៍នេះទេ។ សូមស្វែងរកសកម្មភាពដើម្បីចាប់ផ្តើម។'
-                      : 'No activities completed yet this week. Explore activities to get started.'
-                  }}
-                </p>
-              }
+            }
+          </header>
 
-              <!-- Recent Milestones & Observation Timeline -->
-              <div class="milestones-feed">
-                <div class="milestone-feed-item">
-                  <span class="milestone-feed-icon" aria-hidden="true">✓</span>
-                  <div class="milestone-feed-content">
-                    <span class="milestone-domain-badge domain-sensory">{{
-                      currentLang() === 'km' ? 'ញាណដឹង និងការលេង' : 'Sensory & Play'
-                    }}</span>
-                    <strong class="milestone-feed-title">{{
-                      currentLang() === 'km'
-                        ? 'សកម្មភាពសម្របសម្រួលញាណ'
-                        : 'Sensory Integration Activity'
-                    }}</strong>
-                  </div>
-                  <a routerLink="/activities" class="milestone-feed-link">{{
-                    currentLang() === 'km' ? 'មើល' : 'View'
-                  }}</a>
-                </div>
-                <div class="milestone-feed-item">
-                  <span class="milestone-feed-icon" aria-hidden="true">✓</span>
-                  <div class="milestone-feed-content">
-                    <span class="milestone-domain-badge domain-communication">{{
-                      currentLang() === 'km' ? 'ការប្រាស្រ័យទាក់ទង' : 'Communication'
-                    }}</span>
-                    <strong class="milestone-feed-title">{{
-                      currentLang() === 'km'
-                        ? 'ការលេងឆ្លាស់វេនតាមរូបភាព'
-                        : 'Visual Turn-Taking Play'
-                    }}</strong>
-                  </div>
-                  <a routerLink="/activities" class="milestone-feed-link">{{
-                    currentLang() === 'km' ? 'មើល' : 'View'
-                  }}</a>
-                </div>
-              </div>
-            </article>
-
-            <!-- Recommended Action Card (Spans 5 cols on desktop) -->
-            <article class="card action-card bento-tile-action">
-              <div class="soft-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                  <path
-                    d="M5 6h14v9H8l-3 3V6Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                  <path
-                    d="M8 10h8M8 13h5"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-width="2"
-                  />
-                </svg>
-              </div>
-              <h2>{{ formatActionTitle(data.recommendedAction.title) }}</h2>
-              <p>{{ formatActionDescription(data.recommendedAction.description) }}</p>
-              <a class="text-link" [routerLink]="data.recommendedAction.actionPath">
-                {{ formatActionLabel(data.recommendedAction.actionLabel) }}
-                <span aria-hidden="true">-&gt;</span>
-              </a>
-            </article>
-          </section>
-
-          @if (!data.selectedChild) {
+          @if (selectedChild(); as child) {
+            <ac-parent-analysis [childId]="child.id" [childName]="child.firstName" />
+          } @else {
             <section class="empty-state">
               <h2>
                 {{
@@ -1113,7 +391,7 @@ const quickActions: readonly QuickAction[] = [
               }}</a>
             </section>
           }
-        }
+        </div>
       } @else if (isAdmin()) {
         <!-- ADMINISTRATOR REAL DASHBOARD -->
         @if (adminDashboardLoading()) {
@@ -1353,85 +631,90 @@ const quickActions: readonly QuickAction[] = [
         </div>
       }
 
-      <footer class="dashboard-footer">
-        <section>
-          <h2>AutiCare</h2>
-          <p>
-            {{
-              currentLang() === 'km'
-                ? 'គាំទ្រក្រុមគ្រួសារដែលមានតម្រូវការពិសេស ជាមួយនឹងមាគ៌ាថែទាំផ្ទាល់ខ្លួន និងធនធានជំនាញវិជ្ជាជីវៈ។'
-                : 'Supporting neurodiverse families with personalized care paths and professional resources.'
-            }}
-          </p>
-        </section>
-        <section>
-          <h3>{{ currentLang() === 'km' ? 'ជំនួយ' : 'Support' }}</h3>
-          <a routerLink="/support">
-            {{ currentLang() === 'km' ? 'ធនធានសង្គ្រោះបន្ទាន់' : 'Emergency Resources' }}
-          </a>
-          <a routerLink="/support">
-            {{
-              currentLang() === 'km' ? 'ការមិនទទួលខុសត្រូវផ្នែកវេជ្ជសាស្ត្រ' : 'Medical Disclaimer'
-            }}
-          </a>
-          <a routerLink="/support">
-            {{ currentLang() === 'km' ? 'ទាក់ទងផ្នែកគាំទ្រ' : 'Contact Support' }}
-          </a>
-        </section>
-        <section>
-          <h3>{{ currentLang() === 'km' ? 'តំណភ្ជាប់រហ័ស' : 'Quick Links' }}</h3>
-          <a routerLink="/privacy">
-            {{ currentLang() === 'km' ? 'គោលការណ៍ឯកជនភាព' : 'Privacy Policy' }}
-          </a>
-          <a routerLink="/terms">
-            {{ currentLang() === 'km' ? 'លក្ខខណ្ឌប្រើប្រាស់' : 'Terms of Service' }}
-          </a>
-        </section>
-        <section>
-          <h3>{{ currentLang() === 'km' ? 'ទំនាក់ទំនងជាមួយយើង' : 'Stay Connected' }}</h3>
-          <div
-            class="social-row"
-            [attr.aria-label]="currentLang() === 'km' ? 'តំណភ្ជាប់សហគមន៍' : 'Community links'"
-          >
-            <a
-              routerLink="/support"
-              [attr.aria-label]="currentLang() === 'km' ? 'ចែករំលែក AutiCare' : 'Share AutiCare'"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M18 8a3 3 0 1 0-2.8-4M6 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM8.7 16.3l6.6-3.6M8.7 18.7l6.6 2.6"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                />
-              </svg>
+      <!-- The overview stays short for parents; help and crisis stay one click away in the shell. -->
+      @if (!isParent()) {
+        <footer class="dashboard-footer">
+          <section>
+            <h2>AutiCare</h2>
+            <p>
+              {{
+                currentLang() === 'km'
+                  ? 'គាំទ្រក្រុមគ្រួសារដែលមានតម្រូវការពិសេស ជាមួយនឹងមាគ៌ាថែទាំផ្ទាល់ខ្លួន និងធនធានជំនាញវិជ្ជាជីវៈ។'
+                  : 'Supporting neurodiverse families with personalized care paths and professional resources.'
+              }}
+            </p>
+          </section>
+          <section>
+            <h3>{{ currentLang() === 'km' ? 'ជំនួយ' : 'Support' }}</h3>
+            <a routerLink="/support">
+              {{ currentLang() === 'km' ? 'ធនធានសង្គ្រោះបន្ទាន់' : 'Emergency Resources' }}
             </a>
-            <a
-              routerLink="/support"
-              [attr.aria-label]="
-                currentLang() === 'km' ? 'បើកការគាំទ្រសហគមន៍' : 'Open community support'
-              "
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1M12 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                />
-              </svg>
+            <a routerLink="/support">
+              {{
+                currentLang() === 'km'
+                  ? 'ការមិនទទួលខុសត្រូវផ្នែកវេជ្ជសាស្ត្រ'
+                  : 'Medical Disclaimer'
+              }}
             </a>
-          </div>
-          <p class="copyright">
-            (c) {{ currentYear }} AutiCare.
-            {{ currentLang() === 'km' ? 'រក្សាសិទ្ធិគ្រប់យ៉ាង។' : 'All rights reserved.' }}
-          </p>
-        </section>
-      </footer>
+            <a routerLink="/support">
+              {{ currentLang() === 'km' ? 'ទាក់ទងផ្នែកគាំទ្រ' : 'Contact Support' }}
+            </a>
+          </section>
+          <section>
+            <h3>{{ currentLang() === 'km' ? 'តំណភ្ជាប់រហ័ស' : 'Quick Links' }}</h3>
+            <a routerLink="/privacy">
+              {{ currentLang() === 'km' ? 'គោលការណ៍ឯកជនភាព' : 'Privacy Policy' }}
+            </a>
+            <a routerLink="/terms">
+              {{ currentLang() === 'km' ? 'លក្ខខណ្ឌប្រើប្រាស់' : 'Terms of Service' }}
+            </a>
+          </section>
+          <section>
+            <h3>{{ currentLang() === 'km' ? 'ទំនាក់ទំនងជាមួយយើង' : 'Stay Connected' }}</h3>
+            <div
+              class="social-row"
+              [attr.aria-label]="currentLang() === 'km' ? 'តំណភ្ជាប់សហគមន៍' : 'Community links'"
+            >
+              <a
+                routerLink="/support"
+                [attr.aria-label]="currentLang() === 'km' ? 'ចែករំលែក AutiCare' : 'Share AutiCare'"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M18 8a3 3 0 1 0-2.8-4M6 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM8.7 16.3l6.6-3.6M8.7 18.7l6.6 2.6"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  />
+                </svg>
+              </a>
+              <a
+                routerLink="/support"
+                [attr.aria-label]="
+                  currentLang() === 'km' ? 'បើកការគាំទ្រសហគមន៍' : 'Open community support'
+                "
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1M12 20v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  />
+                </svg>
+              </a>
+            </div>
+            <p class="copyright">
+              (c) {{ currentYear }} AutiCare.
+              {{ currentLang() === 'km' ? 'រក្សាសិទ្ធិគ្រប់យ៉ាង។' : 'All rights reserved.' }}
+            </p>
+          </section>
+        </footer>
+      }
     }
   `,
   styles: [
@@ -1471,9 +754,10 @@ const quickActions: readonly QuickAction[] = [
 
       .greeting-section h1 {
         margin: 0 0 8px 0;
-        font-size: 32px;
-        font-weight: 700;
-        color: var(--ac-color-text-slate-strong);
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-title);
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
       }
 
       .greeting-section p {
@@ -1857,8 +1141,6 @@ const quickActions: readonly QuickAction[] = [
       /* ========== PARENT DASHBOARD STYLES (Unchanged) ========== */
       :host {
         display: block;
-        max-width: 1160px;
-        margin: 0 auto;
       }
 
       :host.school-dashboard {
@@ -1873,138 +1155,12 @@ const quickActions: readonly QuickAction[] = [
         margin: 0;
       }
 
-      .child-selector-pills {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 14px;
-        flex-wrap: wrap;
-      }
-
-      .child-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 14px;
-        border-radius: 999px;
-        border: 1px solid var(--ac-color-border-slate);
-        background: var(--ac-color-surface);
-        color: var(--ac-color-text-slate-strong);
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition:
-          background 0.15s ease,
-          border-color 0.15s ease,
-          color 0.15s ease;
-      }
-
-      .child-pill:hover {
-        background: var(--ac-color-tint-blue-mist);
-      }
-
-      .child-pill.active {
-        background: var(--ac-color-action-alt);
-        color: var(--ac-color-text-on-action);
-        border-color: var(--ac-color-action-alt);
-      }
-
-      .pill-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--ac-color-green-teal);
-      }
-
-      .child-pill.active .pill-dot {
-        background: var(--ac-color-text-on-action);
-      }
-
-      .child-switcher {
-        min-width: 230px;
-        border: 1px solid var(--ac-color-border-grey);
-        border-radius: 24px;
-        background: var(--ac-color-surface-info);
-        color: var(--ac-color-text-strong);
-        display: grid;
-        grid-template-columns: 50px minmax(0, 1fr) 20px;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
-        text-decoration: none;
-      }
-
-      .child-switcher.empty {
-        grid-template-columns: 50px minmax(0, 1fr);
-      }
-
-      .child-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 999px;
-        background: var(--ac-color-olive-light);
-        color: var(--ac-color-olive-dark);
-        display: grid;
-        place-items: center;
-        font-weight: 700;
-        font-size: 20px;
-      }
-
-      .child-switcher strong,
-      .child-switcher small {
-        display: block;
-      }
-
-      .child-switcher strong {
-        font-size: 15px;
-        line-height: 1.2;
-      }
-
-      .child-switcher small {
-        margin-top: 4px;
-        color: var(--ac-color-action-deep);
-        font-size: 13px;
-        font-weight: 600;
-      }
-
-      .child-switcher svg {
-        width: 20px;
-        height: 20px;
-      }
-
       .error {
         border-radius: 12px;
         background: var(--ac-color-alert-surface);
         color: var(--ac-color-alert-strong);
         padding: 14px 16px;
         margin-bottom: 20px;
-      }
-
-      .bento-grid {
-        display: grid;
-        grid-template-columns: repeat(12, minmax(0, 1fr));
-        gap: 24px;
-        margin-bottom: 28px;
-      }
-
-      .bento-tile-screening {
-        grid-column: span 7;
-      }
-
-      .bento-tile-schedule {
-        grid-column: span 5;
-      }
-
-      .bento-tile-children {
-        grid-column: span 12;
-      }
-
-      .bento-tile-progress {
-        grid-column: span 7;
-      }
-
-      .bento-tile-action {
-        grid-column: span 5;
       }
 
       .dashboard-hero-wrapper {
@@ -2228,63 +1384,47 @@ const quickActions: readonly QuickAction[] = [
         background: var(--ac-color-tint-blue-mist);
       }
 
-      .hero-actions-block {
+      /* Parent overview: a short greeting, one next step, two cards. */
+      .parent-overview {
         display: flex;
-        align-items: center;
-        gap: var(--ac-space-3);
+        flex-direction: column;
+        gap: 22px;
+        padding-bottom: 32px;
+      }
+
+      .ov-hero {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
         flex-wrap: wrap;
       }
 
-      .hero-add-child-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ac-space-2);
-        padding: 12px 18px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-        font-size: 14px;
-        font-weight: 600;
-        text-decoration: none;
-        box-shadow: var(--ac-shadow-sm);
-        transition:
-          background var(--ac-motion-fast),
-          transform var(--ac-motion-fast),
-          box-shadow var(--ac-motion-fast);
+      .ov-hero-text {
+        min-width: 0;
       }
 
-      .hero-add-child-btn:hover {
-        background: var(--ac-color-action-hover);
-        transform: translateY(-1px);
-        box-shadow: var(--ac-shadow-hover);
+      .ov-hero h1 {
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-tight);
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
       }
 
-      .hero-add-icon {
-        font-size: 16px;
-        font-weight: 700;
-        line-height: 1;
+      .ov-subtitle {
+        margin-top: 6px;
+        font-size: var(--ac-type-page-subtitle);
+        color: var(--ac-color-text-body);
+        line-height: var(--ac-line-body);
       }
 
-      /* ─── PRIORITY ALERTS ─── */
-      .priority-alerts-container {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ac-space-3);
-        margin-bottom: var(--ac-space-6);
+      .parent-overview .care-context-pill {
+        padding: 4px 12px 4px 4px;
       }
 
-      .priority-alert-card {
-        display: flex;
-        align-items: center;
-        gap: var(--ac-space-4);
-        padding: var(--ac-space-4) var(--ac-space-5);
-        border-radius: var(--ac-radius-md);
-        border: 1px solid var(--ac-color-border-info);
-        background: var(--ac-color-surface);
-        box-shadow: var(--ac-shadow-sm);
-        transition:
-          box-shadow var(--ac-motion-fast),
-          transform var(--ac-motion-fast);
+      .parent-overview .care-dropdown-menu {
+        left: auto;
+        right: 0;
       }
 
       .priority-alert-card.tone-caution {
@@ -2307,113 +1447,10 @@ const quickActions: readonly QuickAction[] = [
         border-color: var(--ac-color-green-500);
       }
 
-      .alert-icon-wrap {
-        width: 38px;
-        height: 38px;
-        border-radius: var(--ac-radius-pill);
-        display: grid;
-        place-items: center;
-        flex-shrink: 0;
-        background: var(--ac-color-surface);
-        color: var(--ac-color-action-deep);
-        box-shadow: var(--ac-shadow-xs);
-      }
-
-      .alert-body {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-
-      .alert-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--ac-color-text-strong);
-      }
-
-      .alert-desc {
-        font-size: 13px;
-        color: var(--ac-color-text-body);
-        margin: 0;
-        line-height: 1.4;
-      }
-
-      .alert-action-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 14px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-slate);
-        color: var(--ac-color-action-deep);
-        font-size: 13px;
-        font-weight: 600;
-        text-decoration: none;
-        white-space: nowrap;
-        transition:
-          background var(--ac-motion-fast),
-          border-color var(--ac-motion-fast);
-      }
-
-      .alert-action-btn:hover {
-        background: var(--ac-color-tint-blue-mist);
-        border-color: var(--ac-color-action-deep);
-      }
-
-      /* ─── QUICK ACTIONS (4 COLUMNS) ─── */
-      .quick-actions-header {
-        grid-column: 1 / -1;
-        margin-bottom: 4px;
-      }
-
-      .quick-actions-header h2 {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--ac-color-text-strong);
-        margin: 0;
-        letter-spacing: -0.01em;
-      }
-
-      .bento-quick-actions {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: var(--ac-space-4);
-        margin-bottom: var(--ac-space-6);
-      }
-
       @media (max-width: 900px) {
-        .bento-quick-actions {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
       }
 
       @media (max-width: 540px) {
-        .bento-quick-actions {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      .quick-card {
-        border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-lg);
-        padding: 18px 20px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        text-decoration: none;
-        box-shadow: var(--ac-shadow-sm);
-        transition:
-          transform var(--ac-motion-fast),
-          box-shadow var(--ac-motion-fast),
-          border-color var(--ac-motion-fast);
-      }
-
-      .quick-card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--ac-shadow-hover);
       }
 
       .gradient-screening {
@@ -2452,353 +1489,15 @@ const quickActions: readonly QuickAction[] = [
         border-color: var(--ac-color-border-info);
       }
 
-      .quick-card-title-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-      }
-
-      .quick-card-badge {
-        display: inline-block;
-        padding: 2px 7px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-slate);
-        font-size: 10px;
-        font-weight: 700;
-        color: var(--ac-color-action-deep);
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        white-space: nowrap;
-      }
-
-      .title-with-streak {
-        display: flex;
-        align-items: center;
-        gap: var(--ac-space-3);
-      }
-
-      .streak-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 3px 10px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-surface-info);
-        border: 1px solid var(--ac-color-border-info);
-        color: var(--ac-color-action-deep);
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .streak-icon {
-        font-size: 13px;
-      }
-
-      .quick-card-text {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-      }
-
-      .quick-card-text strong {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--ac-color-text-strong);
-      }
-
-      .quick-card-text small {
-        font-size: 12px;
-        color: var(--ac-color-text-muted);
-      }
-
-      .quick-card-arrow {
-        font-size: 18px;
-        color: var(--ac-color-action-mid);
-        transition: transform var(--ac-motion-fast);
-      }
-
-      .quick-card:hover .quick-card-arrow {
-        transform: translateX(4px);
-      }
-
-      .countdown-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 10px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-info);
-        color: var(--ac-color-action-deep);
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      .schedule-top-badges {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .status-tag {
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-olive-mid);
-        color: var(--ac-color-text-on-action);
-        padding: 4px 10px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-
-      .appointment-footer-actions {
-        margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px solid var(--ac-color-border);
-      }
-
-      .reschedule-action-link,
-      .reschedule-shortcut {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--ac-color-action-deep);
-        text-decoration: none;
-      }
-
-      .reschedule-action-link:hover,
-      .reschedule-shortcut:hover {
-        text-decoration: underline;
-      }
-
-      .children-roster-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 18px;
-      }
-
-      .children-roster-header h2 {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--ac-color-text-strong);
-        margin: 0;
-      }
-
-      .roster-count {
-        font-size: 12px;
-        color: var(--ac-color-text-muted);
-      }
-
-      .roster-manage-link {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--ac-color-action-deep);
-        text-decoration: none;
-      }
-
-      .roster-manage-link:hover {
-        text-decoration: underline;
-      }
-
-      .children-roster-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 16px;
-      }
-
-      .roster-child-card {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 14px;
-        border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface);
-        cursor: pointer;
-        transition: all var(--ac-motion-fast);
-      }
-
-      .roster-child-card:hover {
-        border-color: var(--ac-color-primary);
-        box-shadow: var(--ac-shadow-sm);
-      }
-
       .roster-child-card.active-child {
         border-color: var(--ac-color-action);
         background: var(--ac-color-surface-info);
         box-shadow: var(--ac-shadow-sm);
       }
 
-      .roster-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: var(--ac-radius-pill);
-        background: linear-gradient(135deg, var(--ac-color-teal-slate), var(--ac-color-sky-soft));
-        color: var(--ac-color-text-on-action);
-        display: grid;
-        place-items: center;
-        font-weight: 700;
-        font-size: 14px;
-        flex: 0 0 auto;
-      }
-
-      .roster-details {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .roster-child-name {
-        font-size: 14px;
-        color: var(--ac-color-text-strong);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .roster-child-age {
-        font-size: 11px;
-        color: var(--ac-color-text-muted);
-      }
-
-      .roster-status-chip {
-        flex: 0 0 auto;
-      }
-
-      .roster-badge {
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        padding: 3px 8px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-slate-100);
-        color: var(--ac-color-text-slate);
-      }
-
       .roster-badge.screened {
         background: var(--ac-color-olive-light);
         color: var(--ac-color-olive-deep);
-      }
-
-      .roster-arrow-btn {
-        font-size: 20px;
-        color: var(--ac-color-text-slate);
-        text-decoration: none;
-        padding: 0 4px;
-      }
-
-      .roster-arrow-btn:hover {
-        color: var(--ac-color-action-deep);
-      }
-
-      .roster-add-card {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px 14px;
-        border: 1px dashed var(--ac-color-border-grey);
-        border-radius: var(--ac-radius-md);
-        color: var(--ac-color-action-deep);
-        text-decoration: none;
-        font-size: 13px;
-        font-weight: 600;
-        transition: all var(--ac-motion-fast);
-      }
-
-      .roster-add-card:hover {
-        border-color: var(--ac-color-action);
-        background: var(--ac-color-surface-info);
-      }
-
-      .milestones-feed {
-        margin-top: 18px;
-        padding-top: 16px;
-        border-top: 1px solid var(--ac-color-border);
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .milestone-feed-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 10px;
-        border-radius: var(--ac-radius-sm);
-        background: var(--ac-color-slate-50);
-      }
-
-      .milestone-feed-icon {
-        width: 22px;
-        height: 22px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-green-100);
-        color: var(--ac-color-green-700);
-        display: grid;
-        place-items: center;
-        font-size: 12px;
-        font-weight: 700;
-      }
-
-      .milestone-feed-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-
-      .milestone-domain-badge {
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        width: fit-content;
-        padding: 1px 6px;
-        border-radius: var(--ac-radius-pill);
-      }
-
-      .domain-sensory {
-        background: var(--ac-color-blue-100);
-        color: var(--ac-color-action-deep);
-      }
-
-      .domain-communication {
-        background: var(--ac-color-olive-light);
-        color: var(--ac-color-olive-deep);
-      }
-
-      .milestone-feed-title {
-        font-size: 12px;
-        color: var(--ac-color-text-strong);
-      }
-
-      .milestone-feed-link {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--ac-color-action-deep);
-        text-decoration: none;
-      }
-
-      .milestone-feed-link:hover {
-        text-decoration: underline;
-      }
-
-      .bar-col {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        flex: 1;
-      }
-
-      .bar-day-name {
-        font-size: 11px;
-        color: var(--ac-color-text-muted);
-        font-weight: 600;
       }
 
       .admin-overview {
@@ -2900,107 +1599,6 @@ const quickActions: readonly QuickAction[] = [
         transform: rotate(45deg);
       }
 
-      .card {
-        border: 1px solid rgb(221 229 228 / 0.72);
-        border-radius: 24px;
-        background: var(--ac-color-surface);
-        box-shadow: 0 12px 34px rgb(41 74 90 / 0.07);
-        padding: 28px;
-      }
-
-      .screening-card {
-        min-height: 310px;
-        display: grid;
-        grid-template-columns: 176px minmax(0, 1fr);
-        align-items: center;
-        gap: 38px;
-      }
-
-      .progress-wrap {
-        position: relative;
-        width: 150px;
-        height: 150px;
-      }
-
-      .progress-wrap svg {
-        width: 100%;
-        height: 100%;
-        transform: rotate(-90deg);
-      }
-
-      .progress-track,
-      .progress-value {
-        fill: none;
-        stroke-width: 10;
-      }
-
-      .progress-track {
-        stroke: var(--ac-color-sage-light);
-      }
-
-      .progress-value {
-        stroke: var(--ac-color-sage);
-        stroke-linecap: butt;
-        stroke-dasharray: 301.59;
-        stroke-dashoffset: 105.56;
-      }
-
-      .progress-wrap div {
-        position: absolute;
-        inset: 0;
-        display: grid;
-        place-content: center;
-        justify-items: center;
-        color: var(--ac-color-olive-deep);
-      }
-
-      .progress-wrap strong {
-        font-size: 30px;
-        line-height: 1;
-      }
-
-      .progress-wrap span {
-        margin-top: 6px;
-        text-transform: uppercase;
-        font-size: 11px;
-        font-weight: 700;
-      }
-
-      .screening-copy {
-        display: grid;
-        justify-items: start;
-        gap: 14px;
-      }
-
-      .status-pill {
-        border-radius: 999px;
-        background: var(--ac-color-olive-light);
-        color: var(--ac-color-olive-deep);
-        padding: 6px 14px;
-        font-size: 13px;
-        line-height: 1.1;
-        font-weight: 700;
-      }
-
-      .screening-copy h2,
-      .action-card h2,
-      .appointment-card h2 {
-        color: var(--ac-color-text-strong);
-        font-size: 26px;
-        line-height: 1.3;
-        font-weight: 600;
-        letter-spacing: 0;
-      }
-
-      .screening-copy p,
-      .action-card p,
-      .appointment-card p,
-      .weekly-card p {
-        color: var(--ac-color-text-body);
-        font-size: 16px;
-        line-height: 1.58;
-      }
-
       .primary-button {
         min-height: 46px;
         border-radius: 12px;
@@ -3014,106 +1612,8 @@ const quickActions: readonly QuickAction[] = [
         font-weight: 600;
       }
 
-      .weekly-card {
-        min-height: 310px;
-        display: grid;
-        align-content: space-between;
-        gap: 18px;
-      }
-
-      .section-title {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        color: var(--ac-color-action-deep);
-      }
-
-      .section-title h2 {
-        font-size: 16px;
-        line-height: 1.3;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0;
-      }
-
-      .section-title svg {
-        width: 26px;
-        height: 26px;
-      }
-
-      .bar-chart {
-        height: 160px;
-        display: flex;
-        align-items: end;
-        justify-content: center;
-        gap: 12px;
-        padding-top: 26px;
-      }
-
-      .bar-chart span {
-        position: relative;
-        width: 34px;
-        height: var(--bar-height);
-        min-height: 2px;
-        border-radius: 10px 10px 0 0;
-        background: var(--ac-color-tint-blue);
-      }
-
       .bar-chart span.active {
         background: var(--ac-color-action);
-      }
-
-      .bar-chart strong {
-        position: absolute;
-        left: 50%;
-        top: -26px;
-        color: var(--ac-color-action-deep);
-        transform: translateX(-50%);
-      }
-
-      .weekly-card p {
-        text-align: center;
-      }
-
-      .weekly-card p strong {
-        color: var(--ac-color-text-strong);
-      }
-
-      .action-card {
-        position: relative;
-        overflow: hidden;
-        min-height: 300px;
-        display: grid;
-        align-content: center;
-        gap: 20px;
-      }
-
-      .action-card::after {
-        content: '';
-        position: absolute;
-        right: -40px;
-        top: -40px;
-        width: 180px;
-        height: 180px;
-        border-radius: 0 0 0 180px;
-        background: var(--ac-color-sage-light);
-        opacity: 0.44;
-      }
-
-      .soft-icon {
-        width: 58px;
-        height: 58px;
-        border-radius: 999px;
-        background: var(--ac-color-olive-light);
-        color: var(--ac-color-olive-mid);
-        display: grid;
-        place-items: center;
-      }
-
-      .soft-icon svg {
-        width: 30px;
-        height: 30px;
       }
 
       .text-link {
@@ -3127,59 +1627,6 @@ const quickActions: readonly QuickAction[] = [
 
       .text-link:hover {
         text-decoration: underline;
-      }
-
-      .appointment-card {
-        min-height: 300px;
-        border-color: var(--ac-color-ice-blue);
-        background: var(--ac-color-surface-info);
-        display: grid;
-        align-content: center;
-        gap: 18px;
-      }
-
-      .appointment-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-
-      .appointment-top span,
-      .appointment-meta span {
-        color: var(--ac-color-action-deep);
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-
-      .appointment-top svg,
-      .appointment-meta svg {
-        width: 18px;
-        height: 18px;
-      }
-
-      .appointment-top strong {
-        border-radius: 999px;
-        background: var(--ac-color-olive-mid);
-        color: var(--ac-color-text-on-action);
-        padding: 6px 14px;
-        font-size: 13px;
-      }
-
-      .appointment-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 18px;
-      }
-
-      .appointment-meta span {
-        color: var(--ac-color-text-strong);
-        font-size: 14px;
-        text-transform: none;
       }
 
       .empty-state {
@@ -3269,27 +1716,6 @@ const quickActions: readonly QuickAction[] = [
       }
 
       @media (max-width: 1024px) and (min-width: 641px) {
-        .bento-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 20px;
-        }
-
-        .bento-tile-screening,
-        .bento-tile-schedule,
-        .bento-tile-progress,
-        .bento-tile-action {
-          grid-column: span 1;
-        }
-
-        .bento-tile-children {
-          grid-column: span 2;
-        }
-
-        .bento-quick-actions {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 14px;
-        }
-
         .stats-grid {
           grid-template-columns: repeat(2, 1fr);
         }
@@ -3318,7 +1744,7 @@ const quickActions: readonly QuickAction[] = [
         }
 
         .hero-text-block h1 {
-          font-size: 22px;
+          font-size: var(--ac-type-page-title);
           line-height: 1.35;
           margin-bottom: 6px;
           word-break: break-word;
@@ -3333,159 +1759,6 @@ const quickActions: readonly QuickAction[] = [
           font-size: 13.5px;
           line-height: 1.5;
           margin-bottom: 14px;
-        }
-
-        .hero-actions-block {
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          gap: 10px;
-        }
-
-        .child-switcher {
-          width: 100%;
-          min-width: 0;
-          box-sizing: border-box;
-          padding: 12px 14px;
-          border-radius: 18px;
-          gap: 12px;
-        }
-
-        .child-avatar {
-          width: 44px;
-          height: 44px;
-          font-size: 18px;
-        }
-
-        .hero-add-child-btn {
-          width: 100%;
-          justify-content: center;
-          height: 46px;
-          border-radius: 14px;
-          box-sizing: border-box;
-        }
-
-        .priority-alerts-container {
-          margin-bottom: 20px;
-          gap: 10px;
-        }
-
-        .priority-alert-card {
-          display: grid;
-          grid-template-columns: 36px minmax(0, 1fr);
-          align-items: start;
-          gap: 12px;
-          padding: 14px;
-          border-radius: 16px;
-        }
-
-        .alert-icon-wrap {
-          width: 36px;
-          height: 36px;
-        }
-
-        .alert-body {
-          grid-column: 2;
-        }
-
-        .alert-title {
-          font-size: 13.5px;
-        }
-
-        .alert-desc {
-          font-size: 12.5px;
-          line-height: 1.45;
-        }
-
-        .alert-action-btn {
-          grid-column: 1 / -1;
-          width: 100%;
-          justify-content: center;
-          height: 42px;
-          margin-top: 4px;
-          box-sizing: border-box;
-        }
-
-        .bento-grid {
-          grid-template-columns: 1fr;
-          gap: 16px;
-        }
-
-        .bento-tile-screening,
-        .bento-tile-schedule,
-        .bento-tile-children,
-        .bento-tile-progress,
-        .bento-tile-action {
-          grid-column: span 1;
-        }
-
-        .bento-quick-actions {
-          grid-template-columns: 1fr;
-          gap: 10px;
-          margin-bottom: 20px;
-        }
-
-        .quick-actions-header h2 {
-          font-size: 17px;
-        }
-
-        .quick-card {
-          padding: 14px 16px;
-          gap: 12px;
-          border-radius: 16px;
-        }
-
-        .quick-card-text strong {
-          font-size: 14.5px;
-        }
-
-        .quick-card-text small {
-          font-size: 12px;
-          line-height: 1.4;
-        }
-
-        .card {
-          border-radius: 18px;
-          padding: 20px;
-        }
-
-        .weekly-card {
-          min-height: auto;
-        }
-
-        .bar-chart {
-          height: 112px;
-          gap: 8px;
-          padding-top: 22px;
-        }
-
-        .bar-chart span {
-          width: 28px;
-        }
-
-        .screening-card {
-          grid-template-columns: 1fr;
-          justify-items: center;
-          text-align: center;
-          gap: 20px;
-          margin-bottom: 0;
-        }
-
-        .screening-copy {
-          justify-items: center;
-        }
-
-        .screening-copy h2,
-        .action-card h2,
-        .appointment-card h2 {
-          font-size: 22px;
-        }
-
-        .appointment-top {
-          align-items: flex-start;
-          flex-direction: column;
-          gap: 8px;
         }
 
         .dashboard-footer {
@@ -3513,34 +1786,7 @@ const quickActions: readonly QuickAction[] = [
 
       @media (max-width: 480px) {
         .hero-text-block h1 {
-          font-size: 20px;
-        }
-
-        .card {
-          border-radius: 16px;
-          padding: 16px;
-        }
-
-        .quick-card {
-          padding: 12px 14px;
-          gap: 10px;
-        }
-
-        .quick-card-text strong {
-          font-size: 14px;
-        }
-
-        .quick-card-text small {
-          font-size: 11.5px;
-        }
-
-        .progress-wrap {
-          width: 130px;
-          height: 130px;
-        }
-
-        .progress-wrap strong {
-          font-size: 26px;
+          font-size: var(--ac-type-page-title);
         }
       }
 
@@ -3548,33 +1794,6 @@ const quickActions: readonly QuickAction[] = [
         display: flex;
         justify-content: center;
         padding: 48px 0;
-      }
-
-      .screening-empty,
-      .weekly-empty,
-      .appointment-empty {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-      }
-
-      .screening-empty h2,
-      .weekly-empty h2,
-      .appointment-empty h2 {
-        color: var(--ac-color-text-strong);
-        font-size: 20px;
-        font-weight: 600;
-        margin: 0;
-      }
-
-      .screening-empty p,
-      .weekly-empty p,
-      .appointment-empty p {
-        color: var(--ac-color-text-body);
-        font-size: 15px;
-        line-height: 1.5;
-        margin: 0;
       }
 
       .admin-stats-grid {
@@ -3746,7 +1965,6 @@ export class DashboardPage implements OnInit {
   protected readonly i18n = inject(I18nService);
   protected readonly currentLang = this.i18n.currentLang;
 
-  protected readonly quickActions = quickActions;
   protected readonly children = signal<readonly ChildResponse[]>([]);
   protected readonly childrenLoading = signal(false);
   protected readonly childrenError = signal<string | null>(null);
@@ -3776,16 +1994,10 @@ export class DashboardPage implements OnInit {
 
   // Parent dashboard real backend data
   protected readonly parentDashboard = signal<ParentDashboardResponse | null>(null);
-  protected readonly parentDashboardLoading = signal(false);
-  protected readonly parentDashboardError = signal<string | null>(null);
   protected readonly selectedChildId = signal<string | null>(null);
 
   protected readonly activeChildren = computed(() => {
     return this.parentDashboard()?.children ?? [];
-  });
-
-  protected readonly hasMultipleChildren = computed(() => {
-    return (this.parentDashboard()?.children?.length ?? 0) > 1;
   });
 
   // Selected child derived from parentDashboard first, falling back to children list if any
@@ -3819,92 +2031,6 @@ export class DashboardPage implements OnInit {
       this.closeChildDropdown();
     }
   }
-
-  protected readonly priorityAlerts = computed<readonly PriorityAlert[]>(() => {
-    if (!this.isParent()) return [];
-    const data = this.parentDashboard();
-    if (!data) return [];
-    const alerts: PriorityAlert[] = [];
-    const isKm = this.currentLang() === 'km';
-
-    if (data.selectedChild && !data.screeningSummary.hasScreening) {
-      alerts.push({
-        id: 'screening-due',
-        title: isKm
-          ? `ដល់ពេលវាយតម្លៃការលូតលាស់របស់ ${data.selectedChild.firstName}`
-          : `Screening due for ${data.selectedChild.firstName}`,
-        description: isKm
-          ? `បំពេញកម្រងសំណួរដំណាក់កាលលូតលាស់រយៈពេល 5 នាទីដើម្បីកំណត់ចំណុចខ្លាំង និងតម្រូវការគាំទ្រ។`
-          : `Complete an initial 5-minute milestone questionnaire to identify strengths and support areas.`,
-        actionPath: '/screening',
-        actionLabel: isKm ? 'ចាប់ផ្តើមការវាយតម្លៃ' : 'Start Screening',
-        tone: 'caution',
-        icon: 'clipboard',
-      });
-    }
-
-    if (data.upcomingAppointment) {
-      const appt = data.upcomingAppointment;
-      const docOrHosp = appt.doctorName || appt.hospitalName;
-      alerts.push({
-        id: 'upcoming-appt',
-        title: isKm
-          ? `ការណាត់ជួបត្រូវបានបញ្ជាក់ជាមួយ ${docOrHosp}`
-          : `Appointment confirmed for ${docOrHosp}`,
-        description: `${this.formatDate(appt.scheduledAt)} at ${this.formatTime(appt.scheduledAt)}${appt.specialty ? ` · ${appt.specialty}` : ''}`,
-        actionPath: '/appointments',
-        actionLabel: isKm ? 'មើលព័ត៌មានលម្អិត' : 'View Details',
-        tone: 'info',
-        icon: 'calendar',
-      });
-    }
-
-    if (data.selectedChild && data.screeningSummary.hasScreening) {
-      alerts.push({
-        id: 'school-report',
-        title: isKm ? 'មានរបាយការណ៍សង្កេតថ្មីពីសាលារៀន' : '1 new school report',
-        description: isKm
-          ? 'គ្រូបង្រៀនបានកត់ត្រាការសង្កេតថ្មីស្តីពីការសម្របសម្រួលញាណដឹង និងការប្រាស្រ័យទាក់ទង។'
-          : 'Teachers recorded new observations on sensory accommodation and communication wins.',
-        actionPath: '/schools',
-        actionLabel: isKm ? 'មើលរបាយការណ៍សាលា' : 'View Report',
-        tone: 'info',
-        icon: 'clipboard',
-      });
-    }
-
-    if (
-      data.recommendedAction &&
-      data.recommendedAction.source !== 'NO_SCREENING' &&
-      data.recommendedAction.source !== 'NO_CHILD'
-    ) {
-      alerts.push({
-        id: 'recommended-action',
-        title: this.formatActionTitle(data.recommendedAction.title),
-        description: this.formatActionDescription(data.recommendedAction.description),
-        actionPath: data.recommendedAction.actionPath,
-        actionLabel: this.formatActionLabel(data.recommendedAction.actionLabel),
-        tone: 'neutral',
-        icon: 'sparkles',
-      });
-    }
-
-    if (!data.selectedChild) {
-      alerts.push({
-        id: 'add-child',
-        title: isKm ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add a child profile',
-        description: isKm
-          ? 'បង្កើតប្រវត្តិកុមារដើម្បីតាមដានការវាយតម្លៃ និងសកម្មភាពផ្ទាល់ខ្លួន។'
-          : 'Create a child profile to track personalized screenings and activities.',
-        actionPath: '/children/new',
-        actionLabel: isKm ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add Child Profile',
-        tone: 'info',
-        icon: 'child',
-      });
-    }
-
-    return alerts;
-  });
 
   // Admin dashboard real backend data
   protected readonly adminDashboard = signal<AdminDashboardResponse | null>(null);
@@ -4051,31 +2177,6 @@ export class DashboardPage implements OnInit {
     }
   }
 
-  protected getAppointmentCountdown(scheduledAt: string): string {
-    const apptDate = new Date(scheduledAt);
-    const now = new Date();
-    const apptDay = new Date(
-      apptDate.getFullYear(),
-      apptDate.getMonth(),
-      apptDate.getDate(),
-    ).getTime();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const diffDays = Math.round((apptDay - today) / (1000 * 60 * 60 * 24));
-    const isKm = this.currentLang() === 'km';
-
-    if (diffDays === 0) return isKm ? 'ថ្ងៃនេះ' : 'Today';
-    if (diffDays === 1) return isKm ? 'ថ្ងៃស្អែក' : 'Tomorrow';
-    if (diffDays === -1) return isKm ? 'ម្សិលមិញ' : 'Yesterday';
-    if (diffDays > 1 && diffDays <= 7) return isKm ? `${diffDays} ថ្ងៃទៀត` : `In ${diffDays} days`;
-    if (diffDays > 7 && diffDays <= 30)
-      return isKm
-        ? `${Math.round(diffDays / 7)} សប្តាហ៍ទៀត`
-        : `In ${Math.round(diffDays / 7)} weeks`;
-    if (diffDays > 30)
-      return isKm ? `${Math.round(diffDays / 30)} ខែទៀត` : `In ${Math.round(diffDays / 30)} months`;
-    return isKm ? 'ខាងមុខ' : 'Upcoming';
-  }
-
   protected formatDate(dateStr: string): string {
     const isKm = this.currentLang() === 'km';
     const date = new Date(dateStr.includes('T') ? dateStr : `${dateStr}T00:00:00`);
@@ -4089,112 +2190,9 @@ export class DashboardPage implements OnInit {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  protected formatTime(dateStr: string): string {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  }
-
   protected formatPending(value: number | undefined): string {
     const n = value ?? 0;
     return n < 10 ? `0${n}` : `${n}`;
-  }
-
-  protected formatRiskLevel(riskLevel: string | null): string {
-    const isKm = this.currentLang() === 'km';
-    if (!riskLevel) return isKm ? 'មិនទាន់វាយតម្លៃ' : 'Not Screened';
-    const normalized = riskLevel.toUpperCase();
-    if (normalized === 'LOW') {
-      return isKm ? 'ការបារម្ភកម្រិតទាប' : 'Low Concern';
-    }
-    if (normalized === 'MODERATE') {
-      return isKm ? 'ការបារម្ភកម្រិតមធ្យម' : 'Moderate Concern';
-    }
-    if (normalized === 'HIGH' || normalized === 'ELEVATED') {
-      return isKm ? 'ការបារម្ភកម្រិតខ្ពស់' : 'Elevated Concern';
-    }
-    return isKm
-      ? `កម្រិតហានិភ័យ ${riskLevel}`
-      : `${riskLevel.charAt(0) + riskLevel.slice(1).toLowerCase()} Risk`;
-  }
-
-  protected formatAppointmentStatus(status: string): string {
-    const isKm = this.currentLang() === 'km';
-    if (!isKm) return status;
-    const normalized = status.toUpperCase();
-    if (normalized === 'CONFIRMED') return 'បានបញ្ជាក់';
-    if (normalized === 'PENDING') return 'កំពុងរង់ចាំ';
-    if (normalized === 'CANCELLED') return 'បានបោះបង់';
-    if (normalized === 'COMPLETED') return 'បានបញ្ចប់';
-    return status;
-  }
-
-  protected formatDayName(day: string): string {
-    const isKm = this.currentLang() === 'km';
-    if (!isKm) return day;
-    switch (day) {
-      case 'Mon':
-        return 'ចន្ទ';
-      case 'Tue':
-        return 'អង្គារ';
-      case 'Wed':
-        return 'ពុធ';
-      case 'Thu':
-        return 'ព្រហ';
-      case 'Fri':
-        return 'សុក្រ';
-      case 'Sat':
-        return 'សៅរ៍';
-      case 'Sun':
-        return 'អាទិត្យ';
-      default:
-        return day;
-    }
-  }
-
-  protected formatActionTitle(title: string): string {
-    const isKm = this.currentLang() === 'km';
-    if (!isKm) return title;
-    if (title.startsWith('Start screening for')) {
-      const name = title.replace('Start screening for ', '');
-      return `ចាប់ផ្តើមការវាយតម្លៃសម្រាប់ ${name}`;
-    }
-    if (title === 'Add a child profile') return 'បន្ថែមទិន្នន័យកុមារ';
-    if (title === 'Screening Recommendation') return 'អនុសាសន៍នៃការវាយតម្លៃ';
-    if (title === 'Start Clinical Screening') return 'ចាប់ផ្តើមការវាយតម្លៃ';
-    return title;
-  }
-
-  protected formatActionDescription(desc: string): string {
-    const isKm = this.currentLang() === 'km';
-    if (!isKm) return desc;
-    if (desc === 'Create a child profile to track personalized screenings and activities.') {
-      return 'បង្កើតប្រវត្តិកុមារដើម្បីតាមដានការវាយតម្លៃ និងសកម្មភាពផ្ទាល់ខ្លួន។';
-    }
-    if (
-      desc ===
-      'Complete an initial developmental screening questionnaire to identify support areas.'
-    ) {
-      return 'បំពេញកម្រងសំណួរវាយតម្លៃការលូតលាស់បឋមដើម្បីកំណត់តម្រូវការគាំទ្រ។';
-    }
-    if (desc === 'Targeted visual and speech exercises recommended.') {
-      return 'បានណែនាំលំហាត់ប្រាណពង្រឹងចក្ខុវិស័យ និងការនិយាយ។';
-    }
-    return desc;
-  }
-
-  protected formatActionLabel(label: string): string {
-    const isKm = this.currentLang() === 'km';
-    if (!isKm) return label;
-    if (label === 'Add Child Profile') return 'បន្ថែមទិន្នន័យកុមារ';
-    if (label === 'Start Screening') return 'ចាប់ផ្តើមការវាយតម្លៃ';
-    if (label === 'View Screening Result') return 'មើលលទ្ធផលវាយតម្លៃ';
-    return label;
-  }
-
-  protected getDashOffset(percentage: number | null): number {
-    const pct = Math.max(0, Math.min(100, percentage ?? 0));
-    // Circumference = 2 * PI * 48 = ~301.59
-    return 301.59 - (301.59 * pct) / 100;
   }
 
   onSelectChild(childId: string) {
@@ -4204,8 +2202,6 @@ export class DashboardPage implements OnInit {
   }
 
   loadParentDashboard(childId?: string) {
-    this.parentDashboardLoading.set(true);
-    this.parentDashboardError.set(null);
     const targetChildId = childId ?? this.selectedChildId() ?? undefined;
     this.dashboardApi.getParentDashboard(targetChildId).subscribe({
       next: (data) => {
@@ -4213,11 +2209,10 @@ export class DashboardPage implements OnInit {
         if (data.selectedChild) {
           this.selectedChildId.set(data.selectedChild.id);
         }
-        this.parentDashboardLoading.set(false);
       },
       error: () => {
-        this.parentDashboardError.set('Parent dashboard could not be loaded.');
-        this.parentDashboardLoading.set(false);
+        // The analysis panel reports its own failures; nothing here renders the
+        // roster, so a failed fetch simply leaves the previous selection in place.
       },
     });
   }

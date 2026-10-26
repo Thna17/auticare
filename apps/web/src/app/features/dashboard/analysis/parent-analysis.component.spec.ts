@@ -141,6 +141,69 @@ describe('ParentAnalysisComponent', () => {
     expect(text).toContain('Nothing recorded yet');
   });
 
+  it('leads with booking when the band is elevated, and with the check-in when there is none', () => {
+    const elevated = assessment();
+    elevated.result!.riskLevel = 'HIGH';
+
+    const fixture = render('child-1');
+    httpTesting
+      .expectOne((request) => request.url.startsWith('/api/v1/insights/children/child-1'))
+      .flush({ data: insight() });
+    httpTesting
+      .expectOne('/api/v1/screening/children/child-1/latest?formKind=SHORT')
+      .flush({ data: elevated });
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('.next-cta')?.getAttribute('href')).toBe('/appointments');
+    expect(element.querySelector('.ask-link')?.getAttribute('href')).toBe('/ai');
+
+    const second = render('child-2');
+    httpTesting
+      .expectOne((request) => request.url.startsWith('/api/v1/insights/children/child-2'))
+      .flush({ data: insight() });
+    httpTesting
+      .expectOne('/api/v1/screening/children/child-2/latest?formKind=SHORT')
+      .flush({ data: null });
+    second.detectChanges();
+
+    const secondElement = second.nativeElement as HTMLElement;
+    expect(secondElement.querySelector('.next-cta')?.getAttribute('href')).toBe('/welcome');
+    // One button only: the band card does not repeat the check-in link.
+    expect(secondElement.querySelectorAll('a[href="/welcome"]').length).toBe(1);
+  });
+
+  it('suggests recording for a named child, then the assistant once there are notes', () => {
+    const fixture = TestBed.createComponent(ParentAnalysisComponent);
+    fixture.componentRef.setInput('childId', 'child-1');
+    fixture.componentRef.setInput('childName', 'Dara');
+    fixture.detectChanges();
+    httpTesting
+      .expectOne((request) => request.url.startsWith('/api/v1/insights/children/child-1'))
+      .flush({ data: insight({ observationCount: 0, distinctDays: 0, patterns: [] }) });
+    httpTesting
+      .expectOne('/api/v1/screening/children/child-1/latest?formKind=SHORT')
+      .flush({ data: assessment() });
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('Note one thing Dara did today');
+    expect(element.querySelector('.next-cta')?.getAttribute('href')).toBe('/observations');
+
+    const withNotes = render('child-2');
+    httpTesting
+      .expectOne((request) => request.url.startsWith('/api/v1/insights/children/child-2'))
+      .flush({ data: insight() });
+    httpTesting
+      .expectOne('/api/v1/screening/children/child-2/latest?formKind=SHORT')
+      .flush({ data: assessment() });
+    withNotes.detectChanges();
+
+    const notesElement = withNotes.nativeElement as HTMLElement;
+    expect(notesElement.querySelector('.next-card.next-ask')).toBeTruthy();
+    expect(notesElement.querySelector('.next-cta')?.getAttribute('href')).toBe('/ai');
+  });
+
   it('makes no request until a child is selected', () => {
     const fixture = render(null);
     fixture.detectChanges();
