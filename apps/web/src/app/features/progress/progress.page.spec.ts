@@ -768,10 +768,14 @@ describe('ProgressPage', () => {
     i18n.setLanguage('km');
     fixture.detectChanges();
 
-    // Topbar
-    const topbar = fixture.nativeElement.querySelector('.topbar') as HTMLElement;
-    expect(topbar.textContent).toContain('កុមារ៖');
-    expect(topbar.textContent).toContain('← ត្រឡប់ទៅផ្ទាំងគ្រប់គ្រង');
+    // Page header: a real title and the child picker; the sidebar handles "back".
+    const pageHead = fixture.nativeElement.querySelector('.page-head') as HTMLElement;
+    expect(pageHead.querySelector('h1')?.textContent).toContain('ការវិវត្ត');
+    expect(pageHead.querySelector('.child-picker label')?.textContent).toContain('កុមារ');
+    expect(pageHead.querySelector('#child-select')).toBeTruthy();
+    expect(pageHead.textContent).not.toContain('ត្រឡប់ទៅផ្ទាំងគ្រប់គ្រង');
+    // Icons are drawn, not emoji.
+    expect(fixture.nativeElement.querySelectorAll('.tab-btn ac-nav-icon').length).toBe(3);
 
     // Navigation Tabs in Khmer
     const tabTexts = Array.from(
@@ -862,8 +866,8 @@ describe('ProgressPage', () => {
     i18n.setLanguage('en');
     fixture.detectChanges();
 
-    expect(topbar.textContent).toContain('Child:');
-    expect(topbar.textContent).toContain('← Back to Dashboard');
+    expect(pageHead.querySelector('h1')?.textContent).toContain('Progress');
+    expect(pageHead.querySelector('.child-picker label')?.textContent).toContain('Child');
     expect(milestonesContainer.textContent).toContain('Developmental Milestones & Daily Practice');
     expect(milestonesContainer.textContent).toContain('Explore Activities Catalogue →');
     expect(milestonesContainer.textContent).toContain('Practice Again ↻');

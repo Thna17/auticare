@@ -21,6 +21,7 @@ import { UiPaginationComponent } from '../../design-system/components/ui-paginat
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { ScreeningBadgeComponent } from '../screening/components/screening-badge.component';
+import { NavIconComponent } from '../../core/layout/nav-icon.component';
 import type { BadgeTone } from '../screening/components/screening-badge.component';
 
 interface EngagementMetric {
@@ -108,30 +109,27 @@ const METRIC_DEFS: MetricDef[] = [
     UiPaginationComponent,
     UiSpinnerComponent,
     ScreeningBadgeComponent,
+    NavIconComponent,
   ],
   selector: 'ac-parent-report-detail-page',
   template: `
     <div class="page-layout">
       <main class="main-content">
-        <!-- Topbar Child Switcher & Page Header -->
-        <header class="topbar">
-          <div class="child-switcher">
-            <label class="child-switcher-label" for="child-select">
+        <!-- Page header: title, then the one control that scopes the whole page. -->
+        <header class="topbar page-head">
+          <div class="page-head-text">
+            <h1>{{ currentLang() === 'km' ? 'ការវិវត្ត' : 'Progress' }}</h1>
+            <p class="page-subtitle">
               @if (currentLang() === 'km') {
-                កុមារ៖
+                តាមដានការវិវត្តរបស់ {{ selectedChild()?.firstName || 'កូនអ្នក' }} តាមពេលវេលា —
+                ការវាយតម្លៃ របាយការណ៍សាលា និងសកម្មភាពនៅផ្ទះ នៅកន្លែងតែមួយ។
               } @else {
-                Child:
+                How {{ selectedChild()?.firstName || 'your child' }} is doing over time —
+                screenings, school reports and home activities in one place.
               }
-            </label>
-            <select id="child-select" class="child-select" (change)="onChildChange($event)">
-              @for (child of children(); track child.id) {
-                <option [value]="child.id" [selected]="child.id === selectedChildId()">
-                  {{ child.lastName ? child.firstName + ' ' + child.lastName : child.firstName }}
-                </option>
-              }
-            </select>
+            </p>
           </div>
-          <div class="topbar-actions">
+          <div class="page-head-actions">
             @if (activeTab() === 'reports' && reports().length > 1) {
               <select
                 class="child-select report-select"
@@ -144,28 +142,37 @@ const METRIC_DEFS: MetricDef[] = [
                 }
               </select>
             }
-            <a class="back-link" routerLink="/dashboard">
-              @if (currentLang() === 'km') {
-                ← ត្រឡប់ទៅផ្ទាំងគ្រប់គ្រង
-              } @else {
-                ← Back to Dashboard
-              }
-            </a>
+            <div class="child-picker">
+              <span class="child-picker-avatar" aria-hidden="true">{{
+                (selectedChild()?.firstName || '?').charAt(0).toUpperCase()
+              }}</span>
+              <label class="child-switcher-label" for="child-select">
+                {{ currentLang() === 'km' ? 'កុមារ' : 'Child' }}
+              </label>
+              <select id="child-select" class="child-select" (change)="onChildChange($event)">
+                @for (child of children(); track child.id) {
+                  <option [value]="child.id" [selected]="child.id === selectedChildId()">
+                    {{ child.lastName ? child.firstName + ' ' + child.lastName : child.firstName }}
+                  </option>
+                }
+              </select>
+            </div>
           </div>
-          @if (activeTab() === 'reports' && pagination(); as meta) {
-            @if (meta.totalPages > 1) {
-              <ac-ui-pagination
-                [page]="meta.page"
-                [totalPages]="meta.totalPages"
-                [total]="meta.total"
-                [perPage]="meta.limit"
-                [itemNoun]="currentLang() === 'km' ? 'របាយការណ៍' : 'reports'"
-                [label]="currentLang() === 'km' ? 'ទំព័ររបាយការណ៍' : 'Report pages'"
-                (pageChange)="goToReportPage($event)"
-              />
-            }
-          }
         </header>
+
+        @if (activeTab() === 'reports' && pagination(); as meta) {
+          @if (meta.totalPages > 1) {
+            <ac-ui-pagination
+              [page]="meta.page"
+              [totalPages]="meta.totalPages"
+              [total]="meta.total"
+              [perPage]="meta.limit"
+              [itemNoun]="currentLang() === 'km' ? 'របាយការណ៍' : 'reports'"
+              [label]="currentLang() === 'km' ? 'ទំព័ររបាយការណ៍' : 'Report pages'"
+              (pageChange)="goToReportPage($event)"
+            />
+          }
+        }
 
         <!-- Printable Clinical Header (Visible only when printed) -->
         <header class="print-header" aria-hidden="true">
@@ -283,7 +290,7 @@ const METRIC_DEFS: MetricDef[] = [
             [class.active]="activeTab() === 'trajectory'"
             (click)="setTab('trajectory')"
           >
-            <span class="tab-icon" aria-hidden="true">📈</span>
+            <span class="tab-icon" aria-hidden="true"><ac-nav-icon name="trend" /></span>
             <span>
               @if (currentLang() === 'km') {
                 គន្លងនៃការលូតលាស់
@@ -301,7 +308,7 @@ const METRIC_DEFS: MetricDef[] = [
             [class.active]="activeTab() === 'reports'"
             (click)="setTab('reports')"
           >
-            <span class="tab-icon" aria-hidden="true">📋</span>
+            <span class="tab-icon" aria-hidden="true"><ac-nav-icon name="school" /></span>
             <span>
               @if (currentLang() === 'km') {
                 របាយការណ៍សង្កេតពីសាលា
@@ -319,7 +326,7 @@ const METRIC_DEFS: MetricDef[] = [
             [class.active]="activeTab() === 'milestones'"
             (click)="setTab('milestones')"
           >
-            <span class="tab-icon" aria-hidden="true">⭐</span>
+            <span class="tab-icon" aria-hidden="true"><ac-nav-icon name="star" /></span>
             <span>
               @if (currentLang() === 'km') {
                 សមិទ្ធផលនៅផ្ទះ
@@ -411,7 +418,9 @@ const METRIC_DEFS: MetricDef[] = [
             <div class="milestones-metrics-grid">
               <div class="metric-card">
                 <div class="metric-card-header">
-                  <span class="metric-card-icon" aria-hidden="true">✓</span>
+                  <span class="metric-card-icon" aria-hidden="true"
+                    ><ac-nav-icon name="check"
+                  /></span>
                   <span class="metric-card-label">
                     @if (currentLang() === 'km') {
                       សរុបបានបញ្ចប់
@@ -431,7 +440,9 @@ const METRIC_DEFS: MetricDef[] = [
               </div>
               <div class="metric-card">
                 <div class="metric-card-header">
-                  <span class="metric-card-icon" aria-hidden="true">🧩</span>
+                  <span class="metric-card-icon" aria-hidden="true"
+                    ><ac-nav-icon name="activity"
+                  /></span>
                   <span class="metric-card-label">
                     @if (currentLang() === 'km') {
                       ដែនសកម្មភាពសកម្ម
@@ -451,7 +462,9 @@ const METRIC_DEFS: MetricDef[] = [
               </div>
               <div class="metric-card">
                 <div class="metric-card-header">
-                  <span class="metric-card-icon" aria-hidden="true">📅</span>
+                  <span class="metric-card-icon" aria-hidden="true"
+                    ><ac-nav-icon name="calendar"
+                  /></span>
                   <span class="metric-card-label">
                     @if (currentLang() === 'km') {
                       សកម្មភាពចុងក្រោយ
@@ -476,7 +489,7 @@ const METRIC_DEFS: MetricDef[] = [
             <!-- Filter Toolbar -->
             <div class="milestone-filter-toolbar">
               <div class="search-input-wrapper">
-                <span class="search-icon" aria-hidden="true">🔍</span>
+                <span class="search-icon" aria-hidden="true"><ac-nav-icon name="search" /></span>
                 <input
                   type="text"
                   class="search-input"
@@ -498,7 +511,7 @@ const METRIC_DEFS: MetricDef[] = [
                     (click)="clearMilestoneSearch()"
                     [attr.aria-label]="currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear search'"
                   >
-                    ✕
+                    <ac-nav-icon name="close" />
                   </button>
                 }
               </div>
@@ -850,7 +863,7 @@ const METRIC_DEFS: MetricDef[] = [
               <section class="trajectory-section domain-counters-section">
                 <div class="section-header-row">
                   <div class="section-title-group">
-                    <span class="card-icon" aria-hidden="true">⭐</span>
+                    <span class="card-icon" aria-hidden="true"><ac-nav-icon name="star" /></span>
                     <h2>
                       @if (currentLang() === 'km') {
                         សមិទ្ធផលសកម្មភាពនៅផ្ទះតាមដែន
@@ -875,7 +888,7 @@ const METRIC_DEFS: MetricDef[] = [
                 <div class="domain-milestones-grid">
                   <div class="domain-counter-card" data-domain="Sensory">
                     <div class="domain-counter-top">
-                      <span class="domain-icon" aria-hidden="true">✨</span>
+                      <span class="domain-icon" aria-hidden="true"><ac-nav-icon name="ai" /></span>
                       <span class="domain-label">
                         @if (currentLang() === 'km') {
                           ញាណដឹង
@@ -895,7 +908,9 @@ const METRIC_DEFS: MetricDef[] = [
                   </div>
                   <div class="domain-counter-card" data-domain="Motor">
                     <div class="domain-counter-top">
-                      <span class="domain-icon" aria-hidden="true">🏃</span>
+                      <span class="domain-icon" aria-hidden="true"
+                        ><ac-nav-icon name="motor"
+                      /></span>
                       <span class="domain-label">
                         @if (currentLang() === 'km') {
                           ចលករ
@@ -915,7 +930,9 @@ const METRIC_DEFS: MetricDef[] = [
                   </div>
                   <div class="domain-counter-card" data-domain="Social">
                     <div class="domain-counter-top">
-                      <span class="domain-icon" aria-hidden="true">🤝</span>
+                      <span class="domain-icon" aria-hidden="true"
+                        ><ac-nav-icon name="family"
+                      /></span>
                       <span class="domain-label">
                         @if (currentLang() === 'km') {
                           ទំនាក់ទំនងសង្គម
@@ -935,7 +952,9 @@ const METRIC_DEFS: MetricDef[] = [
                   </div>
                   <div class="domain-counter-card" data-domain="Communication">
                     <div class="domain-counter-top">
-                      <span class="domain-icon" aria-hidden="true">💬</span>
+                      <span class="domain-icon" aria-hidden="true"
+                        ><ac-nav-icon name="chat"
+                      /></span>
                       <span class="domain-label">
                         @if (currentLang() === 'km') {
                           ការប្រាស្រ័យទាក់ទង
@@ -961,7 +980,7 @@ const METRIC_DEFS: MetricDef[] = [
                 <section class="trajectory-section visualizer-section">
                   <div class="section-header-row">
                     <div class="section-title-group">
-                      <span class="card-icon" aria-hidden="true">📈</span>
+                      <span class="card-icon" aria-hidden="true"><ac-nav-icon name="trend" /></span>
                       <h2>
                         @if (currentLang() === 'km') {
                           គំនូសតាងបង្ហាញគន្លងហានិភ័យតាមពេលវេលា
@@ -1141,7 +1160,9 @@ const METRIC_DEFS: MetricDef[] = [
               <section class="trajectory-section">
                 <div class="section-header-row">
                   <div class="section-title-group">
-                    <span class="card-icon" aria-hidden="true">🩺</span>
+                    <span class="card-icon" aria-hidden="true"
+                      ><ac-nav-icon name="stethoscope"
+                    /></span>
                     <h2>
                       @if (currentLang() === 'km') {
                         ប្រវត្តិវាយតម្លៃ និងការវិនិច្ឆ័យ
@@ -1476,7 +1497,7 @@ const METRIC_DEFS: MetricDef[] = [
                 <div class="report-main">
                   <section class="report-card">
                     <div class="card-header">
-                      <span class="card-icon" aria-hidden="true">✎</span>
+                      <span class="card-icon" aria-hidden="true"><ac-nav-icon name="pen" /></span>
                       <h2>
                         @if (currentLang() === 'km') {
                           ការសង្កេតរបស់គ្រូ
@@ -1503,7 +1524,9 @@ const METRIC_DEFS: MetricDef[] = [
                   <!-- Teacher Accommodation Tags Card -->
                   <section class="report-card accommodation-card">
                     <div class="card-header">
-                      <span class="card-icon" aria-hidden="true">🛡️</span>
+                      <span class="card-icon" aria-hidden="true"
+                        ><ac-nav-icon name="shield"
+                      /></span>
                       <h2>
                         @if (currentLang() === 'km') {
                           ការសម្រួល និងការសម្របសម្រួលក្នុងថ្នាក់រៀន
@@ -1522,7 +1545,9 @@ const METRIC_DEFS: MetricDef[] = [
                     <div class="accommodation-tags-list">
                       @for (tag of getAccommodationTags(r); track tag) {
                         <span class="accommodation-tag">
-                          <span class="tag-icon" aria-hidden="true">✓</span>
+                          <span class="tag-icon" aria-hidden="true"
+                            ><ac-nav-icon name="check"
+                          /></span>
                           <span>{{ tag }}</span>
                         </span>
                       }
@@ -1737,84 +1762,140 @@ const METRIC_DEFS: MetricDef[] = [
     `
       .page-layout {
         display: flex;
-        min-height: 100vh;
-        background: var(--ac-color-surface-slate);
       }
 
       .main-content {
         flex: 1;
-        max-width: 1440px;
-        margin: 0 auto;
-        padding: 24px 32px 56px;
-        overflow-y: auto;
+        min-width: 0;
+        padding-bottom: 48px;
       }
 
-      .topbar {
+      /* ---- Page header ---- */
+      .page-head {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-        gap: 20px;
+        align-items: flex-end;
+        gap: 16px 24px;
         flex-wrap: wrap;
+        margin-bottom: 24px;
       }
 
-      .child-switcher {
+      .page-head-text {
+        min-width: 0;
+        flex: 1 1 360px;
+      }
+
+      .page-head h1 {
+        margin: 0 0 6px;
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-title);
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
+      }
+
+      .page-subtitle {
+        margin: 0;
+        max-width: 62ch;
+        font-size: var(--ac-type-page-subtitle);
+        line-height: var(--ac-line-body);
+        color: var(--ac-color-text-muted);
+      }
+
+      .page-head-actions {
         display: flex;
         align-items: center;
         gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      /* One pill: avatar, label and the native select (kept for accessibility). */
+      .child-picker {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        height: 44px;
+        padding: 0 12px 0 6px;
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 999px;
+        background: var(--ac-color-surface);
+        box-shadow: var(--ac-shadow-xs);
+        transition:
+          border-color var(--ac-motion-fast, 150ms),
+          box-shadow var(--ac-motion-fast, 150ms);
+      }
+
+      .child-picker:hover,
+      .child-picker:focus-within {
+        border-color: var(--ac-color-action-alt);
+        box-shadow: var(--ac-shadow-sm);
+      }
+
+      .child-picker-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--ac-color-primary);
+        color: var(--ac-color-ink-f);
+        font-size: 14px;
+        font-weight: 800;
       }
 
       .child-switcher-label {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--ac-color-slate-600);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ac-color-text-muted);
       }
 
       .child-select {
-        padding: 9px 14px;
+        height: 40px;
+        padding: 0 28px 0 12px;
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: var(--ac-radius-md, 12px);
+        border-radius: 10px;
+        font: inherit;
         font-size: 14px;
-        font-weight: 600;
-        background: white;
-        color: var(--ac-color-slate-800);
-        outline: none;
+        font-weight: 700;
+        color: var(--ac-color-text-strong);
+        background:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+            no-repeat right 8px center / 16px,
+          var(--ac-color-surface);
+        appearance: none;
         cursor: pointer;
-        transition: border-color var(--ac-motion-fast, 150ms);
+        outline: none;
       }
 
-      .child-select:focus {
-        border-color: var(--ac-color-action-alt);
+      .child-picker .child-select {
+        height: auto;
+        padding: 6px 22px 6px 0;
+        border: 0;
+        background-position: right 0 center;
       }
 
-      .topbar-actions {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .back-link {
-        color: var(--ac-color-action-alt);
-        font-size: 14px;
-        font-weight: 600;
-        text-decoration: none;
-      }
-
-      .back-link:hover {
-        text-decoration: underline;
+      .child-select:focus-visible {
+        outline: 2px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
 
       .report-select {
         max-width: 320px;
       }
 
-      /* Tab Navigation */
+      /* ---- Tabs: a segmented control ---- */
       .progress-tabs {
         display: flex;
-        gap: 8px;
+        gap: 4px;
+        width: fit-content;
+        max-width: 100%;
         margin-bottom: 24px;
-        border-bottom: 2px solid var(--ac-color-border-slate);
-        padding-bottom: 2px;
+        padding: 4px;
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 14px;
+        background: var(--ac-color-surface-slate);
         overflow-x: auto;
       }
 
@@ -1822,41 +1903,60 @@ const METRIC_DEFS: MetricDef[] = [
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 18px;
-        border: none;
+        height: 40px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 10px;
         background: transparent;
-        font-size: 15px;
+        font: inherit;
+        font-size: 14px;
         font-weight: 600;
         color: var(--ac-color-slate-600);
         cursor: pointer;
-        border-bottom: 3px solid transparent;
-        margin-bottom: -4px;
-        transition: all var(--ac-motion-fast, 150ms) ease;
         white-space: nowrap;
+        transition:
+          background var(--ac-motion-fast, 150ms) ease,
+          color var(--ac-motion-fast, 150ms) ease,
+          box-shadow var(--ac-motion-fast, 150ms) ease;
       }
 
       .tab-btn:hover {
-        color: var(--ac-color-action-alt);
+        color: var(--ac-color-text-strong);
+        background: rgb(255 255 255 / 0.6);
       }
 
       .tab-btn.active {
+        background: var(--ac-color-surface);
         color: var(--ac-color-action-alt);
-        border-bottom-color: var(--ac-color-action-alt);
         font-weight: 700;
+        box-shadow:
+          0 1px 2px rgb(16 48 59 / 0.08),
+          0 0 0 1px var(--ac-color-border-slate);
+      }
+
+      .tab-btn:focus-visible {
+        outline: 2px solid var(--ac-color-focus);
+        outline-offset: 1px;
       }
 
       .tab-icon {
-        font-size: 16px;
+        display: inline-grid;
+        place-items: center;
+      }
+
+      .tab-icon ac-nav-icon {
+        width: 18px;
+        height: 18px;
       }
 
       .tab-count {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 20px;
-        height: 20px;
-        padding: 0 6px;
-        border-radius: var(--ac-radius-pill, 999px);
+        min-width: 22px;
+        height: 22px;
+        padding: 0 7px;
+        border-radius: 999px;
         font-size: 12px;
         font-weight: 700;
         background: var(--ac-color-border-slate);
@@ -1880,7 +1980,8 @@ const METRIC_DEFS: MetricDef[] = [
 
       .tab-title-group h2 {
         margin: 0 0 4px;
-        font-size: 20px;
+        font-size: 19px;
+        line-height: 1.3;
         font-weight: 700;
         color: var(--ac-color-text-strong);
       }
@@ -1902,10 +2003,13 @@ const METRIC_DEFS: MetricDef[] = [
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 9px 15px;
-        border-radius: var(--ac-radius-md, 12px);
-        font-size: 13px;
-        font-weight: 600;
+        height: 40px;
+        box-sizing: border-box;
+        padding: 0 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
         border: 1px solid var(--ac-color-border-slate);
         background: white;
         color: var(--ac-color-slate-800);
@@ -1923,11 +2027,14 @@ const METRIC_DEFS: MetricDef[] = [
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 9px 15px;
-        border-radius: var(--ac-radius-md, 12px);
-        font-size: 13px;
-        font-weight: 600;
-        border: 1px solid var(--ac-color-border-grey);
+        height: 40px;
+        box-sizing: border-box;
+        padding: 0 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
+        border: 1px solid var(--ac-color-border-slate);
         background: white;
         color: var(--ac-color-action-alt);
         cursor: pointer;
@@ -1964,10 +2071,10 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .domain-counter-card {
-        padding: 16px;
+        padding: 18px 20px;
         background: white;
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: var(--ac-radius-md, 12px);
+        border-radius: var(--ac-radius-lg, 16px);
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -1987,21 +2094,28 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .domain-icon {
-        font-size: 18px;
+        display: inline-grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: var(--ac-color-tint-blue-light);
+        color: var(--ac-color-action-alt);
       }
 
       .domain-label {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
-        color: var(--ac-color-text-strong);
+        color: var(--ac-color-slate-600);
         text-transform: uppercase;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.05em;
       }
 
       .domain-count-stat {
-        font-size: 1.8rem;
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-action-alt);
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1.1;
+        color: var(--ac-color-slate-800);
       }
 
       .domain-subtext {
@@ -2013,10 +2127,13 @@ const METRIC_DEFS: MetricDef[] = [
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 9px 15px;
-        border-radius: var(--ac-radius-md, 12px);
-        font-size: 13px;
-        font-weight: 600;
+        height: 40px;
+        box-sizing: border-box;
+        padding: 0 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
         background: var(--ac-color-action-alt);
         color: white;
         text-decoration: none;
@@ -2033,10 +2150,13 @@ const METRIC_DEFS: MetricDef[] = [
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 9px 15px;
-        border-radius: var(--ac-radius-md, 12px);
-        font-size: 13px;
-        font-weight: 600;
+        height: 40px;
+        box-sizing: border-box;
+        padding: 0 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
         background: white;
         color: var(--ac-color-action-alt);
         border: 1px solid var(--ac-color-action-alt);
@@ -2065,10 +2185,10 @@ const METRIC_DEFS: MetricDef[] = [
         background: white;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
-        padding: 18px 20px;
+        padding: 20px 22px;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
         box-shadow: var(--ac-shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.04));
       }
 
@@ -2079,29 +2199,33 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .metric-card-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        border-radius: var(--ac-radius-sm, 8px);
-        background: var(--ac-color-tint-green);
-        color: var(--ac-color-status-green);
-        font-size: 13px;
-        font-weight: 700;
+        display: inline-grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--ac-color-tint-blue-light);
+        color: var(--ac-color-action-alt);
+      }
+
+      .metric-card-icon ac-nav-icon,
+      .card-icon ac-nav-icon,
+      .domain-icon ac-nav-icon {
+        width: 18px;
+        height: 18px;
       }
 
       .metric-card-label {
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 12px;
+        font-weight: 700;
         color: var(--ac-color-slate-600);
         text-transform: uppercase;
         letter-spacing: 0.04em;
       }
 
       .metric-card-stat {
-        font-size: 26px;
-        font-weight: 700;
+        font-size: 28px;
+        font-weight: 800;
         color: var(--ac-color-slate-800);
         line-height: 1.1;
       }
@@ -2140,17 +2264,28 @@ const METRIC_DEFS: MetricDef[] = [
         left: 12px;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 13px;
+        display: inline-grid;
         color: var(--ac-color-slate-500);
         pointer-events: none;
       }
 
+      .search-icon ac-nav-icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      .clear-search-btn ac-nav-icon {
+        width: 14px;
+        height: 14px;
+      }
+
       .search-input {
         width: 100%;
-        padding: 8px 32px 8px 34px;
+        height: 40px;
+        padding: 0 34px 0 38px;
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: var(--ac-radius-pill, 999px);
-        font-size: 13px;
+        border-radius: 10px;
+        font-size: 14px;
         outline: none;
         background: var(--ac-color-surface-slate);
         color: var(--ac-color-slate-800);
@@ -2169,7 +2304,8 @@ const METRIC_DEFS: MetricDef[] = [
         transform: translateY(-50%);
         border: none;
         background: transparent;
-        font-size: 11px;
+        display: inline-grid;
+        padding: 4px;
         color: var(--ac-color-slate-500);
         cursor: pointer;
       }
@@ -2391,7 +2527,8 @@ const METRIC_DEFS: MetricDef[] = [
 
       .trajectory-heading h2 {
         margin: 0 0 4px;
-        font-size: 20px;
+        font-size: 19px;
+        line-height: 1.3;
         font-weight: 700;
         color: var(--ac-color-text-strong);
       }
@@ -2412,10 +2549,10 @@ const METRIC_DEFS: MetricDef[] = [
         background: white;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
-        padding: 18px 20px;
+        padding: 20px 22px;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
         box-shadow: var(--ac-shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.04));
       }
 
@@ -2426,16 +2563,16 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .overview-label {
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 12px;
+        font-weight: 700;
         color: var(--ac-color-slate-600);
         text-transform: uppercase;
         letter-spacing: 0.04em;
       }
 
       .overview-stat {
-        font-size: 26px;
-        font-weight: 700;
+        font-size: 28px;
+        font-weight: 800;
         color: var(--ac-color-slate-800);
         line-height: 1.1;
       }
@@ -2455,7 +2592,7 @@ const METRIC_DEFS: MetricDef[] = [
         background: white;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
-        padding: 24px;
+        padding: 24px 26px;
         box-shadow: var(--ac-shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.04));
       }
 
@@ -2475,7 +2612,7 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .section-title-group h2 {
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 700;
         color: var(--ac-color-slate-800);
         margin: 0;
@@ -2697,9 +2834,10 @@ const METRIC_DEFS: MetricDef[] = [
 
       .report-header h1 {
         margin: 0;
-        font-size: clamp(22px, 3vw, 28px);
-        font-weight: 700;
-        color: var(--ac-color-slate-800);
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-title);
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
       }
 
       .report-meta {
@@ -2877,8 +3015,13 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .accommodation-tag .tag-icon {
-        font-size: 11px;
+        display: inline-grid;
         color: var(--ac-color-green-600);
+      }
+
+      .accommodation-tag .tag-icon ac-nav-icon {
+        width: 13px;
+        height: 13px;
       }
 
       .report-grid {
@@ -2922,10 +3065,9 @@ const METRIC_DEFS: MetricDef[] = [
         height: 32px;
         align-items: center;
         justify-content: center;
-        border-radius: var(--ac-radius-sm, 8px);
-        background: var(--ac-color-blue-surface-pale, var(--ac-color-tint-blue-mist));
+        border-radius: 9px;
+        background: var(--ac-color-tint-blue-light);
         color: var(--ac-color-action-alt);
-        font-size: 16px;
       }
 
       .card-header h2 {
@@ -3162,7 +3304,7 @@ const METRIC_DEFS: MetricDef[] = [
 
       @media (max-width: 768px) {
         .main-content {
-          padding: 16px 16px 48px;
+          padding-bottom: 48px;
         }
 
         .milestones-metrics-grid,
@@ -3170,14 +3312,21 @@ const METRIC_DEFS: MetricDef[] = [
           grid-template-columns: 1fr;
         }
 
-        .topbar {
-          flex-direction: column;
+        .page-head {
           align-items: stretch;
-          gap: 12px;
         }
 
-        .topbar-actions {
-          justify-content: space-between;
+        .page-head-actions,
+        .child-picker {
+          width: 100%;
+        }
+
+        .child-picker .child-select {
+          flex: 1;
+        }
+
+        .progress-tabs {
+          width: 100%;
         }
 
         .activity-moments {
@@ -3195,7 +3344,7 @@ const METRIC_DEFS: MetricDef[] = [
         .progress-tabs,
         .trajectory-toolbar,
         .tab-actions-group,
-        .topbar-actions,
+        .page-head-actions,
         .btn-primary-compact,
         .btn-secondary-compact,
         .milestone-filter-toolbar,
@@ -3203,7 +3352,6 @@ const METRIC_DEFS: MetricDef[] = [
         .view-link,
         .empty-state-actions,
         .action-buttons,
-        .back-link,
         nav,
         button {
           display: none !important;
