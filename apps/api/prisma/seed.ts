@@ -435,13 +435,194 @@ async function main() {
     },
   ];
 
+  // The SHORT form a parent meets straight after login. Ten threshold questions
+  // per band — the minimum needed to say something useful without asking an
+  // anxious parent to commit to 46 items. Same categories, same polarity rules
+  // and the same scoring engine as the long form, so the two stay comparable.
+  const shortAssessmentQuestions: {
+    questionText: string;
+    category: string;
+    ageBand: 'TODDLER' | 'PRESCHOOL';
+    polarity: 'DIRECT' | 'REVERSE';
+    displayOrder: number;
+    formKind: 'SHORT';
+  }[] = [
+    // ===== TODDLER BAND (10) =====
+    {
+      questionText: 'When you say their name, does your child look at you?',
+      category: 'Social Interaction',
+      ageBand: 'TODDLER',
+      polarity: 'REVERSE',
+      displayOrder: 1,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child point at things they want you to look at?',
+      category: 'Social Interaction',
+      ageBand: 'TODDLER',
+      polarity: 'REVERSE',
+      displayOrder: 2,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child bring things to show you, like a toy or a picture?',
+      category: 'Social Interaction',
+      ageBand: 'TODDLER',
+      polarity: 'REVERSE',
+      displayOrder: 3,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child smile or show pleasure when you play together?',
+      category: 'Social Interaction',
+      ageBand: 'TODDLER',
+      polarity: 'REVERSE',
+      displayOrder: 4,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child use words, sounds or gestures to tell you what they want?',
+      category: 'Communication',
+      ageBand: 'TODDLER',
+      polarity: 'REVERSE',
+      displayOrder: 5,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child copy things you do, like waving or clapping?',
+      category: 'Play & Imagination',
+      ageBand: 'TODDLER',
+      polarity: 'REVERSE',
+      displayOrder: 6,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child play with toys in the way they are meant to be used?',
+      category: 'Play & Imagination',
+      ageBand: 'TODDLER',
+      polarity: 'REVERSE',
+      displayOrder: 7,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child get very upset when a familiar routine changes?',
+      category: 'Flexibility & Routine',
+      ageBand: 'TODDLER',
+      polarity: 'DIRECT',
+      displayOrder: 8,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child cover their ears, or react strongly to everyday sounds?',
+      category: 'Sensory Processing',
+      ageBand: 'TODDLER',
+      polarity: 'DIRECT',
+      displayOrder: 9,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child rock, spin or flap their hands over and over?',
+      category: 'Behaviour Patterns',
+      ageBand: 'TODDLER',
+      polarity: 'DIRECT',
+      displayOrder: 10,
+      formKind: 'SHORT',
+    },
+
+    // ===== PRESCHOOL BAND (10) =====
+    {
+      questionText: 'Does your child hold a back-and-forth conversation with you?',
+      category: 'Communication',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 1,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child understand simple instructions without being shown?',
+      category: 'Communication',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 2,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child play pretend, for example pretending a box is a car?',
+      category: 'Play & Imagination',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 3,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child join other children in play?',
+      category: 'Social Interaction',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 4,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child share things they are excited about with you?',
+      category: 'Social Interaction',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 5,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child look at you to check how you feel in a new situation?',
+      category: 'Social Interaction',
+      ageBand: 'PRESCHOOL',
+      polarity: 'REVERSE',
+      displayOrder: 6,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child become very distressed when plans change unexpectedly?',
+      category: 'Flexibility & Routine',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 7,
+      formKind: 'SHORT',
+    },
+    {
+      questionText:
+        'Does your child insist that things be done in exactly the same way every time?',
+      category: 'Flexibility & Routine',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 8,
+      formKind: 'SHORT',
+    },
+    {
+      questionText:
+        'Does your child react strongly to textures, lights or sounds that other people ignore?',
+      category: 'Sensory Processing',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 9,
+      formKind: 'SHORT',
+    },
+    {
+      questionText: 'Does your child repeat the same phrase or action many times in a row?',
+      category: 'Behaviour Patterns',
+      ageBand: 'PRESCHOOL',
+      polarity: 'DIRECT',
+      displayOrder: 10,
+      formKind: 'SHORT',
+    },
+  ];
+
   // Idempotent "replace": retire any previously seeded questions, delete the ones
   // that are safe to remove (no answers reference them — avoids the RESTRICT FK),
   // then insert the current active set. Answered legacy questions are kept but
   // deactivated so historical sessions remain auditable.
   await prisma.screeningQuestion.updateMany({ data: { isActive: false } });
   await prisma.screeningQuestion.deleteMany({ where: { answers: { none: {} } } });
-  await prisma.screeningQuestion.createMany({ data: screeningQuestions });
+  await prisma.screeningQuestion.createMany({
+    data: [...screeningQuestions, ...shortAssessmentQuestions],
+  });
 
   const cambodianSchools = [
     {

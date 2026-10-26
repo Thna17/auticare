@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider          = "mysql"
   url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
@@ -83,32 +83,70 @@ enum ActivityReportStatus {
   SUBMITTED
 }
 
+// Which question set a screening belongs to. FULL is the long instrument that
+// already exists (46 items per age band). SHORT is the handful of threshold
+// questions a parent meets straight after login, before the app opens. Both are
+// scored by the same engine, so their results stay comparable.
+enum ScreeningFormKind {
+  FULL
+  SHORT
+}
+
+// What a parent recorded happening. Deliberately plain and observable — these
+// are things a caregiver can see, not clinical constructs.
+enum ObservationCategory {
+  CRYING
+  SLEEP
+  EATING
+  SENSORY
+  SOCIAL
+  ROUTINE
+  OTHER
+}
+
+enum AiMessageRole {
+  USER
+  ASSISTANT
+}
+
+// What kind of turn this was. CRISIS and MEDICATION are refusals produced by the
+// safety layer without calling a model at all, so a reviewer can tell an
+// AI-written answer from a fixed one. Stored rather than recomputed because the
+// classification is a fact about the moment the parent asked.
+enum AiMessageKind {
+  ANSWER
+  CRISIS
+  MEDICATION
+}
+
 model Parent {
-  id                  String               @id @default(cuid())
-  email               String               @unique
-  passwordHash        String
-  firstName           String
-  lastName            String
-  phoneNumber         String?
-  socialMediaAccount  String?
-  role                UserRole             @default(PARENT)
-  mustResetPassword   Boolean              @default(false)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  preference          ParentPreference?
-  refreshTokens       RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
-  invitations         AccountInvitation[]
-  children            Child[]
-  favoriteSchools     FavoriteSchool[]
-  reviews             Review[]
-  admissionRequests   AdmissionRequest[]
-  appointments        Appointment[]
-  notifications       Notification[]
-  schoolStaffProfiles SchoolStaff[]
-  activityReports     ActivityReport[]
-  hospitalStaffProfiles HospitalStaff[]
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  passwordHash            String
+  firstName               String
+  lastName                String
+  phoneNumber             String?
+  socialMediaAccount      String?
+  role                    UserRole                 @default(PARENT)
+  mustResetPassword       Boolean                  @default(false)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  preference              ParentPreference?
+  refreshTokens           RefreshToken[]
+  passwordResetTokens     PasswordResetToken[]
+  invitations             AccountInvitation[]
+  children                Child[]
+  favoriteSchools         FavoriteSchool[]
+  reviews                 Review[]
+  admissionRequests       AdmissionRequest[]
+  appointments            Appointment[]
+  notifications           Notification[]
+  schoolStaffProfiles     SchoolStaff[]
+  activityReports         ActivityReport[]
+  hospitalStaffProfiles   HospitalStaff[]
   reportAttachmentUploads ReportAttachmentUpload[]
+  observations            BehaviorObservation[]
+  aiConversations         AiConversation[]
 
   @@index([email])
 }
@@ -151,24 +189,27 @@ model ParentPreference {
 }
 
 model Child {
-  id               String             @id @default(cuid())
-  parentId         String
-  firstName        String
-  lastName         String?
-  dateOfBirth      DateTime
-  photoUrl         String?
-  address          String?            @db.Text
-  notes            String?            @db.Text
-  archivedAt       DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  parent           Parent             @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  screenings       Screening[]
-  appointments     Appointment[]
-  activityProgress ActivityProgress[]
+  id                String                  @id @default(cuid())
+  parentId          String
+  firstName         String
+  lastName          String?
+  dateOfBirth       DateTime
+  photoUrl          String?
+  address           String?                 @db.Text
+  notes             String?                 @db.Text
+  archivedAt        DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  parent            Parent                  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  screenings        Screening[]
+  appointments      Appointment[]
+  activityProgress  ActivityProgress[]
   schoolEnrollments SchoolChildEnrollment[]
-  activityReports     ActivityReport[]
-  admissionRequests   AdmissionRequest[]
+  activityReports   ActivityReport[]
+  admissionRequests AdmissionRequest[]
+  observations      BehaviorObservation[]
+  aiConversations   AiConversation[]
+  aiInsights        AiInsight[]
 
   @@index([parentId, archivedAt])
 }
@@ -183,12 +224,16 @@ model ScreeningQuestion {
   displayOrder Int
   polarity     QuestionPolarity  @default(REVERSE)
   ageBand      AgeBand           @default(TODDLER)
+  // FULL = the long instrument. SHORT = the threshold questions used by the
+  // post-login assessment. A session is served only one kind.
+  formKind     ScreeningFormKind @default(FULL)
   isActive     Boolean           @default(true)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   answers      ScreeningAnswer[]
 
   @@index([isActive, displayOrder])
+  @@index([ageBand, formKind, isActive, displayOrder])
 }
 
 model Screening {
@@ -199,6 +244,9 @@ model Screening {
   // later scoring/history stays correct even if the child ages into another band.
   // Nullable for sessions created before age banding existed.
   ageBand     AgeBand?
+  // Frozen at creation so a session is scored against, and resumed with, the
+  // question set it was started with.
+  formKind    ScreeningFormKind @default(FULL)
   startedAt   DateTime          @default(now())
   submittedAt DateTime?
   createdAt   DateTime          @default(now())
@@ -224,19 +272,19 @@ model ScreeningAnswer {
 }
 
 model ScreeningResult {
-  id              String    @id @default(cuid())
-  screeningId     String    @unique
+  id              String                   @id @default(cuid())
+  screeningId     String                   @unique
   score           Int
   // Normalized 0-100 risk indicator (polarity-corrected). Nullable so pre-v2
   // results scored by the old raw-sum engine remain valid without a misleading
   // backfilled value.
   riskPercentage  Int?
   riskLevel       RiskLevel
-  recommendation  String    @db.Text
-  disclaimer      String    @db.Text
+  recommendation  String                   @db.Text
+  disclaimer      String                   @db.Text
   analysisVersion String
-  analyzedAt      DateTime  @default(now())
-  screening       Screening @relation(fields: [screeningId], references: [id], onDelete: Cascade)
+  analyzedAt      DateTime                 @default(now())
+  screening       Screening                @relation(fields: [screeningId], references: [id], onDelete: Cascade)
   categoryScores  ScreeningCategoryScore[]
 }
 
@@ -282,71 +330,71 @@ enum SchoolNotificationStatus {
 }
 
 model School {
-  id                    String                   @id @default(cuid())
-  name                  String
-  city                  String
-  address               String
-  description           String?                  @db.Text
+  id                      String                   @id @default(cuid())
+  name                    String
+  city                    String
+  address                 String
+  description             String?                  @db.Text
   // Public contact / media
-  email                 String?
-  website               String?                  @db.Text
-  logoUrl               String?                  @db.Text
-  coverImageUrl         String?                  @db.Text
+  email                   String?
+  website                 String?                  @db.Text
+  logoUrl                 String?                  @db.Text
+  coverImageUrl           String?                  @db.Text
   // Profile detail
-  studentTeacherRatio   String?
-  availabilityStatus    SchoolAvailabilityStatus @default(IMMEDIATE)
-  waitlistEstimate      String?
-  admissionRequirements String?                  @db.Text
-  operatingHours        String?
-  facilities            Json? // string[] of facility names
-  specializations       Json? // string[] of specialization tags
+  studentTeacherRatio     String?
+  availabilityStatus      SchoolAvailabilityStatus @default(IMMEDIATE)
+  waitlistEstimate        String?
+  admissionRequirements   String?                  @db.Text
+  operatingHours          String?
+  facilities              Json? // string[] of facility names
+  specializations         Json? // string[] of specialization tags
   // Admin-controlled trust flag; NOT editable by the school account itself.
-  isVerified            Boolean                  @default(false)
+  isVerified              Boolean                  @default(false)
   // School-side features
-  studentCapacity       Int                      @default(0)
-  status                SchoolStatus             @default(ACTIVE)
-  createdAt             DateTime                 @default(now())
-  updatedAt             DateTime                 @updatedAt
-  favorites             FavoriteSchool[]
-  reviews               Review[]
-  admissionRequests     AdmissionRequest[]
-  staff                 SchoolStaff[]
-  childEnrollments      SchoolChildEnrollment[]
-  activityReports       ActivityReport[]
-  notifications         Notification[]
+  studentCapacity         Int                      @default(0)
+  status                  SchoolStatus             @default(ACTIVE)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  favorites               FavoriteSchool[]
+  reviews                 Review[]
+  admissionRequests       AdmissionRequest[]
+  staff                   SchoolStaff[]
+  childEnrollments        SchoolChildEnrollment[]
+  activityReports         ActivityReport[]
+  notifications           Notification[]
   reportAttachmentUploads ReportAttachmentUpload[]
 
   @@index([city, name])
 }
 
 model SchoolStaff {
-  id                      String                  @id @default(cuid())
-  parentId                String
-  schoolId                String
-  role                    String                  @default("TEACHER")
-  title                   String?
-  createdAt               DateTime                @default(now())
-  parent                  Parent                  @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  school                  School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  assignedEnrollments     SchoolChildEnrollment[]
+  id                  String                  @id @default(cuid())
+  parentId            String
+  schoolId            String
+  role                String                  @default("TEACHER")
+  title               String?
+  createdAt           DateTime                @default(now())
+  parent              Parent                  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school              School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  assignedEnrollments SchoolChildEnrollment[]
 
   @@unique([parentId, schoolId])
   @@index([schoolId])
 }
 
 model SchoolChildEnrollment {
-  id                 String                          @id @default(cuid())
-  schoolId           String
-  childId            String
-  leadSpecialistId   String?                         // Optional: assigned lead specialist staff member
-  status             SchoolChildEnrollmentStatus     @default(PENDING)
-  startDate          DateTime                        @default(now()) @map("started_at")
-  endDate            DateTime?                       @map("ended_at")
-  createdAt          DateTime                        @default(now())
-  updatedAt          DateTime                        @updatedAt
-  school             School                          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  child              Child                           @relation(fields: [childId], references: [id], onDelete: Cascade)
-  leadSpecialist     SchoolStaff?                    @relation(fields: [leadSpecialistId], references: [id], onDelete: SetNull)
+  id               String                      @id @default(cuid())
+  schoolId         String
+  childId          String
+  leadSpecialistId String? // Optional: assigned lead specialist staff member
+  status           SchoolChildEnrollmentStatus @default(PENDING)
+  startDate        DateTime                    @default(now()) @map("started_at")
+  endDate          DateTime?                   @map("ended_at")
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+  school           School                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  child            Child                       @relation(fields: [childId], references: [id], onDelete: Cascade)
+  leadSpecialist   SchoolStaff?                @relation(fields: [leadSpecialistId], references: [id], onDelete: SetNull)
 
   @@unique([schoolId, childId])
   @@index([childId, status])
@@ -396,13 +444,13 @@ model AdmissionRequest {
 }
 
 model Hospital {
-  id           String        @id @default(cuid())
+  id           String          @id @default(cuid())
   name         String
   city         String
   address      String
-  services     String        @db.Text
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  services     String          @db.Text
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
   doctors      Doctor[]
   appointments Appointment[]
   staff        HospitalStaff[]
@@ -500,49 +548,49 @@ model ActivityProgress {
 }
 
 model ActivityReport {
-  id               String                 @id @default(cuid())
-  schoolId         String
-  childId          String
-  reporterId       String
-  activityCategory String
-  title            String
-  summary          String                 @db.Text
-  activityDate     DateTime
-  status           ActivityReportStatus   @default(DRAFT)
-  duration         Int? // minutes
+  id                 String                   @id @default(cuid())
+  schoolId           String
+  childId            String
+  reporterId         String
+  activityCategory   String
+  title              String
+  summary            String                   @db.Text
+  activityDate       DateTime
+  status             ActivityReportStatus     @default(DRAFT)
+  duration           Int? // minutes
   performanceMetrics Json?
-  teacherObservation String?              @db.Text
-  recommendations  String?                @db.Text
-  photoUrls        Json? // string[] of photo URLs
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
-  school           School                 @relation(fields: [schoolId], references: [id])
-  child            Child                  @relation(fields: [childId], references: [id], onDelete: Cascade)
-  reporter         Parent                 @relation(fields: [reporterId], references: [id])
-  attachments      ReportAttachmentUpload[]
+  teacherObservation String?                  @db.Text
+  recommendations    String?                  @db.Text
+  photoUrls          Json? // string[] of photo URLs
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  school             School                   @relation(fields: [schoolId], references: [id])
+  child              Child                    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  reporter           Parent                   @relation(fields: [reporterId], references: [id])
+  attachments        ReportAttachmentUpload[]
 
-  @@map("SchoolActivityReport")
   @@index([childId, activityDate])
   @@index([schoolId, activityDate])
   @@index([childId, status, activityDate])
   @@index([schoolId, status, activityDate])
   @@index([reporterId])
+  @@map("SchoolActivityReport")
 }
 
 model Notification {
-  id             String                   @id @default(cuid())
-  parentId       String
-  schoolId       String?
-  type           NotificationType
-  status         SchoolNotificationStatus @default(UNREAD)
-  title          String
-  body           String
-  enrollmentId   String?
-  reportId       String?
-  appointmentId  String?
-  createdAt      DateTime                 @default(now())
-  parent         Parent                   @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  school         School?                  @relation(fields: [schoolId], references: [id])
+  id            String                   @id @default(cuid())
+  parentId      String
+  schoolId      String?
+  type          NotificationType
+  status        SchoolNotificationStatus @default(UNREAD)
+  title         String
+  body          String
+  enrollmentId  String?
+  reportId      String?
+  appointmentId String?
+  createdAt     DateTime                 @default(now())
+  parent        Parent                   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school        School?                  @relation(fields: [schoolId], references: [id])
 
   @@index([parentId, status])
   @@index([schoolId])
@@ -605,4 +653,136 @@ model ReportAttachmentUpload {
   @@index([schoolId])
   @@index([expiresAt, reportId])
   @@index([reportId])
+}
+
+// ---------------------------------------------------------------------------
+// Caregiver update.
+//
+// Four things live here: what a parent recorded happening day to day, what they
+// asked the assistant and what it answered, what the app noticed across those
+// records, and the reviewed material that guidance may be drawn from.
+//
+// Safety note encoded in the shape of these tables: there is no column anywhere
+// for a diagnosis, a severity verdict or a medication. An observation stores what
+// a caregiver saw, an insight stores a pattern in those observations, and every
+// assistant turn stores the sources it was allowed to use.
+// ---------------------------------------------------------------------------
+
+model BehaviorObservation {
+  id         String              @id @default(cuid())
+  childId    String
+  // Denormalised owner so a parent-scoped query never needs a join, and so
+  // deleting a parent's account removes their records even if a child row were
+  // somehow orphaned.
+  parentId   String
+  category   ObservationCategory
+  // 1 (mild) to 5 (severe) — the parent's own read, not a clinical scale.
+  intensity  Int
+  occurredAt DateTime
+  note       String?             @db.Text
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  child      Child               @relation(fields: [childId], references: [id], onDelete: Cascade)
+  parent     Parent              @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([childId, occurredAt])
+  @@index([parentId, occurredAt])
+  @@index([childId, category, occurredAt])
+}
+
+model AiConversation {
+  id        String      @id @default(cuid())
+  parentId  String
+  // Optional: a parent can ask a general question before choosing a child.
+  childId   String?
+  title     String
+  // BCP-47-ish tag ('en' | 'km'). Answers are generated natively in this
+  // language rather than translated afterwards.
+  language  String      @default("en")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  parent    Parent      @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  child     Child?      @relation(fields: [childId], references: [id], onDelete: SetNull)
+  messages  AiMessage[]
+
+  @@index([parentId, updatedAt])
+  @@index([childId, updatedAt])
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  role           AiMessageRole
+  kind           AiMessageKind  @default(ANSWER)
+  content        String         @db.Text
+  // Provenance for assistant turns: which model produced the answer, how long it
+  // took, and which reviewed sources it was permitted to draw on. Stored so an
+  // answer can be audited later without re-running the model.
+  model          String?
+  latencyMs      Int?
+  tokensIn       Int?
+  tokensOut      Int?
+  sources        Json?
+  createdAt      DateTime       @default(now())
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+// A cached read over a window of observations. Cached because the dashboard must
+// not call a model on every page view, and because a pattern shown to a parent
+// should be the same pattern they saw yesterday until the data changes.
+model AiInsight {
+  id              String   @id @default(cuid())
+  childId         String
+  windowStart     DateTime
+  windowEnd       DateTime
+  summary         String   @db.Text
+  // Structured counts behind the summary, so the UI can render bars without
+  // reparsing prose, and so a reviewer can see the evidence for a claim.
+  patterns        Json
+  analysisVersion String
+  // Null when the summary was produced without a model (deterministic fallback).
+  model           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, windowStart, windowEnd])
+  @@index([childId, windowEnd])
+}
+
+// Reviewed source material. Nothing is generated into these tables: they are
+// populated from files the project owner has approved, with the publisher,
+// licence and link recorded so every suggestion can cite where it came from.
+model KnowledgeDocument {
+  id         String           @id @default(cuid())
+  title      String
+  publisher  String
+  sourceUrl  String           @unique @db.VarChar(512)
+  licence    String
+  language   String           @default("en")
+  version    String
+  // When a human last checked the material against the source. Null means it
+  // has been imported but not reviewed, and therefore cannot be cited.
+  reviewedAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  chunks     KnowledgeChunk[]
+
+  @@index([language, reviewedAt])
+}
+
+model KnowledgeChunk {
+  id           String            @id @default(cuid())
+  documentId   String
+  displayOrder Int
+  heading      String?
+  content      String            @db.Text
+  // Retrieval keywords. Derived from `content` at import time, so it is stored
+  // as a JSON array rather than a table of its own.
+  keywords     Json
+  document     KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, displayOrder])
 }
