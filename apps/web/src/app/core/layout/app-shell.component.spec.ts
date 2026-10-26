@@ -107,16 +107,22 @@ describe('AppShellComponent', () => {
     const kmSectionTitles = Array.from(el.querySelectorAll('.nav-section-title')).map((node) =>
       node.textContent?.trim(),
     );
+    // The parent app is organised by intent after the update: five areas, the
+    // existing screens regrouped underneath them.
     expect(kmSectionTitles).toEqual([
-      'ការថែទាំ និងការអភិវឌ្ឍ',
-      'សៀវភៅបញ្ជី និងការណាត់',
-      'ការគាំទ្រ',
+      'ផ្ទាំងគ្រប់គ្រង',
+      'ជំនួយការ AI',
+      'ឯកសារ',
+      'ព័ត៌មានផ្ទាល់ខ្លួន',
+      'ការកំណត់',
     ]);
 
     const kmNavLinks = Array.from(el.querySelectorAll('.sidebar .nav-link')).map((node) =>
       node.querySelector('.nav-label')?.textContent?.trim(),
     );
     expect(kmNavLinks).toContain('ទំព័រដើម');
+    expect(kmNavLinks).toContain('ការសង្កេត');
+    expect(kmNavLinks).toContain('ជំនួយការ AI');
     expect(kmNavLinks).toContain('កុមាររបស់ខ្ញុំ');
     expect(kmNavLinks).toContain('ការវាយតម្លៃ');
     expect(kmNavLinks).toContain('សកម្មភាពលេង');
@@ -130,10 +136,10 @@ describe('AppShellComponent', () => {
     expect(kmNavLinks).toContain('ការកំណត់គណនី');
 
     const kmPrimaryAction = el.querySelector('.sidebar .role-action');
-    expect(kmPrimaryAction?.textContent?.trim()).toContain('ការវាយតម្លៃថ្មី');
+    expect(kmPrimaryAction?.textContent?.trim()).toContain('សួរ AutiCare');
     expect(
       kmPrimaryAction?.getAttribute('href') ?? kmPrimaryAction?.getAttribute('routerLink'),
-    ).toBe('/screening');
+    ).toBe('/ai');
 
     // Switch to English ('en')
     i18n.toggleLanguage();
@@ -142,12 +148,20 @@ describe('AppShellComponent', () => {
     const enSectionTitles = Array.from(el.querySelectorAll('.nav-section-title')).map((node) =>
       node.textContent?.trim(),
     );
-    expect(enSectionTitles).toEqual(['Care & Development', 'Directory & Visits', 'Support']);
+    expect(enSectionTitles).toEqual([
+      'Dashboard',
+      'AI Assistant',
+      'Documents',
+      'Profile',
+      'Settings',
+    ]);
 
     const enNavLinks = Array.from(el.querySelectorAll('.sidebar .nav-link')).map((node) =>
       node.querySelector('.nav-label')?.textContent?.trim(),
     );
     expect(enNavLinks).toContain('Overview');
+    expect(enNavLinks).toContain('Observations');
+    expect(enNavLinks).toContain('AI Assistant');
     expect(enNavLinks).toContain('My Children');
     expect(enNavLinks).toContain('Screening');
     expect(enNavLinks).toContain('Activities');
@@ -161,7 +175,7 @@ describe('AppShellComponent', () => {
     expect(enNavLinks).toContain('Account Settings');
 
     const enPrimaryAction = el.querySelector('.sidebar .role-action');
-    expect(enPrimaryAction?.textContent?.trim()).toContain('New Screening');
+    expect(enPrimaryAction?.textContent?.trim()).toContain('Ask AutiCare');
   });
 
   it('renders school staff navigation items and appropriate portal title for SCHOOL role in both languages', () => {
@@ -409,7 +423,7 @@ describe('AppShellComponent', () => {
       (node) => node.querySelector('.mobile-label')?.textContent?.trim(),
     );
 
-    expect(kmMobileLinks).toEqual(['ទំព័រដើម', 'ការវាយតម្លៃ', 'សកម្មភាពលេង', 'ការណាត់ជួប']);
+    expect(kmMobileLinks).toEqual(['ទំព័រដើម', 'ជំនួយការ AI', 'ឯកសារ', 'ព័ត៌មានផ្ទាល់ខ្លួន']);
 
     const mobileAction = el.querySelector('.mobile-action') as HTMLAnchorElement;
     expect(mobileAction).toBeTruthy();
@@ -425,7 +439,7 @@ describe('AppShellComponent', () => {
     const enMobileLinks = Array.from(el.querySelectorAll('.mobile-nav a:not(.mobile-action)')).map(
       (node) => node.querySelector('.mobile-label')?.textContent?.trim(),
     );
-    expect(enMobileLinks).toEqual(['Overview', 'Screening', 'Activities', 'Appointments']);
+    expect(enMobileLinks).toEqual(['Overview', 'AI Assistant', 'Documents', 'Profile']);
   });
 
   it('opens and closes mobile navigation drawer via toggle, close button, scrim, and Escape', () => {

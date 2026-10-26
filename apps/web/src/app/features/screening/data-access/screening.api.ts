@@ -4,6 +4,7 @@ import type {
   AgeBand,
   CreateScreeningSessionResponse,
   ScreeningAnswerResponse,
+  ScreeningFormKind,
   ScreeningQuestionResponse,
   ScreeningSessionDetailResponse,
   ScreeningSessionResultResponse,
@@ -17,8 +18,11 @@ export class ScreeningApi {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
 
-  listQuestions(ageBand?: AgeBand) {
-    const params = ageBand ? { ageBand } : undefined;
+  listQuestions(ageBand?: AgeBand, formKind?: ScreeningFormKind) {
+    const params = {
+      ...(ageBand ? { ageBand } : {}),
+      ...(formKind ? { formKind } : {}),
+    };
     return this.http
       .get<{ data: ScreeningQuestionResponse[] }>(`${this.apiBaseUrl}/screening/questions`, {
         params,
@@ -26,11 +30,26 @@ export class ScreeningApi {
       .pipe(map((response) => response.data));
   }
 
-  createSession(childId: string) {
+  createSession(childId: string, formKind?: ScreeningFormKind) {
     return this.http
       .post<{ data: CreateScreeningSessionResponse }>(`${this.apiBaseUrl}/screening/sessions`, {
         childId,
+        ...(formKind ? { formKind } : {}),
       })
+      .pipe(map((response) => response.data));
+  }
+
+  /**
+   * The child's newest completed session of one form kind, or null when they have
+   * not been assessed with it yet. Null is a state, not an error, so the caller
+   * can treat "not answered" and "answered badly" as different things.
+   */
+  getLatest(childId: string, formKind: ScreeningFormKind = 'SHORT') {
+    return this.http
+      .get<{ data: ScreeningSessionResultResponse | null }>(
+        `${this.apiBaseUrl}/screening/children/${childId}/latest`,
+        { params: { formKind } },
+      )
       .pipe(map((response) => response.data));
   }
 

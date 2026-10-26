@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { AppShellComponent } from './core/layout/app-shell.component';
 import { authGuard } from './core/guards/auth.guard';
+import { onboardingGuard } from './core/guards/onboarding.guard';
 import { roleGuard } from './core/guards/role.guard';
 export const routes: Routes = [
   {
@@ -35,14 +36,50 @@ export const routes: Routes = [
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
   {
+    // First run: add a child, answer the short assessment, see the concern band.
+    // Signed-in only, but deliberately outside the shell.
+    path: 'welcome',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/assessment/assessment.routes').then((m) => m.ONBOARDING_ROUTES),
+  },
+  {
     path: '',
     component: AppShellComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, onboardingGuard],
     children: [
       {
         path: 'dashboard',
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
+      },
+      {
+        // The five parent-facing areas. Everything below keeps its existing
+        // route; these are the new top-level doors.
+        path: 'ai',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
+        loadComponent: () => import('./features/ai/ai.page').then((m) => m.AiPage),
+      },
+      {
+        path: 'documents',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
+        loadComponent: () =>
+          import('./features/documents/documents.page').then((m) => m.DocumentsPage),
+      },
+      {
+        path: 'observations',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
+        loadComponent: () =>
+          import('./features/observations/observations.page').then((m) => m.ObservationsPage),
+      },
+      {
+        path: 'profile',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
+        loadComponent: () => import('./features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
         path: 'children',

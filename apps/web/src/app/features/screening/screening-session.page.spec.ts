@@ -21,6 +21,7 @@ describe('ScreeningSessionPage', () => {
       category: 'Social Interaction',
       polarity: 'DIRECT',
       displayOrder: 1,
+      formKind: 'FULL',
     },
     {
       id: 'q_2',
@@ -28,6 +29,7 @@ describe('ScreeningSessionPage', () => {
       category: 'Communication',
       polarity: 'DIRECT',
       displayOrder: 2,
+      formKind: 'FULL',
     },
   ];
 
@@ -36,6 +38,7 @@ describe('ScreeningSessionPage', () => {
     childId: 'child_1',
     status: 'DRAFT',
     ageBand: 'PRESCHOOL',
+    formKind: 'FULL',
     startedAt: '2026-03-01T00:00:00.000Z',
     submittedAt: null,
     answers: [],

@@ -27,6 +27,7 @@ describe('ChildProfilePage', () => {
       childId: 'child_1',
       status: 'ANALYZED',
       ageBand: 'PRESCHOOL',
+      formKind: 'FULL',
       startedAt: '2026-02-01T00:00:00.000Z',
       submittedAt: '2026-02-01T00:15:00.000Z',
       answers: [],

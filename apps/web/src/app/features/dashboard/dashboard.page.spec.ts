@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -12,6 +13,20 @@ import { AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { API_BASE_URL } from '../../core/config/api.config';
 import { DashboardPage } from './dashboard.page';
+import { ParentAnalysisComponent } from './analysis/parent-analysis.component';
+
+/**
+ * The analysis block has its own spec, including its two requests. Stubbing it
+ * here keeps these tests about the dashboard itself rather than about whether
+ * every dashboard test remembered to flush two unrelated endpoints.
+ */
+@Component({
+  selector: 'ac-parent-analysis',
+  standalone: true,
+  template: '',
+  inputs: ['childId'],
+})
+class ParentAnalysisStubComponent {}
 
 describe('DashboardPage', () => {
   let httpTesting: HttpTestingController;
@@ -347,6 +362,11 @@ describe('DashboardPage', () => {
         { provide: API_BASE_URL, useValue: '/api/v1' },
       ],
     });
+    TestBed.overrideComponent(DashboardPage, {
+      remove: { imports: [ParentAnalysisComponent] },
+      add: { imports: [ParentAnalysisStubComponent] },
+    });
+
     httpTesting = TestBed.inject(HttpTestingController);
     authService = TestBed.inject(AuthService);
   });

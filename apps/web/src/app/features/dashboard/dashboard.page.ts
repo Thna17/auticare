@@ -19,6 +19,7 @@ import { ChildrenApi } from '../children/data-access/children.api';
 import { SchoolsApi } from '../schools/data-access/schools.api';
 import { DashboardApi } from './data-access/dashboard.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
+import { ParentAnalysisComponent } from './analysis/parent-analysis.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -94,7 +95,13 @@ const quickActions: readonly QuickAction[] = [
 
 @Component({
   standalone: true,
-  imports: [RouterLink, SchoolTopbarComponent, UiMessageComponent, UiSpinnerComponent],
+  imports: [
+    RouterLink,
+    SchoolTopbarComponent,
+    UiMessageComponent,
+    UiSpinnerComponent,
+    ParentAnalysisComponent,
+  ],
   host: {
     '[class.school-dashboard]': 'isSchoolStaff()',
   },
@@ -477,6 +484,9 @@ const quickActions: readonly QuickAction[] = [
       }
 
       @if (isParent()) {
+        <!-- Analysis: where things stand, and what the recorded days add up to. -->
+        <ac-parent-analysis [childId]="selectedChild()?.id ?? null" />
+
         <!-- Priority Action Alerts Ticker -->
         @if (priorityAlerts().length > 0) {
           <section class="priority-alerts-container" aria-label="Priority action alerts">

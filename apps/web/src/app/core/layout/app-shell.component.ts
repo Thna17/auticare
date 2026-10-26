@@ -1525,6 +1525,25 @@ export type NavSection = {
         box-sizing: border-box;
       }
 
+      /* Assistant: a speech bubble with three dots. */
+      .ai::before {
+        inset: 3px 2px 5px;
+        border: 2px solid currentColor;
+        border-radius: 50% 50% 50% 6px;
+      }
+
+      .ai::after {
+        left: 10px;
+        top: 9px;
+        width: 3px;
+        height: 3px;
+        border-radius: var(--ac-radius-pill);
+        background: currentColor;
+        box-shadow:
+          -5px 0 0 0 currentColor,
+          5px 0 0 0 currentColor;
+      }
+
       .grid::before {
         inset: 3px;
         border: 2px solid currentColor;
@@ -1996,32 +2015,47 @@ export class AppShellComponent {
     }
 
     // Default: PARENT
+    //
+    // Five areas organised by what the parent is trying to do, not by which
+    // feature implements it: look at how things are (Dashboard), ask something
+    // (AI), find what we have (Documents), who we are (Profile), and settings.
+    // The existing screens all keep their routes; they are regrouped, not rebuilt.
     return [
       {
-        title: s.careAndDevelopment,
+        title: s.dashboard,
         items: [
           { label: s.overview, path: '/dashboard', icon: 'grid' },
-          { label: s.myChildren, path: '/children', icon: 'family' },
+          { label: s.observations, path: '/observations', icon: 'report' },
           { label: s.screening, path: '/screening', icon: 'checklist' },
-          { label: s.activities, path: '/activities', icon: 'activity' },
           { label: s.progress, path: '/progress', icon: 'trend' },
         ],
       },
       {
-        title: s.directoryAndVisits,
+        title: s.aiAssistant,
+        items: [{ label: s.aiAssistant, path: '/ai', icon: 'ai' }],
+      },
+      {
+        title: s.documents,
         items: [
-          { label: s.appointments, path: '/appointments', icon: 'calendar' },
           { label: s.schools, path: '/schools', icon: 'school' },
           { label: s.hospitals, path: '/hospitals', icon: 'hospital' },
+          { label: s.activities, path: '/activities', icon: 'activity' },
+          { label: s.appointments, path: '/appointments', icon: 'calendar' },
         ],
       },
       {
-        title: s.support,
+        title: s.profile,
         items: [
+          { label: s.myChildren, path: '/children', icon: 'family' },
           { label: s.notifications, path: '/notifications', icon: 'bell', badge },
-          { label: s.crisisSupport, path: '/crisis', icon: 'help' },
-          { label: s.helpCenter, path: '/support', icon: 'help' },
+        ],
+      },
+      {
+        title: s.settings,
+        items: [
           { label: s.accountSettings, path: '/settings', icon: 'settings' },
+          { label: s.helpCenter, path: '/support', icon: 'help' },
+          { label: s.crisisSupport, path: '/crisis', icon: 'help' },
         ],
       },
     ];
@@ -2055,9 +2089,9 @@ export class AppShellComponent {
     }
     return [
       { label: s.overview, path: '/dashboard', icon: 'grid' },
-      { label: s.screening, path: '/screening', icon: 'checklist' },
-      { label: s.activities, path: '/activities', icon: 'activity' },
-      { label: s.appointments, path: '/appointments', icon: 'calendar' },
+      { label: s.aiAssistant, path: '/ai', icon: 'ai' },
+      { label: s.documents, path: '/documents', icon: 'checklist' },
+      { label: s.profile, path: '/profile', icon: 'person' },
     ];
   });
 
@@ -2086,7 +2120,7 @@ export class AppShellComponent {
     if (this.role() === 'HOSPITAL') {
       return { label: s.manageAppointments, path: '/hospital/appointments' };
     }
-    return { label: s.newScreening, path: '/screening' };
+    return { label: s.askAutiCare, path: '/ai' };
   });
 
   protected readonly accountName = computed(() => {

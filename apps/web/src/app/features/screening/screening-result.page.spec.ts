@@ -16,6 +16,7 @@ describe('ScreeningResultPage', () => {
     childId: 'child_456',
     status: 'ANALYZED',
     ageBand: 'TODDLER',
+    formKind: 'FULL',
     startedAt: '2026-03-01T09:45:00.000Z',
     submittedAt: '2026-03-01T10:00:00.000Z',
     createdAt: '2026-03-01T09:45:00.000Z',

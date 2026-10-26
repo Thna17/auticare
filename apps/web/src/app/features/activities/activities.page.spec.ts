@@ -104,6 +104,7 @@ describe('ActivitiesPage', () => {
       id: 'sess_1',
       childId: 'child_1',
       ageBand: 'TODDLER',
+      formKind: 'FULL',
       status: 'ANALYZED',
       startedAt: '2026-10-01T00:00:00.000Z',
       submittedAt: '2026-10-01T00:00:00.000Z',
