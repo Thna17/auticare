@@ -13,6 +13,12 @@ export type QuestionPolarity = (typeof questionPolarities)[number];
 // 4 years and older => PRESCHOOL (decided from the child's age at session start).
 export const ageBands = ['TODDLER', 'PRESCHOOL'] as const;
 export type AgeBand = (typeof ageBands)[number];
+// Which question set a screening uses. FULL is the long instrument; SHORT is the
+// few threshold questions a parent meets straight after login. Both are scored by
+// the same engine against the same 0-100 normalization, so a short result is
+// directly comparable with a past full one in the same age band.
+export const screeningFormKinds = ['FULL', 'SHORT'] as const;
+export type ScreeningFormKind = (typeof screeningFormKinds)[number];
 export const userRoles = ['PARENT', 'ADMIN', 'SCHOOL', 'HOSPITAL'] as const;
 export type UserRole = (typeof userRoles)[number];
 export const errorCodes = [
@@ -23,6 +29,10 @@ export const errorCodes = [
   'CONFLICT',
   'RATE_LIMITED',
   'INTERNAL_ERROR',
+  // The assistant is switched off because no model provider is configured. The
+  // rest of the app keeps working; this is a deliberate, reported state rather
+  // than a failure a parent should retry.
+  'AI_UNAVAILABLE',
 ] as const;
 export type ErrorCode = (typeof errorCodes)[number];
 export type ApiSuccess<TData, TMeta = Record<string, never>> = {
@@ -929,6 +939,9 @@ export const screeningSessionResponseSchema = z.object({
   // Age band used for this session's question set. Nullable for legacy sessions
   // created before age banding existed.
   ageBand: z.enum(ageBands).nullable(),
+  // Question set frozen at creation. Sessions created before the short form
+  // existed are FULL.
+  formKind: z.enum(screeningFormKinds),
   startedAt: z.string(),
   submittedAt: z.string().nullable(),
   createdAt: z.string(),
@@ -942,6 +955,7 @@ export const screeningQuestionResponseSchema = z.object({
   category: z.string(),
   displayOrder: z.number().int(),
   polarity: z.enum(questionPolarities),
+  formKind: z.enum(screeningFormKinds),
 });
 export type ScreeningQuestionResponse = z.infer<typeof screeningQuestionResponseSchema>;
 
@@ -1004,6 +1018,8 @@ export type ScreeningSessionResultResponse = z.infer<typeof screeningSessionResu
 
 export const createScreeningSessionRequestSchema = z.object({
   childId: z.string().min(1),
+  // Omitted means FULL, which keeps every existing caller working unchanged.
+  formKind: z.enum(screeningFormKinds).optional(),
 });
 export type CreateScreeningSessionRequest = z.infer<typeof createScreeningSessionRequestSchema>;
 
@@ -1424,3 +1440,218 @@ export const adminDashboardResponseSchema = z.object({
   ),
 });
 export type AdminDashboardResponse = z.infer<typeof adminDashboardResponseSchema>;
+
+// ── Behaviour observations ────────────────────────────────────────────────
+//
+// What a parent recorded happening, in their own words. Deliberately plain:
+// these are observable events, not clinical constructs, and nothing here is
+// scored, graded or turned into a diagnosis.
+
+export const observationCategories = [
+  'CRYING',
+  'SLEEP',
+  'EATING',
+  'SENSORY',
+  'SOCIAL',
+  'ROUTINE',
+  'OTHER',
+] as const;
+export type ObservationCategory = (typeof observationCategories)[number];
+
+export const observationResponseSchema = z.object({
+  id: z.string(),
+  childId: z.string(),
+  category: z.enum(observationCategories),
+  /** 1 (mild) to 5 (severe) — the parent's own read, not a clinical scale. */
+  intensity: z.number().int().min(1).max(5),
+  occurredAt: z.string(),
+  note: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type ObservationResponse = z.infer<typeof observationResponseSchema>;
+
+export const createObservationRequestSchema = z.object({
+  childId: z.string().min(1),
+  category: z.enum(observationCategories),
+  intensity: z.number().int().min(1).max(5),
+  occurredAt: z.string().min(1),
+  note: z.string().max(2000).optional(),
+});
+export type CreateObservationRequest = z.infer<typeof createObservationRequestSchema>;
+
+export const updateObservationRequestSchema = z
+  .object({
+    category: z.enum(observationCategories),
+    intensity: z.number().int().min(1).max(5),
+    occurredAt: z.string().min(1),
+    note: z.string().max(2000).nullable(),
+  })
+  .partial()
+  .refine(
+    (value) => Object.keys(value).length > 0,
+    'At least one field must be provided to update an observation.',
+  );
+export type UpdateObservationRequest = z.infer<typeof updateObservationRequestSchema>;
+
+export const listObservationsQuerySchema = z.object({
+  childId: z.string().min(1),
+  category: z.enum(observationCategories).optional(),
+  /** Inclusive ISO date-time bounds, used by the dashboard window. */
+  from: z.string().optional(),
+  to: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+export type ListObservationsQuery = z.infer<typeof listObservationsQuerySchema>;
+
+// ── AI parent assistant ───────────────────────────────────────────────────
+//
+// The assistant answers in the parent's own language, cites the reviewed sources
+// it was allowed to use, and never produces a diagnosis. `kind` distinguishes an
+// answer the model wrote from a fixed safety reply, so the UI can render a
+// crisis card differently from a normal turn.
+
+export const aiLanguages = ['en', 'km'] as const;
+export type AiLanguage = (typeof aiLanguages)[number];
+
+export const aiMessageRoles = ['USER', 'ASSISTANT'] as const;
+export type AiMessageRole = (typeof aiMessageRoles)[number];
+
+export const aiMessageKinds = ['ANSWER', 'CRISIS', 'MEDICATION'] as const;
+export type AiMessageKind = (typeof aiMessageKinds)[number];
+
+export const aiSourceSchema = z.object({
+  title: z.string(),
+  publisher: z.string(),
+  url: z.string(),
+});
+export type AiSource = z.infer<typeof aiSourceSchema>;
+
+export const aiMessageResponseSchema = z.object({
+  id: z.string(),
+  conversationId: z.string(),
+  role: z.enum(aiMessageRoles),
+  kind: z.enum(aiMessageKinds),
+  content: z.string(),
+  /** Null for parent turns, and for fixed safety replies that no model wrote. */
+  model: z.string().nullable(),
+  /** Reviewed sources the answer drew on. Empty when there were none. */
+  sources: z.array(aiSourceSchema),
+  createdAt: z.string(),
+});
+export type AiMessageResponse = z.infer<typeof aiMessageResponseSchema>;
+
+export const aiConversationSummarySchema = z.object({
+  id: z.string(),
+  childId: z.string().nullable(),
+  title: z.string(),
+  language: z.enum(aiLanguages),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  messageCount: z.number().int(),
+});
+export type AiConversationSummary = z.infer<typeof aiConversationSummarySchema>;
+
+export const aiConversationDetailResponseSchema = aiConversationSummarySchema.extend({
+  messages: z.array(aiMessageResponseSchema),
+});
+export type AiConversationDetailResponse = z.infer<typeof aiConversationDetailResponseSchema>;
+
+export const createAiConversationRequestSchema = z.object({
+  childId: z.string().min(1).optional(),
+  language: z.enum(aiLanguages).default('en'),
+});
+export type CreateAiConversationRequest = z.infer<typeof createAiConversationRequestSchema>;
+
+export const sendAiMessageRequestSchema = z.object({
+  content: z.string().min(1).max(2000),
+});
+export type SendAiMessageRequest = z.infer<typeof sendAiMessageRequestSchema>;
+
+export const aiStatusResponseSchema = z.object({
+  /** False until a model provider is configured — the rest of the app still works. */
+  configured: z.boolean(),
+  model: z.string().nullable(),
+  /** Messages this parent may send per day. */
+  dailyLimit: z.number().int(),
+  usedToday: z.number().int(),
+});
+export type AiStatusResponse = z.infer<typeof aiStatusResponseSchema>;
+
+export const sendAiMessageResponseSchema = z.object({
+  userMessage: aiMessageResponseSchema,
+  assistantMessage: aiMessageResponseSchema,
+});
+export type SendAiMessageResponse = z.infer<typeof sendAiMessageResponseSchema>;
+
+// ── Child pattern insights ────────────────────────────────────────────────
+//
+// Counts and clusters over what the parent recorded. The server returns the
+// evidence, not a verdict: `patterns` is what the UI renders, and `summary` is a
+// plain audit string. Nothing here asserts a cause, a diagnosis, or a prognosis.
+
+export const insightTrends = ['INCREASED', 'DECREASED', 'STABLE', 'NEW', 'NONE'] as const;
+export type InsightTrend = (typeof insightTrends)[number];
+
+export const insightTimeBuckets = ['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT'] as const;
+export type InsightTimeBucket = (typeof insightTimeBuckets)[number];
+
+export const observationPatternSchema = z.object({
+  category: z.enum(observationCategories),
+  count: z.number().int(),
+  /** Share of all observations in the window, 0–1. */
+  share: z.number(),
+  averageIntensity: z.number(),
+  trend: z.enum(insightTrends),
+  /** Local-time counts, using the caller's UTC offset. */
+  weekdayCount: z.number().int(),
+  weekendCount: z.number().int(),
+  timeOfDay: z.enum(insightTimeBuckets).nullable(),
+});
+export type ObservationPattern = z.infer<typeof observationPatternSchema>;
+
+export const childInsightSchema = z.object({
+  childId: z.string(),
+  windowStart: z.string(),
+  windowEnd: z.string(),
+  observationCount: z.number().int(),
+  /** Days in the window on which at least one observation was recorded. */
+  distinctDays: z.number().int(),
+  patterns: z.array(observationPatternSchema),
+  /** Plain-language audit summary. The UI composes its own copy from `patterns`. */
+  summary: z.string(),
+  analysisVersion: z.string(),
+  generatedAt: z.string(),
+});
+export type ChildInsightResponse = z.infer<typeof childInsightSchema>;
+
+// ── Reviewed guidance ─────────────────────────────────────────────────────
+//
+// Answers to "what can I do about this?" drawn only from a curated corpus the
+// project owner has reviewed. When nothing in the corpus is relevant the result
+// is an empty list, not a guess — that is the feature's whole premise.
+
+export const guidancePassageSchema = z.object({
+  title: z.string(),
+  publisher: z.string(),
+  sourceUrl: z.string(),
+  heading: z.string().nullable(),
+  /** The part of the source that answers the question. */
+  excerpt: z.string(),
+  /** Higher is more relevant. Exposed so the UI can order deterministically. */
+  relevance: z.number(),
+});
+export type GuidancePassage = z.infer<typeof guidancePassageSchema>;
+
+export const guidanceSearchQuerySchema = z.object({
+  q: z.string().min(1).max(300),
+  language: z.enum(aiLanguages).default('en'),
+});
+export type GuidanceSearchQuery = z.infer<typeof guidanceSearchQuerySchema>;
+
+export const guidanceSearchResponseSchema = z.object({
+  passages: z.array(guidancePassageSchema),
+  /** How many reviewed sources exist for this language at all. */
+  corpusSize: z.number().int(),
+});
+export type GuidanceSearchResponse = z.infer<typeof guidanceSearchResponseSchema>;
