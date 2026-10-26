@@ -1,13 +1,26 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import type { ObservationCategory, ObservationResponse } from '@auticare/contracts';
-import { observationCategories } from '@auticare/contracts';
 import type { ChildResponse } from '@auticare/contracts';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ObservationsApi } from './data-access/observations.api';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
+
+// Kept local rather than imported: a value import from @auticare/contracts pulls
+// zod into the browser bundle, and the web app does not depend on zod. The
+// Record type makes the compiler flag a category added to the contract but not here.
+const CATEGORIES: Record<ObservationCategory, true> = {
+  CRYING: true,
+  SLEEP: true,
+  EATING: true,
+  SENSORY: true,
+  SOCIAL: true,
+  ROUTINE: true,
+  OTHER: true,
+};
+const observationCategories = Object.keys(CATEGORIES) as ObservationCategory[];
 
 const COPY = {
   en: {
@@ -268,8 +281,6 @@ const COPY = {
     `
       :host {
         display: block;
-        max-width: 880px;
-        margin: 0 auto;
       }
 
       .page-head {
