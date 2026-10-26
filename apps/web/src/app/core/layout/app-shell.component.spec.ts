@@ -131,9 +131,9 @@ describe('AppShellComponent', () => {
     expect(kmNavLinks).toContain('សាលារៀន');
     expect(kmNavLinks).toContain('មន្ទីរពេទ្យ');
     expect(kmNavLinks).toContain('ការជូនដំណឹង');
-    expect(kmNavLinks).toContain('ជំនួយបន្ទាន់');
-    expect(kmNavLinks).toContain('មជ្ឈមណ្ឌលជំនួយ');
-    expect(kmNavLinks).toContain('ការកំណត់គណនី');
+    expect(kmNavLinks).toContain('ការកំណត់');
+    expect(kmNavLinks).not.toContain('ជំនួយបន្ទាន់');
+    expect(kmNavLinks).not.toContain('មជ្ឈមណ្ឌលជំនួយ');
 
     const kmPrimaryAction = el.querySelector('.sidebar .role-action');
     expect(kmPrimaryAction?.textContent?.trim()).toContain('សួរ AutiCare');
@@ -170,9 +170,11 @@ describe('AppShellComponent', () => {
     expect(enNavLinks).toContain('Schools');
     expect(enNavLinks).toContain('Hospitals');
     expect(enNavLinks).toContain('Notifications');
-    expect(enNavLinks).toContain('Crisis Support');
-    expect(enNavLinks).toContain('Help Center');
-    expect(enNavLinks).toContain('Account Settings');
+    // Settings is a single entry; Help Center and crisis support live in the
+    // account menu and the sidebar footer instead.
+    expect(enNavLinks).toContain('Settings');
+    expect(enNavLinks).not.toContain('Help Center');
+    expect(enNavLinks).not.toContain('Crisis Support');
 
     const enPrimaryAction = el.querySelector('.sidebar .role-action');
     expect(enPrimaryAction?.textContent?.trim()).toContain('Ask AutiCare');

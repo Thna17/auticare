@@ -13,6 +13,7 @@ import { NotificationsStateService } from '../notifications/notifications-state.
 import { PreferencesService } from '../preferences/preferences.service';
 import { I18nService } from '../i18n/i18n.service';
 import { DICTIONARY } from '../i18n/i18n.dictionary';
+import { NavIconComponent } from './nav-icon.component';
 
 export type NavItem = {
   readonly label: string;
@@ -29,7 +30,7 @@ export type NavSection = {
 @Component({
   selector: 'ac-app-shell',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, NavIconComponent],
   template: `
     <a class="skip" href="#main">{{ shellTexts().skipToContent }}</a>
 
@@ -94,7 +95,7 @@ export type NavSection = {
                   }"
                   [attr.title]="sidebarCollapsed() ? item.label : null"
                 >
-                  <span class="nav-icon" [class]="item.icon" aria-hidden="true"></span>
+                  <ac-nav-icon class="nav-icon" [name]="item.icon" />
                   <span class="nav-label">{{ item.label }}</span>
                   @if (item.badge) {
                     <span class="badge" aria-label="Unread count">{{ item.badge }}</span>
@@ -111,7 +112,7 @@ export type NavSection = {
         [routerLink]="primaryAction().path"
         [attr.title]="sidebarCollapsed() ? primaryAction().label : null"
       >
-        <span class="plus-icon" aria-hidden="true"></span>
+        <ac-nav-icon class="plus-icon" [name]="primaryAction().path === '/ai' ? 'ai' : 'plus'" />
         <span class="action-label">{{ primaryAction().label }}</span>
       </a>
 
@@ -356,7 +357,7 @@ export type NavSection = {
             exact: item.path === '/dashboard' || item.path === '/hospital/dashboard',
           }"
         >
-          <span class="nav-icon" [class]="item.icon" aria-hidden="true"></span>
+          <ac-nav-icon class="nav-icon" [name]="item.icon" />
           <span class="mobile-label">{{ item.label }}</span>
           <span class="active-dot" aria-hidden="true"></span>
         </a>
@@ -368,7 +369,7 @@ export type NavSection = {
         [attr.aria-label]="mobileAction().label"
         [title]="mobileAction().label"
       >
-        <span class="plus-icon" aria-hidden="true"></span>
+        <ac-nav-icon class="plus-icon" name="plus" />
       </a>
 
       @for (item of mobileNav().slice(2); track item.path) {
@@ -379,7 +380,7 @@ export type NavSection = {
             exact: item.path === '/dashboard' || item.path === '/hospital/dashboard',
           }"
         >
-          <span class="nav-icon" [class]="item.icon" aria-hidden="true"></span>
+          <ac-nav-icon class="nav-icon" [name]="item.icon" />
           <span class="mobile-label">{{ item.label }}</span>
           <span class="active-dot" aria-hidden="true"></span>
         </a>
@@ -424,7 +425,7 @@ export type NavSection = {
                     routerLinkActive="active"
                     (click)="closeMobileDrawer()"
                   >
-                    <span class="nav-icon" [class]="item.icon" aria-hidden="true"></span>
+                    <ac-nav-icon class="nav-icon" [name]="item.icon" />
                     <span class="nav-label">{{ item.label }}</span>
                     @if (item.badge) {
                       <span class="badge">{{ item.badge }}</span>
@@ -509,16 +510,23 @@ export type NavSection = {
         position: fixed;
         inset: 0 auto 0 0;
         z-index: 20;
-        width: 284px;
+        width: 264px;
         background: var(--ac-color-blue-tint-ice);
         border-right: 1px solid var(--ac-color-ice-blue-pale);
         display: flex;
         flex-direction: column;
-        padding: 24px 16px 20px;
+        padding: 18px 14px 16px;
         overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
         transition:
           width var(--ac-motion-normal),
           padding var(--ac-motion-normal);
+      }
+
+      /* The scrollbar only appears while the pointer is over the sidebar. */
+      .sidebar:hover {
+        scrollbar-color: var(--ac-color-ice-blue-border) transparent;
       }
 
       .sidebar-header {
@@ -526,16 +534,18 @@ export type NavSection = {
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        margin-bottom: 24px;
-        padding: 0 4px;
+        padding: 2px 6px 16px;
+        margin-bottom: 14px;
+        border-bottom: 1px solid var(--ac-color-ice-blue-frost);
       }
 
       .brand {
         color: var(--ac-color-action-mid);
         text-decoration: none;
-        font-size: 22px;
+        font-size: 19px;
         line-height: 1.1;
-        font-weight: var(--ac-font-weight-semibold);
+        font-weight: var(--ac-font-weight-bold);
+        letter-spacing: -0.01em;
         display: inline-flex;
         align-items: center;
         gap: 10px;
@@ -545,20 +555,20 @@ export type NavSection = {
       .brand-mark {
         width: 32px;
         height: 32px;
-        border-radius: var(--ac-radius-pill);
+        border-radius: 10px;
         flex: 0 0 auto;
         object-fit: cover;
         box-shadow: 0 0 0 1px var(--ac-color-sky-light);
       }
 
       .collapse-btn {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        min-height: 36px;
-        border: 1px solid var(--ac-color-ice-blue-frost);
-        border-radius: var(--ac-radius-sm);
-        background: rgb(255 255 255 / 0.7);
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
         color: var(--ac-color-slate-icon);
         display: grid;
         place-items: center;
@@ -566,14 +576,12 @@ export type NavSection = {
         padding: 0;
         transition:
           background var(--ac-motion-fast),
-          color var(--ac-motion-fast),
-          border-color var(--ac-motion-fast);
+          color var(--ac-motion-fast);
       }
 
       .collapse-btn:hover {
-        background: rgb(255 255 255 / 0.95);
+        background: rgb(255 255 255 / 0.8);
         color: var(--ac-color-action-mid);
-        border-color: var(--ac-color-border-info);
       }
 
       .collapse-btn:focus-visible {
@@ -589,7 +597,12 @@ export type NavSection = {
 
       .sidebar.collapsed {
         width: 76px;
-        padding: 24px 10px 20px;
+        padding: 18px 10px 16px;
+      }
+
+      .sidebar.collapsed .sidebar-header {
+        flex-direction: column;
+        padding: 2px 0 14px;
       }
 
       .sidebar.collapsed .brand-text,
@@ -601,37 +614,52 @@ export type NavSection = {
         display: none;
       }
 
+      /* Collapsed, a section is marked by a short rule instead of its title. */
+      .sidebar.collapsed .nav-section + .nav-section {
+        border-top: 1px solid var(--ac-color-ice-blue-frost);
+        padding-top: 10px;
+      }
+
       .sidebar.collapsed .role-action,
       .sidebar.collapsed .logout-button {
         justify-content: center;
         padding: 0;
       }
 
+      .sidebar.collapsed .role-action {
+        width: 44px;
+        margin: 14px auto 10px;
+      }
+
       .sidebar.collapsed .nav-link {
         justify-content: center;
         padding: 0;
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         margin: 0 auto;
+      }
+
+      .sidebar.collapsed .nav-link.active::before {
+        display: none;
       }
 
       .sidebar-nav {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 14px;
       }
 
       .nav-section {
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 2px;
       }
 
       .nav-section-title {
-        padding: 6px 12px 2px;
+        padding: 4px 12px 6px;
         font-size: 11px;
-        font-weight: var(--ac-font-weight-bold);
-        letter-spacing: 0.06em;
+        font-weight: var(--ac-font-weight-semibold);
+        letter-spacing: 0.08em;
         text-transform: uppercase;
         color: var(--ac-color-text-slate);
         user-select: none;
@@ -641,13 +669,13 @@ export type NavSection = {
       .nav-section-items {
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 2px;
       }
 
       .nav-link {
         position: relative;
-        min-height: 44px;
-        border-radius: var(--ac-radius-md);
+        min-height: 40px;
+        border-radius: 10px;
         background: transparent;
         color: var(--ac-color-ink-dark-slate);
         display: flex;
@@ -655,37 +683,60 @@ export type NavSection = {
         gap: 12px;
         padding: 0 12px;
         text-decoration: none;
-        font-size: var(--ac-type-label);
+        font-size: 14.5px;
         font-weight: var(--ac-font-weight-medium);
         line-height: 1.2;
         transition:
           background var(--ac-motion-fast),
-          color var(--ac-motion-fast),
-          transform var(--ac-motion-fast);
+          color var(--ac-motion-fast);
+      }
+
+      .nav-link .nav-icon {
+        color: var(--ac-color-slate-icon);
+        transition: color var(--ac-motion-fast);
       }
 
       .nav-link:hover {
-        background: rgb(255 255 255 / 0.65);
+        background: rgb(255 255 255 / 0.7);
+        color: var(--ac-color-action-deep);
+      }
+
+      .nav-link:hover .nav-icon {
         color: var(--ac-color-action-mid);
-        transform: translateX(2px);
+      }
+
+      .nav-link:focus-visible {
+        outline: 2px solid var(--ac-color-focus);
+        outline-offset: 1px;
       }
 
       .nav-link.active {
-        background: var(--ac-color-primary);
-        color: var(--ac-color-ink-f);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-deep);
         font-weight: var(--ac-font-weight-semibold);
-        box-shadow: var(--ac-shadow-xs);
+        box-shadow:
+          0 1px 2px rgb(16 48 59 / 0.06),
+          0 0 0 1px var(--ac-color-ice-blue-frost);
+      }
+
+      .nav-link.active .nav-icon {
+        color: var(--ac-color-action-mid);
       }
 
       .nav-link.active::before {
         content: '';
         position: absolute;
         left: 0;
-        top: 8px;
-        bottom: 8px;
-        width: 4px;
-        border-radius: 0 var(--ac-radius-xs) var(--ac-radius-xs) 0;
+        top: 10px;
+        bottom: 10px;
+        width: 3px;
+        border-radius: 0 3px 3px 0;
         background: var(--ac-color-action-mid);
+      }
+
+      /* In the sidebar the marker sits on the panel edge, outside the pill. */
+      .sidebar .nav-link.active::before {
+        left: -14px;
       }
 
       .badge {
@@ -703,65 +754,66 @@ export type NavSection = {
       }
 
       .role-action {
-        min-height: 48px;
-        border-radius: var(--ac-radius-md);
+        min-height: 44px;
+        border-radius: 12px;
         background: var(--ac-color-action);
         color: var(--ac-color-text-on-action);
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 10px;
-        margin: 18px 4px 12px;
+        margin: 18px 0 12px;
         text-decoration: none;
-        font-size: var(--ac-type-label);
+        font-size: 14.5px;
         font-weight: var(--ac-font-weight-semibold);
         box-shadow: var(--ac-shadow-sm);
         transition:
-          transform var(--ac-motion-fast),
+          background var(--ac-motion-fast),
           box-shadow var(--ac-motion-fast);
       }
 
       .role-action:hover {
-        transform: translateY(-1px);
+        background: var(--ac-color-action-deep);
         box-shadow: var(--ac-shadow-hover);
       }
 
-      .role-action:active {
-        transform: scale(0.99);
+      .role-action:focus-visible {
+        outline: 2px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
 
       .sidebar-footer {
         margin-top: auto;
-        padding-top: 14px;
+        padding-top: 12px;
         border-top: 1px solid var(--ac-color-ice-blue-frost);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
       }
 
       .crisis-shortcut {
         width: 100%;
-        min-height: 44px;
-        border: 1px solid var(--ac-color-red-border);
-        border-radius: var(--ac-radius-md);
-        background: var(--ac-color-red-tint-blush);
+        min-height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
         color: var(--ac-color-alert-text);
         display: flex;
         align-items: center;
         gap: 12px;
         padding: 0 12px;
-        margin-bottom: 8px;
         text-decoration: none;
-        font-size: var(--ac-type-label);
+        font-size: 14.5px;
         font-weight: var(--ac-font-weight-semibold);
-        transition:
-          background var(--ac-motion-fast),
-          transform var(--ac-motion-fast);
+        transition: background var(--ac-motion-fast);
       }
 
       .crisis-shortcut:hover {
-        background: var(--ac-color-red-tint-muted);
-        transform: translateY(-1px);
+        background: var(--ac-color-red-tint-blush);
       }
 
       .crisis-icon {
+        width: 20px;
         display: grid;
         place-items: center;
         color: currentColor;
@@ -770,9 +822,9 @@ export type NavSection = {
       .sidebar.collapsed .crisis-shortcut {
         justify-content: center;
         padding: 0;
-        width: 48px;
-        height: 48px;
-        margin: 0 auto 8px;
+        width: 44px;
+        height: 44px;
+        margin: 0 auto;
       }
 
       .sidebar.collapsed .crisis-label {
@@ -781,36 +833,44 @@ export type NavSection = {
 
       .logout-button {
         width: 100%;
-        min-height: 44px;
+        min-height: 40px;
         border: 0;
-        border-radius: var(--ac-radius-md);
+        border-radius: 10px;
         background: transparent;
-        color: var(--ac-color-red-600);
+        color: var(--ac-color-ink-dark-slate);
         display: flex;
         align-items: center;
         gap: 12px;
         padding: 0 12px;
         font: inherit;
-        font-size: var(--ac-type-label);
+        font-size: 14.5px;
         font-weight: var(--ac-font-weight-medium);
         cursor: pointer;
-        transition: background var(--ac-motion-fast);
+        transition:
+          background var(--ac-motion-fast),
+          color var(--ac-motion-fast);
       }
 
       .logout-button:hover {
         background: var(--ac-color-red-50);
+        color: var(--ac-color-red-600);
       }
 
       .logout-icon {
+        width: 20px;
         display: grid;
         place-items: center;
+        color: var(--ac-color-slate-icon);
+      }
+
+      .logout-button:hover .logout-icon {
         color: currentColor;
       }
 
       /* ─── MAIN SHELL & TOPBAR ─── */
       .shell {
         min-height: 100svh;
-        margin-left: 284px;
+        margin-left: 264px;
         display: flex;
         flex-direction: column;
         background: var(--ac-color-tint-blue-faint);
@@ -1227,7 +1287,7 @@ export type NavSection = {
 
       .content-container {
         width: 100%;
-        max-width: 1440px;
+        max-width: 1200px;
         margin: 0 auto;
       }
 
@@ -1506,302 +1566,10 @@ export type NavSection = {
         gap: 8px;
       }
 
-      /* ─── NAV ICONS (PURE CSS TOKENS) ─── */
-      .nav-icon,
+      /* ─── NAV ICONS: drawn by ac-nav-icon; size is set here per surface. ─── */
       .plus-icon {
-        position: relative;
-        width: 22px;
-        height: 22px;
-        flex: 0 0 auto;
-        color: currentColor;
-      }
-
-      .nav-icon::before,
-      .nav-icon::after,
-      .plus-icon::before,
-      .plus-icon::after {
-        content: '';
-        position: absolute;
-        box-sizing: border-box;
-      }
-
-      /* Assistant: a speech bubble with three dots. */
-      .ai::before {
-        inset: 3px 2px 5px;
-        border: 2px solid currentColor;
-        border-radius: 50% 50% 50% 6px;
-      }
-
-      .ai::after {
-        left: 10px;
-        top: 9px;
-        width: 3px;
-        height: 3px;
-        border-radius: var(--ac-radius-pill);
-        background: currentColor;
-        box-shadow:
-          -5px 0 0 0 currentColor,
-          5px 0 0 0 currentColor;
-      }
-
-      .grid::before {
-        inset: 3px;
-        border: 2px solid currentColor;
-        box-shadow:
-          9px 0 0 -2px currentColor,
-          0 9px 0 -2px currentColor,
-          9px 9px 0 -2px currentColor;
-      }
-
-      .family::before {
-        left: 3px;
-        top: 5px;
-        width: 7px;
-        height: 7px;
-        border: 2px solid currentColor;
-        border-radius: var(--ac-radius-pill);
-        box-shadow: 11px 0 0 -1px currentColor;
-      }
-
-      .family::after {
-        left: 1px;
-        bottom: 3px;
-        width: 22px;
-        height: 10px;
-        border: 2px solid currentColor;
-        border-radius: 10px 10px 3px 3px;
-      }
-
-      .children::before {
-        left: 3px;
-        top: 4px;
-        width: 6px;
-        height: 6px;
-        border: 2px solid currentColor;
-        border-radius: var(--ac-radius-pill);
-        box-shadow:
-          10px 0 0 -1px currentColor,
-          5px 8px 0 -1px currentColor;
-      }
-
-      .children::after {
-        left: 1px;
-        bottom: 2px;
-        width: 20px;
-        height: 8px;
-        border: 2px solid currentColor;
-        border-radius: 10px 10px 3px 3px;
-      }
-
-      .checklist::before {
-        inset: 3px;
-        border: 2px solid currentColor;
-        border-radius: var(--ac-radius-xs);
-      }
-
-      .checklist::after {
-        left: 8px;
-        top: 8px;
-        width: 10px;
-        height: 7px;
-        border-left: 2px solid currentColor;
-        border-bottom: 2px solid currentColor;
-        transform: rotate(-45deg);
-      }
-
-      .activity::before {
-        left: 9px;
-        top: 2px;
-        width: 6px;
-        height: 18px;
-        background: currentColor;
-        border-radius: var(--ac-radius-xs);
-      }
-
-      .activity::after {
-        left: 2px;
-        top: 8px;
-        width: 18px;
-        height: 6px;
-        background: currentColor;
-        border-radius: var(--ac-radius-xs);
-      }
-
-      .trend::before {
-        left: 3px;
-        top: 13px;
-        width: 18px;
-        height: 8px;
-        border-left: 2px solid currentColor;
-        border-top: 2px solid currentColor;
-        transform: skew(-35deg);
-      }
-
-      .trend::after {
-        right: 2px;
-        top: 5px;
-        width: 7px;
-        height: 7px;
-        border-top: 2px solid currentColor;
-        border-right: 2px solid currentColor;
-      }
-
-      .calendar::before {
-        inset: 4px 3px 3px;
-        border: 2px solid currentColor;
-        border-radius: var(--ac-radius-xs);
-      }
-
-      .calendar::after {
-        left: 6px;
-        right: 6px;
-        top: 9px;
-        height: 2px;
-        background: currentColor;
-      }
-
-      .school::before {
-        left: 2px;
-        top: 6px;
-        width: 20px;
-        height: 12px;
-        border: 2px solid currentColor;
-        transform: rotate(45deg) skew(-10deg, -10deg);
-      }
-
-      .school::after {
-        left: 8px;
-        bottom: 2px;
-        width: 9px;
-        height: 9px;
-        border: 2px solid currentColor;
-        border-top: 0;
-      }
-
-      .hospital::before {
-        inset: 3px;
-        border: 2px solid currentColor;
-        border-radius: var(--ac-radius-xs);
-      }
-
-      .hospital::after {
-        left: 11px;
-        top: 7px;
-        width: 2px;
-        height: 10px;
-        background: currentColor;
-        box-shadow: -4px 4px 0 0 currentColor;
-        transform: rotate(90deg);
-      }
-
-      .bell::before {
-        left: 5px;
-        top: 4px;
-        width: 12px;
-        height: 13px;
-        border: 2px solid currentColor;
-        border-radius: 9px 9px 4px 4px;
-      }
-
-      .bell::after {
-        left: 9px;
-        bottom: 1px;
-        width: 5px;
-        height: 5px;
-        border-radius: var(--ac-radius-pill);
-        background: currentColor;
-      }
-
-      .report::before {
-        left: 3px;
-        bottom: 3px;
         width: 18px;
         height: 18px;
-        border-radius: var(--ac-radius-pill);
-        border: 2px solid currentColor;
-        clip-path: polygon(50% 50%, 100% 50%, 100% 100%, 50% 100%);
-      }
-
-      .report::after {
-        left: 11px;
-        top: 2px;
-        width: 2px;
-        height: 20px;
-        background: currentColor;
-      }
-
-      .person::before {
-        left: 8px;
-        top: 4px;
-        width: 8px;
-        height: 8px;
-        border: 2px solid currentColor;
-        border-radius: var(--ac-radius-pill);
-      }
-
-      .person::after {
-        left: 4px;
-        bottom: 3px;
-        width: 16px;
-        height: 9px;
-        border: 2px solid currentColor;
-        border-radius: 12px 12px 4px 4px;
-      }
-
-      .settings::before {
-        inset: 5px;
-        border: 2px solid currentColor;
-        border-radius: var(--ac-radius-pill);
-        box-shadow:
-          0 -5px 0 -3px currentColor,
-          0 5px 0 -3px currentColor,
-          5px 0 0 -3px currentColor,
-          -5px 0 0 -3px currentColor,
-          4px 4px 0 -3px currentColor,
-          -4px 4px 0 -3px currentColor,
-          4px -4px 0 -3px currentColor,
-          -4px -4px 0 -3px currentColor;
-      }
-
-      .settings::after {
-        left: 9px;
-        top: 9px;
-        width: 4px;
-        height: 4px;
-        background: currentColor;
-        border-radius: var(--ac-radius-pill);
-      }
-
-      .help::before {
-        inset: 3px;
-        border-radius: var(--ac-radius-pill);
-        background: currentColor;
-      }
-
-      .help::after {
-        content: '?';
-        inset: 0;
-        color: var(--ac-color-blue-tint-ice);
-        display: grid;
-        place-items: center;
-        font-size: var(--ac-type-label);
-        font-weight: var(--ac-font-weight-bold);
-      }
-
-      .plus-icon::before {
-        left: 10px;
-        top: 4px;
-        width: 2px;
-        height: 14px;
-        background: currentColor;
-      }
-
-      .plus-icon::after {
-        left: 4px;
-        top: 10px;
-        width: 14px;
-        height: 2px;
-        background: currentColor;
       }
     `,
   ],
@@ -2051,12 +1819,11 @@ export class AppShellComponent {
         ],
       },
       {
+        // One door, so a new parent is not faced with a menu here. Help Center
+        // stays in the account menu, and crisis support keeps its always-visible
+        // shortcut in the sidebar footer as well as the account menu.
         title: s.settings,
-        items: [
-          { label: s.accountSettings, path: '/settings', icon: 'settings' },
-          { label: s.helpCenter, path: '/support', icon: 'help' },
-          { label: s.crisisSupport, path: '/crisis', icon: 'help' },
-        ],
+        items: [{ label: s.settings, path: '/settings', icon: 'settings' }],
       },
     ];
   });
