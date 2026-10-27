@@ -155,13 +155,20 @@ describe('LandingPage', () => {
     expect(heroPrimary?.getAttribute('href')).toBe('/hospital/dashboard');
   });
 
-  it('keeps a short page: five sections, and the menu only links to sections that exist', () => {
+  it('keeps a short page, and the menu only links to sections that exist', () => {
     fixture = TestBed.createComponent(LandingPage);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const sectionIds = Array.from(compiled.querySelectorAll('main > section')).map((el) => el.id);
-    expect(sectionIds).toEqual(['home', 'features', 'how-it-works', 'about-autism', 'start']);
+    expect(sectionIds).toEqual([
+      'home',
+      'features',
+      'how-it-works',
+      'about-autism',
+      'pricing',
+      'start',
+    ]);
 
     // No invented testimonials or unbacked accreditation claims.
     expect(compiled.querySelector('#testimonials')).toBeNull();
@@ -170,9 +177,66 @@ describe('LandingPage', () => {
     const navTargets = Array.from(compiled.querySelectorAll('.desktop-nav a')).map((a) =>
       a.getAttribute('href'),
     );
-    expect(navTargets).toEqual(['#home', '#features', '#how-it-works', '#about-autism']);
+    expect(navTargets).toEqual([
+      '#home',
+      '#features',
+      '#how-it-works',
+      '#about-autism',
+      '#pricing',
+    ]);
     for (const target of navTargets) {
       expect(compiled.querySelector(target as string)).toBeTruthy();
     }
+  });
+
+  it('prices three plans, keeps families free, and switches to yearly with a discount badge', () => {
+    i18nService.setLanguage('en');
+    fixture = TestBed.createComponent(LandingPage);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const cards = Array.from(compiled.querySelectorAll('#pricing .plan-card'));
+    expect(cards.map((card) => card.querySelector('h3')?.textContent?.trim())).toEqual([
+      'School',
+      'Family',
+      'Hospital',
+    ]);
+
+    const family = cards[1];
+    expect(family.classList.contains('highlighted')).toBe(true);
+    expect(family.querySelector('.plan-amount')?.textContent).toContain('Free');
+    expect(family.querySelector('.plan-cta')?.getAttribute('href')).toBe('/register');
+    expect(compiled.querySelector('#pricing .discount')).toBeNull();
+
+    const [, yearly] = Array.from(
+      compiled.querySelectorAll<HTMLButtonElement>('.billing-toggle button'),
+    );
+    yearly.click();
+    fixture.detectChanges();
+
+    expect(yearly.getAttribute('aria-checked')).toBe('true');
+    // Discounts only on paid plans; the free family plan never shows one.
+    expect(compiled.querySelectorAll('#pricing .discount').length).toBe(2);
+    expect(family.querySelector('.discount')).toBeNull();
+    expect(cards[0].querySelector('.plan-billed')?.textContent).toContain('Billed yearly');
+  });
+
+  it('lights up the preview panel for the step a visitor picks', () => {
+    fixture = TestBed.createComponent(LandingPage);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const lit = () =>
+      Array.from(compiled.querySelectorAll('.pv-card.lit')).map((el) => el.classList[1]);
+    expect(lit()).toEqual(['pv-child']);
+
+    const steps = compiled.querySelectorAll<HTMLButtonElement>('.step-btn');
+    expect(steps.length).toBe(4);
+    steps[2].click();
+    fixture.detectChanges();
+
+    expect(lit()).toEqual(['pv-notes']);
+    expect(compiled.querySelector('.pv-chat')?.classList.contains('lit')).toBe(true);
+    expect(steps[2].getAttribute('aria-pressed')).toBe('true');
   });
 });

@@ -1,19 +1,21 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LegalSectionsComponent } from './legal/legal-sections.component';
+import { PRIVACY_SECTIONS, PRIVACY_EFFECTIVE_DATE } from './legal/privacy.content';
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, LegalSectionsComponent],
   template: `
     <div class="legal-page">
       <header class="legal-header">
         <a class="brand" routerLink="/" aria-label="AutiCare home">
-          <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" width="36" height="34" />
+          <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
           <span>AutiCare</span>
         </a>
         <nav class="legal-nav" aria-label="Legal navigation">
           <a routerLink="/privacy" class="active" aria-current="page">Privacy Policy</a>
-          <a routerLink="/terms">Terms of Service</a>
+          <a routerLink="/terms">Terms of Use</a>
           <a routerLink="/support">Help Center</a>
           <a routerLink="/crisis">Crisis Support</a>
         </nav>
@@ -43,11 +45,9 @@ import { RouterLink } from '@angular/router';
               </div>
 
               <nav class="toc-list" aria-label="Section shortcuts">
-                <a href="#overview" class="toc-link">1. Overview &amp; HIPAA Notice</a>
-                <a href="#collection" class="toc-link">2. Information We Collect</a>
-                <a href="#usage" class="toc-link">3. Use &amp; Data Sharing</a>
-                <a href="#management" class="toc-link">4. Management &amp; Archiving</a>
-                <a href="#security" class="toc-link">5. Security &amp; Contact</a>
+                @for (item of toc; track item.id) {
+                  <a [href]="'#' + item.id" class="toc-link">{{ item.label }}</a>
+                }
               </nav>
 
               <div class="toc-footer-card">
@@ -62,7 +62,7 @@ import { RouterLink } from '@angular/router';
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                   </svg>
-                  <span>4 min read</span>
+                  <span>10 min read</span>
                 </div>
                 <p class="toc-help-note">
                   Questions about your data?
@@ -77,119 +77,12 @@ import { RouterLink } from '@angular/router';
             <header class="prose-header">
               <span class="meta-tag">Transparency &amp; Trust</span>
               <h1>Privacy Policy</h1>
-              <p class="effective-date">Last updated: {{ currentYear }}</p>
+              <p class="effective-date">
+                Effective date: {{ effectiveDate }} · Last updated {{ currentYear }}
+              </p>
             </header>
 
-            <section id="overview" class="legal-section">
-              <h2>1. Overview and Commitment</h2>
-              <p>
-                AutiCare is an educational and organizational web application designed to help
-                neurodiverse families, schools, and hospitals coordinate care, activities, and
-                observations. We believe in complete honesty regarding our data practices and
-                architectural implementation.
-              </p>
-
-              <div class="notice-callout warning">
-                <div class="callout-indicator">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-                    ></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                </div>
-                <div class="callout-body">
-                  <strong>HIPAA Notice:</strong> AutiCare is an informational platform and does not
-                  claim compliance with the Health Insurance Portability and Accountability Act
-                  (HIPAA). AutiCare is not a covered entity or a business associate under HIPAA
-                  regulations. You should not upload protected health information requiring HIPAA
-                  protections to AutiCare.
-                </div>
-              </div>
-            </section>
-
-            <section id="collection" class="legal-section">
-              <h2>2. Information We Collect</h2>
-              <p>
-                We collect and store only the information necessary to provide the platform
-                features:
-              </p>
-              <ul class="styled-list">
-                <li>
-                  <strong>Account Credentials and Profile:</strong> When registering, we collect
-                  your email address, first name, last name, and hashed password. In account
-                  settings, parents may optionally provide a phone number and a social media handle.
-                </li>
-                <li>
-                  <strong>Child Profiles:</strong> To associate activities and screenings, parents
-                  may add a child's first name, date of birth, and free-form support notes (e.g.,
-                  routines, communication preferences). We do not collect government identifiers,
-                  medical record numbers, or diagnostic charts.
-                </li>
-                <li>
-                  <strong>Screening Responses &amp; Observations:</strong> Answers provided to our
-                  developmental questionnaires are stored alongside heuristic risk indicators (Low,
-                  Moderate, High) and date stamps.
-                </li>
-                <li>
-                  <strong>Appointments &amp; Enrollment Requests:</strong> Requests sent to listed
-                  hospitals (including requested date, specialist, visit reason, and notes) and
-                  admission requests sent to schools.
-                </li>
-              </ul>
-            </section>
-
-            <section id="usage" class="legal-section">
-              <h2>3. How Information Is Used and Shared</h2>
-              <p>
-                Your data is used solely to provide and improve AutiCare services. Specifically:
-              </p>
-              <ul class="styled-list">
-                <li>
-                  We do not sell, rent, or monetize your personal or family data with third parties
-                  or data brokers.
-                </li>
-                <li>
-                  We do not display third-party advertisements or share data with advertising
-                  networks.
-                </li>
-                <li>
-                  <strong>Sharing Boundaries:</strong> Child profiles and screening results belong
-                  exclusively to your parent account. They are not made public. When you explicitly
-                  book an appointment with a hospital or submit an enrollment request to a school,
-                  the details of that specific booking or request are shared with the selected
-                  provider.
-                </li>
-              </ul>
-            </section>
-
-            <section id="management" class="legal-section">
-              <h2>4. Data Management &amp; Profile Archiving</h2>
-              <p>
-                Parents can edit their name, phone number, and social media handle at any time in
-                Settings. Email addresses serve as primary account identifiers and cannot be altered
-                directly in settings. Child profiles can be archived through the child management
-                view. If you wish to close your account or request data removal, please reach out to
-                support.
-              </p>
-            </section>
-
-            <section id="security" class="legal-section">
-              <h2>5. Security &amp; Contact</h2>
-              <p>
-                All sessions utilize secure, encrypted authentication cookies, and server logs
-                redact sensitive credentials, session cookies, and child support notes. If you have
-                questions about privacy, email us at
-                <a href="mailto:support@auticare.local">support&#64;auticare.local</a>.
-              </p>
-            </section>
+            <ac-legal-sections [sections]="sections" />
           </article>
         </div>
       </main>
@@ -198,7 +91,7 @@ import { RouterLink } from '@angular/router';
         <p>&copy; {{ currentYear }} AutiCare. All rights reserved.</p>
         <div class="footer-links">
           <a routerLink="/privacy">Privacy Policy</a>
-          <a routerLink="/terms">Terms of Service</a>
+          <a routerLink="/terms">Terms of Use</a>
           <a routerLink="/support">Help Center</a>
         </div>
       </footer>
@@ -303,7 +196,7 @@ import { RouterLink } from '@angular/router';
         border: 1px solid var(--ac-color-border);
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 4px 16px rgb(0 30 43 / 0.04);
+        box-shadow: 0 4px 16px color-mix(in srgb, var(--ac-brand-950) 4%, transparent);
       }
 
       .toc-header {
@@ -398,7 +291,7 @@ import { RouterLink } from '@angular/router';
         border: 1px solid var(--ac-color-border);
         border-radius: 20px;
         padding: 48px 56px;
-        box-shadow: 0 4px 20px rgb(0 30 43 / 0.04);
+        box-shadow: 0 4px 20px color-mix(in srgb, var(--ac-brand-950) 4%, transparent);
         max-width: 72ch;
       }
 
@@ -555,6 +448,21 @@ import { RouterLink } from '@angular/router';
         text-decoration: underline;
       }
 
+      .legal-intro {
+        font-size: 17px;
+        line-height: 1.7;
+        color: var(--ac-color-text-body);
+        margin: 0 0 32px;
+      }
+
+      .legal-tagline {
+        margin: 40px 0 0;
+        padding-top: 24px;
+        border-top: 1px solid var(--ac-color-border);
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-action-deep);
+        text-align: center;
+      }
       @media (max-width: 860px) {
         .legal-layout {
           grid-template-columns: 1fr;
@@ -584,4 +492,10 @@ import { RouterLink } from '@angular/router';
 })
 export class PrivacyPage {
   readonly currentYear = new Date().getFullYear();
+  readonly effectiveDate = PRIVACY_EFFECTIVE_DATE;
+  readonly sections = PRIVACY_SECTIONS;
+  readonly toc = PRIVACY_SECTIONS.map((section) => ({
+    id: section.id,
+    label: section.title.replace(/^Article /, ''),
+  }));
 }

@@ -1,68 +1,58 @@
 #!/usr/bin/env node
 /**
- * Fails if a component introduces a colour literal that is not already
- * grandfathered below.
+ * Fails if web code writes a colour directly instead of using a design token.
  *
- * The web app had 1424 hardcoded colour literals against 342 token uses. Most are
- * now tokens; what remains is the long tail of values used once or twice, which
- * could not be tokenised without either inventing a name per value or collapsing
- * near-duplicates — and collapsing changes what is on screen, so it is a design
- * decision rather than a refactor.
+ * Every colour lives in apps/web/src/app/design-system/styles/tokens.scss. The
+ * brand is one teal scale there (--ac-brand-50 … --ac-brand-950, main colour
+ * --ac-brand-500); every other brand-like token is an alias of it. Components
+ * use var(--ac-…) only. For a see-through shade, mix a token:
  *
- * This is a ratchet, not a clean bill of health. The list below may only ever get
- * SHORTER. Adding a new raw hex fails the build; removing one by adopting a token
- * means deleting its entry here too.
+ *   color-mix(in srgb, var(--ac-brand-500) 20%, transparent)
  *
- * Token definitions live in apps/web/src/app/design-system/styles/tokens.scss and
- * are deliberately exempt — that is where colour is allowed to be a literal.
+ * Caught: hex (#348c83), rgb()/rgba(), hsl()/hsla(), and the keywords white and
+ * black used as a CSS value. tokens.scss is exempt — it is where colours are defined.
  */
 import { readFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
 
-// All grandfathered literals have been fully migrated to design tokens in tokens.scss.
-const GRANDFATHERED = new Set([]);
+const PATTERNS = [
+  { name: 'hex', re: /#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g },
+  { name: 'rgb/hsl', re: /\b(?:rgba?|hsla?)\(\s*[\d.]/g },
+  { name: 'keyword', re: /(?:^|[\s;{])(?:color|background(?:-color)?|border(?:-color)?|fill|stroke)\s*:\s*(?:white|black)\b/g },
+];
+const EXEMPT = /design-system[\\/]styles[\\/]tokens\.scss$/;
+// Hex in a URL fragment or an HTML entity is not a colour.
+const NOT_COLOUR = /href="#|&#x?[0-9a-fA-F]+;/;
 
-const HEX = /#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g;
-const EXEMPT = /design-system\/styles\/tokens\.scss$/;
-
-const normalise = (value) => {
-  const v = value.toLowerCase();
-  return v.length === 4
-    ? `#${v
-        .slice(1)
-        .split('')
-        .map((c) => c + c)
-        .join('')}`
-    : v;
-};
-
-const files = globSync('apps/web/src/app/**/*.ts').filter((f) => !EXEMPT.test(f));
+const files = [
+  ...globSync('apps/web/src/app/**/*.ts'),
+  ...globSync('apps/web/src/**/*.scss'),
+].filter((f) => !EXEMPT.test(f) && !/\.spec\.ts$/.test(f));
 const offences = [];
 
 for (const file of files) {
-  const source = readFileSync(file, 'utf8');
-  const lines = source.split('\n');
+  const lines = readFileSync(file, 'utf8').split('\n');
   lines.forEach((line, index) => {
-    for (const match of line.matchAll(HEX)) {
-      const value = normalise(match[0]);
-      if (!GRANDFATHERED.has(value)) {
-        offences.push({ file, line: index + 1, value: match[0] });
+    if (NOT_COLOUR.test(line)) return;
+    for (const { name, re } of PATTERNS) {
+      for (const match of line.matchAll(re)) {
+        offences.push({ file, line: index + 1, value: match[0].trim(), name });
       }
     }
   });
 }
 
 if (offences.length > 0) {
-  console.error('\nRaw colour literals that are not grandfathered:\n');
+  console.error('\nRaw colours found. Use a token from tokens.scss instead:\n');
   for (const o of offences) {
-    console.error(`  ${o.file}:${o.line}  ${o.value}`);
+    console.error(`  ${o.file}:${o.line}  ${o.value}  (${o.name})`);
   }
   console.error(
-    `\n${offences.length} offence(s). Use a token from` +
-      ' apps/web/src/app/design-system/styles/tokens.scss, or add one there if the' +
+    `\n${offences.length} offence(s). Use var(--ac-…) from` +
+      ' apps/web/src/app/design-system/styles/tokens.scss, or add a token there if the' +
       ' colour is genuinely new.\n',
   );
   process.exit(1);
 }
 
-console.log(`No new colour literals. ${GRANDFATHERED.size} value(s) still grandfathered.`);
+console.log(`No raw colours in ${files.length} web files.`);

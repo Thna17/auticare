@@ -201,8 +201,8 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
         --scr-avatar-bg: var(--ac-color-primary);
         --scr-divider: var(--ac-color-grey-pale);
         --scr-radius: 12px;
-        --scr-shadow-btn: 0 10px 26px rgb(61 99 117 / 0.18);
-        --scr-shadow-card: 0 12px 30px rgb(41 74 90 / 0.08);
+        --scr-shadow-btn: 0 10px 26px color-mix(in srgb, var(--ac-brand-500) 18%, transparent);
+        --scr-shadow-card: 0 12px 30px color-mix(in srgb, var(--ac-brand-800) 8%, transparent);
         --scr-error: var(--ac-color-alert-text);
 
         /* The child cards are the main choice on this page, so they are large. */

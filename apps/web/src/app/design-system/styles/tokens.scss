@@ -1,19 +1,50 @@
 :root {
-  --ac-color-primary: #8db4c8;
-  --ac-color-text-dark: #294a5a;
+  /* ──────────────────────────────────────────────────────────────────────
+   * THE BRAND. White surfaces with soft teal green. Change the main colour
+   * here and every page follows: all brand, tint and ink tokens below are
+   * aliases of this one scale, never their own hex.
+   * ────────────────────────────────────────────────────────────────────── */
+  --ac-brand-50: #eef7f6;
+  --ac-brand-100: #d8eeeb;
+  --ac-brand-200: #b3ddd7;
+  --ac-brand-300: #86c6be;
+  --ac-brand-400: #57a99f;
+  --ac-brand-500: #348c83; /* the main colour */
+  --ac-brand-600: #2c7870;
+  --ac-brand-700: #24635d;
+  --ac-brand-800: #1c4f4a;
+  --ac-brand-900: #143a36;
+  --ac-brand-950: #0d2624;
+  --ac-brand-mint: #9fdfc4; /* the logo's light green, for small accents */
+
+  /* Base colours, for shadows and overlays mixed with color-mix(). */
+  --ac-color-white: #ffffff;
+  --ac-color-black: #000000;
+  --ac-color-shadow: #0f172a;
+
+  /* Category colours (observation types). Muted and distinct on purpose. */
+  --ac-color-category-1: #6b7fa8;
+  --ac-color-category-2: #b3756a;
+  --ac-color-category-3: #8a9a6b;
+  --ac-color-category-4: #a98dbe;
+  --ac-color-category-5: #5f9ea0;
+  --ac-color-category-6: #c09a4e;
+
+  --ac-color-primary: var(--ac-brand-100);
+  --ac-color-text-dark: var(--ac-brand-800);
   --ac-color-sage: #a8b993;
   --ac-color-sage-light: #e7eedf;
   --ac-color-beige: #d5c2a5;
-  --ac-color-background: #faf8f2;
-  --ac-color-surface: #ffffff;
+  --ac-color-background: var(--ac-brand-50);
+  --ac-color-surface: var(--ac-color-white);
   --ac-color-text: #263238;
   --ac-color-text-muted: #66747a;
   --ac-color-success: #72a675;
   --ac-color-warning: #d9a441;
   --ac-color-attention: #c96e62;
   --ac-color-border: #dde5e4;
-  --ac-color-overlay: rgb(0 30 43 / 0.45);
-  --ac-color-focus: #3b82f6;
+  --ac-color-overlay: color-mix(in srgb, var(--ac-brand-950) 45%, transparent);
+  --ac-color-focus: var(--ac-brand-600);
 
   /* ──────────────────────────────────────────────────────────────────────
    * Palette extracted from the feature styles (see output/audit/AUDIT.md).
@@ -35,27 +66,26 @@
    * ────────────────────────────────────────────────────────────────────── */
 
   /* Text. --ac-color-text (#263238) above remains the default body colour. */
-  --ac-color-text-strong: #001e2b; /* x76, always `color` — headings and strong body */
+  --ac-color-text-strong: var(--ac-brand-950); /* x76, always `color` — headings and strong body */
   --ac-color-text-body: #41484b; /* x36, always `color` — secondary body copy */
-  --ac-color-text-slate: #64748b; /* x65, always `color` — slate palette */
-  --ac-color-text-slate-strong: #0f172a; /* x25 — slate palette */
-  --ac-color-text-on-action: #ffffff; /* white used as foreground, not as a surface */
+  --ac-color-text-slate: var(--ac-color-text-muted); /* x65, always `color` — slate palette */
+  --ac-color-text-slate-strong: var(--ac-color-text-strong); /* x25 — slate palette */
+  --ac-color-text-on-action: var(--ac-color-white); /* white used as foreground, not as a surface */
 
-  /* Brand / action. NEAR-DUPLICATES: action and action-alt are two teals doing
-   * the same job (background, text and border alike). Worth collapsing to one,
-   * which is a visual change. */
-  --ac-color-action: #3d6375; /* x71 */
-  --ac-color-action-alt: #2d6a7a; /* x56 */
-  --ac-color-action-mid: #315d72; /* x19 */
-  --ac-color-action-deep: #164f68; /* x25 */
-  --ac-color-action-darkest: #10303b; /* x16 */
+  /* Brand / action. action and action-alt now share the brand teal; mid, deep
+   * and darkest are its hover and pressed shades. */
+  --ac-color-action: var(--ac-brand-500); /* x71 */
+  --ac-color-action-alt: var(--ac-brand-500); /* x56 */
+  --ac-color-action-mid: var(--ac-brand-600); /* x19 */
+  --ac-color-action-deep: var(--ac-brand-700); /* x25 */
+  --ac-color-action-darkest: var(--ac-brand-900); /* x16 */
 
   /* Surfaces and borders */
-  --ac-color-surface-info: #e8f6ff; /* x27, always a background */
-  --ac-color-surface-slate: #f8fafc; /* x16 — slate palette */
-  --ac-color-border-info: #d4e6ef; /* x20 */
+  --ac-color-surface-info: var(--ac-brand-50); /* x27, always a background */
+  --ac-color-surface-slate: var(--ac-color-background); /* x16 — slate palette */
+  --ac-color-border-info: var(--ac-brand-100); /* x20 */
   --ac-color-border-grey: #b8c2c8; /* x15 */
-  --ac-color-border-slate: #e2e8f0; /* x48 — slate palette */
+  --ac-color-border-slate: var(--ac-color-border); /* x48 — slate palette */
 
   /* Alert. NEAR-DUPLICATES: four reds across two palettes. */
   --ac-color-alert-text: #a23434; /* x19 */
@@ -85,7 +115,7 @@
    * ────────────────────────────────────────────────────────────────────── */
 
   /* Slate scale — Tailwind values, the second palette noted above. */
-  --ac-color-slate-50: #f8fafc;
+  --ac-color-slate-50: var(--ac-color-background);
   --ac-color-slate-100: #f1f5f9;
   --ac-color-slate-300: #cbd5e1;
   --ac-color-slate-400: #94a3b8;
@@ -110,7 +140,7 @@
   --ac-color-green-500: #10b981;
   --ac-color-green-600: #177a4c;
   --ac-color-green-700: #236b43;
-  --ac-color-green-teal: #0f766e;
+  --ac-color-green-teal: var(--ac-brand-600);
   --ac-color-green-50: #e7f6ef;
   --ac-color-green-100: #d1fae5;
 
@@ -118,27 +148,27 @@
   --ac-color-amber-500: #f59e0b;
 
   /* Teal inks — the custom dark family (near-duplicates, see note above) */
-  --ac-color-ink-a: #1f4f5c;
-  --ac-color-ink-b: #19465b;
-  --ac-color-ink-c: #163f52;
-  --ac-color-ink-d: #123f52;
-  --ac-color-ink-e: #1a3a4a;
-  --ac-color-ink-f: #103443;
-  --ac-color-ink-g: #123443;
-  --ac-color-ink-h: #223344;
-  --ac-color-ink-i: #273a43;
-  --ac-color-ink-j: #244b5d;
+  --ac-color-ink-a: var(--ac-brand-800);
+  --ac-color-ink-b: var(--ac-brand-800);
+  --ac-color-ink-c: var(--ac-brand-900);
+  --ac-color-ink-d: var(--ac-brand-900);
+  --ac-color-ink-e: var(--ac-brand-900);
+  --ac-color-ink-f: var(--ac-brand-950);
+  --ac-color-ink-g: var(--ac-brand-950);
+  --ac-color-ink-h: var(--ac-brand-950);
+  --ac-color-ink-i: var(--ac-brand-900);
+  --ac-color-ink-j: var(--ac-brand-800);
 
   /* Pale surfaces — the custom tint family (near-duplicates, see note above) */
-  --ac-color-tint-blue: #ceedff;
-  --ac-color-tint-blue-soft: #f0f7fb;
-  --ac-color-tint-blue-pale: #f8fcff;
-  --ac-color-tint-blue-mist: #eef8fc;
-  --ac-color-tint-blue-light: #e8f4f8;
-  --ac-color-tint-blue-faint: #f2f9fd;
-  --ac-color-tint-blue-wash: #f4faff;
-  --ac-color-tint-steel: #d7e3ea;
-  --ac-color-tint-steel-soft: #dfe9ee;
+  --ac-color-tint-blue: var(--ac-brand-100);
+  --ac-color-tint-blue-soft: var(--ac-brand-50);
+  --ac-color-tint-blue-pale: var(--ac-brand-50);
+  --ac-color-tint-blue-mist: var(--ac-brand-50);
+  --ac-color-tint-blue-light: var(--ac-brand-50);
+  --ac-color-tint-blue-faint: var(--ac-brand-50);
+  --ac-color-tint-blue-wash: var(--ac-brand-50);
+  --ac-color-tint-steel: var(--ac-brand-100);
+  --ac-color-tint-steel-soft: var(--ac-brand-100);
 
   /* Olive / sage family */
   --ac-color-olive-light: #d7e9c0;
@@ -161,45 +191,45 @@
    * ────────────────────────────────────────────────────────────────────── */
 
   /* Inks and dark slates */
-  --ac-color-ink-midnight: #0f2c3b;
-  --ac-color-ink-navy: #194b61;
-  --ac-color-ink-charcoal: #1c3644;
-  --ac-color-ink-deep-teal: #1e4a5a;
-  --ac-color-ink-deep-slate: #24404e;
-  --ac-color-ink-petroleum: #334e5c;
+  --ac-color-ink-midnight: var(--ac-brand-950);
+  --ac-color-ink-navy: var(--ac-brand-800);
+  --ac-color-ink-charcoal: var(--ac-brand-950);
+  --ac-color-ink-deep-teal: var(--ac-brand-800);
+  --ac-color-ink-deep-slate: var(--ac-brand-900);
+  --ac-color-ink-petroleum: var(--ac-brand-800);
   --ac-color-ink-dark-slate: #34434a;
 
   /* Teals */
-  --ac-color-teal-deep: #115e59;
-  --ac-color-teal-dark: #245764;
-  --ac-color-teal-slate: #47758b;
-  --ac-color-teal-accent: #4ba3b8;
+  --ac-color-teal-deep: var(--ac-brand-700);
+  --ac-color-teal-dark: var(--ac-brand-700);
+  --ac-color-teal-slate: var(--ac-brand-500);
+  --ac-color-teal-accent: var(--ac-brand-400);
 
   /* Blues and ice blues */
   --ac-color-blue-700: #1d4ed8;
   --ac-color-blue-800: #1e40af;
-  --ac-color-sky-light: #9bc6d8;
-  --ac-color-sky-soft: #9cc5d6;
-  --ac-color-sky-pale: #9ec9d8;
-  --ac-color-sky-ice: #a8d5e2;
-  --ac-color-ice-blue: #b6dceb;
-  --ac-color-ice-blue-border: #b9d6e5;
-  --ac-color-sky-tint: #c0e8fe;
-  --ac-color-sky-tint-light: #c5e7fb;
-  --ac-color-ice-blue-frost: #c8e1ed;
-  --ac-color-ice-blue-pale: #c9e5f1;
-  --ac-color-ice-blue-soft: #d5eaf3;
-  --ac-color-ice-blue-faint: #dceaf0;
-  --ac-color-blue-tint-wash: #e2f3ff;
-  --ac-color-blue-tint-ice: #e5f6ff;
-  --ac-color-blue-surface-pale: #e6f4f2;
-  --ac-color-blue-surface-soft: #e7f3f7;
-  --ac-color-blue-tint-clean: #eefaff;
-  --ac-color-blue-tint-sky: #f0f7fa;
-  --ac-color-blue-tint-subtle: #f0f9ff;
-  --ac-color-blue-tint-clear: #f2f9ff;
-  --ac-color-blue-tint-polar: #f4fbfd;
-  --ac-color-blue-tint-pure: #fbfdfe;
+  --ac-color-sky-light: var(--ac-brand-300);
+  --ac-color-sky-soft: var(--ac-brand-300);
+  --ac-color-sky-pale: var(--ac-brand-300);
+  --ac-color-sky-ice: var(--ac-brand-300);
+  --ac-color-ice-blue: var(--ac-brand-200);
+  --ac-color-ice-blue-border: var(--ac-brand-200);
+  --ac-color-sky-tint: var(--ac-brand-200);
+  --ac-color-sky-tint-light: var(--ac-brand-200);
+  --ac-color-ice-blue-frost: var(--ac-brand-200);
+  --ac-color-ice-blue-pale: var(--ac-brand-200);
+  --ac-color-ice-blue-soft: var(--ac-brand-100);
+  --ac-color-ice-blue-faint: var(--ac-brand-100);
+  --ac-color-blue-tint-wash: var(--ac-brand-50);
+  --ac-color-blue-tint-ice: var(--ac-brand-50);
+  --ac-color-blue-surface-pale: var(--ac-brand-50);
+  --ac-color-blue-surface-soft: var(--ac-brand-50);
+  --ac-color-blue-tint-clean: var(--ac-brand-50);
+  --ac-color-blue-tint-sky: var(--ac-brand-50);
+  --ac-color-blue-tint-subtle: var(--ac-brand-50);
+  --ac-color-blue-tint-clear: var(--ac-brand-50);
+  --ac-color-blue-tint-polar: var(--ac-brand-50);
+  --ac-color-blue-tint-pure: var(--ac-brand-50);
 
   /* Greens, emeralds, and forest greens */
   --ac-color-emerald-600: #059669;
@@ -257,13 +287,13 @@
   /* Slates, greys, and muted borders/surfaces */
   --ac-color-slate-text-contrast: #4c575c;
   --ac-color-slate-text-secondary: #586369;
-  --ac-color-slate-border-strong: #63899b;
+  --ac-color-slate-border-strong: var(--ac-brand-400);
   --ac-color-slate-text-dimmed: #68737a;
   --ac-color-slate-text-subtle: #6a747b;
   --ac-color-slate-text-darker: #6a7486;
-  --ac-color-slate-text-dim: #6b8494;
+  --ac-color-slate-text-dim: #6b8a86;
   --ac-color-slate-body-text: #707b84;
-  --ac-color-slate-icon: #759bad;
+  --ac-color-slate-icon: var(--ac-brand-400);
   --ac-color-slate-muted-alt: #7b8fa0;
   --ac-color-slate-border-card: #8da0aa;
   --ac-color-slate-border-dim-alt: #a8bcc7;

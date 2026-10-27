@@ -989,7 +989,7 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
 
       .pill-btn--recommended.active {
         background: var(--ac-color-amber-500);
-        color: white;
+        color: var(--ac-color-text-on-action);
         border-color: var(--ac-color-amber-600);
       }
 

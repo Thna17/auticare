@@ -50,9 +50,9 @@ import { NotificationsStateService } from '../../core/notifications/notification
         justify-content: space-between;
         align-items: center;
         padding: 16px 24px;
-        background: white;
+        background: var(--ac-color-surface);
         border-radius: 16px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         margin-bottom: 24px;
       }
 
@@ -81,7 +81,7 @@ import { NotificationsStateService } from '../../core/notifications/notification
       }
 
       .search-input:focus {
-        border-color: var(--ac-color-blue-500);
+        border-color: var(--ac-color-focus);
       }
 
       .topbar-actions {
@@ -167,14 +167,14 @@ import { NotificationsStateService } from '../../core/notifications/notification
       .user-avatar {
         width: 40px;
         height: 40px;
-        background: var(--ac-color-blue-100);
+        background: var(--ac-brand-100);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 14px;
         font-weight: 700;
-        color: var(--ac-color-blue-800);
+        color: var(--ac-brand-800);
       }
     `,
   ],

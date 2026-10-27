@@ -521,27 +521,27 @@ const COPY = {
       }
 
       .dot.cat-sleep {
-        background: #6b7fa8;
+        background: var(--ac-color-category-1);
       }
 
       .dot.cat-crying {
-        background: #b3756a;
+        background: var(--ac-color-category-2);
       }
 
       .dot.cat-eating {
-        background: #8a9a6b;
+        background: var(--ac-color-category-3);
       }
 
       .dot.cat-sensory {
-        background: #a98dbe;
+        background: var(--ac-color-category-4);
       }
 
       .dot.cat-social {
-        background: #5f9ea0;
+        background: var(--ac-color-category-5);
       }
 
       .dot.cat-routine {
-        background: #c09a4e;
+        background: var(--ac-color-category-6);
       }
 
       .dot.cat-other {

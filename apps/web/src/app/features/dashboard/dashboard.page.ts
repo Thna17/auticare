@@ -738,10 +738,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
       }
 
       .empty-message {
-        background: white;
+        background: var(--ac-color-surface);
         border-radius: 12px;
         text-align: center;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         margin-bottom: 24px;
         color: var(--ac-color-text-slate);
         font-size: 14px;
@@ -774,10 +774,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
       }
 
       .stat-card {
-        background: white;
+        background: var(--ac-color-surface);
         border-radius: 12px;
         padding: 24px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         position: relative;
       }
 
@@ -864,10 +864,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
       }
 
       .content-card {
-        background: white;
+        background: var(--ac-color-surface);
         border-radius: 12px;
         padding: 24px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
       }
 
       .card-header {
@@ -943,7 +943,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
         justify-content: center;
         font-weight: 600;
         font-size: 12px;
-        color: white;
+        color: var(--ac-color-text-on-action);
       }
 
       .student-name {
@@ -987,7 +987,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
         align-items: center;
         justify-content: center;
         font-size: 16px;
-        color: white;
+        color: var(--ac-color-text-on-action);
         font-weight: 600;
         flex-shrink: 0;
       }
@@ -1013,7 +1013,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
       }
 
       .reminders-card {
-        background: white;
+        background: var(--ac-color-surface);
       }
 
       .reminders-list {
@@ -1085,8 +1085,8 @@ import { I18nService } from '../../core/i18n/i18n.service';
         );
         border-radius: 12px;
         padding: 24px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(45, 106, 122, 0.3);
+        color: var(--ac-color-text-on-action);
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--ac-brand-500) 30%, transparent);
       }
 
       .engagement-header h2 {
@@ -1123,14 +1123,14 @@ import { I18nService } from '../../core/i18n/i18n.service';
 
       .bar {
         width: 100%;
-        background: rgba(255, 255, 255, 0.3);
+        background: color-mix(in srgb, var(--ac-color-white) 30%, transparent);
         border-radius: 6px 6px 0 0;
         min-height: 20px;
         transition: all 0.3s;
       }
 
       .bar.today {
-        background: rgba(255, 255, 255, 0.9);
+        background: color-mix(in srgb, var(--ac-color-white) 90%, transparent);
       }
 
       .day-label {
@@ -1456,7 +1456,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
       .gradient-screening {
         background: linear-gradient(
           135deg,
-          rgb(255 255 255 / 0.95) 0%,
+          color-mix(in srgb, var(--ac-color-white) 95%, transparent) 0%,
           var(--ac-color-surface-info) 100%
         );
         border-color: var(--ac-color-border-info);
@@ -1465,7 +1465,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
       .gradient-milestone {
         background: linear-gradient(
           135deg,
-          rgb(255 255 255 / 0.95) 0%,
+          color-mix(in srgb, var(--ac-color-white) 95%, transparent) 0%,
           var(--ac-color-green-50) 100%
         );
         border-color: var(--ac-color-border);
@@ -1474,7 +1474,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
       .gradient-hospital {
         background: linear-gradient(
           135deg,
-          rgb(255 255 255 / 0.95) 0%,
+          color-mix(in srgb, var(--ac-color-white) 95%, transparent) 0%,
           var(--ac-color-ice-blue-soft) 100%
         );
         border-color: var(--ac-color-ice-blue-border);
@@ -1483,7 +1483,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
       .gradient-trajectory {
         background: linear-gradient(
           135deg,
-          rgb(255 255 255 / 0.95) 0%,
+          color-mix(in srgb, var(--ac-color-white) 95%, transparent) 0%,
           var(--ac-color-tint-blue-mist) 100%
         );
         border-color: var(--ac-color-border-info);
@@ -1508,10 +1508,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
 
       .admin-overview article {
         min-height: 280px;
-        border: 1px solid rgb(221 229 228 / 0.72);
+        border: 1px solid color-mix(in srgb, var(--ac-color-border) 72%, transparent);
         border-radius: 8px;
         background: var(--ac-color-surface);
-        box-shadow: 0 12px 34px rgb(41 74 90 / 0.07);
+        box-shadow: 0 12px 34px color-mix(in srgb, var(--ac-brand-800) 7%, transparent);
         display: grid;
         align-content: start;
         gap: 14px;
@@ -1805,13 +1805,13 @@ import { I18nService } from '../../core/i18n/i18n.service';
 
       .admin-stat-card {
         background: var(--ac-color-surface);
-        border: 1px solid rgb(221 229 228 / 0.72);
+        border: 1px solid color-mix(in srgb, var(--ac-color-border) 72%, transparent);
         border-radius: 16px;
         padding: 24px;
         display: flex;
         flex-direction: column;
         gap: 8px;
-        box-shadow: 0 4px 16px rgb(41 74 90 / 0.04);
+        box-shadow: 0 4px 16px color-mix(in srgb, var(--ac-brand-800) 4%, transparent);
       }
 
       .admin-stat-label {
@@ -1842,10 +1842,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
 
       .admin-content-card {
         background: var(--ac-color-surface);
-        border: 1px solid rgb(221 229 228 / 0.72);
+        border: 1px solid color-mix(in srgb, var(--ac-color-border) 72%, transparent);
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 4px 16px rgb(41 74 90 / 0.04);
+        box-shadow: 0 4px 16px color-mix(in srgb, var(--ac-brand-800) 4%, transparent);
       }
 
       .admin-card-header {

@@ -209,7 +209,7 @@ type FaqItem = {
         --hc-banner-border: var(--ac-color-border-info);
         --hc-avatar-bg: var(--ac-color-primary);
         --hc-radius: 12px;
-        --hc-shadow-card: 0 12px 30px rgb(41 74 90 / 0.08);
+        --hc-shadow-card: 0 12px 30px color-mix(in srgb, var(--ac-brand-800) 8%, transparent);
         display: block;
       }
 
@@ -401,7 +401,7 @@ type FaqItem = {
         font-weight: 700;
         font-size: 15px;
         text-decoration: none;
-        box-shadow: 0 10px 26px rgb(61 99 117 / 0.18);
+        box-shadow: 0 10px 26px color-mix(in srgb, var(--ac-brand-500) 18%, transparent);
       }
       .contact-btn:focus-visible {
         outline: 3px solid var(--hc-teal);
@@ -415,7 +415,7 @@ type FaqItem = {
         background: var(--ac-color-surface);
         padding: 20px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 14px color-mix(in srgb, var(--ac-color-black) 6%, transparent);
       }
 
       .emergency-header {

@@ -114,13 +114,13 @@ html.reduced-motion {
 
 :root.high-contrast,
 html.high-contrast {
-  --ac-color-text: #000000;
-  --ac-color-text-strong: #000000;
-  --ac-color-text-body: #111111;
-  --ac-color-border: #000000;
-  --ac-color-border-grey: #000000;
-  --ac-color-action: #00364d;
-  --ac-color-action-alt: #002e42;
+  --ac-color-text: var(--ac-color-black);
+  --ac-color-text-strong: var(--ac-color-black);
+  --ac-color-text-body: var(--ac-color-black);
+  --ac-color-border: var(--ac-color-black);
+  --ac-color-border-grey: var(--ac-color-black);
+  --ac-color-action: var(--ac-brand-950);
+  --ac-color-action-alt: var(--ac-brand-950);
   filter: contrast(115%);
 }
 
@@ -176,8 +176,8 @@ html[lang='km'],
   }
 
   body {
-    background: white !important;
-    color: black !important;
+    background: var(--ac-color-white) !important;
+    color: var(--ac-color-black) !important;
   }
 
   main,

@@ -19,6 +19,7 @@ export interface TranslationDictionary {
     readonly profile: string;
     readonly myChildren: string;
     readonly reports: string;
+    readonly schoolRequests: string;
   };
   readonly common: {
     readonly save: string;
@@ -321,6 +322,9 @@ export interface TranslationDictionary {
     readonly hospitals: string;
     readonly familyRecords: string;
     readonly schoolProfile: string;
+    readonly team: string;
+    readonly familyCodes: string;
+    readonly mySchools: string;
     readonly hospitalProfile: string;
     readonly students: string;
     readonly reports: string;
@@ -346,6 +350,7 @@ export interface TranslationDictionary {
     readonly switchToEnglish: string;
     readonly closeDrawer: string;
     readonly autiCareUser: string;
+    readonly schoolRequests: string;
     // The five parent-facing areas the app is organised by after the update.
     readonly dashboard: string;
     readonly aiAssistant: string;
@@ -354,6 +359,55 @@ export interface TranslationDictionary {
     readonly settings: string;
     readonly askAutiCare: string;
     readonly observations: string;
+  };
+  readonly schoolRegistrations: {
+    readonly title: string;
+    readonly subtitle: string;
+    readonly schoolName: string;
+    readonly city: string;
+    readonly address: string;
+    readonly contactFirstName: string;
+    readonly contactLastName: string;
+    readonly contactTitle: string;
+    readonly email: string;
+    readonly phone: string;
+    readonly studentCount: string;
+    readonly message: string;
+    readonly submit: string;
+    readonly submitting: string;
+    readonly successTitle: string;
+    readonly successMessage: string;
+    readonly backHome: string;
+    readonly adminTitle: string;
+    readonly adminSubtitle: string;
+    readonly pending: string;
+    readonly approved: string;
+    readonly rejected: string;
+    readonly emptyPending: string;
+    readonly emptyApproved: string;
+    readonly emptyRejected: string;
+    readonly approve: string;
+    readonly reject: string;
+    readonly approveConfirmTitle: string;
+    readonly approveConfirmMessage: string;
+    readonly rejectDialogTitle: string;
+    readonly rejectReasonLabel: string;
+    readonly rejectReasonPlaceholder: string;
+    readonly rejectionReason: string;
+    readonly reviewedBy: string;
+    readonly reviewedAt: string;
+    readonly schoolId: string;
+  };
+  readonly invitation: {
+    readonly verificationStepTitle: string;
+    readonly verificationStepDesc: string;
+    readonly sendCode: string;
+    readonly sendingCode: string;
+    readonly codeSentMessage: string;
+    readonly enterCodeLabel: string;
+    readonly codePlaceholder: string;
+    readonly resendCode: string;
+    readonly resendCooldown: string;
   };
 }
 
@@ -377,6 +431,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       profile: 'ព័ត៌មានផ្ទាល់ខ្លួន',
       myChildren: 'កុមាររបស់ខ្ញុំ',
       reports: 'របាយការណ៍',
+      schoolRequests: 'សំណើសាលារៀន',
     },
     common: {
       save: 'រក្សាទុក',
@@ -685,6 +740,9 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       hospitals: 'មន្ទីរពេទ្យ',
       familyRecords: 'កំណត់ត្រាគ្រួសារ',
       schoolProfile: 'ព័ត៌មានសាលារៀន',
+      team: 'ក្រុមការងារ',
+      familyCodes: 'លេខកូដគ្រួសារ',
+      mySchools: 'សាលារបស់ខ្ញុំ',
       hospitalProfile: 'ព័ត៌មានមន្ទីរពេទ្យ',
       students: 'សិស្សានុសិស្ស',
       reports: 'របាយការណ៍',
@@ -710,6 +768,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       switchToEnglish: 'ប្តូរទៅភាសាអង់គ្លេស',
       closeDrawer: 'បិទម៉ឺនុយ',
       autiCareUser: 'អ្នកប្រើប្រាស់ AutiCare',
+      schoolRequests: 'សំណើចុះឈ្មោះសាលា',
       dashboard: 'ផ្ទាំងគ្រប់គ្រង',
       aiAssistant: 'ជំនួយការ AI',
       documents: 'ឯកសារ',
@@ -717,6 +776,58 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       settings: 'ការកំណត់',
       askAutiCare: 'សួរ AutiCare',
       observations: 'ការសង្កេត',
+    },
+    schoolRegistrations: {
+      title: 'ស្នើសុំចុះឈ្មោះសាលារៀន',
+      subtitle:
+        'ភ្ជាប់សាលារបស់អ្នកជាមួយ AutiCare ដើម្បីគាំទ្រកុមារអូទីសឹម និងសហការជាមួយអាណាព្យាបាល។',
+      schoolName: 'ឈ្មោះសាលារៀន',
+      city: 'រាជធានី/ខេត្ត',
+      address: 'អាសយដ្ឋាន',
+      contactFirstName: 'នាមខ្លួនអ្នកទំនាក់ទំនង',
+      contactLastName: 'គោត្តនាមអ្នកទំនាក់ទំនង',
+      contactTitle: 'តួនាទី / មុខតំណែង',
+      email: 'អ៊ីមែល',
+      phone: 'លេខទូរស័ព្ទ',
+      studentCount: 'ចំនួនសិស្សប្រហាក់ប្រហែល',
+      message: 'សារបន្ថែម',
+      submit: 'ផ្ញើសំណើចុះឈ្មោះ',
+      submitting: 'កំពុងផ្ញើ...',
+      successTitle: 'សូមអរគុណ!',
+      successMessage:
+        'យើងខ្ញុំបានទទួលសំណើរបស់អ្នកហើយ។ ក្រុមការងារយើងនឹងពិនិត្យ និងផ្ញើអ៊ីមែលជូនដំណឹងឆាប់ៗនេះ។',
+      backHome: 'ត្រឡប់ទៅទំព័រដើម',
+      adminTitle: 'សំណើសុំចុះឈ្មោះសាលារៀន',
+      adminSubtitle: 'ពិនិត្យ អនុម័ត ឬបដិសេធសំណើបង្កើតគណនីសាលារៀនថ្មី។',
+      pending: 'កំពុងរង់ចាំ',
+      approved: 'បានអនុម័ត',
+      rejected: 'បានបដិសេធ',
+      emptyPending: 'មិនមានសំណើកំពុងរង់ចាំទេ។',
+      emptyApproved: 'មិនទាន់មានសំណើដែលបានអនុម័តទេ។',
+      emptyRejected: 'មិនមានសំណើដែលត្រូវបានបដិសេធទេ។',
+      approve: 'អនុម័ត',
+      reject: 'បដិសេធ',
+      approveConfirmTitle: 'អនុម័តសំណើសាលារៀន?',
+      approveConfirmMessage:
+        'ការអនុម័តនឹងបង្កើតគណនីសាលា និងផ្ញើលិខិតអញ្ជើញតាមអ៊ីមែលទៅកាន់អ្នកគ្រប់គ្រងសាលា។',
+      rejectDialogTitle: 'បដិសេធសំណើសាលារៀន',
+      rejectReasonLabel: 'មូលហេតុនៃការបដិសេធ (តម្រូវ)',
+      rejectReasonPlaceholder: 'បញ្ជាក់មូលហេតុសម្រាប់ជូនដំណឹងទៅសាលា...',
+      rejectionReason: 'មូលហេតុបដិសេធ',
+      reviewedBy: 'ពិនិត្យដោយ',
+      reviewedAt: 'កាលបរិច្ឆេទពិនិត្យ',
+      schoolId: 'លេខសម្គាល់សាលា',
+    },
+    invitation: {
+      verificationStepTitle: 'ផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក',
+      verificationStepDesc: 'យើងនឹងផ្ញើលេខកូដសម្ងាត់ ៦ ខ្ទង់ទៅកាន់',
+      sendCode: 'ផ្ញើលេខកូដ',
+      sendingCode: 'កំពុងផ្ញើ...',
+      codeSentMessage: 'លេខកូដត្រូវបានផ្ញើទៅកាន់អ៊ីមែលរបស់អ្នករួចរាល់ហើយ។',
+      enterCodeLabel: 'លេខកូដផ្ទៀងផ្ទាត់ ៦ ខ្ទង់',
+      codePlaceholder: '123456',
+      resendCode: 'ផ្ញើលេខកូដម្តងទៀត',
+      resendCooldown: 'សូមរង់ចាំ {{seconds}} វិនាទីដើម្បីផ្ញើម្តងទៀត',
     },
   },
   en: {
@@ -738,6 +849,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       profile: 'Profile',
       myChildren: 'My Children',
       reports: 'Reports',
+      schoolRequests: 'School Requests',
     },
     common: {
       save: 'Save',
@@ -1057,6 +1169,9 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       hospitals: 'Hospitals',
       familyRecords: 'Family Records',
       schoolProfile: 'School Profile',
+      team: 'Team',
+      familyCodes: 'Family codes',
+      mySchools: 'My schools',
       hospitalProfile: 'Hospital Profile',
       students: 'Students',
       reports: 'Reports',
@@ -1083,6 +1198,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       switchToEnglish: 'Switch language to English',
       closeDrawer: 'Close navigation drawer',
       autiCareUser: 'AutiCare user',
+      schoolRequests: 'School requests',
       dashboard: 'Dashboard',
       aiAssistant: 'AI Assistant',
       documents: 'Documents',
@@ -1090,6 +1206,59 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       settings: 'Settings',
       askAutiCare: 'Ask AutiCare',
       observations: 'Observations',
+    },
+    schoolRegistrations: {
+      title: 'School Registration Request',
+      subtitle:
+        'Connect your school with AutiCare to support neurodivergent students and partner with families.',
+      schoolName: 'School Name',
+      city: 'City / Province',
+      address: 'Address',
+      contactFirstName: 'Contact First Name',
+      contactLastName: 'Contact Last Name',
+      contactTitle: 'Contact Title / Role',
+      email: 'Email',
+      phone: 'Phone Number',
+      studentCount: 'Estimated Student Count',
+      message: 'Additional Message',
+      submit: 'Submit Registration Request',
+      submitting: 'Submitting...',
+      successTitle: 'Thank You!',
+      successMessage:
+        "We've received your registration request. Our team will review it and email you shortly.",
+      backHome: 'Back to Home',
+      adminTitle: 'School Registration Requests',
+      adminSubtitle:
+        'Review, approve, or reject incoming registration requests from educational institutions.',
+      pending: 'Pending',
+      approved: 'Approved',
+      rejected: 'Rejected',
+      emptyPending: 'No pending registration requests.',
+      emptyApproved: 'No approved registration requests yet.',
+      emptyRejected: 'No rejected registration requests.',
+      approve: 'Approve',
+      reject: 'Reject',
+      approveConfirmTitle: 'Approve School Registration?',
+      approveConfirmMessage:
+        'This will create the school organization, administrator account, and dispatch an invitation email.',
+      rejectDialogTitle: 'Reject School Registration',
+      rejectReasonLabel: 'Reason for rejection (required)',
+      rejectReasonPlaceholder: 'Provide a reason to include in the email notification...',
+      rejectionReason: 'Rejection Reason',
+      reviewedBy: 'Reviewed By',
+      reviewedAt: 'Reviewed At',
+      schoolId: 'School ID',
+    },
+    invitation: {
+      verificationStepTitle: 'Verify your inbox',
+      verificationStepDesc: "We'll email a 6-digit code to",
+      sendCode: 'Send code',
+      sendingCode: 'Sending...',
+      codeSentMessage: 'A 6-digit code has been sent to your email.',
+      enterCodeLabel: '6-digit verification code',
+      codePlaceholder: '123456',
+      resendCode: 'Resend code',
+      resendCooldown: 'Resend in {{seconds}}s',
     },
   },
 };

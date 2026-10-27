@@ -1442,8 +1442,8 @@ const formatAge = (dateOfBirth: string, isKm = false): string => {
 
       @media print {
         :host {
-          color: black;
-          background: white;
+          color: var(--ac-color-black);
+          background: var(--ac-color-surface);
         }
         .no-print,
         .link,
@@ -1461,7 +1461,7 @@ const formatAge = (dateOfBirth: string, isKm = false): string => {
           font-size: 22px;
           font-weight: 800;
           margin: 0 0 6px;
-          color: black;
+          color: var(--ac-color-black);
         }
         .print-meta {
           font-size: 13px;

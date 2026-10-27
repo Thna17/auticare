@@ -23,24 +23,19 @@ describe('TermsPage', () => {
     expect(el.querySelector('.legal-footer')?.textContent).toContain(yearStr);
   });
 
-  it('truthfully specifies medical and diagnostic disclaimer', () => {
-    const fixture = render();
-    const text = fixture.nativeElement.textContent;
-
-    expect(text).toContain('AutiCare is not a medical provider and does not give medical advice');
+  it('states that AutiCare does not diagnose or replace medical advice', () => {
+    const text = render().nativeElement.textContent;
     expect(text).toContain(
-      'original heuristic indicators provided for educational and organizational purposes only',
+      'AutiCare does not diagnose autism or replace professional medical advice.',
     );
-    expect(text).toContain('They do not constitute clinical diagnoses');
+    expect(text).toContain('should not be treated as medical diagnoses');
   });
 
-  it('clarifies appointment and enrollment request expectations', () => {
-    const fixture = render();
-    const text = fixture.nativeElement.textContent;
-
-    expect(text).toContain('Appointments and School Enrollments');
-    expect(text).toContain(
-      'does not guarantee immediate acceptance, admission, or scheduled confirmation',
-    );
+  it('lists every section in the table of contents', () => {
+    const el = render().nativeElement as HTMLElement;
+    const links = el.querySelectorAll('.toc-link');
+    expect(links.length).toBe(el.querySelectorAll('.legal-section').length);
+    expect(links[0]?.getAttribute('href')).toBe('#about');
+    expect(el.textContent).toContain('Teachers: Join through invitations from their School Admin.');
   });
 });

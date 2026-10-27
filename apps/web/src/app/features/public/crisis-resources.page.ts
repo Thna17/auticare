@@ -157,7 +157,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
       <!-- Site Navigation Header -->
       <header class="page-header">
         <a class="brand" routerLink="/" aria-label="AutiCare home">
-          <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" width="36" height="34" />
+          <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
           <span>AutiCare</span>
         </a>
         <nav class="header-nav" aria-label="Crisis resource navigation">
@@ -688,7 +688,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
         position: sticky;
         top: 0;
         z-index: 50;
-        box-shadow: 0 4px 12px rgb(162 52 52 / 0.25);
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--ac-color-alert-text) 25%, transparent);
       }
 
       .urgent-content {
@@ -1048,7 +1048,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
         flex-direction: column;
         justify-content: space-between;
         gap: 16px;
-        box-shadow: 0 2px 8px rgb(0 0 0 / 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-black) 4%, transparent);
         transition:
           transform 160ms ease,
           box-shadow 160ms ease;
@@ -1056,7 +1056,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
 
       .hotline-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgb(0 0 0 / 0.08);
+        box-shadow: 0 6px 16px color-mix(in srgb, var(--ac-color-black) 8%, transparent);
       }
 
       .hotline-card[data-tone='emergency'] {

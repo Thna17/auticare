@@ -23,21 +23,24 @@ describe('PrivacyPage', () => {
     expect(el.querySelector('.legal-footer')?.textContent).toContain(yearStr);
   });
 
-  it('truthfully disclaims HIPAA compliance', () => {
-    const fixture = render();
-    const text = fixture.nativeElement.textContent;
-
-    expect(text).toContain(
-      'does not claim compliance with the Health Insurance Portability and Accountability Act (HIPAA)',
-    );
-    expect(text).not.toContain('HIPAA-compliant support');
+  it('states that the platform gives no medical advice', () => {
+    const text = render().nativeElement.textContent;
+    expect(text).toContain('AutiCare is not a healthcare provider');
+    expect(text).toContain('ambulance 119, police 117');
   });
 
-  it('truthfully documents stored child profile fields and data sharing boundaries', () => {
-    const fixture = render();
-    const text = fixture.nativeElement.textContent;
-
-    expect(text).toContain('first name, date of birth, and free-form support notes');
-    expect(text).toContain('We do not sell, rent, or monetize your personal or family data');
+  it('shows the role access table and lists every article', () => {
+    const el = render().nativeElement as HTMLElement;
+    const roles = Array.from(el.querySelectorAll('#access .legal-table tbody tr')).map((row) =>
+      row.querySelector('td')?.textContent?.trim(),
+    );
+    expect(roles).toEqual([
+      'Parent',
+      'School staff',
+      'Hospital or clinic staff',
+      'AutiCare administrators',
+    ]);
+    expect(el.querySelectorAll('.toc-link').length).toBe(11);
+    expect(el.textContent).toContain('AutiCare shall not:');
   });
 });

@@ -1,19 +1,21 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LegalSectionsComponent } from './legal/legal-sections.component';
+import { TERMS_SECTIONS, TERMS_EFFECTIVE_DATE } from './legal/terms.content';
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, LegalSectionsComponent],
   template: `
     <div class="legal-page">
       <header class="legal-header">
         <a class="brand" routerLink="/" aria-label="AutiCare home">
-          <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" width="36" height="34" />
+          <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
           <span>AutiCare</span>
         </a>
         <nav class="legal-nav" aria-label="Legal navigation">
           <a routerLink="/privacy">Privacy Policy</a>
-          <a routerLink="/terms" class="active" aria-current="page">Terms of Service</a>
+          <a routerLink="/terms" class="active" aria-current="page">Terms of Use</a>
           <a routerLink="/support">Help Center</a>
           <a routerLink="/crisis">Crisis Support</a>
         </nav>
@@ -43,11 +45,9 @@ import { RouterLink } from '@angular/router';
               </div>
 
               <nav class="toc-list" aria-label="Section shortcuts">
-                <a href="#acceptance" class="toc-link">1. Acceptance of Terms</a>
-                <a href="#disclaimer" class="toc-link">2. Medical Disclaimer</a>
-                <a href="#accounts" class="toc-link">3. User Accounts</a>
-                <a href="#requests" class="toc-link">4. Appointments &amp; Schools</a>
-                <a href="#availability" class="toc-link">5. Service Availability</a>
+                @for (item of toc; track item.id) {
+                  <a [href]="'#' + item.id" class="toc-link">{{ item.label }}</a>
+                }
               </nav>
 
               <div class="toc-footer-card">
@@ -75,89 +75,22 @@ import { RouterLink } from '@angular/router';
           <!-- Main Editorial Article -->
           <article class="prose">
             <header class="prose-header">
-              <span class="meta-tag">Terms &amp; Disclaimers</span>
-              <h1>Terms of Service</h1>
-              <p class="effective-date">Last updated: {{ currentYear }}</p>
+              <span class="meta-tag">Terms &amp; Conditions</span>
+              <h1>Terms of Use</h1>
+              <p class="effective-date">
+                Effective date: {{ effectiveDate }} · Last updated {{ currentYear }}
+              </p>
             </header>
 
-            <section id="acceptance" class="legal-section">
-              <h2>1. Acceptance of Terms</h2>
-              <p>
-                By creating an account, browsing, or using AutiCare, you agree to these Terms of
-                Service. AutiCare is an educational and organizational coordination tool designed
-                for neurodiverse families, special education institutions, and healthcare providers.
-              </p>
-            </section>
+            <p class="legal-intro">
+              Welcome to AutiCare! By creating an account or using our platform, you agree to the
+              following terms.
+            </p>
 
-            <section id="disclaimer" class="legal-section">
-              <h2>2. Medical and Diagnostic Disclaimer</h2>
-              <div class="notice-callout warning">
-                <div class="callout-indicator">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-                    ></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                </div>
-                <div class="callout-body">
-                  <p class="callout">
-                    <strong
-                      >AutiCare is not a medical provider and does not give medical advice:</strong
-                    >
-                    The AutiCare autism screening questionnaires, risk band categorizations (Low,
-                    Moderate, High), and activity recommendations are original heuristic indicators
-                    provided for educational and organizational purposes only. They do not
-                    constitute clinical diagnoses, psychological evaluations, medical assessments,
-                    or treatment plans.
-                  </p>
-                </div>
-              </div>
-              <p>
-                Always consult a licensed pediatrician, developmental psychologist, or qualified
-                healthcare clinician for any formal developmental evaluation or medical care. In an
-                emergency or acute distress, contact emergency services immediately.
-              </p>
-            </section>
-
-            <section id="accounts" class="legal-section">
-              <h2>3. User Accounts and Accurate Context</h2>
-              <p>
-                You agree to provide accurate information upon registration and to maintain the
-                security of your login credentials. You are responsible for all activities that
-                occur under your account. AutiCare provides role-based access controls separating
-                parent accounts, school accounts, and hospital accounts.
-              </p>
-            </section>
-
-            <section id="requests" class="legal-section">
-              <h2>4. Appointments and School Enrollments</h2>
-              <p>
-                AutiCare facilitates appointment requests with listed specialists and
-                admission/enrollment requests with listed schools. Submitting a request creates an
-                entry on the platform; it does not guarantee immediate acceptance, admission, or
-                scheduled confirmation by the receiving institution. All service provisions,
-                tuitions, and medical consultations are arranged directly between you and the
-                respective institution.
-              </p>
-            </section>
-
-            <section id="availability" class="legal-section">
-              <h2>5. Service Availability and Termination</h2>
-              <p>
-                We strive for high reliability but provide AutiCare on an "as is" and "as available"
-                basis without warranties of any kind. You may discontinue use at any time. For
-                support inquiries or account assistance, contact
-                <a href="mailto:support@auticare.local">support&#64;auticare.local</a>.
-              </p>
-            </section>
+            <ac-legal-sections [sections]="sections" />
+            <p class="legal-tagline">
+              AutiCare — Every Child Deserves Understanding, Support, and Opportunity.
+            </p>
           </article>
         </div>
       </main>
@@ -166,7 +99,7 @@ import { RouterLink } from '@angular/router';
         <p>&copy; {{ currentYear }} AutiCare. All rights reserved.</p>
         <div class="footer-links">
           <a routerLink="/privacy">Privacy Policy</a>
-          <a routerLink="/terms">Terms of Service</a>
+          <a routerLink="/terms">Terms of Use</a>
           <a routerLink="/support">Help Center</a>
         </div>
       </footer>
@@ -271,7 +204,7 @@ import { RouterLink } from '@angular/router';
         border: 1px solid var(--ac-color-border);
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 4px 16px rgb(0 30 43 / 0.04);
+        box-shadow: 0 4px 16px color-mix(in srgb, var(--ac-brand-950) 4%, transparent);
       }
 
       .toc-header {
@@ -366,7 +299,7 @@ import { RouterLink } from '@angular/router';
         border: 1px solid var(--ac-color-border);
         border-radius: 20px;
         padding: 48px 56px;
-        box-shadow: 0 4px 20px rgb(0 30 43 / 0.04);
+        box-shadow: 0 4px 20px color-mix(in srgb, var(--ac-brand-950) 4%, transparent);
         max-width: 72ch;
       }
 
@@ -513,6 +446,21 @@ import { RouterLink } from '@angular/router';
         text-decoration: underline;
       }
 
+      .legal-intro {
+        font-size: 17px;
+        line-height: 1.7;
+        color: var(--ac-color-text-body);
+        margin: 0 0 32px;
+      }
+
+      .legal-tagline {
+        margin: 40px 0 0;
+        padding-top: 24px;
+        border-top: 1px solid var(--ac-color-border);
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-action-deep);
+        text-align: center;
+      }
       @media (max-width: 860px) {
         .legal-layout {
           grid-template-columns: 1fr;
@@ -542,4 +490,10 @@ import { RouterLink } from '@angular/router';
 })
 export class TermsPage {
   readonly currentYear = new Date().getFullYear();
+  readonly effectiveDate = TERMS_EFFECTIVE_DATE;
+  readonly sections = TERMS_SECTIONS;
+  readonly toc = TERMS_SECTIONS.map((section) => ({
+    id: section.id,
+    label: section.title.replace(/^Article /, ''),
+  }));
 }

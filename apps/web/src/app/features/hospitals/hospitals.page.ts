@@ -348,7 +348,7 @@ const SERVICE_FILTER_OPTIONS = [
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgb(15 23 42 / 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
       }
       .search-icon {
         font-size: 15px;
@@ -380,7 +380,7 @@ const SERVICE_FILTER_OPTIONS = [
         display: flex;
         flex-direction: column;
         gap: 18px;
-        box-shadow: 0 2px 8px rgb(15 23 42 / 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         position: sticky;
         top: 16px;
       }
@@ -485,7 +485,7 @@ const SERVICE_FILTER_OPTIONS = [
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgb(15 23 42 / 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
       }
       .results-count {
         font-size: 14px;
@@ -537,11 +537,11 @@ const SERVICE_FILTER_OPTIONS = [
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-tint-steel-soft);
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgb(15 23 42 / 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         transition: box-shadow 0.2s;
       }
       .hospital-card:hover {
-        box-shadow: 0 6px 18px rgb(15 23 42 / 0.08);
+        box-shadow: 0 6px 18px color-mix(in srgb, var(--ac-color-shadow) 8%, transparent);
       }
       .hospital-image-wrapper {
         flex-shrink: 0;
@@ -604,8 +604,8 @@ const SERVICE_FILTER_OPTIONS = [
       }
       .service-tag {
         padding: 4px 10px;
-        background: var(--ac-color-blue-100);
-        color: var(--ac-color-blue-600);
+        background: var(--ac-brand-50);
+        color: var(--ac-brand-700);
         border-radius: 6px;
         font-size: 12px;
         font-weight: 600;
@@ -640,7 +640,7 @@ const SERVICE_FILTER_OPTIONS = [
         border: 1px solid var(--ac-color-border);
         border-radius: 12px;
         background: var(--ac-color-surface);
-        box-shadow: 0 8px 30px rgb(41 74 90 / 0.06);
+        box-shadow: 0 8px 30px color-mix(in srgb, var(--ac-brand-800) 6%, transparent);
         padding: 24px;
       }
       .admin-panel header {
@@ -685,7 +685,7 @@ const SERVICE_FILTER_OPTIONS = [
       .field input:focus,
       .field textarea:focus {
         border-color: var(--ac-color-action);
-        box-shadow: 0 0 0 4px rgb(61 99 117 / 0.12);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac-brand-500) 12%, transparent);
         outline: none;
       }
       .admin-panel button[type='submit'] {

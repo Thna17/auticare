@@ -923,7 +923,7 @@ export const roleConfigs: Record<string, RoleSettingsContext> = getRoleConfigs(f
         border-radius: 16px;
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
-        box-shadow: 0 4px 20px rgb(0 30 43 / 0.04);
+        box-shadow: 0 4px 20px color-mix(in srgb, var(--ac-brand-950) 4%, transparent);
         padding: 28px 32px;
         display: flex;
         align-items: center;
@@ -950,7 +950,7 @@ export const roleConfigs: Record<string, RoleSettingsContext> = getRoleConfigs(f
         font-size: 26px;
         font-weight: var(--ac-font-weight-bold);
         flex: 0 0 auto;
-        box-shadow: 0 2px 8px rgb(0 30 43 / 0.06);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-brand-950) 6%, transparent);
       }
 
       h1,
@@ -1011,7 +1011,7 @@ export const roleConfigs: Record<string, RoleSettingsContext> = getRoleConfigs(f
         border: 1px solid var(--ac-color-border);
         border-radius: 14px;
         background: var(--ac-color-surface);
-        box-shadow: 0 2px 10px rgb(0 30 43 / 0.03);
+        box-shadow: 0 2px 10px color-mix(in srgb, var(--ac-brand-950) 3%, transparent);
         padding: 18px 20px;
         display: grid;
         gap: 6px;
@@ -1052,7 +1052,7 @@ export const roleConfigs: Record<string, RoleSettingsContext> = getRoleConfigs(f
         border: 1px solid var(--ac-color-border);
         border-radius: 18px;
         background: var(--ac-color-surface);
-        box-shadow: 0 4px 18px rgb(0 30 43 / 0.04);
+        box-shadow: 0 4px 18px color-mix(in srgb, var(--ac-brand-950) 4%, transparent);
         padding: 28px;
         display: grid;
         gap: 22px;
@@ -1273,7 +1273,7 @@ export const roleConfigs: Record<string, RoleSettingsContext> = getRoleConfigs(f
       .scale-chip.active {
         border-color: var(--ac-color-action);
         background: var(--ac-color-surface-info);
-        box-shadow: 0 2px 8px rgb(0 30 43 / 0.06);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-brand-950) 6%, transparent);
       }
 
       .chip-sample {

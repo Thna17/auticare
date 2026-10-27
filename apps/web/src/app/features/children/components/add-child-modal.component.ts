@@ -179,7 +179,7 @@ import type { ChildResponse } from '@auticare/contracts';
       textarea:focus {
         outline: none;
         border-color: var(--ac-color-action-deep);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac-color-focus) 15%, transparent);
       }
 
       .modal-actions {
@@ -205,7 +205,7 @@ import type { ChildResponse } from '@auticare/contracts';
       .primary-button {
         padding: 9px 20px;
         background: var(--ac-color-action-deep);
-        color: white;
+        color: var(--ac-color-text-on-action);
         border: none;
         border-radius: var(--ac-radius-md);
         font-weight: 600;

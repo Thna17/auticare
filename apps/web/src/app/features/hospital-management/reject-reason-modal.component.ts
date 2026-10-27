@@ -111,7 +111,7 @@ const presetReasons = [
         border-radius: var(--ac-radius-md);
         padding: 0 var(--ac-space-4);
         background: var(--ac-color-red-700);
-        color: white;
+        color: var(--ac-color-text-on-action);
         font-weight: var(--ac-font-weight-semibold);
         cursor: pointer;
       }

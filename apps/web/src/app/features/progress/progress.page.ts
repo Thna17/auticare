@@ -1922,7 +1922,7 @@ const METRIC_DEFS: MetricDef[] = [
 
       .tab-btn:hover {
         color: var(--ac-color-text-strong);
-        background: rgb(255 255 255 / 0.6);
+        background: color-mix(in srgb, var(--ac-color-white) 60%, transparent);
       }
 
       .tab-btn.active {
@@ -1930,7 +1930,7 @@ const METRIC_DEFS: MetricDef[] = [
         color: var(--ac-color-action-alt);
         font-weight: 700;
         box-shadow:
-          0 1px 2px rgb(16 48 59 / 0.08),
+          0 1px 2px color-mix(in srgb, var(--ac-brand-900) 8%, transparent),
           0 0 0 1px var(--ac-color-border-slate);
       }
 
@@ -2011,7 +2011,7 @@ const METRIC_DEFS: MetricDef[] = [
         font-weight: 700;
         white-space: nowrap;
         border: 1px solid var(--ac-color-border-slate);
-        background: white;
+        background: var(--ac-color-surface);
         color: var(--ac-color-slate-800);
         cursor: pointer;
         transition: all var(--ac-motion-fast, 150ms) ease;
@@ -2035,7 +2035,7 @@ const METRIC_DEFS: MetricDef[] = [
         font-weight: 700;
         white-space: nowrap;
         border: 1px solid var(--ac-color-border-slate);
-        background: white;
+        background: var(--ac-color-surface);
         color: var(--ac-color-action-alt);
         cursor: pointer;
         transition: all var(--ac-motion-fast, 150ms) ease;
@@ -2072,7 +2072,7 @@ const METRIC_DEFS: MetricDef[] = [
 
       .domain-counter-card {
         padding: 18px 20px;
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
         display: flex;
@@ -2135,7 +2135,7 @@ const METRIC_DEFS: MetricDef[] = [
         font-weight: 700;
         white-space: nowrap;
         background: var(--ac-color-action-alt);
-        color: white;
+        color: var(--ac-color-text-on-action);
         text-decoration: none;
         cursor: pointer;
         border: none;
@@ -2157,7 +2157,7 @@ const METRIC_DEFS: MetricDef[] = [
         font-size: 14px;
         font-weight: 700;
         white-space: nowrap;
-        background: white;
+        background: var(--ac-color-surface);
         color: var(--ac-color-action-alt);
         border: 1px solid var(--ac-color-action-alt);
         cursor: pointer;
@@ -2182,14 +2182,17 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .metric-card {
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
         padding: 20px 22px;
         display: flex;
         flex-direction: column;
         gap: 8px;
-        box-shadow: var(--ac-shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.04));
+        box-shadow: var(
+          --ac-shadow-xs,
+          0 1px 2px color-mix(in srgb, var(--ac-color-black) 4%, transparent)
+        );
       }
 
       .metric-card-header {
@@ -2242,7 +2245,7 @@ const METRIC_DEFS: MetricDef[] = [
 
       /* Milestones Filter Toolbar */
       .milestone-filter-toolbar {
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
         padding: 14px 18px;
@@ -2250,7 +2253,10 @@ const METRIC_DEFS: MetricDef[] = [
         align-items: center;
         gap: 14px;
         flex-wrap: wrap;
-        box-shadow: var(--ac-shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.04));
+        box-shadow: var(
+          --ac-shadow-xs,
+          0 1px 2px color-mix(in srgb, var(--ac-color-black) 4%, transparent)
+        );
       }
 
       .search-input-wrapper {
@@ -2294,7 +2300,7 @@ const METRIC_DEFS: MetricDef[] = [
 
       .search-input:focus {
         border-color: var(--ac-color-action-alt);
-        background: white;
+        background: var(--ac-color-surface);
       }
 
       .clear-search-btn {
@@ -2320,7 +2326,7 @@ const METRIC_DEFS: MetricDef[] = [
         padding: 6px 12px;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-pill, 999px);
-        background: white;
+        background: var(--ac-color-surface);
         font-size: 12px;
         font-weight: 600;
         color: var(--ac-color-slate-600);
@@ -2335,7 +2341,7 @@ const METRIC_DEFS: MetricDef[] = [
 
       .domain-pill-btn.active {
         background: var(--ac-color-action-alt);
-        color: white;
+        color: var(--ac-color-text-on-action);
         border-color: var(--ac-color-action-alt);
       }
 
@@ -2355,14 +2361,17 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .milestone-card {
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
         padding: 18px;
         display: flex;
         flex-direction: column;
         gap: 12px;
-        box-shadow: var(--ac-shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.04));
+        box-shadow: var(
+          --ac-shadow-xs,
+          0 1px 2px color-mix(in srgb, var(--ac-color-black) 4%, transparent)
+        );
         transition:
           transform var(--ac-motion-fast, 150ms) ease,
           box-shadow var(--ac-motion-fast, 150ms) ease;
@@ -2370,7 +2379,10 @@ const METRIC_DEFS: MetricDef[] = [
 
       .milestone-card:hover {
         transform: translateY(-2px);
-        box-shadow: var(--ac-shadow-sm, 0 4px 6px rgba(0, 0, 0, 0.06));
+        box-shadow: var(
+          --ac-shadow-sm,
+          0 4px 6px color-mix(in srgb, var(--ac-color-black) 6%, transparent)
+        );
       }
 
       .milestone-card-top {
@@ -2546,14 +2558,17 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .overview-card {
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
         padding: 20px 22px;
         display: flex;
         flex-direction: column;
         gap: 8px;
-        box-shadow: var(--ac-shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.04));
+        box-shadow: var(
+          --ac-shadow-xs,
+          0 1px 2px color-mix(in srgb, var(--ac-color-black) 4%, transparent)
+        );
       }
 
       .overview-card-header {
@@ -2589,11 +2604,14 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .trajectory-section {
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
         padding: 24px 26px;
-        box-shadow: var(--ac-shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.04));
+        box-shadow: var(
+          --ac-shadow-xs,
+          0 1px 2px color-mix(in srgb, var(--ac-color-black) 4%, transparent)
+        );
       }
 
       .section-header-row {
@@ -2898,7 +2916,7 @@ const METRIC_DEFS: MetricDef[] = [
       .chronological-reports-bar {
         margin-bottom: 20px;
         padding: 14px 16px;
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-md, 12px);
         box-shadow: var(--ac-shadow-xs);
@@ -2947,7 +2965,7 @@ const METRIC_DEFS: MetricDef[] = [
         width: 28px;
         height: 28px;
         border-radius: 50%;
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-grey);
         color: var(--ac-color-action-alt);
         display: flex;
@@ -2979,7 +2997,7 @@ const METRIC_DEFS: MetricDef[] = [
         font-weight: 600;
         padding: 2px 8px;
         border-radius: var(--ac-radius-pill, 999px);
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         color: var(--ac-color-action-alt);
       }
@@ -3045,7 +3063,7 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .report-card {
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-slate-border-dim, var(--ac-color-border-slate));
         border-radius: var(--ac-radius-lg, 16px);
         padding: 22px;
@@ -3241,7 +3259,7 @@ const METRIC_DEFS: MetricDef[] = [
 
       .btn-primary {
         background: var(--ac-color-action-alt);
-        color: white;
+        color: var(--ac-color-text-on-action);
       }
 
       .btn-primary:hover {
@@ -3249,7 +3267,7 @@ const METRIC_DEFS: MetricDef[] = [
       }
 
       .btn-secondary {
-        background: white;
+        background: var(--ac-color-surface);
         color: var(--ac-color-action-alt);
         border: 1px solid var(--ac-color-action-alt);
       }
@@ -3267,7 +3285,7 @@ const METRIC_DEFS: MetricDef[] = [
       .empty-box {
         text-align: center;
         padding: 32px 16px;
-        background: white;
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: var(--ac-radius-lg, 16px);
         display: flex;
@@ -3360,8 +3378,8 @@ const METRIC_DEFS: MetricDef[] = [
         body,
         .page-layout,
         .main-content {
-          background: white !important;
-          color: black !important;
+          background: var(--ac-color-surface) !important;
+          color: var(--ac-color-black) !important;
           padding: 0 !important;
           margin: 0 !important;
           min-height: auto !important;
@@ -3451,7 +3469,7 @@ const METRIC_DEFS: MetricDef[] = [
         .overview-card,
         .metric-card {
           border: 1px solid var(--ac-color-slate-line-mist) !important;
-          background: white !important;
+          background: var(--ac-color-surface) !important;
           box-shadow: none !important;
           padding: 10px !important;
         }
