@@ -32,6 +32,7 @@ describe('AdminSchoolsPage', () => {
         updatedAt: '2026-01-01T00:00:00.000Z',
       },
       staff: {
+        role: 'ADMIN',
         id: 'staff-1',
         parentId: 'parent-1',
         schoolId: 'school-1',
@@ -68,6 +69,7 @@ describe('AdminSchoolsPage', () => {
         updatedAt: '2026-01-01T00:00:00.000Z',
       },
       staff: {
+        role: 'ADMIN',
         id: 'staff-2',
         parentId: 'parent-2',
         schoolId: 'school-2',

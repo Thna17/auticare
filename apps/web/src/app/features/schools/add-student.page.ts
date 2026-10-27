@@ -164,7 +164,7 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
         padding: 20px;
-        background: white;
+        background: var(--ac-color-surface);
       }
 
       legend {
@@ -196,7 +196,7 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
       textarea:focus {
         outline: none;
         border-color: var(--ac-color-action-alt);
-        box-shadow: 0 0 0 3px rgba(45, 106, 122, 0.1);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac-brand-500) 10%, transparent);
       }
 
       .form-row {
@@ -238,7 +238,7 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
         border: 0;
         border-radius: 10px;
         background: var(--ac-color-action-alt);
-        color: white;
+        color: var(--ac-color-text-on-action);
         padding: 12px 24px;
         font-weight: 700;
         font-size: 14px;
@@ -260,7 +260,7 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
         align-items: center;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 10px;
-        background: white;
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-slate);
         padding: 12px 24px;
         font-weight: 600;

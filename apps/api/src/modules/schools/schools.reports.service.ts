@@ -14,6 +14,7 @@ import {
   type StorageReadResult,
 } from '../storage/storage.driver.js';
 import { SchoolsRepository } from './schools.repository.js';
+import { canSeeChild, resolveStaffScope } from './schools.scope.js';
 import { toActivityReportResponse } from './schools.mapper.js';
 import { prisma } from '../../database/prisma.js';
 
@@ -100,6 +101,9 @@ export class SchoolsReportsService {
   async createReport(actor: Actor, input: CreateActivityReportRequest) {
     if (actor.role !== 'SCHOOL') throw forbidden();
     const staff = await this.requireSchoolStaff(actor);
+
+    // A teacher writes reports only for the children assigned to them.
+    if (!canSeeChild(await resolveStaffScope(staff), input.childId)) throw forbidden();
 
     // Verify the child is actively enrolled in this school.
     const enrollment = await this.repository.findReportableEnrollment({
@@ -234,10 +238,12 @@ export class SchoolsReportsService {
 
     // SCHOOL role — scoped to the staff member's school, with child/reporter info.
     const staff = await this.requireSchoolStaff(actor);
+    const scope = await resolveStaffScope(staff);
     const { items, total } = await this.repository.listReportsForSchoolWithRelations(
       staff.schoolId,
       filters,
       page,
+      scope.childIds,
     );
     return {
       reports: items.map((r) => ({
@@ -262,6 +268,8 @@ export class SchoolsReportsService {
     if (!report || report.schoolId !== staff.schoolId) {
       throw notFound('Activity report was not found.');
     }
+    // A teacher may delete only their own reports; the school admin, any.
+    if (staff.role !== 'ADMIN' && report.reporterId !== actor.parentId) throw forbidden();
 
     // Delete stored files associated with this report
     const urls = Array.isArray(report.photoUrls) ? (report.photoUrls as unknown[]) : [];
@@ -285,9 +293,16 @@ export class SchoolsReportsService {
     if (actor.role === 'SCHOOL') {
       const staff = await this.requireSchoolStaff(actor);
       if (staff.schoolId !== report.schoolId) throw notFound('Activity report was not found.');
+      if (!canSeeChild(await resolveStaffScope(staff), report.childId)) {
+        throw notFound('Activity report was not found.');
+      }
     }
 
-    if (actor.role === 'PARENT' && report.child.parentId !== actor.parentId) {
+    // Parents see their own child's reports, and only once submitted.
+    if (
+      actor.role === 'PARENT' &&
+      (report.child.parentId !== actor.parentId || report.status !== 'SUBMITTED')
+    ) {
       throw notFound('Activity report was not found.');
     }
 

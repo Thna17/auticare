@@ -9,8 +9,11 @@ import type {
   EnrolledStudent,
   LeadSpecialistResponse,
   SchoolChildEnrollmentStatus,
+  SchoolStaffMember,
 } from '@auticare/contracts';
 import { SchoolsApi } from './data-access/schools.api';
+import { SchoolTeamApi } from './data-access/school-team.api';
+import { SchoolStaffState } from './data-access/school-staff.state';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
@@ -32,6 +35,9 @@ export interface EnrollmentViewModel {
   status: 'Active' | 'Graduated' | 'Pending' | 'Rejected';
   rawStatus: 'ACTIVE' | 'GRADUATED' | 'PENDING' | 'REJECTED';
   leadSpecialist: string;
+  /** Teachers assigned to this child (SchoolStaff ids and display names). */
+  teacherIds?: string[];
+  teacherNames?: string;
   communicationProgress: number;
   startDate: string;
   age: string;
@@ -69,10 +75,14 @@ export interface EnrollmentViewModel {
         </p>
       </div>
       <div class="header-actions">
-        <a class="btn-primary" routerLink="/schools/students/add">
-          <span class="btn-icon">👤+</span>
-          <span>Add New Student</span>
-        </a>
+        <!-- Changing who is enrolled is the school admin's job. -->
+        @if (isSchoolAdmin()) {
+          <a class="btn-secondary-link" routerLink="/schools/connect">Family codes</a>
+          <a class="btn-primary" routerLink="/schools/students/add">
+            <span class="btn-icon">👤+</span>
+            <span>Add New Student</span>
+          </a>
+        }
       </div>
     </section>
 
@@ -290,7 +300,7 @@ export interface EnrollmentViewModel {
                   <td>
                     <div class="specialist-cell">
                       <span class="specialist-icon">🩺</span>
-                      <span>{{ enrollment.leadSpecialist }}</span>
+                      <span>{{ enrollment.teacherNames || enrollment.leadSpecialist }}</span>
                     </div>
                   </td>
                   <td>
@@ -315,56 +325,60 @@ export interface EnrollmentViewModel {
                   </td>
                   <td>
                     <div class="actions-cell">
-                      <!-- Admission Review Quick Actions for Pending -->
-                      @if (enrollment.rawStatus === 'PENDING') {
-                        <button
-                          type="button"
-                          class="btn-admission-review"
-                          (click)="openAdmissionReview(enrollment)"
-                          title="Review student application"
-                          aria-label="Review student application"
-                        >
-                          📋 Review
-                        </button>
-                        <button
-                          type="button"
-                          class="btn-admission-accept"
-                          (click)="acceptEnrollment(enrollment)"
-                          title="Accept student application"
-                          aria-label="Accept student application"
-                        >
-                          ✓ Accept
-                        </button>
-                        <button
-                          type="button"
-                          class="btn-admission-decline"
-                          (click)="declineEnrollment(enrollment)"
-                          title="Decline student application"
-                          aria-label="Decline student application"
-                        >
-                          ✕ Decline
-                        </button>
-                      }
+                      @if (isSchoolAdmin()) {
+                        <!-- Admission Review Quick Actions for Pending -->
+                        @if (enrollment.rawStatus === 'PENDING') {
+                          <button
+                            type="button"
+                            class="btn-admission-review"
+                            (click)="openAdmissionReview(enrollment)"
+                            title="Review student application"
+                            aria-label="Review student application"
+                          >
+                            📋 Review
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-admission-accept"
+                            (click)="acceptEnrollment(enrollment)"
+                            title="Accept student application"
+                            aria-label="Accept student application"
+                          >
+                            ✓ Accept
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-admission-decline"
+                            (click)="declineEnrollment(enrollment)"
+                            title="Decline student application"
+                            aria-label="Decline student application"
+                          >
+                            ✕ Decline
+                          </button>
+                        }
 
-                      <button
-                        class="action-btn edit"
-                        type="button"
-                        (click)="openEditDialog(enrollment)"
-                        aria-label="Edit student"
-                        title="Edit profile & assignment"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        class="action-btn delete"
-                        type="button"
-                        (click)="openDeleteDialog(enrollment)"
-                        aria-label="Remove student"
-                        title="End enrollment"
-                        [disabled]="deleting()"
-                      >
-                        🗑️
-                      </button>
+                        <button
+                          class="action-btn edit"
+                          type="button"
+                          (click)="openEditDialog(enrollment)"
+                          aria-label="Edit student"
+                          title="Edit profile & assignment"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          class="action-btn delete"
+                          type="button"
+                          (click)="openDeleteDialog(enrollment)"
+                          aria-label="Remove student"
+                          title="End enrollment"
+                          [disabled]="deleting()"
+                        >
+                          🗑️
+                        </button>
+                      } @else {
+                        <span class="view-only">View only</span>
+                      }
                     </div>
                   </td>
                 </tr>
@@ -420,7 +434,9 @@ export interface EnrollmentViewModel {
               <div class="card-meta-grid">
                 <div class="card-meta-item">
                   <span class="meta-label">Lead Specialist</span>
-                  <span class="meta-val">🩺 {{ enrollment.leadSpecialist }}</span>
+                  <span class="meta-val"
+                    >🩺 {{ enrollment.teacherNames || enrollment.leadSpecialist }}</span
+                  >
                 </div>
                 <div class="card-meta-item">
                   <span class="meta-label">Enrolled Since</span>
@@ -444,44 +460,50 @@ export interface EnrollmentViewModel {
 
               <!-- Card Action Buttons -->
               <div class="card-footer">
-                @if (enrollment.rawStatus === 'PENDING') {
-                  <div class="card-admission-btns">
+                @if (isSchoolAdmin()) {
+                  @if (enrollment.rawStatus === 'PENDING') {
+                    <div class="card-admission-btns">
+                      <button
+                        type="button"
+                        class="btn-admission-review-full"
+                        (click)="openAdmissionReview(enrollment)"
+                      >
+                        📋 Review Application
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-admission-accept-full"
+                        (click)="acceptEnrollment(enrollment)"
+                      >
+                        ✓ Accept Admission
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-admission-decline-full"
+                        (click)="declineEnrollment(enrollment)"
+                      >
+                        ✕ Decline
+                      </button>
+                    </div>
+                  }
+                  <div class="card-standard-actions">
                     <button
+                      class="btn-card-edit"
                       type="button"
-                      class="btn-admission-review-full"
-                      (click)="openAdmissionReview(enrollment)"
+                      (click)="openEditDialog(enrollment)"
                     >
-                      📋 Review Application
+                      ✏️ Edit Details
                     </button>
                     <button
+                      class="btn-card-delete"
                       type="button"
-                      class="btn-admission-accept-full"
-                      (click)="acceptEnrollment(enrollment)"
+                      (click)="openDeleteDialog(enrollment)"
+                      [disabled]="deleting()"
                     >
-                      ✓ Accept Admission
-                    </button>
-                    <button
-                      type="button"
-                      class="btn-admission-decline-full"
-                      (click)="declineEnrollment(enrollment)"
-                    >
-                      ✕ Decline
+                      🗑️ Remove
                     </button>
                   </div>
                 }
-                <div class="card-standard-actions">
-                  <button class="btn-card-edit" type="button" (click)="openEditDialog(enrollment)">
-                    ✏️ Edit Details
-                  </button>
-                  <button
-                    class="btn-card-delete"
-                    type="button"
-                    (click)="openDeleteDialog(enrollment)"
-                    [disabled]="deleting()"
-                  >
-                    🗑️ Remove
-                  </button>
-                </div>
               </div>
             </article>
           }
@@ -568,6 +590,33 @@ export interface EnrollmentViewModel {
             </select>
           </label>
         </div>
+
+        @if (teamTeachers().length > 0) {
+          <fieldset class="teacher-picks">
+            <legend class="dialog-label">Teachers working with this child</legend>
+            <div class="teacher-checks">
+              @for (member of teamTeachers(); track member.id) {
+                <label class="teacher-check">
+                  <input
+                    type="checkbox"
+                    [checked]="editTeacherIds().includes(member.id)"
+                    (change)="toggleEditTeacher(member.id, $any($event.target).checked)"
+                  />
+                  <span>
+                    {{ member.firstName }} {{ member.lastName }}
+                    @if (member.title) {
+                      <small>· {{ member.title }}</small>
+                    }
+                  </span>
+                </label>
+              }
+            </div>
+            <small class="teacher-hint">
+              A teacher sees only the children they are assigned to, and the family sees who their
+              child's teachers are.
+            </small>
+          </fieldset>
+        }
 
         <label class="dialog-field">
           <span class="dialog-label">Clinical care notes (shared with guardian)</span>
@@ -829,7 +878,7 @@ export interface EnrollmentViewModel {
         padding: 18px 20px;
         border-radius: 14px;
         border: 1px solid var(--ac-color-border-slate);
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -923,7 +972,7 @@ export interface EnrollmentViewModel {
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         margin-bottom: 24px;
         gap: 16px;
         flex-wrap: wrap;
@@ -1040,7 +1089,7 @@ export interface EnrollmentViewModel {
       .view-toggle-btn.active {
         background: var(--ac-color-surface);
         color: var(--ac-color-action-alt);
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--ac-color-shadow) 8%, transparent);
       }
 
       .icon-action-btn {
@@ -1068,7 +1117,7 @@ export interface EnrollmentViewModel {
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 14px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         overflow: hidden;
       }
 
@@ -1382,7 +1431,7 @@ export interface EnrollmentViewModel {
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 14px;
         padding: 18px 20px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         display: flex;
         flex-direction: column;
         gap: 14px;
@@ -1390,7 +1439,7 @@ export interface EnrollmentViewModel {
       }
 
       .roster-card:hover {
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+        box-shadow: 0 6px 16px color-mix(in srgb, var(--ac-color-shadow) 7%, transparent);
       }
 
       .roster-card.pending-card {
@@ -1863,7 +1912,7 @@ export interface EnrollmentViewModel {
         border-radius: 10px;
         font-size: 14px;
         font-weight: 600;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+        box-shadow: 0 8px 24px color-mix(in srgb, var(--ac-color-shadow) 25%, transparent);
         z-index: 110;
       }
 
@@ -1887,13 +1936,76 @@ export interface EnrollmentViewModel {
           justify-content: space-between;
         }
       }
+
+      .btn-secondary-link {
+        display: inline-flex;
+        align-items: center;
+        height: 44px;
+        padding: 0 18px;
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 12px;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-deep);
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+      }
+
+      .btn-secondary-link:hover {
+        border-color: var(--ac-color-action-mid);
+        background: var(--ac-color-surface-slate);
+      }
+
+      .view-only {
+        font-size: 12px;
+        color: var(--ac-color-text-muted);
+      }
+
+      .teacher-picks {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .teacher-checks {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 6px;
+      }
+
+      .teacher-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 10px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .teacher-check small {
+        color: var(--ac-color-text-muted);
+      }
+
+      .teacher-hint {
+        font-size: 12px;
+        color: var(--ac-color-text-muted);
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SchoolEnrollmentsPage implements OnInit, OnDestroy {
   private readonly api = inject(SchoolsApi);
+  private readonly teamApi = inject(SchoolTeamApi);
   private readonly destroy$ = new Subject<void>();
+  /** Teachers can view the roster; only the school admin changes it. */
+  readonly isSchoolAdmin = inject(SchoolStaffState).isSchoolAdmin;
+  readonly teamTeachers = signal<SchoolStaffMember[]>([]);
+  readonly editTeacherIds = signal<string[]>([]);
   readonly enrollments = signal<EnrollmentViewModel[]>([]);
   readonly stats = signal<EnrollmentStatsResponse | null>(null);
   readonly specialists = signal<LeadSpecialistResponse[]>([]);
@@ -1940,6 +2052,16 @@ export class SchoolEnrollmentsPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loading.set(true);
+    // Everyone who can be assigned; a teacher's request is refused and just
+    // leaves the picker empty, which is fine since they cannot edit anyway.
+    this.teamApi
+      .listStaff()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (staff) =>
+          this.teamTeachers.set(staff.filter((member) => member.status !== 'DEACTIVATED')),
+        error: () => this.teamTeachers.set([]),
+      });
     // Load stats and specialists in parallel
     forkJoin({
       stats: this.api.getEnrollmentStats(),
@@ -2173,6 +2295,13 @@ export class SchoolEnrollmentsPage implements OnInit, OnDestroy {
     this.editNotes.set('');
     this.editStatus.set(enrollment.rawStatus);
     this.editSpecialistId.set('');
+    this.editTeacherIds.set([...(enrollment.teacherIds ?? [])]);
+  }
+
+  toggleEditTeacher(staffId: string, checked: boolean) {
+    this.editTeacherIds.update((ids) =>
+      checked ? [...new Set([...ids, staffId])] : ids.filter((id) => id !== staffId),
+    );
   }
 
   closeEditDialog() {
@@ -2215,10 +2344,33 @@ export class SchoolEnrollmentsPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (updated) => {
-          this.savingEdit.set(false);
-          this.closeEditDialog();
-          this.showToast(`${updated.childFirstName}'s profile was updated.`);
-          this.refreshAfterMutation();
+          const done = () => {
+            this.savingEdit.set(false);
+            this.closeEditDialog();
+            this.showToast(`${updated.childFirstName}'s profile was updated.`);
+            this.refreshAfterMutation();
+          };
+          const before = [...(student.teacherIds ?? [])].sort().join(',');
+          const after = [...this.editTeacherIds()].sort().join(',');
+          if (before === after) {
+            done();
+            return;
+          }
+          // Assignment is saved after the profile, so a failure here leaves
+          // the profile change in place and says so.
+          this.teamApi
+            .assignTeachers(student.childId, { staffIds: this.editTeacherIds() })
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: done,
+              error: (err) => {
+                this.savingEdit.set(false);
+                this.editError.set(
+                  err?.error?.error?.message ??
+                    'The profile was saved, but the teachers could not be updated.',
+                );
+              },
+            });
         },
         error: (err) => {
           this.savingEdit.set(false);
@@ -2361,6 +2513,10 @@ export class SchoolEnrollmentsPage implements OnInit, OnDestroy {
       status: statusMap[rawStatus] ?? 'Pending',
       rawStatus,
       leadSpecialist: specialistName,
+      teacherIds: (student.teachers ?? []).map((teacher) => teacher.id),
+      teacherNames: (student.teachers ?? [])
+        .map((teacher) => `${teacher.firstName} ${teacher.lastName}`.trim())
+        .join(', '),
       communicationProgress: student.communicationProgress ?? 0,
       startDate: student.startDate ?? '2026-09-01',
       age,

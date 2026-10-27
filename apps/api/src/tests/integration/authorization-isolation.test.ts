@@ -107,6 +107,7 @@ beforeAll(async () => {
 
   await prisma.schoolStaff.create({
     data: {
+      role: 'ADMIN',
       schoolId: school.id,
       parentId: schoolUser.id,
       title: 'Head of Special Ed',

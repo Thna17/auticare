@@ -644,7 +644,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         transition: background 0.15s;
       }
       .btn-clear-search:hover {
-        background: rgba(0, 0, 0, 0.05);
+        background: color-mix(in srgb, var(--ac-color-black) 5%, transparent);
       }
       .btn-clear-search-pill {
         display: inline-flex;
@@ -689,7 +689,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 14px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 2px 4px color-mix(in srgb, var(--ac-color-black) 4%, transparent);
         overflow: hidden;
         transition:
           box-shadow 0.15s ease,
@@ -699,7 +699,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         margin-bottom: 16px;
       }
       .report-card:hover {
-        box-shadow: 0 6px 18px rgba(16, 48, 59, 0.08);
+        box-shadow: 0 6px 18px color-mix(in srgb, var(--ac-brand-900) 8%, transparent);
       }
       .report-card-main {
         display: grid;
@@ -919,7 +919,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         font-size: 13.5px;
         line-height: 1.55;
         white-space: pre-wrap;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--ac-color-black) 3%, transparent);
       }
 
       .recommendations-box {

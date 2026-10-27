@@ -34,6 +34,7 @@ import { schoolsReportsRoutes } from './schools.reports.routes.js';
 import { schoolsNotificationsRoutes } from './schools.notifications.routes.js';
 import { schoolsDashboardRoutes } from './schools.dashboard.routes.js';
 import { schoolsEnrollmentsRoutes } from './schools.enrollments.routes.js';
+import { schoolsTeamRoutes } from './schools.team.routes.js';
 import {
   uploadMiddleware,
   uploadPhotosMiddleware,
@@ -82,6 +83,9 @@ schoolsRoutes.use(schoolsDashboardRoutes);
 
 // School enrollments (stats, student list, specialists).
 schoolsRoutes.use(schoolsEnrollmentsRoutes);
+
+// Staff accounts, teacher assignment and family connection codes.
+schoolsRoutes.use(schoolsTeamRoutes);
 
 // Admin account management.
 schoolsRoutes.get('/admin/accounts', requireRole('ADMIN'), listSchoolAccounts);

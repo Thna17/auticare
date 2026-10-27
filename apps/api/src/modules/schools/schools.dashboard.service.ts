@@ -1,6 +1,7 @@
 import type { SchoolDashboardResponse } from '@auticare/contracts';
 import { forbidden, notFound } from '../../common/errors/app-error.js';
 import { SchoolsRepository } from './schools.repository.js';
+import { canSeeChild, resolveStaffScope } from './schools.scope.js';
 
 type Actor = { parentId: string; role: string };
 
@@ -39,8 +40,8 @@ export class SchoolDashboardService {
       activitiesCompleted,
       activitiesLastWeek,
       activitiesPrevWeek,
-      recentReports,
-      draftReports,
+      allRecentReports,
+      allDraftReports,
       pendingEnrollments,
       pendingNotifications,
     ] = await Promise.all([
@@ -51,11 +52,19 @@ export class SchoolDashboardService {
       this.repository.countReportsBefore(schoolId, now),
       this.repository.countReportsBetween(schoolId, sevenDaysAgo, now),
       this.repository.countReportsBetween(schoolId, fourteenDaysAgo, sevenDaysAgo),
-      this.repository.listRecentReports(schoolId, 5),
+      // Fetched wider, then trimmed to what this staff member may see.
+      this.repository.listRecentReports(schoolId, 50),
       this.repository.listDraftReports(schoolId),
       this.repository.countPendingEnrollments(schoolId),
       this.repository.listPendingNotifications(schoolId),
     ]);
+
+    // A teacher sees names only for the children assigned to them.
+    const scope = await resolveStaffScope(staff);
+    const recentReports = allRecentReports
+      .filter((report) => canSeeChild(scope, report.childId))
+      .slice(0, 5);
+    const draftReports = allDraftReports.filter((report) => canSeeChild(scope, report.childId));
 
     // Build reminders from real data
     const reminders: SchoolDashboardResponse['reminders'] = [];

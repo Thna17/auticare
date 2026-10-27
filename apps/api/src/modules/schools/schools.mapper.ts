@@ -76,6 +76,7 @@ export const toSchoolStaffResponse = (staff: SchoolStaff): SchoolStaffResponse =
   schoolId: staff.schoolId,
   parentId: staff.parentId,
   title: staff.title,
+  role: staff.role === 'ADMIN' ? 'ADMIN' : 'TEACHER',
 });
 
 export const toSchoolAccountResponse = (

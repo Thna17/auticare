@@ -53,7 +53,7 @@ beforeAll(async () => {
   });
   schoolUserId = schoolUser.id;
   await prisma.schoolStaff.create({
-    data: { schoolId, parentId: schoolUser.id, title: 'Teacher' },
+    data: { role: 'ADMIN', schoolId, parentId: schoolUser.id, title: 'Teacher' },
   });
 
   const register = await parentAgent.post('/api/v1/auth/register').send({

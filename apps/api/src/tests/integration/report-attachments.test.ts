@@ -98,10 +98,15 @@ beforeAll(async () => {
   ]);
   createdParentIds.push(schoolUser.id, otherSchoolUser.id);
   await prisma.schoolStaff.create({
-    data: { parentId: schoolUser.id, schoolId: school.id, title: 'Teacher' },
+    data: { role: 'ADMIN', parentId: schoolUser.id, schoolId: school.id, title: 'Teacher' },
   });
   await prisma.schoolStaff.create({
-    data: { parentId: otherSchoolUser.id, schoolId: otherSchool.id, title: 'Teacher' },
+    data: {
+      role: 'ADMIN',
+      parentId: otherSchoolUser.id,
+      schoolId: otherSchool.id,
+      title: 'Teacher',
+    },
   });
 
   await prisma.schoolChildEnrollment.create({

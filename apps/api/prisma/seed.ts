@@ -710,8 +710,14 @@ async function main() {
 
   await prisma.schoolStaff.upsert({
     where: { parentId_schoolId: { parentId: schoolUser.id, schoolId: school.id } },
-    update: {},
-    create: { parentId: schoolUser.id, schoolId: school.id, title: 'Activity Reporter' },
+    update: { role: 'ADMIN' },
+    create: {
+      parentId: schoolUser.id,
+      schoolId: school.id,
+      title: 'Activity Reporter',
+      // The school's own account manages its staff and connection codes.
+      role: 'ADMIN',
+    },
   });
 
   await prisma.schoolChildEnrollment.upsert({

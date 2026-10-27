@@ -1,6 +1,7 @@
 import type { EnrolledStudentOption } from '@auticare/contracts';
 import { forbidden } from '../../common/errors/app-error.js';
 import { SchoolsRepository } from './schools.repository.js';
+import { canSeeChild, resolveStaffScope } from './schools.scope.js';
 
 type Actor = { parentId: string; role: string };
 
@@ -26,7 +27,10 @@ export class SchoolStudentsService {
   async listMyStudents(actor: Actor): Promise<SchoolStudent[]> {
     const staff = await this.requireSchoolStaff(actor);
 
-    const enrollments = await this.repository.listEnrollmentsWithChildForSchool(staff.schoolId);
+    const scope = await resolveStaffScope(staff);
+    const enrollments = (
+      await this.repository.listEnrollmentsWithChildForSchool(staff.schoolId)
+    ).filter((enrollment) => canSeeChild(scope, enrollment.childId));
 
     return enrollments.map((enrollment) => ({
       childId: enrollment.childId,
@@ -47,7 +51,10 @@ export class SchoolStudentsService {
   async listEnrolledStudents(actor: Actor): Promise<EnrolledStudentOption[]> {
     const staff = await this.requireSchoolStaff(actor);
 
-    const enrollments = await this.repository.listPickerEnrolledStudentsForSchool(staff.schoolId);
+    const scope = await resolveStaffScope(staff);
+    const enrollments = (
+      await this.repository.listPickerEnrolledStudentsForSchool(staff.schoolId)
+    ).filter((enrollment) => canSeeChild(scope, enrollment.childId));
 
     return enrollments.map((enrollment) => ({
       id: enrollment.child.id,

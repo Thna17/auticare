@@ -54,7 +54,7 @@ beforeAll(async () => {
   });
   createdParentIds.push(schoolUser.id);
   await prisma.schoolStaff.create({
-    data: { parentId: schoolUser.id, schoolId: school.id, title: 'Teacher' },
+    data: { role: 'ADMIN', parentId: schoolUser.id, schoolId: school.id, title: 'Teacher' },
   });
 
   // Two children of the same parent, both enrolled at the same school. One will

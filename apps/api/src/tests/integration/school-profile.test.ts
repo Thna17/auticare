@@ -111,8 +111,8 @@ beforeAll(async () => {
   createdParentIds.push(aAccount.id, bAccount.id, parentAccount.id);
 
   await Promise.all([
-    prisma.schoolStaff.create({ data: { parentId: aAccount.id, schoolId: a.id } }),
-    prisma.schoolStaff.create({ data: { parentId: bAccount.id, schoolId: b.id } }),
+    prisma.schoolStaff.create({ data: { role: 'ADMIN', parentId: aAccount.id, schoolId: a.id } }),
+    prisma.schoolStaff.create({ data: { role: 'ADMIN', parentId: bAccount.id, schoolId: b.id } }),
   ]);
 
   // SCHOOL account without a SchoolStaff row (orphan) — tests the 404 case.

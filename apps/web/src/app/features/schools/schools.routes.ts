@@ -53,6 +53,20 @@ export const SCHOOLS_ROUTES: Routes = [
       import('./create-school-report.page').then((m) => m.CreateSchoolReportPage),
   },
   {
+    // The school admin's team: teacher accounts and assignment.
+    path: 'staff',
+    canActivate: [roleGuard],
+    data: { roles: ['SCHOOL'] },
+    loadComponent: () => import('./school-team.page').then((m) => m.SchoolTeamPage),
+  },
+  {
+    // Single-use codes families use to connect a child to the school.
+    path: 'connect',
+    canActivate: [roleGuard],
+    data: { roles: ['SCHOOL'] },
+    loadComponent: () => import('./school-connect.page').then((m) => m.SchoolConnectPage),
+  },
+  {
     path: 'profile',
     canActivate: [roleGuard],
     data: { roles: ['SCHOOL'] },

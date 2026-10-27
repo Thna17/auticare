@@ -168,7 +168,7 @@ import { availabilityLabel, availabilityTone } from '../school-display.util';
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-info);
         border-radius: 12px;
-        box-shadow: 0 12px 30px rgb(41 74 90 / 0.08);
+        box-shadow: 0 12px 30px color-mix(in srgb, var(--ac-brand-800) 8%, transparent);
         padding: 22px 24px;
       }
       .head-main {

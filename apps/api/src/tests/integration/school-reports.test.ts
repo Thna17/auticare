@@ -44,7 +44,7 @@ beforeAll(async () => {
   });
   schoolUserId = schoolUser.id;
   await prisma.schoolStaff.create({
-    data: { schoolId, parentId: schoolUser.id, title: 'Teacher' },
+    data: { role: 'ADMIN', schoolId, parentId: schoolUser.id, title: 'Teacher' },
   });
 });
 
@@ -114,12 +114,14 @@ describe('school activity reports', () => {
       ),
     ).toBe(true);
 
+    // Submitted, because parents only ever see submitted reports.
     const report = await schoolAgent.post('/api/v1/schools/reports').send({
       childId,
       activityCategory: 'Social/Emotional',
       title: 'Shared play activity',
       summary: 'Participated calmly in a small-group activity.',
       activityDate: '2026-07-11',
+      status: 'SUBMITTED',
     });
     expect(report.status).toBe(201);
     expect(report.body.data.schoolId).toBe(schoolId);

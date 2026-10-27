@@ -303,7 +303,13 @@ export class SchoolsRepository {
           },
         });
         const staff = await tx.schoolStaff.create({
-          data: { parentId: account.id, schoolId: school.id, title: input.account.title },
+          // The account an administrator creates for a school is that school's admin.
+          data: {
+            parentId: account.id,
+            schoolId: school.id,
+            title: input.account.title,
+            role: 'ADMIN',
+          },
         });
         return { school, account, staff };
       },
@@ -319,8 +325,12 @@ export class SchoolsRepository {
     return staff.map((item) => ({ school: item.school, staff: item, account: item.parent }));
   }
 
+  /**
+   * The caller's staff record. Deactivated staff are excluded here, which is
+   * what cuts a removed teacher off from every school endpoint at once.
+   */
   findStaffForParent(parentId: string): Promise<SchoolStaff | null> {
-    return prisma.schoolStaff.findFirst({ where: { parentId } });
+    return prisma.schoolStaff.findFirst({ where: { parentId, deactivatedAt: null } });
   }
 
   findStaffForParentAndSchool(parentId: string, schoolId: string): Promise<SchoolStaff | null> {
@@ -448,8 +458,10 @@ export class SchoolsRepository {
     const searchFilter = buildReportSearchFilter(filters.search);
     const where: Prisma.ActivityReportWhereInput = {
       child: { parentId },
+      // Parents only ever see submitted reports; a draft is the teacher's
+      // working copy. A status filter from the client cannot widen this.
+      status: 'SUBMITTED',
       ...(filters.childId !== undefined && { childId: filters.childId }),
-      ...(filters.status !== undefined && { status: filters.status }),
       ...(searchFilter ? { AND: [searchFilter] } : {}),
     };
     const [items, total] = await prisma.$transaction([
@@ -491,14 +503,17 @@ export class SchoolsRepository {
     });
   }
 
+  /** `childIds` null means the whole school; a list limits it (teachers). */
   async listReportsForSchoolWithRelations(
     schoolId: string,
     filters: ActivityReportFilter,
     page: Page,
+    childIds: readonly string[] | null = null,
   ) {
     const searchFilter = buildReportSearchFilter(filters.search);
     const where: Prisma.ActivityReportWhereInput = {
       schoolId,
+      ...(childIds !== null && { childId: { in: [...childIds] } }),
       ...(filters.childId !== undefined && { childId: filters.childId }),
       ...(filters.status !== undefined && { status: filters.status }),
       ...(searchFilter ? { AND: [searchFilter] } : {}),
@@ -1018,11 +1033,14 @@ export class SchoolsRepository {
       status?: SchoolChildEnrollmentStatus | undefined;
       specialistId?: string | undefined;
       search?: string | undefined;
+      /** Null for the whole school; a list limits it to a teacher's children. */
+      childIds?: readonly string[] | null;
     },
     pagination: { skip: number; take: number },
   ) {
     const where: Prisma.SchoolChildEnrollmentWhereInput = {
       schoolId,
+      ...(filters.childIds && { childId: { in: [...filters.childIds] } }),
       ...ENROLLMENT_CHILD_NOT_ARCHIVED,
       ...(filters.status !== undefined && {
         status: filters.status,

@@ -984,7 +984,7 @@ const PRESET_FACILITIES: readonly string[] = [
         border-radius: 14px;
         padding: 22px;
         background: var(--ac-color-surface);
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
       }
       legend {
         font-weight: 800;

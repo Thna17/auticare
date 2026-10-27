@@ -16,6 +16,8 @@ import { auditService } from '../audit/audit.service.js';
 import { invitationService } from '../auth/invitation.service.js';
 import { PasswordService } from '../auth/password.service.js';
 import { SchoolsRepository } from './schools.repository.js';
+import { canSeeChild, requireSchoolAdmin, resolveStaffScope } from './schools.scope.js';
+import { SchoolTeamRepository } from './schools.team.repository.js';
 
 type Actor = { parentId: string; role: string };
 
@@ -33,24 +35,34 @@ export class SchoolEnrollmentsService {
   constructor(
     private readonly repository = new SchoolsRepository(),
     private readonly passwordService = new PasswordService(),
+    private readonly team = new SchoolTeamRepository(),
   ) {}
 
   /** Dashboard statistics for the enrollment page. */
   async getEnrollmentStats(actor: Actor): Promise<EnrollmentStatsResponse> {
     const staff = await this.requireSchoolStaff(actor);
     const schoolId = staff.schoolId;
+    const scope = await resolveStaffScope(staff);
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [totalStudents, activePrograms, newStudentsThisMonth] = await Promise.all([
-      this.repository.countAllEnrollments(schoolId),
-      this.repository.countEnrollmentsByStatus(schoolId, 'ACTIVE'),
-      this.repository.countEnrollmentsSince(schoolId, startOfMonth),
-    ]);
-
     // Calculate average progress from latest performance metrics
-    const enrollments = await this.repository.listEnrollmentsWithChildForSchool(schoolId);
+    const enrollments = (await this.repository.listEnrollmentsWithChildForSchool(schoolId)).filter(
+      (enrollment) => canSeeChild(scope, enrollment.childId),
+    );
+
+    const [totalStudents, activePrograms, newStudentsThisMonth] = scope.isAdmin
+      ? await Promise.all([
+          this.repository.countAllEnrollments(schoolId),
+          this.repository.countEnrollmentsByStatus(schoolId, 'ACTIVE'),
+          this.repository.countEnrollmentsSince(schoolId, startOfMonth),
+        ])
+      : [
+          enrollments.length,
+          enrollments.filter((enrollment) => enrollment.status === 'ACTIVE').length,
+          enrollments.filter((enrollment) => enrollment.startDate >= startOfMonth).length,
+        ];
     const childIds = enrollments.map((e) => e.childId);
     const metrics = await this.repository.getLatestPerformanceMetrics(schoolId, childIds);
 
@@ -114,6 +126,7 @@ export class SchoolEnrollmentsService {
       );
     }
 
+    const scope = await resolveStaffScope(staff);
     const skip = (pagination.page - 1) * pagination.limit;
     const { items, total } = await this.repository.getEnrolledStudents(
       schoolId,
@@ -121,9 +134,11 @@ export class SchoolEnrollmentsService {
         status,
         specialistId: filters.specialistId,
         search: filters.search,
+        childIds: scope.childIds,
       },
       { skip, take: pagination.limit },
     );
+    const assignments = await this.team.teachersForEnrollments(items.map((item) => item.id));
 
     // Get performance metrics for the current page of students
     const childIds = items.map((item) => item.childId);
@@ -168,6 +183,14 @@ export class SchoolEnrollmentsService {
         enrollmentStatus: item.status as SchoolChildEnrollmentStatus,
         startDate: item.startDate.toISOString().slice(0, 10),
         leadSpecialist,
+        teachers: assignments
+          .filter((row) => row.enrollmentId === item.id && !row.staff.deactivatedAt)
+          .map((row) => ({
+            id: row.staff.id,
+            firstName: row.staff.parent.firstName,
+            lastName: row.staff.parent.lastName,
+            title: row.staff.title,
+          })),
         communicationProgress: metrics.get(item.childId) ?? 0,
         dateOfBirth: item.child.dateOfBirth
           ? item.child.dateOfBirth.toISOString().slice(0, 10)
@@ -200,6 +223,8 @@ export class SchoolEnrollmentsService {
     input: UpdateSchoolEnrollmentRequest,
   ): Promise<SchoolEnrollmentMutationResponse> {
     const staff = await this.requireSchoolStaff(actor);
+    // Changing who is enrolled is the school admin's job, not a teacher's.
+    requireSchoolAdmin(staff);
     const schoolId = staff.schoolId;
 
     const enrollment = await this.repository.findEnrollmentForSchool(schoolId, childId);
@@ -279,6 +304,8 @@ export class SchoolEnrollmentsService {
     childId: string,
   ): Promise<SchoolEnrollmentMutationResponse> {
     const staff = await this.requireSchoolStaff(actor);
+    // Changing who is enrolled is the school admin's job, not a teacher's.
+    requireSchoolAdmin(staff);
     const schoolId = staff.schoolId;
 
     const enrollment = await this.repository.findEnrollmentForSchool(schoolId, childId);
@@ -324,6 +351,8 @@ export class SchoolEnrollmentsService {
     input: CreateSchoolStudentRequest,
   ): Promise<CreateSchoolStudentResponse> {
     const staff = await this.requireSchoolStaff(actor);
+    // Changing who is enrolled is the school admin's job, not a teacher's.
+    requireSchoolAdmin(staff);
     const schoolId = staff.schoolId;
 
     // Check for duplicate guardian email

@@ -258,7 +258,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
         border-radius: 8px;
         font-size: 14px;
         font-weight: var(--ac-font-weight-semibold);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 16px color-mix(in srgb, var(--ac-color-black) 20%, transparent);
         z-index: 1000;
         pointer-events: none;
       }
