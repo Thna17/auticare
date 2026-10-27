@@ -141,7 +141,7 @@ const EN_PLANS: readonly PricingPlan[] = [
       'School profile in the directory',
       'Email support',
     ],
-    cta: { label: 'Contact us', link: '/register-school' },
+    cta: { label: 'Apply as a school', link: '/register-school' },
   },
   {
     id: 'family',
@@ -191,7 +191,7 @@ const KM_PLANS: readonly PricingPlan[] = [
       'ប្រវត្តិសាលានៅក្នុងបញ្ជី',
       'ជំនួយតាមអ៊ីមែល',
     ],
-    cta: { label: 'ទាក់ទងយើង', link: '/register-school' },
+    cta: { label: 'ដាក់ពាក្យជាសាលា', link: '/register-school' },
   },
   {
     id: 'family',
