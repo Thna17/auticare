@@ -67,30 +67,6 @@ describe('LoginPage', () => {
     expect(component.selectedRole()).toBe('PARENT');
   });
 
-  it('populates demo credentials when calling fillDemoCredentials', () => {
-    const { component } = createComponent();
-
-    component.fillDemoCredentials('SCHOOL');
-    expect(component.selectedRole()).toBe('SCHOOL');
-    expect(component.form.value.email).toBe('school@auticare.local');
-    expect(component.form.value.password).toBe('AutiCareSchoolPassword123');
-
-    component.fillDemoCredentials('HOSPITAL');
-    expect(component.selectedRole()).toBe('HOSPITAL');
-    expect(component.form.value.email).toBe('hospital@auticare.local');
-    expect(component.form.value.password).toBe('AutiCareHospitalPassword123');
-
-    component.fillDemoCredentials('ADMIN');
-    expect(component.selectedRole()).toBe('ADMIN');
-    expect(component.form.value.email).toBe('admin@auticare.local');
-    expect(component.form.value.password).toBe('AutiCareAdminPassword123');
-
-    component.fillDemoCredentials('PARENT');
-    expect(component.selectedRole()).toBe('PARENT');
-    expect(component.form.value.email).toBe('demo.parent@auticare.local');
-    expect(component.form.value.password).toBe('AutiCareDemoPassword123');
-  });
-
   it('toggles password visibility state', () => {
     const { component } = createComponent();
 

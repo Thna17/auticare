@@ -6,71 +6,27 @@ const prisma = new PrismaClient();
 const passwordService = new PasswordService();
 
 async function main() {
-  const passwordHash = await passwordService.hash('AutiCareDemoPassword123');
-  const adminPasswordHash = await passwordService.hash('AutiCareAdminPassword123');
-
-  await prisma.parent.upsert({
-    where: { email: 'admin@auticare.local' },
-    update: {},
-    create: {
-      email: 'admin@auticare.local',
-      firstName: 'Admin',
-      lastName: 'User',
-      role: 'ADMIN',
-      passwordHash: adminPasswordHash,
-      preference: { create: { preferredLanguage: 'en' } },
-    },
-  });
-
-  const schoolPasswordHash = await passwordService.hash('AutiCareSchoolPassword123');
-  const schoolUser = await prisma.parent.upsert({
-    where: { email: 'school@auticare.local' },
-    update: {},
-    create: {
-      email: 'school@auticare.local',
-      firstName: 'School',
-      lastName: 'Staff',
-      role: 'SCHOOL',
-      passwordHash: schoolPasswordHash,
-      preference: { create: { preferredLanguage: 'en' } },
-    },
-  });
-
-  const hospitalPasswordHash = await passwordService.hash('AutiCareHospitalPassword123');
-  const hospitalUser = await prisma.parent.upsert({
-    where: { email: 'hospital@auticare.local' },
-    update: {},
-    create: {
-      email: 'hospital@auticare.local',
-      firstName: 'Hospital',
-      lastName: 'Manager',
-      role: 'HOSPITAL',
-      passwordHash: hospitalPasswordHash,
-      preference: { create: { preferredLanguage: 'en' } },
-    },
-  });
-  const parent = await prisma.parent.upsert({
-    where: { email: 'demo.parent@auticare.local' },
-    update: {},
-    create: {
-      email: 'demo.parent@auticare.local',
-      firstName: 'Demo',
-      lastName: 'Parent',
-      passwordHash,
-      preference: { create: { preferredLanguage: 'en' } },
-    },
-  });
-
-  await prisma.child.upsert({
-    where: { id: 'demo-child-1' },
-    update: {},
-    create: {
-      id: 'demo-child-1',
-      parentId: parent.id,
-      firstName: 'Sam',
-      dateOfBirth: new Date('2020-05-01'),
-    },
-  });
+  // The first administrator comes from the environment, so no shared
+  // password is ever committed. Every other account is created through the app:
+  // schools apply and are approved, teachers get a setup code, parents register.
+  const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (adminEmail && adminPassword) {
+    await prisma.parent.upsert({
+      where: { email: adminEmail },
+      update: {},
+      create: {
+        email: adminEmail,
+        firstName: process.env.SEED_ADMIN_FIRST_NAME?.trim() || 'Admin',
+        lastName: process.env.SEED_ADMIN_LAST_NAME?.trim() || 'User',
+        role: 'ADMIN',
+        passwordHash: await passwordService.hash(adminPassword),
+        preference: { create: { preferredLanguage: 'en' } },
+      },
+    });
+  } else {
+    console.warn('SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD not set: no administrator created.');
+  }
 
   // ORIGINAL, HEURISTIC screening items (not copied from any copyrighted
   // instrument, and not a clinically validated screening tool). Each item carries
@@ -704,28 +660,6 @@ async function main() {
     });
   }
 
-  const school = await prisma.school.findUniqueOrThrow({
-    where: { id: 'demo-school-1' },
-  });
-
-  await prisma.schoolStaff.upsert({
-    where: { parentId_schoolId: { parentId: schoolUser.id, schoolId: school.id } },
-    update: { role: 'ADMIN' },
-    create: {
-      parentId: schoolUser.id,
-      schoolId: school.id,
-      title: 'Activity Reporter',
-      // The school's own account manages its staff and connection codes.
-      role: 'ADMIN',
-    },
-  });
-
-  await prisma.schoolChildEnrollment.upsert({
-    where: { schoolId_childId: { schoolId: school.id, childId: 'demo-child-1' } },
-    update: { status: 'ACTIVE', endDate: null },
-    create: { schoolId: school.id, childId: 'demo-child-1' },
-  });
-
   const cambodianHospitals = [
     {
       id: 'demo-hospital-1',
@@ -779,10 +713,6 @@ async function main() {
     });
   }
 
-  const hospital = await prisma.hospital.findUniqueOrThrow({
-    where: { id: 'demo-hospital-1' },
-  });
-
   const cambodianDoctors = [
     {
       id: 'demo-doctor-1',
@@ -828,39 +758,6 @@ async function main() {
     });
   }
 
-  await prisma.hospitalStaff.upsert({
-    where: { parentId_hospitalId: { parentId: hospitalUser.id, hospitalId: hospital.id } },
-    update: {},
-    create: { parentId: hospitalUser.id, hospitalId: hospital.id, title: 'Hospital Manager' },
-  });
-  await prisma.appointment.upsert({
-    where: { id: 'demo-appointment-requested' },
-    update: {},
-    create: {
-      id: 'demo-appointment-requested',
-      parentId: parent.id,
-      childId: 'demo-child-1',
-      hospitalId: hospital.id,
-      doctorId: 'demo-doctor-1',
-      scheduledAt: new Date('2027-01-15T09:00:00.000Z'),
-      status: 'REQUESTED',
-      reason: 'Development consultation',
-    },
-  });
-  await prisma.appointment.upsert({
-    where: { id: 'demo-appointment-confirmed' },
-    update: {},
-    create: {
-      id: 'demo-appointment-confirmed',
-      parentId: parent.id,
-      childId: 'demo-child-1',
-      hospitalId: hospital.id,
-      doctorId: 'demo-doctor-1',
-      scheduledAt: new Date('2027-02-15T10:00:00.000Z'),
-      status: 'CONFIRMED',
-      reason: 'Follow-up consultation',
-    },
-  });
   // Upsert on a stable id, not createMany+skipDuplicates. Activity has no unique
   // constraint beyond its id, so skipDuplicates had nothing to match on and every
   // seed run inserted another copy — a dev database that had been seeded ten times
@@ -918,96 +815,6 @@ async function main() {
   for (const activity of demoActivities) {
     const { id, ...fields } = activity;
     await prisma.activity.upsert({ where: { id }, update: fields, create: { id, ...fields } });
-  }
-
-  // ── Seed ActivityReports for the school dashboard ──────────────────────
-  const now = new Date();
-  const daysAgo = (d: number) => {
-    const date = new Date(now);
-    date.setDate(date.getDate() - d);
-    return date;
-  };
-
-  const seedReports: {
-    id: string;
-    schoolId: string;
-    childId: string;
-    reporterId: string;
-    activityCategory: string;
-    title: string;
-    summary: string;
-    activityDate: Date;
-    status: string;
-    duration?: number;
-  }[] = [
-    {
-      id: 'demo-report-1',
-      schoolId: school.id,
-      childId: 'demo-child-1',
-      reporterId: schoolUser.id,
-      activityCategory: 'Cognitive/Developmental',
-      title: 'Color Sorting Activity',
-      summary: 'Sam successfully sorted 8 colors into groups with 90% accuracy.',
-      activityDate: daysAgo(1),
-      status: 'SUBMITTED',
-      duration: 30,
-    },
-    {
-      id: 'demo-report-2',
-      schoolId: school.id,
-      childId: 'demo-child-1',
-      reporterId: schoolUser.id,
-      activityCategory: 'Social/Emotional',
-      title: 'Group Play Session',
-      summary: 'Sam initiated play with a peer and shared toys cooperatively.',
-      activityDate: daysAgo(3),
-      status: 'SUBMITTED',
-      duration: 45,
-    },
-    {
-      id: 'demo-report-3',
-      schoolId: school.id,
-      childId: 'demo-child-1',
-      reporterId: schoolUser.id,
-      activityCategory: 'Language/Communication',
-      title: 'Vocabulary Building',
-      summary: 'Sam learned 5 new words and used them in sentences.',
-      activityDate: daysAgo(5),
-      status: 'SUBMITTED',
-      duration: 25,
-    },
-    {
-      id: 'demo-report-4',
-      schoolId: school.id,
-      childId: 'demo-child-1',
-      reporterId: schoolUser.id,
-      activityCategory: 'Sensory/Motor',
-      title: 'Fine Motor Practice',
-      summary: 'Draft: Sam worked on pencil grip and tracing shapes.',
-      activityDate: daysAgo(7),
-      status: 'DRAFT',
-      duration: 20,
-    },
-    {
-      id: 'demo-report-5',
-      schoolId: school.id,
-      childId: 'demo-child-1',
-      reporterId: schoolUser.id,
-      activityCategory: 'Adaptive/Self-Care',
-      title: 'Morning Routine Practice',
-      summary: 'Draft: Sam practiced putting on shoes independently.',
-      activityDate: daysAgo(10),
-      status: 'DRAFT',
-      duration: 15,
-    },
-  ];
-
-  for (const report of seedReports) {
-    await prisma.activityReport.upsert({
-      where: { id: report.id },
-      update: {},
-      create: report,
-    });
   }
 
   console.log(screeningDisclaimer);

@@ -97,15 +97,13 @@ Stop the database with `pnpm docker:down` when you are finished.
 
 ## Local accounts
 
-After `pnpm db:seed`, use these development-only accounts:
+`pnpm db:seed` creates one administrator from `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in `.env`, plus the reference content (screening questions, activities, the school and hospital directory). No demo accounts are seeded. Every other account is created through the app:
 
-| Role          | Email                        | Password                    |
-| ------------- | ---------------------------- | --------------------------- |
-| Parent        | `demo.parent@auticare.local` | `AutiCareDemoPassword123`   |
-| Administrator | `admin@auticare.local`       | `AutiCareAdminPassword123`  |
-| School staff  | `school@auticare.local`      | `AutiCareSchoolPassword123` |
+- **School:** applies at `/register-school`; an administrator approves it at `/admin/school-registrations`, which sends an invitation link (printed in the API log when no mailer is configured).
+- **Teacher:** the school adds them under Team and hands over a username and setup code, used at `/staff-setup`.
+- **Parent:** registers at `/register`, then connects a child to a school with a family code at `/connections`.
 
-These credentials are for the local seeded database only. Do not reuse them in deployed environments.
+To start again from an empty database, run `pnpm --filter @auticare/api exec prisma migrate reset --force`. It deletes all data, re-applies the migrations and runs the seed.
 
 ## Password-reset email
 

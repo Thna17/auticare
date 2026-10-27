@@ -10,32 +10,6 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
 
 export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL' | 'ADMIN';
 
-export const DEMO_CREDENTIALS: Record<
-  AuthRoleOption,
-  { email: string; password: string; label: string }
-> = {
-  PARENT: {
-    email: 'demo.parent@auticare.local',
-    password: 'AutiCareDemoPassword123',
-    label: 'Demo Parent',
-  },
-  SCHOOL: {
-    email: 'school@auticare.local',
-    password: 'AutiCareSchoolPassword123',
-    label: 'Demo School Staff',
-  },
-  HOSPITAL: {
-    email: 'hospital@auticare.local',
-    password: 'AutiCareHospitalPassword123',
-    label: 'Demo Hospital Coordinator',
-  },
-  ADMIN: {
-    email: 'admin@auticare.local',
-    password: 'AutiCareAdminPassword123',
-    label: 'Demo Admin',
-  },
-};
-
 @Component({
   standalone: true,
   imports: [
@@ -178,24 +152,6 @@ export const DEMO_CREDENTIALS: Record<
                 hospital registrations, and review platform telemetry.
               </p>
             }
-            <button
-              type="button"
-              class="demo-fill-btn"
-              (click)="fillDemoCredentials()"
-              aria-label="Fill demo credentials for this role"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                />
-              </svg>
-              <span>Use demo credentials ({{ demoCredentials[selectedRole()].email }})</span>
-            </button>
           </div>
 
           <form
@@ -535,46 +491,6 @@ export const DEMO_CREDENTIALS: Record<
       .role-hint strong {
         color: var(--ac-color-text-strong);
       }
-
-      .demo-fill-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 8px;
-        padding: 6px 12px;
-        max-width: 100%;
-        box-sizing: border-box;
-        text-align: left;
-        white-space: normal;
-        word-break: break-word;
-        overflow-wrap: anywhere;
-        background: var(--ac-color-action-tint);
-        color: var(--ac-color-action-mid);
-        border: 1px dashed var(--ac-color-action-mid);
-        border-radius: var(--ac-radius-sm);
-        font-size: var(--ac-type-body-sm-size);
-        font-weight: var(--ac-font-weight-medium);
-        cursor: pointer;
-        transition:
-          background 0.15s ease,
-          border-color 0.15s ease;
-      }
-
-      .demo-fill-btn:hover {
-        background: var(--ac-color-sky-light);
-      }
-
-      .demo-fill-btn svg {
-        width: 16px;
-        height: 16px;
-        flex-shrink: 0;
-      }
-
-      .demo-fill-btn span {
-        min-width: 0;
-        line-height: 1.35;
-      }
-
       /* Form */
       .login-form {
         display: grid;
@@ -1081,7 +997,6 @@ export class LoginPage {
   readonly showPassword = signal(false);
   readonly selectedRole = signal<AuthRoleOption>('PARENT');
   readonly currentYear = new Date().getFullYear();
-  readonly demoCredentials = DEMO_CREDENTIALS;
 
   readonly form = this.fb.nonNullable.group({
     // An email address or a school-issued username; the server decides which.
@@ -1091,17 +1006,6 @@ export class LoginPage {
 
   selectRole(role: AuthRoleOption) {
     this.selectedRole.set(role);
-  }
-
-  fillDemoCredentials(role?: AuthRoleOption) {
-    const targetRole = role ?? this.selectedRole();
-    this.selectedRole.set(targetRole);
-    const creds = DEMO_CREDENTIALS[targetRole];
-    this.form.setValue({
-      email: creds.email,
-      password: creds.password,
-    });
-    this.error.set(null);
   }
 
   submit() {
