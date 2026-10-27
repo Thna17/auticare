@@ -18,6 +18,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/public/privacy.page').then((m) => m.PrivacyPage),
   },
   {
+    path: 'register-school',
+    loadComponent: () =>
+      import('./features/public/register-school.page').then((m) => m.RegisterSchoolPage),
+  },
+  {
     path: 'terms',
     loadComponent: () => import('./features/public/terms.page').then((m) => m.TermsPage),
   },
@@ -82,6 +87,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
+        // A parent connects a child to a school with the school's code.
+        path: 'connections',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
+        loadComponent: () =>
+          import('./features/connections/connections.page').then((m) => m.ConnectionsPage),
+      },
+      {
         path: 'children',
         canActivate: [roleGuard],
         data: { roles: ['PARENT', 'ADMIN'] },
@@ -99,6 +112,15 @@ export const routes: Routes = [
         path: 'schools',
         loadChildren: () =>
           import('./features/schools/schools.routes').then((m) => m.SCHOOLS_ROUTES),
+      },
+      {
+        path: 'admin/school-registrations',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/school-registrations.page').then(
+            (m) => m.SchoolRegistrationsPage,
+          ),
       },
       {
         path: 'hospitals',

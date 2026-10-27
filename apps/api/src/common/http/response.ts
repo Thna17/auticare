@@ -3,3 +3,5 @@ export const ok = <T>(res: Response, data: T, meta: Record<string, unknown> = {}
   res.json({ data, meta });
 export const created = <T>(res: Response, data: T, meta: Record<string, unknown> = {}) =>
   res.status(201).json({ data, meta });
+export const accepted = <T>(res: Response, data: T, meta: Record<string, unknown> = {}) =>
+  res.status(202).json({ data, meta });

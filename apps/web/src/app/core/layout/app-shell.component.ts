@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   HostListener,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import type { UserRole } from '@auticare/contracts';
@@ -14,6 +16,8 @@ import { PreferencesService } from '../preferences/preferences.service';
 import { I18nService } from '../i18n/i18n.service';
 import { DICTIONARY } from '../i18n/i18n.dictionary';
 import { NavIconComponent } from './nav-icon.component';
+import { SchoolStaffState } from '../../features/schools/data-access/school-staff.state';
+import { SchoolRegistrationsService } from '../../features/admin/data-access/school-registrations.service';
 
 export type NavItem = {
   readonly label: string;
@@ -43,7 +47,7 @@ export type NavSection = {
         <a class="brand" [routerLink]="brandLink()">
           <img
             class="brand-mark"
-            src="/images/auticare-logo.jpg"
+            src="/images/auticare-logo.png"
             alt=""
             aria-hidden="true"
             width="32"
@@ -189,7 +193,7 @@ export type NavSection = {
           <a class="topbar-brand" [routerLink]="brandLink()" aria-label="AutiCare home">
             <img
               class="brand-mark"
-              src="/images/auticare-logo.jpg"
+              src="/images/auticare-logo.png"
               alt=""
               aria-hidden="true"
               width="28"
@@ -397,7 +401,7 @@ export type NavSection = {
       >
         <header class="mobile-drawer-header">
           <div class="drawer-brand">
-            <img src="/images/auticare-logo.jpg" alt="" width="32" height="32" class="brand-mark" />
+            <img src="/images/auticare-logo.png" alt="" width="32" height="32" class="brand-mark" />
             <div class="drawer-brand-info">
               <strong class="drawer-brand-name">AutiCare</strong>
               <span class="drawer-portal-name">{{ portalTitle() }}</span>
@@ -580,7 +584,7 @@ export type NavSection = {
       }
 
       .collapse-btn:hover {
-        background: rgb(255 255 255 / 0.8);
+        background: color-mix(in srgb, var(--ac-color-white) 80%, transparent);
         color: var(--ac-color-action-mid);
       }
 
@@ -697,7 +701,7 @@ export type NavSection = {
       }
 
       .nav-link:hover {
-        background: rgb(255 255 255 / 0.7);
+        background: color-mix(in srgb, var(--ac-color-white) 70%, transparent);
         color: var(--ac-color-action-deep);
       }
 
@@ -715,7 +719,7 @@ export type NavSection = {
         color: var(--ac-color-action-deep);
         font-weight: var(--ac-font-weight-semibold);
         box-shadow:
-          0 1px 2px rgb(16 48 59 / 0.06),
+          0 1px 2px color-mix(in srgb, var(--ac-brand-900) 6%, transparent),
           0 0 0 1px var(--ac-color-ice-blue-frost);
       }
 
@@ -890,7 +894,7 @@ export type NavSection = {
         align-items: center;
         justify-content: space-between;
         padding: 0 36px;
-        background: rgb(255 255 255 / 0.85);
+        background: color-mix(in srgb, var(--ac-color-white) 85%, transparent);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--ac-color-border);
@@ -1039,7 +1043,7 @@ export type NavSection = {
         height: 40px;
         border: 1px solid var(--ac-color-border);
         border-radius: var(--ac-radius-md);
-        background: rgb(255 255 255 / 0.9);
+        background: color-mix(in srgb, var(--ac-color-white) 90%, transparent);
         color: var(--ac-color-text-slate);
         display: grid;
         place-items: center;
@@ -1098,7 +1102,7 @@ export type NavSection = {
       .profile-chip {
         border: 1px solid var(--ac-color-border);
         border-radius: var(--ac-radius-pill);
-        background: rgb(255 255 255 / 0.9);
+        background: color-mix(in srgb, var(--ac-color-white) 90%, transparent);
         display: flex;
         align-items: center;
         gap: 10px;
@@ -1358,13 +1362,13 @@ export type NavSection = {
           padding-top: 4px;
           padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
           border-top: 1px solid var(--ac-color-border);
-          background: rgb(255 255 255 / 0.95);
+          background: color-mix(in srgb, var(--ac-color-white) 95%, transparent);
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           display: grid;
           grid-template-columns: 1fr 1fr 64px 1fr 1fr;
           align-items: center;
-          box-shadow: 0 -4px 20px rgb(15 23 42 / 0.08);
+          box-shadow: 0 -4px 20px color-mix(in srgb, var(--ac-color-shadow) 8%, transparent);
           box-sizing: border-box;
         }
 
@@ -1423,7 +1427,7 @@ export type NavSection = {
           color: var(--ac-color-text-on-action) !important;
           place-self: center;
           transform: translateY(-14px);
-          box-shadow: 0 6px 18px rgb(61 99 117 / 0.35);
+          box-shadow: 0 6px 18px color-mix(in srgb, var(--ac-brand-500) 35%, transparent);
           display: grid;
           place-items: center;
           transition:
@@ -1581,6 +1585,18 @@ export class AppShellComponent {
   private readonly notificationsState = inject(NotificationsStateService);
   private readonly preferences = inject(PreferencesService, { optional: true });
   private readonly i18n = inject(I18nService, { optional: true });
+  private readonly schoolStaff = inject(SchoolStaffState);
+  private readonly schoolRegistrations = inject(SchoolRegistrationsService, { optional: true });
+
+  constructor() {
+    effect(() => {
+      if (this.role() === 'ADMIN') {
+        untracked(() => {
+          this.schoolRegistrations?.fetchPendingCount().subscribe({ error: () => {} });
+        });
+      }
+    });
+  }
 
   readonly sidebarCollapsed = signal(false);
   readonly profileMenuOpen = signal(false);
@@ -1702,6 +1718,8 @@ export class AppShellComponent {
     const badge = unread > 0 ? String(unread) : undefined;
 
     if (role === 'ADMIN') {
+      const pendingCount = this.schoolRegistrations?.pendingCount() ?? 0;
+      const requestBadge = pendingCount > 0 ? String(pendingCount) : undefined;
       return [
         {
           title: s.careAndDevelopment,
@@ -1714,6 +1732,12 @@ export class AppShellComponent {
           title: s.directoryAndVisits,
           items: [
             { label: s.schools, path: '/schools/admin', icon: 'school' },
+            {
+              label: s.schoolRequests,
+              path: '/admin/school-registrations',
+              icon: 'checklist',
+              badge: requestBadge,
+            },
             { label: s.hospitals, path: '/hospitals/admin', icon: 'hospital' },
             { label: s.schoolReports, path: '/schools/reports', icon: 'checklist' },
           ],
@@ -1742,7 +1766,16 @@ export class AppShellComponent {
         },
         {
           title: s.directoryAndVisits,
-          items: [{ label: s.schoolProfile, path: '/schools/profile', icon: 'school' }],
+          items: [
+            { label: s.schoolProfile, path: '/schools/profile', icon: 'school' },
+            // Running the team and enrolling families is the school admin's job.
+            ...(this.schoolStaff.isSchoolAdmin()
+              ? [
+                  { label: s.team, path: '/schools/staff', icon: 'family' },
+                  { label: s.familyCodes, path: '/schools/connect', icon: 'person' },
+                ]
+              : []),
+          ],
         },
         {
           title: s.support,
@@ -1815,6 +1848,7 @@ export class AppShellComponent {
         title: s.profile,
         items: [
           { label: s.myChildren, path: '/children', icon: 'family' },
+          { label: s.mySchools, path: '/connections', icon: 'school' },
           { label: s.notifications, path: '/notifications', icon: 'bell', badge },
         ],
       },

@@ -9,6 +9,8 @@ import { NotificationsStateService } from '../notifications/notifications-state.
 import { PreferencesService } from '../preferences/preferences.service';
 import { I18nService, LANG_STORAGE_KEY } from '../i18n/i18n.service';
 import { AppShellComponent } from './app-shell.component';
+import { SchoolStaffState } from '../../features/schools/data-access/school-staff.state';
+import { SchoolRegistrationsService } from '../../features/admin/data-access/school-registrations.service';
 
 describe('AppShellComponent', () => {
   let fixture: ComponentFixture<AppShellComponent>;
@@ -42,6 +44,10 @@ describe('AppShellComponent', () => {
     unreadCount: mockUnreadSignal,
   };
 
+  // Whether the signed-in school account is the school's admin.
+  const mockSchoolAdminSignal = signal(false);
+  const mockSchoolStaffState = { isSchoolAdmin: mockSchoolAdminSignal };
+
   const mockHighContrastSignal = signal(false);
   const mockCalmingPaletteSignal = signal(false);
   const mockReducedMotionSignal = signal(false);
@@ -50,6 +56,12 @@ describe('AppShellComponent', () => {
     calmingPalette: mockCalmingPaletteSignal,
     reducedMotion: mockReducedMotionSignal,
     updatePreferredLanguage: vi.fn(),
+  };
+
+  const mockPendingCountSignal = signal(0);
+  const mockSchoolRegistrationsService = {
+    pendingCount: mockPendingCountSignal,
+    fetchPendingCount: vi.fn(() => of(mockPendingCountSignal())),
   };
 
   beforeEach(async () => {
@@ -63,9 +75,11 @@ describe('AppShellComponent', () => {
       socialMediaAccount: null,
     });
     mockUnreadSignal.set(0);
+    mockSchoolAdminSignal.set(false);
     mockHighContrastSignal.set(false);
     mockCalmingPaletteSignal.set(false);
     mockReducedMotionSignal.set(false);
+    mockPendingCountSignal.set(0);
     localStorage.removeItem(LANG_STORAGE_KEY);
     vi.clearAllMocks();
 
@@ -77,6 +91,8 @@ describe('AppShellComponent', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: NotificationsStateService, useValue: mockNotificationsState },
         { provide: PreferencesService, useValue: mockPreferencesService },
+        { provide: SchoolStaffState, useValue: mockSchoolStaffState },
+        { provide: SchoolRegistrationsService, useValue: mockSchoolRegistrationsService },
       ],
     }).compileComponents();
 
@@ -163,6 +179,7 @@ describe('AppShellComponent', () => {
     expect(enNavLinks).toContain('Observations');
     expect(enNavLinks).toContain('AI Assistant');
     expect(enNavLinks).toContain('My Children');
+    expect(enNavLinks).toContain('My schools');
     expect(enNavLinks).toContain('Screening');
     expect(enNavLinks).toContain('Activities');
     expect(enNavLinks).toContain('Progress');
@@ -221,6 +238,19 @@ describe('AppShellComponent', () => {
     expect(enNavLinks).toContain('Reports');
     expect(enNavLinks).toContain('School Profile');
     expect(kmPrimaryAction?.textContent?.trim()).toContain('Add Activity');
+
+    // A teacher does not see the admin's team and family-code links…
+    expect(enNavLinks).not.toContain('Team');
+    expect(enNavLinks).not.toContain('Family codes');
+
+    // …the school admin does.
+    mockSchoolAdminSignal.set(true);
+    fixture.detectChanges();
+    const adminLinks = Array.from(el.querySelectorAll('.sidebar .nav-link')).map((node) =>
+      node.querySelector('.nav-label')?.textContent?.trim(),
+    );
+    expect(adminLinks).toContain('Team');
+    expect(adminLinks).toContain('Family codes');
   });
 
   it('renders hospital navigation items and brand link for HOSPITAL role in both languages', () => {
@@ -538,5 +568,31 @@ describe('AppShellComponent', () => {
     const updatedToggleBtn = el.querySelector('.topbar-lang-toggle') as HTMLButtonElement;
     expect(updatedToggleBtn.textContent).toContain('English');
     expect(updatedToggleBtn.getAttribute('aria-label')).toBe('Switch language to Khmer');
+  });
+
+  it('renders School requests nav item with badge for ADMIN role', () => {
+    mockParentSignal.set({
+      id: 'admin_1',
+      firstName: 'System',
+      lastName: 'Admin',
+      role: 'ADMIN',
+      email: 'admin@auticare.test',
+      phoneNumber: null,
+      socialMediaAccount: null,
+    });
+    mockPendingCountSignal.set(3);
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const links = Array.from(el.querySelectorAll('.sidebar .nav-link'));
+    const schoolReqLink = links.find(
+      (l) =>
+        (l.getAttribute('href') ?? l.getAttribute('routerLink')) === '/admin/school-registrations',
+    );
+    expect(schoolReqLink).toBeTruthy();
+    expect(schoolReqLink?.textContent).toContain('School requests');
+    expect(schoolReqLink?.querySelector('.badge')?.textContent?.trim()).toBe('3');
   });
 });
