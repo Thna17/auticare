@@ -107,6 +107,68 @@ describe('ChildrenListPage', () => {
     expect(element.textContent).toContain('Screened: Low Risk');
   });
 
+  it('renders questionnaire status chip and action button for each child state', () => {
+    const fixture = TestBed.createComponent(ChildrenListPage);
+    fixture.detectChanges();
+
+    const childrenWithStatus: ChildResponse[] = [
+      {
+        id: 'child_1',
+        firstName: 'Bopha',
+        lastName: 'Sok',
+        dateOfBirth: '2021-05-15',
+        notes: null,
+        archivedAt: null,
+        questionnaireStatus: 'COMPLETED',
+      },
+      {
+        id: 'child_2',
+        firstName: 'Dara',
+        lastName: 'Sok',
+        dateOfBirth: '2023-01-10',
+        notes: null,
+        archivedAt: null,
+        questionnaireStatus: 'IN_PROGRESS',
+      },
+      {
+        id: 'child_3',
+        firstName: 'Chann',
+        lastName: 'Sok',
+        dateOfBirth: '2024-03-01',
+        notes: null,
+        archivedAt: null,
+        questionnaireStatus: 'NOT_STARTED',
+      },
+    ];
+
+    const childrenReq = httpTesting.expectOne('/api/v1/children');
+    childrenReq.flush({ data: childrenWithStatus });
+    fixture.detectChanges();
+
+    const req1 = httpTesting.expectOne('/api/v1/screening/children/child_1/sessions');
+    req1.flush({ data: mockSessions });
+    const req2 = httpTesting.expectOne('/api/v1/screening/children/child_2/sessions');
+    req2.flush({ data: [] });
+    const req3 = httpTesting.expectOne('/api/v1/screening/children/child_3/sessions');
+    req3.flush({ data: [] });
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const chips = Array.from(element.querySelectorAll('.q-label')).map((el) =>
+      el.textContent?.trim(),
+    );
+    expect(chips).toContain('Completed');
+    expect(chips).toContain('In progress');
+    expect(chips).toContain('Not started');
+
+    const btns = Array.from(element.querySelectorAll('.q-action-btn')).map((el) =>
+      el.textContent?.trim(),
+    );
+    expect(btns).toContain('View');
+    expect(btns).toContain('Continue');
+    expect(btns).toContain('Start');
+  });
+
   it('renders registered child count badge in header', () => {
     const fixture = TestBed.createComponent(ChildrenListPage);
     fixture.detectChanges();

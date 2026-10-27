@@ -175,7 +175,7 @@ export class ParentsService {
     if (actor.role !== 'PARENT') throw forbidden();
     const { items, total } = await this.repository.listNotificationsForParent(
       actor.parentId,
-      { isRead: query.isRead },
+      { isRead: query.isRead, status: query.status },
       toSkipTake(query),
     );
     // Shaped as NotificationResponse so the web side can reuse the existing
@@ -199,6 +199,26 @@ export class ParentsService {
    * PATCH /parents/notifications/:id/read — mark a single notification read.
    * Scoped strictly to the authenticated parent.
    */
+  async archiveNotification(actor: Actor, notificationId: string): Promise<NotificationResponse> {
+    const notification = await this.repository.findNotificationById(notificationId);
+    if (!notification) throw notFound('Notification was not found.');
+    if (notification.parentId !== actor.parentId) {
+      throw forbidden('You do not have permission to archive this notification.');
+    }
+    const updated = await this.repository.archiveNotification(notificationId);
+    return {
+      id: updated.id,
+      type: updated.type,
+      status: updated.status,
+      title: updated.title,
+      body: updated.body,
+      enrollmentId: updated.enrollmentId,
+      reportId: updated.reportId,
+      appointmentId: updated.appointmentId,
+      createdAt: updated.createdAt.toISOString(),
+    };
+  }
+
   async markNotificationRead(actor: Actor, notificationId: string): Promise<NotificationResponse> {
     if (actor.role !== 'PARENT') throw forbidden();
     const notification = await this.repository.findNotificationById(notificationId);
@@ -240,6 +260,11 @@ export class ParentsService {
           preferredLanguage: 'en',
           reducedMotion: false,
           highContrast: false,
+          notifyQuestionnaire: true,
+          notifyActivities: true,
+          notifyReports: true,
+          notifySchool: true,
+          notifyAnnouncements: true,
         },
       };
     }
@@ -248,6 +273,11 @@ export class ParentsService {
         preferredLanguage: pref.preferredLanguage,
         reducedMotion: pref.reducedMotion,
         highContrast: pref.highContrast,
+        notifyQuestionnaire: pref.notifyQuestionnaire,
+        notifyActivities: pref.notifyActivities,
+        notifyReports: pref.notifyReports,
+        notifySchool: pref.notifySchool,
+        notifyAnnouncements: pref.notifyAnnouncements,
         updatedAt: pref.updatedAt.toISOString(),
       },
     };
@@ -263,7 +293,12 @@ export class ParentsService {
     if (
       input.preferredLanguage === undefined &&
       input.reducedMotion === undefined &&
-      input.highContrast === undefined
+      input.highContrast === undefined &&
+      input.notifyQuestionnaire === undefined &&
+      input.notifyActivities === undefined &&
+      input.notifyReports === undefined &&
+      input.notifySchool === undefined &&
+      input.notifyAnnouncements === undefined
     ) {
       throw new AppError('VALIDATION_ERROR', 'Provide at least one preference to update.', 400);
     }
@@ -274,6 +309,11 @@ export class ParentsService {
         preferredLanguage: pref.preferredLanguage,
         reducedMotion: pref.reducedMotion,
         highContrast: pref.highContrast,
+        notifyQuestionnaire: pref.notifyQuestionnaire,
+        notifyActivities: pref.notifyActivities,
+        notifyReports: pref.notifyReports,
+        notifySchool: pref.notifySchool,
+        notifyAnnouncements: pref.notifyAnnouncements,
         updatedAt: pref.updatedAt.toISOString(),
       },
     };

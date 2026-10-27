@@ -30,7 +30,15 @@ const asSources = (value: Prisma.JsonValue | null): AiSource[] => {
   });
 };
 
-export const toAiMessageResponse = (message: AiMessage): AiMessageResponse => ({
+export const toAiMessageResponse = (
+  message: AiMessage,
+  relatedActivities?: {
+    id: string;
+    title: string;
+    category: string;
+    description?: string | null;
+  }[],
+): AiMessageResponse => ({
   id: message.id,
   conversationId: message.conversationId,
   role: message.role,
@@ -38,6 +46,11 @@ export const toAiMessageResponse = (message: AiMessage): AiMessageResponse => ({
   content: message.content,
   model: message.model,
   sources: asSources(message.sources),
+  savedAt: message.savedAt ? message.savedAt.toISOString() : null,
+  feedback: message.feedback,
+  feedbackNote: message.feedbackNote,
+  relatedActivities:
+    relatedActivities && relatedActivities.length > 0 ? relatedActivities : undefined,
   createdAt: message.createdAt.toISOString(),
 });
 

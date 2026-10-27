@@ -46,6 +46,7 @@ function extractRoutesFromApp(app: ExpressApp): RouteDefinition[] {
     '/api/v1/auth',
     '/api/v1/children',
     '/api/v1/hospitals',
+    '/api/v1/inquiries',
     '/api/v1/appointments',
     '/api/v1/hospital-management',
     '/api/v1/schools',

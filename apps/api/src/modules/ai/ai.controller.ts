@@ -27,3 +27,12 @@ export const deleteConversation = async (req: Request, res: Response) =>
 
 export const sendMessage = async (req: Request, res: Response) =>
   ok(res, await service.sendMessage(req.auth!, requiredParam(req.params.id), req.body));
+
+export const listSavedMessages = async (req: Request, res: Response) =>
+  ok(res, await service.listSaved(req.auth!));
+
+export const toggleSaveMessage = async (req: Request, res: Response) =>
+  ok(res, await service.toggleSaveMessage(req.auth!, requiredParam(req.params.id)));
+
+export const saveFeedback = async (req: Request, res: Response) =>
+  ok(res, await service.saveFeedback(req.auth!, requiredParam(req.params.id), req.body));

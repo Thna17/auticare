@@ -4,6 +4,7 @@ import type {
   AiConversationDetailResponse,
   AiConversationSummary,
   AiLanguage,
+  AiMessageResponse,
   AiStatusResponse,
   CreateAiConversationRequest,
   SendAiMessageResponse,
@@ -28,10 +29,17 @@ export class AiApi {
       .pipe(map((response) => response.data));
   }
 
-  createConversation(input: { childId?: string; language: AiLanguage }) {
+  createConversation(input: {
+    childId?: string;
+    language: AiLanguage;
+    includeChildContext?: boolean;
+  }) {
     const body: CreateAiConversationRequest = {
       language: input.language,
       ...(input.childId ? { childId: input.childId } : {}),
+      ...(input.includeChildContext !== undefined
+        ? { includeChildContext: input.includeChildContext }
+        : {}),
     };
     return this.http
       .post<{ data: AiConversationSummary }>(`${this.apiBaseUrl}/ai/conversations`, body)
@@ -54,6 +62,31 @@ export class AiApi {
     return this.http
       .post<{ data: SendAiMessageResponse }>(`${this.apiBaseUrl}/ai/conversations/${id}/messages`, {
         content,
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  listSaved() {
+    return this.http
+      .get<{ data: AiMessageResponse[] }>(`${this.apiBaseUrl}/ai/saved`)
+      .pipe(map((response) => response.data));
+  }
+
+  toggleSave(messageId: string) {
+    return this.http
+      .post<{ data: AiMessageResponse }>(`${this.apiBaseUrl}/ai/messages/${messageId}/save`, {})
+      .pipe(map((response) => response.data));
+  }
+
+  sendFeedback(
+    messageId: string,
+    feedback: 'HELPFUL' | 'NOT_HELPFUL',
+    feedbackNote?: string | null,
+  ) {
+    return this.http
+      .post<{ data: AiMessageResponse }>(`${this.apiBaseUrl}/ai/messages/${messageId}/feedback`, {
+        feedback,
+        ...(feedbackNote ? { feedbackNote } : {}),
       })
       .pipe(map((response) => response.data));
   }

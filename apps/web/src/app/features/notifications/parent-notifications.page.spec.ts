@@ -412,4 +412,42 @@ describe('ParentNotificationsPage', () => {
     expect(comp.presentation('REPORT_REQUEST').label).toBe('សំណើរបាយការណ៍');
     expect(comp.presentation('SYSTEM').label).toBe('ប្រព័ន្ធ');
   });
+
+  it('archives notification when archive button is clicked', () => {
+    const fixture = TestBed.createComponent(ParentNotificationsPage);
+    fixture.detectChanges();
+
+    const listReq = httpTesting.expectOne('/api/v1/parents/notifications?page=1');
+    listReq.flush({
+      data: {
+        notifications: mockNotifications,
+        pagination: { total: 3, page: 1, limit: 20, totalPages: 1 },
+      },
+    });
+
+    const countReq = httpTesting.expectOne('/api/v1/parents/notifications?page=1&isRead=false');
+    countReq.flush({
+      data: {
+        notifications: [mockNotifications[0], mockNotifications[1]],
+        pagination: { total: 2, page: 1, limit: 20, totalPages: 1 },
+      },
+    });
+
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const archiveBtns = root.querySelectorAll<HTMLButtonElement>('.archive-btn');
+    expect(archiveBtns.length).toBeGreaterThan(0);
+
+    archiveBtns[0].click();
+    fixture.detectChanges();
+
+    const archiveReq = httpTesting.expectOne('/api/v1/parents/notifications/notif-1/archive');
+    expect(archiveReq.request.method).toBe('PATCH');
+    archiveReq.flush({
+      data: { ...mockNotifications[0], status: 'ARCHIVED' },
+    });
+
+    fixture.detectChanges();
+  });
 });

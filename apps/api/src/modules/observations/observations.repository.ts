@@ -1,4 +1,4 @@
-import type { BehaviorObservation, Child, ObservationCategory } from '@prisma/client';
+﻿import type { BehaviorObservation, Child, ObservationCategory } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
 import { CHILD_NOT_ARCHIVED } from '../../database/active-child.js';
 
@@ -51,6 +51,10 @@ export class ObservationsRepository {
     intensity: number;
     occurredAt: Date;
     note: string | null;
+    trigger?: string | null;
+    durationMinutes?: number | null;
+    parentResponse?: string | null;
+    outcome?: string | null;
   }): Promise<BehaviorObservation> {
     return prisma.behaviorObservation.create({ data: input });
   }
@@ -62,6 +66,10 @@ export class ObservationsRepository {
       intensity?: number;
       occurredAt?: Date;
       note?: string | null;
+      trigger?: string | null;
+      durationMinutes?: number | null;
+      parentResponse?: string | null;
+      outcome?: string | null;
     },
   ): Promise<BehaviorObservation> {
     return prisma.behaviorObservation.update({ where: { id }, data });

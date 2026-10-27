@@ -48,6 +48,15 @@ export class ActivitiesApi {
       .pipe(map((response) => response.data));
   }
 
+  toggleFavorite(activityId: string) {
+    return this.http
+      .post<{ data: { activityId: string; isFavorite: boolean } }>(
+        `${this.apiBaseUrl}/activities/${encodeURIComponent(activityId)}/favorite`,
+        {},
+      )
+      .pipe(map((response) => response.data));
+  }
+
   updateProgress(progressId: string, input: UpdateActivityProgressRequest) {
     return this.http
       .patch<{ data: ActivityProgressResponse }>(

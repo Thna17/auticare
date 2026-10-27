@@ -16,6 +16,25 @@ export class HospitalsApi {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
 
+  getHospital(id: string) {
+    return this.listHospitals().pipe(
+      map((hospitals) => {
+        const found = hospitals.find((h) => h.id === id);
+        if (!found) throw new Error('Hospital not found');
+        return found;
+      }),
+    );
+  }
+
+  toggleFavorite(id: string) {
+    return this.http
+      .post<{ data: { hospitalId: string; isFavorite: boolean } }>(
+        `${this.apiBaseUrl}/hospitals/${id}/favorite`,
+        {},
+      )
+      .pipe(map((response) => response.data));
+  }
+
   listHospitals() {
     return this.http
       .get<{ data: HospitalResponse[] }>(`${this.apiBaseUrl}/hospitals`)

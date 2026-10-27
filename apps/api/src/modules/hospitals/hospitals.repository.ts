@@ -8,6 +8,35 @@ export type HospitalAccountRecord = {
 };
 
 export class HospitalsRepository {
+  findHospitalById(id: string): Promise<Hospital | null> {
+    return prisma.hospital.findUnique({ where: { id } });
+  }
+
+  findFavorite(parentId: string, hospitalId: string) {
+    return prisma.favoriteHospital.findUnique({
+      where: { parentId_hospitalId: { parentId, hospitalId } },
+    });
+  }
+
+  addFavorite(parentId: string, hospitalId: string) {
+    return prisma.favoriteHospital.create({
+      data: { parentId, hospitalId },
+    });
+  }
+
+  removeFavorite(parentId: string, hospitalId: string) {
+    return prisma.favoriteHospital.delete({
+      where: { parentId_hospitalId: { parentId, hospitalId } },
+    });
+  }
+
+  listFavoriteHospitalIds(parentId: string) {
+    return prisma.favoriteHospital.findMany({
+      where: { parentId },
+      select: { hospitalId: true },
+    });
+  }
+
   list(): Promise<Hospital[]> {
     return prisma.hospital.findMany({ orderBy: [{ city: 'asc' }, { name: 'asc' }] });
   }

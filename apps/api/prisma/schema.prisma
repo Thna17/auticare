@@ -107,6 +107,8 @@ enum ScreeningFormKind {
 // What a parent recorded happening. Deliberately plain and observable — these
 // are things a caregiver can see, not clinical constructs.
 enum ObservationCategory {
+  COMMUNICATION
+  EMOTIONAL
   CRYING
   SLEEP
   EATING
@@ -164,6 +166,9 @@ model Parent {
   aiConversations         AiConversation[]
   subscriptions           Subscription[]
   sponsorships            Sponsorship[]
+  activityFavorites       ActivityFavorite[]
+  favoriteHospitals       FavoriteHospital[]
+  organizationInquiries   OrganizationInquiry[]
 
   @@index([email])
 }
@@ -200,6 +205,11 @@ model ParentPreference {
   preferredLanguage String   @default("en")
   reducedMotion     Boolean  @default(false)
   highContrast      Boolean  @default(false)
+  notifyQuestionnaire Boolean  @default(true)
+  notifyActivities    Boolean  @default(true)
+  notifyReports       Boolean  @default(true)
+  notifySchool        Boolean  @default(true)
+  notifyAnnouncements Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   parent            Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
@@ -344,6 +354,7 @@ enum SchoolChildEnrollmentStatus {
 enum SchoolNotificationStatus {
   UNREAD
   READ
+  ARCHIVED
 }
 
 model School {
@@ -383,6 +394,7 @@ model School {
   connectionCodes         SchoolConnectionCode[]
   subscriptions           Subscription[]
   sponsorships            Sponsorship[]
+  inquiries               OrganizationInquiry[]
 
   @@index([city, name])
 }
@@ -567,6 +579,8 @@ model Hospital {
   doctors      Doctor[]
   appointments Appointment[]
   staff        HospitalStaff[]
+  favoritedBy  FavoriteHospital[]
+  inquiries    OrganizationInquiry[]
 
   @@index([city, name])
 }
@@ -646,6 +660,7 @@ model Activity {
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
   progress     ActivityProgress[]
+  favorites    ActivityFavorite[]
 
   @@index([category, minAgeMonths, maxAgeMonths])
 }
@@ -798,6 +813,10 @@ model BehaviorObservation {
   intensity  Int
   occurredAt DateTime
   note       String?             @db.Text
+  trigger         String?             @db.Text
+  durationMinutes Int?
+  parentResponse  String?             @db.Text
+  outcome         String?             @db.Text
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
   child      Child               @relation(fields: [childId], references: [id], onDelete: Cascade)
@@ -806,6 +825,58 @@ model BehaviorObservation {
   @@index([childId, occurredAt])
   @@index([parentId, occurredAt])
   @@index([childId, category, occurredAt])
+}
+
+model ActivityFavorite {
+  id         String   @id @default(cuid())
+  parentId   String
+  activityId String
+  createdAt  DateTime @default(now())
+  parent     Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, activityId])
+  @@index([parentId])
+  @@index([activityId])
+}
+
+model FavoriteHospital {
+  id         String   @id @default(cuid())
+  parentId   String
+  hospitalId String
+  createdAt  DateTime @default(now())
+  parent     Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, hospitalId])
+  @@index([parentId])
+  @@index([hospitalId])
+}
+
+enum InquiryStatus {
+  NEW
+  READ
+  ARCHIVED
+}
+
+model OrganizationInquiry {
+  id             String        @id @default(cuid())
+  parentId       String
+  schoolId       String?
+  hospitalId     String?
+  childFirstName String?
+  subject        String        @db.VarChar(120)
+  message        String        @db.VarChar(2000)
+  status         InquiryStatus @default(NEW)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  parent         Parent        @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school         School?       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  hospital       Hospital?     @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, createdAt])
+  @@index([schoolId, status, createdAt])
+  @@index([hospitalId, status, createdAt])
 }
 
 model AiConversation {
@@ -841,6 +912,9 @@ model AiMessage {
   tokensIn       Int?
   tokensOut      Int?
   sources        Json?
+  savedAt        DateTime?
+  feedback       String?
+  feedbackNote   String?        @db.Text
   createdAt      DateTime       @default(now())
   conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 

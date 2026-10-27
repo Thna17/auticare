@@ -47,3 +47,11 @@ export const schoolRegistrationRateLimit = rateLimit({
   legacyHeaders: false,
   skip: () => isTesting,
 });
+
+export const inquiryRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: isTesting ? 10000 : 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => isTesting,
+});

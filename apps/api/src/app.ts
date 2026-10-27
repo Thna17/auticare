@@ -31,6 +31,7 @@ import { aiRoutes } from './modules/ai/index.js';
 import { insightsRoutes } from './modules/insights/index.js';
 import { guidanceRoutes } from './modules/guidance/index.js';
 import { connectionsRoutes } from './modules/connections/index.js';
+import { inquiriesRoutes } from './modules/inquiries/index.js';
 import {
   hospitalRegistrationAdminRoutes,
   hospitalRegistrationPublicRoutes,
@@ -105,6 +106,7 @@ export const createApp = () => {
   app.use('/api/v1/insights', insightsRoutes);
   app.use('/api/v1/guidance', guidanceRoutes);
   app.use('/api/v1/connections', connectionsRoutes);
+  app.use('/api/v1/inquiries', inquiriesRoutes);
   app.use('/api/v1/school-registrations', schoolRegistrationPublicRoutes);
   app.use('/api/v1/admin/school-registrations', schoolRegistrationAdminRoutes);
   app.use('/api/v1/hospital', hospitalTeamRoutes);

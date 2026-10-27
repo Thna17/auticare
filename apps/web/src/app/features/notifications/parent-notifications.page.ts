@@ -10,7 +10,7 @@ import { NotificationsStateService } from '../../core/notifications/notification
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ParentNotificationsApi } from './data-access/parent-notifications.api';
 
-type ReadFilter = 'ALL' | 'UNREAD';
+type ReadFilter = 'ALL' | 'UNREAD' | 'ARCHIVED';
 
 @Component({
   standalone: true,
@@ -192,6 +192,24 @@ type ReadFilter = 'ALL' | 'UNREAD';
                         : currentLang() === 'km'
                           ? 'សម្គាល់ថាបានអាន'
                           : 'Mark as read'
+                    }}
+                  </button>
+                }
+                @if (item.status !== 'ARCHIVED') {
+                  <button
+                    type="button"
+                    class="archive-btn"
+                    [disabled]="actingId() === item.id"
+                    (click)="archive(item)"
+                  >
+                    {{
+                      actingId() === item.id
+                        ? currentLang() === 'km'
+                          ? 'កំពុងរក្សាទុក…'
+                          : 'Archiving…'
+                        : currentLang() === 'km'
+                          ? 'រក្សាទុក'
+                          : 'Archive'
                     }}
                   </button>
                 }
@@ -411,6 +429,26 @@ type ReadFilter = 'ALL' | 'UNREAD';
         text-decoration: underline;
       }
 
+      .archive-btn {
+        background: transparent;
+        color: var(--ac-text-muted);
+        border: 1px solid var(--ac-border);
+        border-radius: var(--ac-radius-sm);
+        padding: 0.375rem 0.625rem;
+        font-size: var(--ac-font-size-xs);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .archive-btn:hover:not(:disabled) {
+        background: var(--ac-surface-hover);
+        color: var(--ac-text-primary);
+        border-color: var(--ac-border-strong);
+      }
+      .archive-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
       .mark-read-btn {
         min-height: 32px;
         padding: 0 12px;
@@ -529,6 +567,29 @@ export class ParentNotificationsPage implements OnInit {
         this.notificationsState.setUnreadCount(pagination.total);
       },
       error: () => this.unreadTotal.set(null),
+    });
+  }
+
+  protected archive(item: NotificationResponse): void {
+    this.actingId.set(item.id);
+    this.api.archive(item.id).subscribe({
+      next: () => {
+        this.actingId.set(null);
+        if (item.status === 'UNREAD') {
+          this.unreadTotal.update((total) => (total !== null ? Math.max(0, total - 1) : null));
+          this.notificationsState.decrementUnread(1);
+        }
+        if (this.filter() !== 'ARCHIVED') {
+          this.notifications.update((items) => items.filter((n) => n.id !== item.id));
+        } else {
+          this.notifications.update((items) =>
+            items.map((n) => (n.id === item.id ? { ...n, status: 'ARCHIVED' as const } : n)),
+          );
+        }
+      },
+      error: () => {
+        this.actingId.set(null);
+      },
     });
   }
 

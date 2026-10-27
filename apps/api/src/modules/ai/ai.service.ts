@@ -18,6 +18,8 @@ import type { ConversationSummaryResponse } from './ai.mapper.js';
 import { toAiMessageResponse, toConversationSummary } from './ai.mapper.js';
 import type { ChildContext, GroundingPassage } from './ai.prompt.js';
 import { buildConversationMessages, buildSystemPrompt, titleFromMessage } from './ai.prompt.js';
+import { prisma } from '../../database/prisma.js';
+import type { FeedbackAiMessageRequest, AiMessageResponse } from '@auticare/contracts';
 import { AiRepository } from './ai.repository.js';
 import {
   classifyParentMessage,
@@ -57,6 +59,40 @@ const citedIndexes = (answer: string): number[] => {
   return [...found];
 };
 
+/**
+ * Topic keywords → a word that appears in activity category names
+ * ("Sensory Response", "Social Interaction", "Flexibility & Routine", …).
+ * Deterministic on purpose: the links under an answer should be predictable.
+ */
+const TOPIC_TO_CATEGORY: readonly [RegExp, string][] = [
+  [/\b(talk|speak|words?|say|language|communicat\w*|point|sign|respond)\b/i, 'Communication'],
+  [/\b(sounds?|noise|hear|loud|touch|lights?|texture|taste|smell|sensory)\b/i, 'Sensory'],
+  [/\b(friends?|share|social|turns?|peers?|together|eye contact)\b/i, 'Social'],
+  [/\b(routines?|schedule|habit|transitions?|change)\b/i, 'Routine'],
+  [/\b(play|pretend|toys?|imagin\w*)\b/i, 'Play'],
+  [/\b(motor|hands?|grip|draw|climb|balance)\b/i, 'Motor'],
+];
+
+/** Up to three activities related to the topic of a message; none when nothing fits. */
+export const matchActivitiesForContent = async (
+  content: string,
+): Promise<{ id: string; title: string; category: string; description?: string | null }[]> => {
+  const match = TOPIC_TO_CATEGORY.find(([pattern]) => pattern.test(content));
+  if (!match) return [];
+  const activities = await prisma.activity.findMany({
+    where: { category: { contains: match[1] } },
+    orderBy: { title: 'asc' },
+    take: 3,
+    select: { id: true, title: true, category: true, summary: true },
+  });
+  return activities.map((a) => ({
+    id: a.id,
+    title: a.title,
+    category: a.category,
+    description: a.summary,
+  }));
+};
+
 const defaultTitle = (language: AiLanguage): string =>
   language === 'km' ? 'ការសន្ទនាថ្មី' : 'New conversation';
 
@@ -89,7 +125,8 @@ export class AiService {
   ): Promise<ConversationSummaryResponse> {
     if (actor.role !== 'PARENT') throw forbidden();
 
-    if (input.childId) {
+    const attachChild = input.includeChildContext === true && !!input.childId;
+    if (attachChild && input.childId) {
       const child = await this.repository.findChild(input.childId);
       // notFound rather than forbidden: a 403 would confirm the child exists.
       if (!child || child.parentId !== actor.parentId) {
@@ -99,7 +136,7 @@ export class AiService {
 
     const conversation = await this.repository.createConversation({
       parentId: actor.parentId,
-      childId: input.childId ?? null,
+      childId: attachChild ? input.childId! : null,
       title: defaultTitle(input.language),
       language: input.language,
     });
@@ -113,7 +150,7 @@ export class AiService {
     const conversation = await this.requireOwned(actor, conversationId);
     return {
       ...toConversationSummary(conversation, conversation.messages.length),
-      messages: conversation.messages.map(toAiMessageResponse),
+      messages: conversation.messages.map((m) => toAiMessageResponse(m)),
     };
   }
 
@@ -173,9 +210,10 @@ export class AiService {
       });
       await this.renameFromFirstMessage(conversation.title, conversationId, language, content);
       await this.repository.touchConversation(conversationId);
+      const related = await matchActivitiesForContent(content);
       return {
         userMessage: toAiMessageResponse(userMessage),
-        assistantMessage: toAiMessageResponse(assistantMessage),
+        assistantMessage: toAiMessageResponse(assistantMessage, related),
       };
     }
 
@@ -236,9 +274,10 @@ export class AiService {
     });
     await this.repository.touchConversation(conversationId);
 
+    const related = await matchActivitiesForContent(answer);
     return {
       userMessage: toAiMessageResponse(userMessage),
-      assistantMessage: toAiMessageResponse(assistantMessage),
+      assistantMessage: toAiMessageResponse(assistantMessage, related),
     };
   }
 
@@ -271,6 +310,41 @@ export class AiService {
       concernBand: band,
       observationsLast14Days: observationCount,
     };
+  }
+
+  async toggleSaveMessage(actor: Actor, messageId: string): Promise<AiMessageResponse> {
+    if (actor.role !== 'PARENT') throw forbidden();
+    const message = await this.repository.findMessageWithConversation(messageId);
+    if (!message || message.conversation.parentId !== actor.parentId) {
+      throw notFound('Message was not found.');
+    }
+    const newSavedAt = message.savedAt ? null : new Date();
+    const updated = await this.repository.updateMessageSave(messageId, newSavedAt);
+    return toAiMessageResponse(updated);
+  }
+
+  async listSaved(actor: Actor): Promise<AiMessageResponse[]> {
+    if (actor.role !== 'PARENT') throw forbidden();
+    const rows = await this.repository.listSavedMessages(actor.parentId);
+    return rows.map((r) => toAiMessageResponse(r));
+  }
+
+  async saveFeedback(
+    actor: Actor,
+    messageId: string,
+    input: FeedbackAiMessageRequest,
+  ): Promise<AiMessageResponse> {
+    if (actor.role !== 'PARENT') throw forbidden();
+    const message = await this.repository.findMessageWithConversation(messageId);
+    if (!message || message.conversation.parentId !== actor.parentId) {
+      throw notFound('Message was not found.');
+    }
+    const updated = await this.repository.updateFeedback(
+      messageId,
+      input.feedback,
+      input.feedbackNote?.trim() ? input.feedbackNote.trim() : null,
+    );
+    return toAiMessageResponse(updated);
   }
 
   private async requireOwned(actor: Actor, conversationId: string) {

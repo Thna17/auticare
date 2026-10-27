@@ -2021,12 +2021,12 @@ export class AppShellComponent {
         items: [
           { label: s.aiParentAssistant, path: '/ai', icon: 'ai' },
           { label: s.resourcesActivities, path: '/activities', icon: 'book' },
-          { label: s.findSupport, path: '/documents', icon: 'pin' },
+          { label: s.findSupport, path: '/find-support', icon: 'pin' },
         ],
       },
       {
         title: s.progress,
-        items: [{ label: s.reports, path: '/schools/reports', icon: 'file' }],
+        items: [{ label: s.reports, path: '/reports', icon: 'file' }],
       },
       {
         title: s.other,

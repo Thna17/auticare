@@ -222,6 +222,9 @@ export const resendInvitationResponseSchema = z.object({
   invitationUrl: z.string().url().optional(),
 });
 export type ResendInvitationResponse = z.infer<typeof resendInvitationResponseSchema>;
+export const questionnaireStatuses = ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'] as const;
+export type QuestionnaireStatus = (typeof questionnaireStatuses)[number];
+
 export const childResponseSchema = z.object({
   id: z.string(),
   firstName: z.string(),
@@ -230,6 +233,7 @@ export const childResponseSchema = z.object({
   address: z.string().nullable().optional(),
   notes: z.string().nullable(),
   archivedAt: z.string().nullable(),
+  questionnaireStatus: z.enum(questionnaireStatuses).optional(),
 });
 export type ChildResponse = z.infer<typeof childResponseSchema>;
 export const createChildRequestSchema = z.object({
@@ -263,6 +267,7 @@ export const hospitalResponseSchema = z.object({
   city: z.string(),
   address: z.string(),
   services: z.string(),
+  isFavorite: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -744,6 +749,7 @@ export const activityResponseSchema = z.object({
   minAgeMonths: z.number().int(),
   maxAgeMonths: z.number().int(),
   summary: z.string(),
+  isFavorite: z.boolean().optional(),
 });
 export type ActivityResponse = z.infer<typeof activityResponseSchema>;
 
@@ -769,6 +775,14 @@ export type ActivityProgressResponse = z.infer<typeof activityProgressResponseSc
 export const listActivitiesQuerySchema = z.object({
   childId: z.string().min(1).optional(),
   category: z.string().trim().min(1).max(60).optional(),
+  learningGoal: z.string().trim().min(1).max(60).optional(),
+  minAgeMonths: z.coerce.number().int().optional(),
+  maxAgeMonths: z.coerce.number().int().optional(),
+  // A query string is text, and z.coerce.boolean() would read "false" as true.
+  favoriteOnly: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((val) => val === 'true'),
 });
 export type ListActivitiesQuery = z.infer<typeof listActivitiesQuerySchema>;
 
@@ -798,7 +812,7 @@ export const updateActivityProgressRequestSchema = z
 export type UpdateActivityProgressRequest = z.infer<typeof updateActivityProgressRequestSchema>;
 
 // ── School Notifications ──────────────────────────────────────────────
-export const schoolNotificationStatuses = ['UNREAD', 'READ'] as const;
+export const schoolNotificationStatuses = ['UNREAD', 'READ', 'ARCHIVED'] as const;
 export type SchoolNotificationStatus = (typeof schoolNotificationStatuses)[number];
 
 export const notificationTypes = [
@@ -838,6 +852,11 @@ export const updateParentPreferencesRequestSchema = z.object({
   reducedMotion: z.boolean().optional(),
   highContrast: z.boolean().optional(),
   preferredLanguage: z.string().trim().min(2).max(10).optional(),
+  notifyQuestionnaire: z.boolean().optional(),
+  notifyActivities: z.boolean().optional(),
+  notifyReports: z.boolean().optional(),
+  notifySchool: z.boolean().optional(),
+  notifyAnnouncements: z.boolean().optional(),
 });
 export type UpdateParentPreferencesRequest = z.infer<typeof updateParentPreferencesRequestSchema>;
 
@@ -845,6 +864,11 @@ export const parentPreferenceSchema = z.object({
   preferredLanguage: z.string(),
   reducedMotion: z.boolean(),
   highContrast: z.boolean(),
+  notifyQuestionnaire: z.boolean().optional(),
+  notifyActivities: z.boolean().optional(),
+  notifyReports: z.boolean().optional(),
+  notifySchool: z.boolean().optional(),
+  notifyAnnouncements: z.boolean().optional(),
   updatedAt: z.string().optional(),
 });
 export type ParentPreference = z.infer<typeof parentPreferenceSchema>;
@@ -961,6 +985,7 @@ export const listParentNotificationsQuerySchema = z
       .string()
       .transform((val) => val === 'true')
       .optional(),
+    status: z.enum(['UNREAD', 'READ', 'ARCHIVED']).optional(),
   })
   .merge(paginationQuerySchema);
 export type ListParentNotificationsQuery = z.infer<typeof listParentNotificationsQuerySchema>;
@@ -1426,9 +1451,6 @@ export const parentDashboardQuerySchema = z.object({
 export type ParentDashboardQuery = z.infer<typeof parentDashboardQuerySchema>;
 
 /** A child's initial questionnaire. The personalized dashboard opens once it is COMPLETED. */
-export const questionnaireStatuses = ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'] as const;
-export type QuestionnaireStatus = (typeof questionnaireStatuses)[number];
-
 export const parentDashboardResponseSchema = z.object({
   selectedChild: z
     .object({
@@ -1457,6 +1479,38 @@ export const parentDashboardResponseSchema = z.object({
   weeklyProgress: parentDashboardWeeklyProgressSchema,
   upcomingAppointment: parentDashboardUpcomingAppointmentSchema.nullable(),
   recommendedAction: parentDashboardRecommendedActionSchema,
+  recentObservations: z
+    .array(
+      z.object({
+        id: z.string(),
+        category: z.string(),
+        occurredAt: z.string(),
+        note: z.string().nullable(),
+      }),
+    )
+    .optional(),
+  recentNotifications: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        body: z.string(),
+        createdAt: z.string(),
+      }),
+    )
+    .optional(),
+  recommendedActivities: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        category: z.string(),
+        minAgeMonths: z.number().int(),
+        maxAgeMonths: z.number().int(),
+        summary: z.string(),
+      }),
+    )
+    .optional(),
 });
 export type ParentDashboardResponse = z.infer<typeof parentDashboardResponseSchema>;
 
@@ -1498,6 +1552,8 @@ export type AdminDashboardResponse = z.infer<typeof adminDashboardResponseSchema
 // scored, graded or turned into a diagnosis.
 
 export const observationCategories = [
+  'COMMUNICATION',
+  'EMOTIONAL',
   'CRYING',
   'SLEEP',
   'EATING',
@@ -1516,6 +1572,10 @@ export const observationResponseSchema = z.object({
   intensity: z.number().int().min(1).max(5),
   occurredAt: z.string(),
   note: z.string().nullable(),
+  trigger: z.string().nullable().optional(),
+  durationMinutes: z.number().int().nullable().optional(),
+  parentResponse: z.string().nullable().optional(),
+  outcome: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -1527,6 +1587,10 @@ export const createObservationRequestSchema = z.object({
   intensity: z.number().int().min(1).max(5),
   occurredAt: z.string().min(1),
   note: z.string().max(2000).optional(),
+  trigger: z.string().max(2000).optional(),
+  durationMinutes: z.number().int().min(0).max(1440).optional(),
+  parentResponse: z.string().max(2000).optional(),
+  outcome: z.string().max(2000).optional(),
 });
 export type CreateObservationRequest = z.infer<typeof createObservationRequestSchema>;
 
@@ -1536,6 +1600,10 @@ export const updateObservationRequestSchema = z
     intensity: z.number().int().min(1).max(5),
     occurredAt: z.string().min(1),
     note: z.string().max(2000).nullable(),
+    trigger: z.string().max(2000).nullable().optional(),
+    durationMinutes: z.number().int().min(0).max(1440).nullable().optional(),
+    parentResponse: z.string().max(2000).nullable().optional(),
+    outcome: z.string().max(2000).nullable().optional(),
   })
   .partial()
   .refine(
@@ -1587,6 +1655,19 @@ export const aiMessageResponseSchema = z.object({
   model: z.string().nullable(),
   /** Reviewed sources the answer drew on. Empty when there were none. */
   sources: z.array(aiSourceSchema),
+  savedAt: z.string().nullable().optional(),
+  feedback: z.string().nullable().optional(),
+  feedbackNote: z.string().nullable().optional(),
+  relatedActivities: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        category: z.string(),
+        description: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
   createdAt: z.string(),
 });
 export type AiMessageResponse = z.infer<typeof aiMessageResponseSchema>;
@@ -1610,6 +1691,7 @@ export type AiConversationDetailResponse = z.infer<typeof aiConversationDetailRe
 export const createAiConversationRequestSchema = z.object({
   childId: z.string().min(1).optional(),
   language: z.enum(aiLanguages).default('en'),
+  includeChildContext: z.boolean().optional(),
 });
 export type CreateAiConversationRequest = z.infer<typeof createAiConversationRequestSchema>;
 
@@ -2132,3 +2214,5 @@ export const updateAdminSubscriptionRequestSchema = z.object({
   currentPeriodEnd: isoDate.nullable().optional(),
 });
 export type UpdateAdminSubscriptionRequest = z.infer<typeof updateAdminSubscriptionRequestSchema>;
+
+export * from './parent-portal.js';

@@ -154,14 +154,25 @@ export class ParentsRepository {
   /** One page of the parent's own notifications, newest first. */
   async listNotificationsForParent(
     parentId: string,
-    filters: { isRead?: boolean | undefined },
+    filters: { isRead?: boolean | undefined; status?: string | undefined },
     page: Page,
   ) {
+    let statusFilter: Prisma.NotificationWhereInput['status'];
+    if (filters.status === 'ARCHIVED') {
+      statusFilter = 'ARCHIVED';
+    } else if (filters.status === 'UNREAD') {
+      statusFilter = 'UNREAD';
+    } else if (filters.status === 'READ') {
+      statusFilter = 'READ';
+    } else if (filters.isRead !== undefined) {
+      statusFilter = filters.isRead ? 'READ' : 'UNREAD';
+    } else {
+      statusFilter = { not: 'ARCHIVED' };
+    }
+
     const where: Prisma.NotificationWhereInput = {
       parentId,
-      ...(filters.isRead !== undefined && {
-        status: filters.isRead ? ('READ' as const) : ('UNREAD' as const),
-      }),
+      status: statusFilter,
     };
     const [items, total] = await prisma.$transaction([
       prisma.notification.findMany({ where, orderBy: { createdAt: 'desc' }, ...page }),
@@ -174,6 +185,14 @@ export class ParentsRepository {
   findNotificationById(id: string) {
     return prisma.notification.findUnique({
       where: { id },
+    });
+  }
+
+  /** Archive a notification. */
+  archiveNotification(id: string) {
+    return prisma.notification.update({
+      where: { id },
+      data: { status: 'ARCHIVED' },
     });
   }
 
@@ -207,8 +226,27 @@ export class ParentsRepository {
       preferredLanguage?: string | undefined;
       reducedMotion?: boolean | undefined;
       highContrast?: boolean | undefined;
+      notifyQuestionnaire?: boolean | undefined;
+      notifyActivities?: boolean | undefined;
+      notifyReports?: boolean | undefined;
+      notifySchool?: boolean | undefined;
+      notifyAnnouncements?: boolean | undefined;
     },
   ) {
+    // Only the notification switches that were sent are written.
+    const notify = Object.fromEntries(
+      (
+        [
+          'notifyQuestionnaire',
+          'notifyActivities',
+          'notifyReports',
+          'notifySchool',
+          'notifyAnnouncements',
+        ] as const
+      )
+        .filter((key) => data[key] !== undefined)
+        .map((key) => [key, data[key] as boolean]),
+    );
     return prisma.parentPreference.upsert({
       where: { parentId },
       create: {
@@ -216,11 +254,13 @@ export class ParentsRepository {
         preferredLanguage: data.preferredLanguage ?? 'en',
         reducedMotion: data.reducedMotion ?? false,
         highContrast: data.highContrast ?? false,
+        ...notify,
       },
       update: {
         ...(data.preferredLanguage !== undefined && { preferredLanguage: data.preferredLanguage }),
         ...(data.reducedMotion !== undefined && { reducedMotion: data.reducedMotion }),
         ...(data.highContrast !== undefined && { highContrast: data.highContrast }),
+        ...notify,
       },
     });
   }

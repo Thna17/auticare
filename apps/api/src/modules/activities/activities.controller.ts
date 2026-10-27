@@ -12,7 +12,10 @@ const requiredParam = (value: string | readonly string[] | undefined): string =>
 };
 
 export const listActivities = async (req: Request, res: Response) =>
-  ok(res, await service.listActivities(req.auth!, validatedQuery<ListActivitiesQuery>(req)));
+  ok(res, await service.list(req.auth!, validatedQuery<ListActivitiesQuery>(req)));
+
+export const toggleFavorite = async (req: Request, res: Response) =>
+  ok(res, await service.toggleFavorite(req.auth!, requiredParam(req.params.activityId)));
 
 export const listActivityProgress = async (req: Request, res: Response) =>
   ok(
@@ -21,10 +24,7 @@ export const listActivityProgress = async (req: Request, res: Response) =>
   );
 
 export const startActivity = async (req: Request, res: Response) =>
-  created(
-    res,
-    await service.startActivity(req.auth!, requiredParam(req.params.activityId), req.body.childId),
-  );
+  created(res, await service.start(req.auth!, requiredParam(req.params.activityId), req.body));
 
-export const updateActivityProgress = async (req: Request, res: Response) =>
+export const updateProgress = async (req: Request, res: Response) =>
   ok(res, await service.updateProgress(req.auth!, requiredParam(req.params.progressId), req.body));

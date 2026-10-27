@@ -61,6 +61,8 @@ const COPY = {
     },
     disclaimer: 'Counts of what you recorded. Not a diagnosis, and not a cause.',
     categories: {
+      COMMUNICATION: 'Communication',
+      EMOTIONAL: 'Emotional expression',
       CRYING: 'Crying',
       SLEEP: 'Sleep',
       EATING: 'Eating',
@@ -136,6 +138,8 @@ const COPY = {
     },
     disclaimer: 'ការរាប់ពីអ្វីដែលអ្នកបានកត់ត្រា។ មិនមែនជាការធ្វើរោគវិនិច្ឆ័យ និងមិនមែនជាមូលហេតុទេ។',
     categories: {
+      COMMUNICATION: 'ការប្រាស្រ័យទាក់ទង',
+      EMOTIONAL: 'ការបញ្ចេញអារម្មណ៍',
       CRYING: 'ការយំ',
       SLEEP: 'ការគេង',
       EATING: 'ការញ៉ាំ',
