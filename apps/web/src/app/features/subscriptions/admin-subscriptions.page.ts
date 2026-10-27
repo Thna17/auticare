@@ -15,7 +15,7 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
 import { SchoolsApi } from '../schools/data-access/schools.api';
 import { SubscriptionsApi } from './data-access/subscriptions.api';
 import { STATUS_LABEL, errorMessage, formatDate, formatPrice } from './subscription-format';
-import { SUBSCRIPTION_PAGE_STYLES } from './subscription-page.styles';
+import { PORTAL_PAGE_STYLES } from '../../design-system/styles/portal-page.styles';
 
 /** The status changes the server accepts from each status. EXPIRED is final. */
 const NEXT_STATUSES: Record<SubscriptionStatus, readonly SubscriptionStatus[]> = {
@@ -169,7 +169,7 @@ type SchoolOption = { id: string; name: string; city: string };
       }
     }
   `,
-  styles: [SUBSCRIPTION_PAGE_STYLES],
+  styles: [PORTAL_PAGE_STYLES],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminSubscriptionsPage implements OnInit {

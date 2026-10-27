@@ -144,6 +144,10 @@ model Parent {
   socialMediaAccount      String?
   role                    UserRole                 @default(PARENT)
   mustResetPassword       Boolean                  @default(false)
+  // Set by the platform admin. A suspended account cannot sign in or refresh a
+  // session; nothing else about it changes, and reactivating clears these.
+  suspendedAt             DateTime?
+  suspendedReason         String?                  @db.Text
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   preference              ParentPreference?
@@ -245,6 +249,11 @@ model ScreeningQuestion {
   // post-login assessment. A session is served only one kind.
   formKind     ScreeningFormKind @default(FULL)
   isActive     Boolean           @default(true)
+  // Editing a question never changes it in place: the admin's edit becomes a
+  // new row (version + 1, replacesId = the old row) and the old row is retired,
+  // so answers already given stay attached to the wording that was asked.
+  version      Int               @default(1)
+  replacesId   String?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   answers      ScreeningAnswer[]
@@ -637,15 +646,24 @@ model Appointment {
 }
 
 model Activity {
-  id           String             @id @default(cuid())
-  title        String
-  category     String
-  minAgeMonths Int
-  maxAgeMonths Int
-  summary      String             @db.Text
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  progress     ActivityProgress[]
+  id                     String             @id @default(cuid())
+  title                  String
+  category               String
+  minAgeMonths           Int
+  maxAgeMonths           Int
+  summary                String             @db.Text
+  // Parents only ever see PUBLISHED activities; the admin drafts and archives.
+  status                 ActivityStatus     @default(PUBLISHED)
+  steps                  String?            @db.Text
+  imageUrl               String?            @db.Text
+  videoUrl               String?            @db.Text
+  resourceUrl            String?            @db.Text
+  // Recorded by the admin when a qualified professional has reviewed it.
+  professionallyReviewed Boolean            @default(false)
+  reviewedBy             String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  progress               ActivityProgress[]
 
   @@index([category, minAgeMonths, maxAgeMonths])
 }
@@ -993,4 +1011,73 @@ model Sponsorship {
 
   @@index([schoolId, status])
   @@index([email, status])
+}
+
+// ---------------------------------------------------------------------------
+// Admin operations: platform announcements and the partnership tracker.
+// ---------------------------------------------------------------------------
+
+enum AnnouncementAudience {
+  ALL
+  PARENTS
+  SCHOOLS
+  TEACHERS
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// A message from the AutiCare team shown as a banner to one audience. A
+// PUBLISHED announcement appears from `publishAt` (now when empty) until
+// `expiresAt`, so scheduling needs no background job.
+model Announcement {
+  id          String               @id @default(cuid())
+  title       String
+  body        String               @db.Text
+  audience    AnnouncementAudience @default(ALL)
+  status      AnnouncementStatus   @default(DRAFT)
+  publishAt   DateTime?
+  expiresAt   DateTime?
+  publishedAt DateTime?
+  createdById String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([status, publishAt])
+}
+
+enum PartnershipStatus {
+  PROSPECT
+  CONTACTED
+  IN_DISCUSSION
+  ACTIVE
+  ENDED
+}
+
+// AutiCare's relationship with an organization, from first contact to an
+// active partnership. Internal to the admin team; never shown to the partner.
+model Partnership {
+  id               String            @id @default(cuid())
+  organizationName String
+  organizationType String            @default("SCHOOL")
+  contactName      String?
+  contactEmail     String?
+  contactPhone     String?
+  status           PartnershipStatus @default(PROSPECT)
+  nextFollowUpAt   DateTime?
+  notes            String?           @db.Text
+  createdById      String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([status, nextFollowUpAt])
+}
+
+enum ActivityStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }

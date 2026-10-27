@@ -13,7 +13,7 @@ import {
   formatDate,
   formatPrice,
 } from './subscription-format';
-import { SUBSCRIPTION_PAGE_STYLES } from './subscription-page.styles';
+import { PORTAL_PAGE_STYLES } from '../../design-system/styles/portal-page.styles';
 
 /** The school admin's Business plan: status, price, paid-through date and slot usage. */
 @Component({
@@ -81,7 +81,7 @@ import { SUBSCRIPTION_PAGE_STYLES } from './subscription-page.styles';
       </section>
     }
   `,
-  styles: [SUBSCRIPTION_PAGE_STYLES],
+  styles: [PORTAL_PAGE_STYLES],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SchoolSubscriptionPage implements OnInit {

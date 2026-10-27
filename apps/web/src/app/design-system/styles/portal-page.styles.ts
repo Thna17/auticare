@@ -1,5 +1,5 @@
-/** Layout and controls shared by the subscription pages, in the tokens the team pages use. */
-export const SUBSCRIPTION_PAGE_STYLES = `
+/** Layout and controls shared by the portal management pages (admin, subscriptions). */
+export const PORTAL_PAGE_STYLES = `
   :host {
     display: grid;
     gap: 20px;
@@ -254,5 +254,71 @@ export const SUBSCRIPTION_PAGE_STYLES = `
   select:focus-visible {
     outline: 3px solid var(--ac-color-focus);
     outline-offset: 2px;
+  }
+
+  /* Search box and filter buttons above a list. */
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .toolbar input[type='search'] {
+    flex: 1 1 240px;
+    min-width: 0;
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--ac-color-border-slate);
+    border-radius: 10px;
+    background: var(--ac-color-surface);
+    color: var(--ac-color-text-strong);
+  }
+
+  .toolbar select {
+    height: 42px;
+    padding: 0 10px;
+    border: 1px solid var(--ac-color-border-slate);
+    border-radius: 10px;
+    background: var(--ac-color-surface);
+    color: var(--ac-color-text-strong);
+  }
+
+  .btn-small[aria-pressed='true'] {
+    background: var(--ac-color-action);
+    border-color: var(--ac-color-action);
+    color: var(--ac-color-text-on-action);
+  }
+
+  /* Number tiles on overview pages. */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+  }
+
+  .stat {
+    display: grid;
+    gap: 4px;
+    padding: 16px 18px;
+    border: 1px solid var(--ac-color-border-slate);
+    border-radius: 14px;
+    background: var(--ac-color-surface);
+    text-decoration: none;
+  }
+
+  .stat strong {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--ac-color-text-strong);
+  }
+
+  .stat span {
+    font-size: 13px;
+    color: var(--ac-color-text-muted);
+  }
+
+  a.stat:hover {
+    border-color: var(--ac-color-action);
   }
 `;

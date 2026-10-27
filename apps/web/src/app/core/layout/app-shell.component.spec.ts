@@ -13,6 +13,7 @@ import { SchoolStaffState } from '../../features/schools/data-access/school-staf
 import { SchoolRegistrationsService } from '../../features/admin/data-access/school-registrations.service';
 import { HospitalRegistrationsService } from '../../features/admin/data-access/hospital-registrations.service';
 import { HospitalStaffState } from '../../features/hospital-management/data-access/hospital-staff.state';
+import { AdminPortalApi } from '../../features/admin/data-access/admin-portal.api';
 
 describe('AppShellComponent', () => {
   let fixture: ComponentFixture<AppShellComponent>;
@@ -103,6 +104,8 @@ describe('AppShellComponent', () => {
       providers: [
         provideRouter([]),
         I18nService,
+        // The announcement banner asks for live announcements; none here.
+        { provide: AdminPortalApi, useValue: { visibleAnnouncements: () => of([]) } },
         { provide: AuthService, useValue: mockAuthService },
         { provide: NotificationsStateService, useValue: mockNotificationsState },
         { provide: PreferencesService, useValue: mockPreferencesService },
@@ -361,7 +364,7 @@ describe('AppShellComponent', () => {
 
     // Planned areas are shown but not linked.
     const soon = Array.from(el.querySelectorAll('.sidebar .nav-link.soon'));
-    const audit = soon.find((node) => node.textContent?.includes('Audit Logs'));
+    const audit = soon.find((node) => node.textContent?.includes('Payments & Transactions'));
     expect(audit?.tagName).toBe('SPAN');
     expect(audit?.getAttribute('aria-disabled')).toBe('true');
     expect(audit?.querySelector('.soon-tag')?.textContent?.trim()).toBe('Soon');

@@ -16,6 +16,7 @@ import { PreferencesService } from '../preferences/preferences.service';
 import { I18nService } from '../i18n/i18n.service';
 import { DICTIONARY } from '../i18n/i18n.dictionary';
 import { NavIconComponent } from './nav-icon.component';
+import { AnnouncementBannerComponent } from './announcement-banner.component';
 import { SchoolStaffState } from '../../features/schools/data-access/school-staff.state';
 import { SchoolRegistrationsService } from '../../features/admin/data-access/school-registrations.service';
 import { HospitalRegistrationsService } from '../../features/admin/data-access/hospital-registrations.service';
@@ -38,7 +39,13 @@ export type NavSection = {
 @Component({
   selector: 'ac-app-shell',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, NavIconComponent],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    NavIconComponent,
+    AnnouncementBannerComponent,
+  ],
   template: `
     <a class="skip" href="#main">{{ shellTexts().skipToContent }}</a>
 
@@ -375,6 +382,7 @@ export type NavSection = {
 
       <main id="main" class="shell-body">
         <div class="content-container">
+          <ac-announcement-banner />
           <router-outlet />
         </div>
       </main>
@@ -1844,8 +1852,8 @@ export class AppShellComponent {
         {
           title: s.userManagement,
           items: [
-            { label: s.parentsFamilies, path: '/children', icon: 'family' },
-            { label: s.schoolsOrganizations, path: '/schools/admin', icon: 'building' },
+            { label: s.parentsFamilies, path: '/admin/parents', icon: 'family' },
+            { label: s.schoolsOrganizations, path: '/admin/schools', icon: 'building' },
             {
               label: s.schoolRequests,
               path: '/admin/school-registrations',
@@ -1858,21 +1866,16 @@ export class AppShellComponent {
               icon: 'checklist',
               badge: hospitalRequestBadge,
             },
-            { label: s.teachersStaff, path: 'soon:teachers', icon: 'school', soon: true },
+            { label: s.teachersStaff, path: '/admin/staff', icon: 'school' },
             { label: s.adminTeamRoles, path: 'soon:admin-team', icon: 'shield', soon: true },
           ],
         },
         {
           title: s.aiAndContent,
           items: [
-            {
-              label: s.questionnaireManagement,
-              path: 'soon:questionnaire',
-              icon: 'report',
-              soon: true,
-            },
-            { label: s.aiConfiguration, path: 'soon:ai', icon: 'brain', soon: true },
-            { label: s.resourcesActivities, path: 'soon:resources', icon: 'book', soon: true },
+            { label: s.questionnaireManagement, path: '/admin/questionnaire', icon: 'report' },
+            { label: s.aiConfiguration, path: '/admin/ai', icon: 'brain' },
+            { label: s.resourcesActivities, path: '/admin/activities', icon: 'book' },
             { label: s.supportServicesDirectory, path: '/hospitals/admin', icon: 'pin' },
           ],
         },
@@ -1881,29 +1884,24 @@ export class AppShellComponent {
           items: [
             { label: s.subscriptionPlans, path: '/admin/subscriptions', icon: 'card' },
             { label: s.paymentsTransactions, path: 'soon:payments', icon: 'receipt', soon: true },
-            { label: s.sponsoredProAccounts, path: 'soon:sponsored', icon: 'gift', soon: true },
+            { label: s.sponsoredProAccounts, path: '/admin/sponsorships', icon: 'gift' },
           ],
         },
         {
           title: s.operationsGrowth,
           items: [
-            { label: s.partnerships, path: 'soon:partnerships', icon: 'handshake', soon: true },
+            { label: s.partnerships, path: '/admin/partnerships', icon: 'handshake' },
             { label: s.inquiriesSupport, path: 'soon:inquiries', icon: 'chat', soon: true },
-            { label: s.analyticsReports, path: '/schools/reports', icon: 'chart' },
-            {
-              label: s.announcementsPromotions,
-              path: 'soon:announcements',
-              icon: 'megaphone',
-              soon: true,
-            },
+            { label: s.analyticsReports, path: '/admin/analytics', icon: 'chart' },
+            { label: s.announcementsPromotions, path: '/admin/announcements', icon: 'megaphone' },
           ],
         },
         {
           title: s.system,
           items: [
-            { label: s.auditLogs, path: 'soon:audit', icon: 'file', soon: true },
+            { label: s.auditLogs, path: '/admin/audit', icon: 'file' },
             { label: s.platformSettings, path: '/settings', icon: 'gear' },
-            { label: s.helpDocumentation, path: '/support', icon: 'help' },
+            { label: s.helpDocumentation, path: '/admin/help', icon: 'help' },
           ],
         },
       ];

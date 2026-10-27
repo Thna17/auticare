@@ -39,6 +39,7 @@ import {
 } from './modules/registrations/index.js';
 import { hospitalTeamRoutes } from './modules/hospital-management/hospital.team.routes.js';
 import { adminSubscriptionsRoutes, subscriptionsRoutes } from './modules/subscriptions/index.js';
+import { adminRoutes, announcementsRoutes } from './modules/admin/index.js';
 export const createApp = () => {
   const app = express();
   app.disable('x-powered-by');
@@ -112,6 +113,9 @@ export const createApp = () => {
   app.use('/api/v1/admin/hospital-registrations', hospitalRegistrationAdminRoutes);
   app.use('/api/v1/subscriptions', subscriptionsRoutes);
   app.use('/api/v1/admin/subscriptions', adminSubscriptionsRoutes);
+  // After every more specific /api/v1/admin/... router, which handle their own paths first.
+  app.use('/api/v1/admin', adminRoutes);
+  app.use('/api/v1/announcements', announcementsRoutes);
   // NOTE: uploads are deliberately NOT served statically. They are files about
   // children, and express.static has no notion of who is asking. Downloads go
   // through GET /api/v1/schools/reports/:id/attachments/:filename, which

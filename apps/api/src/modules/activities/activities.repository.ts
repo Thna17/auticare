@@ -22,6 +22,8 @@ export class ActivitiesRepository {
   listActivities(filters: { category?: string; ageMonths?: number }): Promise<Activity[]> {
     return prisma.activity.findMany({
       where: {
+        // Drafts and archived activities are the admin's, never shown to families.
+        status: 'PUBLISHED',
         ...(filters.category !== undefined ? { category: filters.category } : {}),
         ...(filters.ageMonths !== undefined
           ? {
@@ -35,7 +37,7 @@ export class ActivitiesRepository {
   }
 
   findActivityById(activityId: string): Promise<Activity | null> {
-    return prisma.activity.findUnique({ where: { id: activityId } });
+    return prisma.activity.findFirst({ where: { id: activityId, status: 'PUBLISHED' } });
   }
 
   listProgressForChild(childId: string): Promise<ActivityProgressWithActivity[]> {

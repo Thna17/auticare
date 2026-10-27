@@ -101,15 +101,22 @@ export class AuthService {
   }
 
   /**
-   * A school can deactivate a teacher. If every school this account belongs to
-   * has done so, the account cannot sign in. Accounts with no staff rows (or
-   * any active one) are unaffected.
+   * The platform admin can suspend any account, and a school can deactivate a
+   * teacher. If every school this account belongs to has deactivated it, or
+   * every one of those schools is suspended, the account cannot sign in.
+   * Accounts with no staff rows (or any active one) are unaffected.
    */
   private async assertNotDeactivated(parentId: string, role: UserRole): Promise<void> {
+    if (await this.repository.findSuspension(parentId)) {
+      throw forbidden('This account has been suspended. Contact AutiCare support.');
+    }
     if (role === 'SCHOOL') {
       const states = await this.repository.listSchoolStaffStates(parentId);
       if (states.length > 0 && states.every((state) => state.deactivatedAt !== null)) {
         throw forbidden('This account has been deactivated by your school.');
+      }
+      if (states.length > 0 && states.every((state) => state.school.status !== 'ACTIVE')) {
+        throw forbidden("Your school's AutiCare access is suspended. Contact AutiCare support.");
       }
     } else if (role === 'HOSPITAL') {
       const states = await this.repository.listHospitalStaffStates(parentId);
@@ -283,6 +290,9 @@ export class AuthService {
     role: UserRole,
     response: AuthResponse,
   ): Promise<AuthSession> {
+    // Every way in (login, setup code, invitation) ends here, so this one check
+    // covers them all.
+    await this.assertNotDeactivated(parentId, role);
     const accessToken = this.tokenService.createAccessToken({ sub: parentId, role });
     const refreshToken = this.tokenService.createRefreshToken();
     await this.repository.createRefreshToken({

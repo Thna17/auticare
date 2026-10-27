@@ -20,6 +20,7 @@ import { SchoolsApi } from '../schools/data-access/schools.api';
 import { DashboardApi } from './data-access/dashboard.api';
 import { SchoolTopbarComponent } from '../../school-component/components/school-topbar.component';
 import { ParentAnalysisComponent } from './analysis/parent-analysis.component';
+import { AdminOverviewComponent } from '../admin/admin-overview.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { I18nService } from '../../core/i18n/i18n.service';
@@ -32,6 +33,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
     UiMessageComponent,
     UiSpinnerComponent,
     ParentAnalysisComponent,
+    AdminOverviewComponent,
   ],
   host: {
     '[class.school-dashboard]': 'isSchoolStaff()',
@@ -432,6 +434,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
         </div>
       } @else if (isAdmin()) {
         <!-- ADMINISTRATOR REAL DASHBOARD -->
+        <ac-admin-overview />
         @if (adminDashboardLoading()) {
           <div class="dashboard-state-center">
             <ac-ui-spinner label="Loading administrative dashboard…" />

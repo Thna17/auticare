@@ -39,6 +39,10 @@ export const openApiDocument: Record<string, unknown> = {
   ],
   tags: [
     {
+      name: 'Admin',
+      description: 'Platform admin: users, schools, staff, sponsorships, audit logs',
+    },
+    {
       name: 'Subscriptions',
       description: 'Pro and Business plans, and sponsored Pro family accounts',
     },
@@ -2563,6 +2567,269 @@ export const openApiDocument: Record<string, unknown> = {
         security: [{ cookieAuth: [] }],
         'x-roles': ['SCHOOL'],
         responses: { '200': dataResponse('Revoked') },
+      },
+    },
+    '/api/v1/admin/overview': {
+      get: {
+        tags: ['Admin'],
+        summary: 'Platform overview: registrations, pending requests, plans, suspensions',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '200': dataResponse('Overview') },
+      },
+    },
+    '/api/v1/admin/parents': {
+      get: {
+        tags: ['Admin'],
+        summary: 'List parent accounts with plan and child count (no child details)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [
+          { name: 'page', in: 'query', required: false, schema: { type: 'integer' } },
+          { name: 'pageSize', in: 'query', required: false, schema: { type: 'integer' } },
+          { name: 'search', in: 'query', required: false, schema: { type: 'string' } },
+          {
+            name: 'status',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', enum: ['ACTIVE', 'SUSPENDED'] },
+          },
+        ],
+        responses: { '200': dataResponse('Parents page') },
+      },
+    },
+    '/api/v1/admin/accounts/{id}/suspend': {
+      post: {
+        tags: ['Admin'],
+        summary: 'Suspend a non-admin account; it keeps its data but cannot sign in',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': dataResponse('Suspended'),
+          '400': dataResponse('Administrator accounts cannot be suspended'),
+          '404': dataResponse('Account not found'),
+        },
+      },
+    },
+    '/api/v1/admin/accounts/{id}/reactivate': {
+      post: {
+        tags: ['Admin'],
+        summary: 'Reactivate a suspended account',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: { '200': dataResponse('Reactivated'), '404': dataResponse('Account not found') },
+      },
+    },
+    '/api/v1/admin/schools': {
+      get: {
+        tags: ['Admin'],
+        summary: 'List schools with Business status, teacher count and sponsored slots',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '200': dataResponse('Schools page') },
+      },
+    },
+    '/api/v1/admin/schools/{id}': {
+      patch: {
+        tags: ['Admin'],
+        summary: "Verify a school's listing, or suspend / restore its access",
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: { '200': dataResponse('Updated school'), '404': dataResponse('Not found') },
+      },
+    },
+    '/api/v1/admin/staff': {
+      get: {
+        tags: ['Admin'],
+        summary: 'List school staff (admins and teachers) across all schools',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '200': dataResponse('Staff page') },
+      },
+    },
+    '/api/v1/admin/sponsorships': {
+      get: {
+        tags: ['Admin'],
+        summary: 'Sponsored Pro slot usage for every school',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '200': dataResponse('Per-school sponsorship counts') },
+      },
+    },
+    '/api/v1/admin/audit': {
+      get: {
+        tags: ['Admin'],
+        summary: 'Search the audit log by action, date range, target email or id',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '200': dataResponse('Audit page') },
+      },
+    },
+    '/api/v1/admin/announcements': {
+      get: {
+        tags: ['Admin'],
+        summary: 'List announcements (drafts, published and archived)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '200': dataResponse('Announcements') },
+      },
+      post: {
+        tags: ['Admin'],
+        summary: 'Create an announcement for parents, schools, teachers or everyone',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '201': dataResponse('Created announcement') },
+      },
+    },
+    '/api/v1/admin/announcements/{id}': {
+      patch: {
+        tags: ['Admin'],
+        summary: 'Edit, publish, schedule or archive an announcement',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': dataResponse('Updated announcement'),
+          '404': dataResponse('Not found'),
+        },
+      },
+    },
+    '/api/v1/announcements': {
+      get: {
+        tags: ['Admin'],
+        summary: "The live announcements for the signed-in user's audience",
+        security: [{ cookieAuth: [] }],
+        responses: { '200': dataResponse('Visible announcements') },
+      },
+    },
+    '/api/v1/admin/partnerships': {
+      get: {
+        tags: ['Admin'],
+        summary: 'List partnerships, soonest follow-up first',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '200': dataResponse('Partnerships') },
+      },
+      post: {
+        tags: ['Admin'],
+        summary: 'Record a potential or active partner organization',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '201': dataResponse('Created partnership') },
+      },
+    },
+    '/api/v1/admin/partnerships/{id}': {
+      patch: {
+        tags: ['Admin'],
+        summary: 'Update a partnership status, contact, follow-up date or notes',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: { '200': dataResponse('Updated partnership'), '404': dataResponse('Not found') },
+      },
+    },
+    '/api/v1/admin/analytics': {
+      get: {
+        tags: ['Admin'],
+        summary: 'Monthly growth: registrations, plans, questionnaires, AI use (counts only)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [{ name: 'months', in: 'query', required: false, schema: { type: 'integer' } }],
+        responses: { '200': dataResponse('Analytics') },
+      },
+    },
+    '/api/v1/admin/activities': {
+      get: {
+        tags: ['Admin'],
+        summary: 'List every activity, including drafts and archived ones',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '200': dataResponse('Activities') },
+      },
+      post: {
+        tags: ['Admin'],
+        summary: 'Create an activity (draft or published)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '201': dataResponse('Created activity') },
+      },
+    },
+    '/api/v1/admin/activities/{id}': {
+      patch: {
+        tags: ['Admin'],
+        summary: 'Edit, publish or archive an activity',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: { '200': dataResponse('Updated activity'), '404': dataResponse('Not found') },
+      },
+    },
+    '/api/v1/admin/questionnaire': {
+      get: {
+        tags: ['Admin'],
+        summary: 'Every question version with answer counts, and completion statistics',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '200': dataResponse('Questionnaire') },
+      },
+    },
+    '/api/v1/admin/questions': {
+      post: {
+        tags: ['Admin'],
+        summary: 'Add a question to a form and age band',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: { '201': dataResponse('Created question') },
+      },
+    },
+    '/api/v1/admin/questions/{id}': {
+      patch: {
+        tags: ['Admin'],
+        summary: 'Publish an edit as a new version; the old wording is kept for past answers',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': dataResponse('New version'),
+          '400': dataResponse('Not the current version'),
+          '404': dataResponse('Not found'),
+        },
+      },
+    },
+    '/api/v1/admin/questions/{id}/archive': {
+      post: {
+        tags: ['Admin'],
+        summary: 'Remove a question from new questionnaires',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: { '200': dataResponse('Archived question') },
+      },
+    },
+    '/api/v1/admin/questions/{id}/restore': {
+      post: {
+        tags: ['Admin'],
+        summary: 'Bring an archived question back (only the latest version)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': dataResponse('Restored question'),
+          '400': dataResponse('Newer version exists'),
+        },
+      },
+    },
+    '/api/v1/admin/ai': {
+      get: {
+        tags: ['Admin'],
+        summary: 'AI assistant usage, response times and safety rules (no conversation text)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [{ name: 'days', in: 'query', required: false, schema: { type: 'integer' } }],
+        responses: { '200': dataResponse('AI monitoring') },
       },
     },
     '/api/v1/subscriptions/me': {

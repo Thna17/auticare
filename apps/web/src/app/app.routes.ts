@@ -128,6 +128,89 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'admin/parents',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-parents.page').then((m) => m.AdminParentsPage),
+      },
+      {
+        path: 'admin/schools',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-schools.page').then((m) => m.AdminSchoolsPage),
+      },
+      {
+        path: 'admin/staff',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-staff.page').then((m) => m.AdminStaffPage),
+      },
+      {
+        path: 'admin/sponsorships',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-sponsorships.page').then((m) => m.AdminSponsorshipsPage),
+      },
+      {
+        path: 'admin/audit',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-audit.page').then((m) => m.AdminAuditPage),
+      },
+      {
+        path: 'admin/announcements',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-announcements.page').then((m) => m.AdminAnnouncementsPage),
+      },
+      {
+        path: 'admin/partnerships',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-partnerships.page').then((m) => m.AdminPartnershipsPage),
+      },
+      {
+        path: 'admin/analytics',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-analytics.page').then((m) => m.AdminAnalyticsPage),
+      },
+      {
+        path: 'admin/activities',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-activities.page').then((m) => m.AdminActivitiesPage),
+      },
+      {
+        path: 'admin/questionnaire',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-questionnaire.page').then((m) => m.AdminQuestionnairePage),
+      },
+      {
+        path: 'admin/ai',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () => import('./features/admin/admin-ai.page').then((m) => m.AdminAiPage),
+      },
+      {
+        path: 'admin/help',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin-help.page').then((m) => m.AdminHelpPage),
+      },
+      {
         path: 'admin/subscriptions',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },

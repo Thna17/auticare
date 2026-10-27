@@ -14,8 +14,23 @@ export class AuthRepository {
   }
 
   /** Deactivation state of every school this account works at. */
-  listSchoolStaffStates(parentId: string): Promise<{ deactivatedAt: Date | null }[]> {
-    return prisma.schoolStaff.findMany({ where: { parentId }, select: { deactivatedAt: true } });
+  /** Deactivation state of every school this account works at, and whether that school is suspended. */
+  listSchoolStaffStates(
+    parentId: string,
+  ): Promise<{ deactivatedAt: Date | null; school: { status: 'ACTIVE' | 'INACTIVE' } }[]> {
+    return prisma.schoolStaff.findMany({
+      where: { parentId },
+      select: { deactivatedAt: true, school: { select: { status: true } } },
+    });
+  }
+
+  /** Set when the platform admin has suspended the account. */
+  async findSuspension(parentId: string): Promise<Date | null> {
+    const row = await prisma.parent.findUnique({
+      where: { id: parentId },
+      select: { suspendedAt: true },
+    });
+    return row?.suspendedAt ?? null;
   }
 
   /** Deactivation state of every hospital this account works at. */

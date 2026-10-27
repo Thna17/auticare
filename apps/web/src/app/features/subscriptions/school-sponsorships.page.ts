@@ -9,7 +9,7 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 import { SubscriptionsApi } from './data-access/subscriptions.api';
 import { errorMessage, formatDate } from './subscription-format';
-import { SUBSCRIPTION_PAGE_STYLES } from './subscription-page.styles';
+import { PORTAL_PAGE_STYLES } from '../../design-system/styles/portal-page.styles';
 
 const SPONSORSHIP_LABEL: Record<SchoolSponsorship['status'], string> = {
   INVITED: 'Waiting for the parent',
@@ -159,7 +159,7 @@ const ENDED_REASON: Record<string, string> = {
       }
     }
   `,
-  styles: [SUBSCRIPTION_PAGE_STYLES],
+  styles: [PORTAL_PAGE_STYLES],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SchoolSponsorshipsPage implements OnInit {

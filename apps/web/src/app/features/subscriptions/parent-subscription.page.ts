@@ -13,7 +13,7 @@ import {
   formatDate,
   formatPrice,
 } from './subscription-format';
-import { SUBSCRIPTION_PAGE_STYLES } from './subscription-page.styles';
+import { PORTAL_PAGE_STYLES } from '../../design-system/styles/portal-page.styles';
 
 /**
  * The parent's plan: Free or Pro (personal or sponsored by a school), the
@@ -162,7 +162,7 @@ import { SUBSCRIPTION_PAGE_STYLES } from './subscription-page.styles';
       }
     }
   `,
-  styles: [SUBSCRIPTION_PAGE_STYLES],
+  styles: [PORTAL_PAGE_STYLES],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ParentSubscriptionPage implements OnInit {

@@ -463,6 +463,8 @@ describe('DashboardPage', () => {
       childrenReq.flush([]);
 
       fixture.detectChanges();
+      // The overview panel at the top of the admin dashboard loads on its own.
+      httpTesting.match('/api/v1/admin/overview');
 
       const element: HTMLElement = fixture.nativeElement;
 
@@ -496,6 +498,8 @@ describe('DashboardPage', () => {
       childrenReq.flush([]);
 
       fixture.detectChanges();
+      // The overview panel at the top of the admin dashboard loads on its own.
+      httpTesting.match('/api/v1/admin/overview');
 
       const element: HTMLElement = fixture.nativeElement;
       expect(element.textContent).toContain('Administrator dashboard could not be loaded.');

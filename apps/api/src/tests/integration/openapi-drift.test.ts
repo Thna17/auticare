@@ -60,6 +60,9 @@ function extractRoutesFromApp(app: ExpressApp): RouteDefinition[] {
     '/api/v1/admin/hospital-registrations',
     '/api/v1/subscriptions',
     '/api/v1/admin/subscriptions',
+    '/api/v1/announcements',
+    // Last, so the more specific admin prefixes above match first.
+    '/api/v1/admin',
   ];
 
   function traverse(stack: ExpressLayer[], prefix = '') {

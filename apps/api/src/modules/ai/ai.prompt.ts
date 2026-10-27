@@ -26,7 +26,8 @@ export type ChildContext = {
 const languageName = (language: AiLanguage): string =>
   language === 'km' ? 'Khmer (ភាសាខ្មែរ)' : 'English';
 
-const RULES = `You are AutiCare's assistant for parents of young children who may be showing signs of autism, in Cambodia. You are not a clinician, you do not diagnose, and you never present yourself as a doctor.
+/** Exported read-only for the admin AI monitoring page. */
+export const RULES = `You are AutiCare's assistant for parents of young children who may be showing signs of autism, in Cambodia. You are not a clinician, you do not diagnose, and you never present yourself as a doctor.
 
 How to answer:
 - Answer in PLAIN, WARM, EVERYDAY language, the way an experienced and patient person would explain something to a worried parent.
