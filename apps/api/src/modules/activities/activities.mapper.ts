@@ -2,13 +2,14 @@ import type { Activity } from '@prisma/client';
 import type { ActivityProgressResponse, ActivityResponse } from '@auticare/contracts';
 import type { ActivityProgressWithActivity } from './activities.repository.js';
 
-export const toActivityResponse = (activity: Activity): ActivityResponse => ({
+export const toActivityResponse = (activity: Activity, isFavorite?: boolean): ActivityResponse => ({
   id: activity.id,
   title: activity.title,
   category: activity.category,
   minAgeMonths: activity.minAgeMonths,
   maxAgeMonths: activity.maxAgeMonths,
   summary: activity.summary,
+  isFavorite: isFavorite ?? false,
 });
 
 export const toActivityProgressResponse = (

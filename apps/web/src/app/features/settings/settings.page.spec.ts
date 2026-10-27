@@ -305,31 +305,33 @@ describe('SettingsPage', () => {
   });
 
   describe('Notification preferences panel', () => {
-    it('initializes with active notification toggles', () => {
-      expect(component['notificationForm'].controls.appointmentAlerts.value).toBe(true);
-      expect(component['notificationForm'].controls.schoolReports.value).toBe(true);
-      expect(component['notificationForm'].controls.systemAnnouncements.value).toBe(true);
+    it('initializes every notification switch on by default', () => {
+      const value = component['notificationForm'].getRawValue();
+      expect(Object.values(value).every(Boolean)).toBe(true);
+      expect(Object.keys(value)).toEqual([
+        'notifyQuestionnaire',
+        'notifyActivities',
+        'notifyReports',
+        'notifySchool',
+        'notifyAnnouncements',
+      ]);
     });
 
-    it('updates and persists notification preferences', async () => {
-      vi.useFakeTimers();
-
-      component['notificationForm'].controls.appointmentAlerts.setValue(false);
-      component['notificationForm'].controls.schoolReports.setValue(true);
-      component['notificationForm'].controls.systemAnnouncements.setValue(false);
+    it('saves notification preferences to the server, not only this browser', () => {
+      mockPreferencesService.updatePreferences.mockClear();
+      component['notificationForm'].controls.notifyActivities.setValue(false);
+      component['notificationForm'].controls.notifyAnnouncements.setValue(false);
 
       component['saveNotifications']();
 
-      expect(mockPreferencesService.updateNotificationPreferences).toHaveBeenCalledWith({
-        appointmentAlerts: false,
-        schoolReports: true,
-        systemAnnouncements: false,
+      expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith({
+        notifyQuestionnaire: true,
+        notifyActivities: false,
+        notifyReports: true,
+        notifySchool: true,
+        notifyAnnouncements: false,
       });
-
-      vi.advanceTimersByTime(200);
       expect(component['notificationSaved']()).toBe(true);
-
-      vi.useRealTimers();
     });
   });
 
@@ -399,9 +401,9 @@ describe('SettingsPage', () => {
 
       const el = fixture.nativeElement as HTMLElement;
       expect(el.textContent).toContain('ភាសាដែលពេញចិត្ត');
-      expect(el.textContent).toContain('ការជូនដំណឹងណាត់ជួប');
-      expect(el.textContent).toContain('របាយការណ៍សាលារៀន');
-      expect(el.textContent).toContain('សេចក្តីប្រកាសពីប្រព័ន្ធ');
+      expect(el.textContent).toContain('ការរំលឹកកម្រងសំណួរ');
+      expect(el.textContent).toContain('របាយការណ៍ និងសេចក្តីសង្ខេបថ្មី');
+      expect(el.textContent).toContain('សេចក្តីប្រកាសពី AutiCare');
     });
   });
 

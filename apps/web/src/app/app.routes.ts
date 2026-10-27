@@ -114,6 +114,19 @@ export const routes: Routes = [
           import('./features/screening/screening.routes').then((m) => m.SCREENING_ROUTES),
       },
       {
+        path: 'find-support',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
+        loadChildren: () =>
+          import('./features/find-support/find-support.routes').then((m) => m.FIND_SUPPORT_ROUTES),
+      },
+      {
+        path: 'reports',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
+        loadComponent: () => import('./features/reports/reports.page').then((m) => m.ReportsPage),
+      },
+      {
         path: 'schools',
         loadChildren: () =>
           import('./features/schools/schools.routes').then((m) => m.SCHOOLS_ROUTES),

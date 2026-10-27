@@ -44,3 +44,6 @@ export const getParentPreferences = async (req: Request, res: Response) =>
 
 export const updateParentPreferences = async (req: Request, res: Response) =>
   ok(res, await service.updatePreferences(req.auth!, req.body));
+
+export const archiveNotification = async (req: Request, res: Response) =>
+  ok(res, await service.archiveNotification(req.auth!, requiredParam(req.params.id)));

@@ -1773,6 +1773,25 @@ export const openApiDocument: Record<string, unknown> = {
         },
       },
     },
+    '/api/v1/activities/{activityId}/favorite': {
+      post: {
+        tags: ['Activities'],
+        summary: 'Toggle activity favorite (Parent)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        parameters: [
+          { name: 'activityId', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Favorite status toggled',
+            content: {
+              'application/json': { schema: { properties: { data: { type: 'object' } } } },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/activities/progress': {
       get: {
         tags: ['Activities'],
@@ -1937,6 +1956,23 @@ export const openApiDocument: Record<string, unknown> = {
         responses: {
           '201': {
             description: 'Hospital and manager provisioned with invitation dispatched',
+            content: {
+              'application/json': { schema: { properties: { data: { type: 'object' } } } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/hospitals/{id}/favorite': {
+      post: {
+        tags: ['Hospitals'],
+        summary: 'Toggle hospital favorite (Parent)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Favorite status toggled',
             content: {
               'application/json': { schema: { properties: { data: { type: 'object' } } } },
             },
@@ -3780,6 +3816,23 @@ export const openApiDocument: Record<string, unknown> = {
       },
     },
 
+    '/api/v1/parents/notifications/{id}/archive': {
+      patch: {
+        tags: ['Notifications'],
+        summary: 'Archive parent notification',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: {
+          '200': {
+            description: 'Notification archived',
+            content: {
+              'application/json': { schema: { properties: { data: { type: 'object' } } } },
+            },
+          },
+        },
+      },
+    },
     // ── Parent Specialized Endpoints ─────────────────────────────────────────
     '/api/v1/parents/activity-reports/{childId}': {
       get: {
@@ -4493,6 +4546,95 @@ export const openApiDocument: Record<string, unknown> = {
             description: 'Request already reviewed',
             content: {
               'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+
+    // ── Inquiries ─────────────────────────────────────────────────────────────
+    '/api/v1/inquiries': {
+      post: {
+        tags: ['Inquiries'],
+        summary: 'Create inquiry to school or hospital (Parent)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['subject', 'message'],
+                properties: {
+                  schoolId: { type: 'string' },
+                  hospitalId: { type: 'string' },
+                  childFirstName: { type: 'string' },
+                  subject: { type: 'string' },
+                  message: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Inquiry created',
+            content: {
+              'application/json': { schema: { properties: { data: { type: 'object' } } } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/inquiries/mine': {
+      get: {
+        tags: ['Inquiries'],
+        summary: 'List my inquiries (Parent)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: {
+          '200': {
+            description: 'List of inquiries',
+            content: {
+              'application/json': {
+                schema: { properties: { data: { type: 'array', items: { type: 'object' } } } },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/inquiries/school': {
+      get: {
+        tags: ['Inquiries'],
+        summary: 'List school inquiries (School Admin)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: {
+          '200': {
+            description: 'School inquiries list',
+            content: {
+              'application/json': {
+                schema: { properties: { data: { type: 'array', items: { type: 'object' } } } },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/inquiries/school/{id}/read': {
+      post: {
+        tags: ['Inquiries'],
+        summary: 'Mark school inquiry as read (School Admin)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Inquiry marked as read',
+            content: {
+              'application/json': { schema: { properties: { data: { type: 'object' } } } },
             },
           },
         },

@@ -1,6 +1,7 @@
 import type {
   CreateChildRequest,
   ListChildrenQuery,
+  QuestionnaireStatus,
   UpdateChildRequest,
   UserRole,
 } from '@auticare/contracts';
@@ -34,18 +35,24 @@ export class ChildrenService {
       const pagination =
         query?.page && query?.limit ? { page: query.page, limit: query.limit } : undefined;
       const children = await this.repository.listAllActive(pagination);
-      return children.map(toChildResponse);
+      return children.map((c) => toChildResponse(c));
     }
     if (actor.role !== 'PARENT') throw forbidden();
     const children = await this.repository.listByParent(
       actor.parentId,
       query?.includeArchived ?? false,
     );
-    return children.map(toChildResponse);
+    const childIds = children.map((c) => c.id);
+    const statusMap = await this.deriveStatusMap(childIds);
+    return children.map((c) => toChildResponse(c, statusMap.get(c.id)));
   }
 
   async get(actor: Actor, childId: string) {
     const child = await this.getAuthorizedChild(actor, childId);
+    if (actor.role === 'PARENT') {
+      const statusMap = await this.deriveStatusMap([child.id]);
+      return toChildResponse(child, statusMap.get(child.id));
+    }
     return toChildResponse(child);
   }
 
@@ -69,7 +76,7 @@ export class ChildrenService {
         tx,
       );
     });
-    return toChildResponse(child);
+    return toChildResponse(child, 'NOT_STARTED');
   }
 
   async update(actor: Actor, childId: string, input: UpdateChildRequest) {
@@ -83,7 +90,8 @@ export class ChildrenService {
       ...(input.address !== undefined ? { address: input.address } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
     });
-    return toChildResponse(child);
+    const statusMap = await this.deriveStatusMap([child.id]);
+    return toChildResponse(child, statusMap.get(child.id));
   }
 
   async archive(actor: Actor, childId: string) {
@@ -101,7 +109,28 @@ export class ChildrenService {
       await this.entitlements.assertCanAddChild(existing.parentId, tx);
       return this.repository.restore(childId, tx);
     });
-    return toChildResponse(child);
+    const statusMap = await this.deriveStatusMap([child.id]);
+    return toChildResponse(child, statusMap.get(child.id));
+  }
+
+  private async deriveStatusMap(childIds: string[]): Promise<Map<string, QuestionnaireStatus>> {
+    const map = new Map<string, QuestionnaireStatus>();
+    if (childIds.length === 0) return map;
+    const screenings = await prisma.screening.findMany({
+      where: { childId: { in: childIds } },
+      select: { childId: true, status: true },
+    });
+    for (const childId of childIds) {
+      const childScreenings = screenings.filter((s) => s.childId === childId);
+      if (childScreenings.some((s) => s.status === 'SUBMITTED' || s.status === 'ANALYZED')) {
+        map.set(childId, 'COMPLETED');
+      } else if (childScreenings.some((s) => s.status === 'DRAFT')) {
+        map.set(childId, 'IN_PROGRESS');
+      } else {
+        map.set(childId, 'NOT_STARTED');
+      }
+    }
+    return map;
   }
 
   private async getAuthorizedChild(actor: Actor, childId: string) {

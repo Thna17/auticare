@@ -409,6 +409,158 @@ import { I18nService } from '../../core/i18n/i18n.service';
               </section>
             } @else {
               <ac-parent-analysis [childId]="child.id" [childName]="child.firstName" />
+
+              <!-- Quick Actions -->
+              <section class="quick-actions-section" aria-label="Quick Actions">
+                <h2 class="section-title">
+                  {{ currentLang() === 'km' ? 'សកម្មភាពរហ័ស' : 'Quick Actions' }}
+                </h2>
+                <div class="quick-actions-grid">
+                  <a
+                    class="quick-action-card"
+                    routerLink="/observations"
+                    [queryParams]="{ childId: child.id, action: 'new' }"
+                  >
+                    <span class="action-icon" aria-hidden="true">📝</span>
+                    <span class="action-text">{{
+                      currentLang() === 'km' ? 'កត់ត្រាការសង្កេត' : 'Add Behaviour Log'
+                    }}</span>
+                  </a>
+                  <a
+                    class="quick-action-card"
+                    routerLink="/reports"
+                    [queryParams]="{ childId: child.id }"
+                  >
+                    <span class="action-icon" aria-hidden="true">📊</span>
+                    <span class="action-text">{{
+                      currentLang() === 'km' ? 'មើលរបាយការណ៍' : 'View Reports'
+                    }}</span>
+                  </a>
+                  <a
+                    class="quick-action-card"
+                    routerLink="/ai"
+                    [queryParams]="{ childId: child.id }"
+                  >
+                    <span class="action-icon" aria-hidden="true">💡</span>
+                    <span class="action-text">{{
+                      currentLang() === 'km' ? 'សួរ AI' : 'Ask AI'
+                    }}</span>
+                  </a>
+                </div>
+              </section>
+
+              <!-- Widgets Grid -->
+              <div class="parent-cards-grid">
+                <!-- Recent Behaviour Records -->
+                <section class="dashboard-widget-card" aria-label="Recent Behaviour Records">
+                  <div class="widget-header">
+                    <h2>
+                      {{ currentLang() === 'km' ? 'ការសង្កេតថ្មីៗ' : 'Recent Behaviour Records' }}
+                    </h2>
+                    <a
+                      routerLink="/observations"
+                      [queryParams]="{ childId: child.id }"
+                      class="widget-link"
+                    >
+                      {{ currentLang() === 'km' ? 'មើលទាំងអស់' : 'View all' }} &rarr;
+                    </a>
+                  </div>
+                  @if (parentDashboard()?.recentObservations?.length) {
+                    <ul class="widget-list">
+                      @for (obs of parentDashboard()?.recentObservations; track obs.id) {
+                        <li class="widget-item">
+                          <div class="item-meta">
+                            <span class="category-pill">{{ obs.category }}</span>
+                            <span class="item-date">{{ formatDate(obs.occurredAt) }}</span>
+                          </div>
+                          @if (obs.note) {
+                            <p class="item-text">{{ obs.note }}</p>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="widget-empty">
+                      {{
+                        currentLang() === 'km'
+                          ? 'មិនទាន់មានកំណត់ត្រាការសង្កេតនៅឡើយទេ។'
+                          : 'No behaviour records yet for this child.'
+                      }}
+                    </p>
+                  }
+                </section>
+
+                <!-- Recent Notifications -->
+                <section class="dashboard-widget-card" aria-label="Recent Notifications">
+                  <div class="widget-header">
+                    <h2>
+                      {{ currentLang() === 'km' ? 'ការជូនដំណឹងថ្មីៗ' : 'Recent Notifications' }}
+                    </h2>
+                    <a routerLink="/notifications" class="widget-link">
+                      {{ currentLang() === 'km' ? 'មើលទាំងអស់' : 'View all' }} &rarr;
+                    </a>
+                  </div>
+                  @if (parentDashboard()?.recentNotifications?.length) {
+                    <ul class="widget-list">
+                      @for (notif of parentDashboard()?.recentNotifications; track notif.id) {
+                        <li class="widget-item">
+                          <span class="item-title">{{ notif.title }}</span>
+                          <p class="item-text">{{ notif.body }}</p>
+                          <span class="item-date">{{ formatDate(notif.createdAt) }}</span>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="widget-empty">
+                      {{
+                        currentLang() === 'km'
+                          ? 'មិនទាន់មានការជូនដំណឹងនៅឡើយទេ។'
+                          : 'No notifications yet.'
+                      }}
+                    </p>
+                  }
+                </section>
+
+                <!-- Recommended Activities -->
+                <section class="dashboard-widget-card" aria-label="Recommended Activities">
+                  <div class="widget-header">
+                    <h2>
+                      {{ currentLang() === 'km' ? 'សកម្មភាពណែនាំ' : 'Recommended Activities' }}
+                    </h2>
+                    <a
+                      routerLink="/activities"
+                      [queryParams]="{ childId: child.id }"
+                      class="widget-link"
+                    >
+                      {{ currentLang() === 'km' ? 'ស្វែងរកទាំងអស់' : 'Explore all' }} &rarr;
+                    </a>
+                  </div>
+                  @if (parentDashboard()?.recommendedActivities?.length) {
+                    <ul class="widget-list">
+                      @for (act of parentDashboard()?.recommendedActivities; track act.id) {
+                        <li class="widget-item">
+                          <div class="item-meta">
+                            <span class="category-pill">{{ act.category }}</span>
+                            <span class="age-pill"
+                              >{{ act.minAgeMonths }}–{{ act.maxAgeMonths }}m</span
+                            >
+                          </div>
+                          <span class="item-title">{{ act.title }}</span>
+                          <p class="item-text">{{ act.summary }}</p>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="widget-empty">
+                      {{
+                        currentLang() === 'km'
+                          ? 'មិនទាន់មានសកម្មភាពណែនាំនៅឡើយទេ។'
+                          : 'No activities found for this age range.'
+                      }}
+                    </p>
+                  }
+                </section>
+              </div>
             }
           } @else {
             <section class="empty-state">

@@ -10,6 +10,7 @@ import {
   createHospitalAccount,
   listHospitalAccounts,
   listHospitals,
+  toggleFavorite,
 } from './hospitals.controller.js';
 
 export const hospitalsRoutes = Router();
@@ -28,3 +29,4 @@ hospitalsRoutes.post(
   validateBody(createHospitalRequestSchema),
   createHospital,
 );
+hospitalsRoutes.post('/:id/favorite', requireRole('PARENT'), toggleFavorite);

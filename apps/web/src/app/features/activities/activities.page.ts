@@ -29,7 +29,7 @@ export interface ActivityRow {
   readonly progress: ActivityProgressResponse | null;
 }
 
-export type ActivityStatusFilter = 'ALL' | 'IN_PROGRESS' | 'COMPLETED' | 'NOT_STARTED';
+export type ActivityStatusFilter = 'ALL' | 'IN_PROGRESS' | 'COMPLETED' | 'NOT_STARTED' | 'SAVED';
 
 interface StatusOption {
   readonly value: ActivityStatusFilter;
@@ -1074,6 +1074,14 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         margin-bottom: 8px;
       }
 
+      .fav-heart-btn {
+        background: transparent;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 2px 4px;
+        line-height: 1;
+      }
       .category-badges {
         display: flex;
         align-items: center;
@@ -1654,6 +1662,21 @@ export class ActivitiesPage implements OnInit {
   protected readonly searchQuery = signal('');
   protected readonly statusFilter = signal<ActivityStatusFilter>('ALL');
 
+  protected readonly ageRangeFilter = signal<string>('ALL');
+  protected readonly learningGoalFilter = signal<string>('ALL');
+
+  protected toggleFavorite(activity: ActivityResponse, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.api.toggleFavorite(activity.id).subscribe({
+      next: (res) => {
+        this.activities.update((list) =>
+          list.map((a) => (a.id === activity.id ? { ...a, isFavorite: res.isFavorite } : a)),
+        );
+      },
+      error: () => {},
+    });
+  }
+
   protected readonly statusOptions = computed<readonly StatusOption[]>(() => {
     const isKm = this.currentLang() === 'km';
     return [
@@ -1803,6 +1826,8 @@ export class ActivitiesPage implements OnInit {
           if (!row.progress?.completedAt) return false;
         } else if (status === 'NOT_STARTED') {
           if (row.progress !== null) return false;
+        } else if (status === 'SAVED') {
+          if (!row.activity.isFavorite) return false;
         }
 
         if (query) {
@@ -2278,6 +2303,8 @@ export class ActivitiesPage implements OnInit {
   protected resetFilters(): void {
     this.searchQuery.set('');
     this.statusFilter.set('ALL');
+    this.ageRangeFilter.set('ALL');
+    this.learningGoalFilter.set('ALL');
     this.category.set('');
     this.onlyRecommended.set(false);
     this.load();

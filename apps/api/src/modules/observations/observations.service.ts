@@ -51,6 +51,10 @@ export class ObservationsService {
       intensity: input.intensity,
       occurredAt: parseTimestamp(input.occurredAt, 'occurredAt'),
       note: input.note?.trim() ? input.note.trim() : null,
+      trigger: input.trigger?.trim() ? input.trigger.trim() : null,
+      durationMinutes: input.durationMinutes ?? null,
+      parentResponse: input.parentResponse?.trim() ? input.parentResponse.trim() : null,
+      outcome: input.outcome?.trim() ? input.outcome.trim() : null,
     });
     return toObservationResponse(row);
   }
@@ -75,6 +79,13 @@ export class ObservationsService {
       data.occurredAt = parseTimestamp(input.occurredAt, 'occurredAt');
     }
     if (input.note !== undefined) data.note = input.note?.trim() ? input.note.trim() : null;
+    if (input.trigger !== undefined)
+      data.trigger = input.trigger?.trim() ? input.trigger.trim() : null;
+    if (input.durationMinutes !== undefined) data.durationMinutes = input.durationMinutes;
+    if (input.parentResponse !== undefined)
+      data.parentResponse = input.parentResponse?.trim() ? input.parentResponse.trim() : null;
+    if (input.outcome !== undefined)
+      data.outcome = input.outcome?.trim() ? input.outcome.trim() : null;
 
     return toObservationResponse(await this.repository.update(observationId, data));
   }

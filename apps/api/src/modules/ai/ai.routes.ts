@@ -1,5 +1,9 @@
 import { Router } from 'express';
-import { createAiConversationRequestSchema, sendAiMessageRequestSchema } from '@auticare/contracts';
+import {
+  createAiConversationRequestSchema,
+  feedbackAiMessageRequestSchema,
+  sendAiMessageRequestSchema,
+} from '@auticare/contracts';
 import { validateBody } from '../../common/middleware/validate.js';
 import { requireAuth, requireRole } from '../auth/index.js';
 import {
@@ -8,7 +12,10 @@ import {
   getAiStatus,
   getConversation,
   listConversations,
+  listSavedMessages,
+  saveFeedback,
   sendMessage,
+  toggleSaveMessage,
 } from './ai.controller.js';
 
 export const aiRoutes = Router();
@@ -17,6 +24,9 @@ aiRoutes.use(requireAuth, requireRole('PARENT'));
 
 /** GET /api/v1/ai/status — configuration and today's remaining allowance. */
 aiRoutes.get('/status', getAiStatus);
+
+/** GET /api/v1/ai/saved — saved assistant responses for the current parent. */
+aiRoutes.get('/saved', listSavedMessages);
 
 /** GET /api/v1/ai/conversations — most recently active first. */
 aiRoutes.get('/conversations', listConversations);
@@ -41,3 +51,9 @@ aiRoutes.delete('/conversations/:id', deleteConversation);
  * here would only produce a different way to be told no.
  */
 aiRoutes.post('/conversations/:id/messages', validateBody(sendAiMessageRequestSchema), sendMessage);
+
+/** POST /api/v1/ai/messages/:id/save — toggle saving an assistant message. */
+aiRoutes.post('/messages/:id/save', toggleSaveMessage);
+
+/** POST /api/v1/ai/messages/:id/feedback — submit helpful/not helpful feedback. */
+aiRoutes.post('/messages/:id/feedback', validateBody(feedbackAiMessageRequestSchema), saveFeedback);

@@ -28,6 +28,7 @@ describe('ActivitiesPage', () => {
     listProgress: ReturnType<typeof vi.fn>;
     startActivity: ReturnType<typeof vi.fn>;
     updateProgress: ReturnType<typeof vi.fn>;
+    toggleFavorite: ReturnType<typeof vi.fn>;
   };
 
   let mockScreeningApi: {
@@ -135,6 +136,7 @@ describe('ActivitiesPage', () => {
     };
 
     mockActivitiesApi = {
+      toggleFavorite: vi.fn().mockReturnValue(of({ activityId: 'act_1', isFavorite: true })),
       listActivities: vi.fn().mockReturnValue(of(sampleActivities)),
       listProgress: vi.fn().mockReturnValue(of(sampleProgress)),
       startActivity: vi.fn().mockReturnValue(
@@ -738,5 +740,20 @@ describe('ActivitiesPage', () => {
     // Clean up language
     i18n.setLanguage('en');
     fixture.detectChanges();
+  });
+
+  it('toggles favorite and filters by saved favorites', () => {
+    const act = sampleActivities[0];
+    component['toggleFavorite'](act);
+    expect(mockActivitiesApi.toggleFavorite).toHaveBeenCalledWith(act.id);
+
+    // Set filter to SAVED
+    component['statusFilter'].set('SAVED');
+    // Act 1 is favorite now
+    component['activities'].set([{ ...act, isFavorite: true }]);
+    expect(component['rows']().length).toBe(1);
+
+    component['activities'].set([{ ...act, isFavorite: false }]);
+    expect(component['rows']().length).toBe(0);
   });
 });

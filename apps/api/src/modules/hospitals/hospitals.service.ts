@@ -3,9 +3,10 @@ import type {
   AdminHospitalAccountResponse,
   CreateHospitalAccountRequest,
   CreateHospitalRequest,
+  ToggleFavoriteHospitalResponse,
   UserRole,
 } from '@auticare/contracts';
-import { AppError, forbidden } from '../../common/errors/app-error.js';
+import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { env, isProduction } from '../../config/env.js';
 import { auditService } from '../audit/audit.service.js';
 import { invitationService } from '../auth/invitation.service.js';
@@ -21,13 +22,33 @@ export class HospitalsService {
     private readonly passwords = new PasswordService(),
   ) {}
 
-  async list() {
-    return (await this.repository.list()).map(toHospitalResponse);
+  async list(actor?: Actor) {
+    const hospitals = await this.repository.list();
+    if (actor?.role === 'PARENT' && actor.parentId) {
+      const favorites = await this.repository.listFavoriteHospitalIds(actor.parentId);
+      const favSet = new Set(favorites.map((f) => f.hospitalId));
+      return hospitals.map((h) => toHospitalResponse(h, favSet.has(h.id)));
+    }
+    return hospitals.map((h) => toHospitalResponse(h, false));
+  }
+
+  async toggleFavorite(actor: Actor, hospitalId: string): Promise<ToggleFavoriteHospitalResponse> {
+    if (actor.role !== 'PARENT' || !actor.parentId) throw forbidden();
+    const hospital = await this.repository.findHospitalById(hospitalId);
+    if (!hospital) throw notFound('Hospital was not found.');
+
+    const existing = await this.repository.findFavorite(actor.parentId, hospitalId);
+    if (existing) {
+      await this.repository.removeFavorite(actor.parentId, hospitalId);
+      return { hospitalId, isFavorite: false };
+    }
+    await this.repository.addFavorite(actor.parentId, hospitalId);
+    return { hospitalId, isFavorite: true };
   }
 
   async create(actor: Actor, input: CreateHospitalRequest) {
     if (actor.role !== 'ADMIN') throw forbidden();
-    return toHospitalResponse(await this.repository.create(input));
+    return toHospitalResponse(await this.repository.create(input), false);
   }
 
   async createAccount(
@@ -83,7 +104,7 @@ export class HospitalsService {
 
     const isTestRun = env.NODE_ENV === 'test' || process.env.VITEST === 'true';
     return {
-      hospital: toHospitalResponse(record.hospital),
+      hospital: toHospitalResponse(record.hospital, false),
       staff: record.staff,
       account: {
         id: record.account.id,
@@ -103,7 +124,7 @@ export class HospitalsService {
   async listAccounts(actor: Actor) {
     if (actor.role !== 'ADMIN') throw forbidden();
     return (await this.repository.listHospitalAccounts()).map((record) => ({
-      hospital: toHospitalResponse(record.hospital),
+      hospital: toHospitalResponse(record.hospital, false),
       staff: record.staff,
       account: {
         id: record.account.id,

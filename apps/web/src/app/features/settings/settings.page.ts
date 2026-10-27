@@ -16,6 +16,8 @@ import type { ParentResponse, UpdateMyProfileRequest } from '@auticare/contracts
 import { AuthService } from '../../core/auth/auth.service';
 import type { FontSizeScale } from '../../core/preferences/preferences.service';
 import { PreferencesService } from '../../core/preferences/preferences.service';
+import { ConnectionsApi } from '../connections/data-access/connections.api';
+import type { ParentSchoolConnection } from '@auticare/contracts';
 import { I18nService } from '../../core/i18n/i18n.service';
 
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
@@ -470,87 +472,33 @@ export const roleConfigs: Record<string, RoleSettingsContext> = getRoleConfigs(f
 
           <form [formGroup]="notificationForm" (ngSubmit)="saveNotifications()" novalidate>
             <div class="preferences-list">
-              <label class="toggle-card">
-                <div class="toggle-icon-wrap" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                  </svg>
-                </div>
-                <div class="toggle-info">
-                  <span class="toggle-title">{{
-                    currentLang() === 'km' ? 'ការជូនដំណឹងណាត់ជួប' : 'Appointment alerts'
-                  }}</span>
-                  <span class="toggle-desc">{{
-                    currentLang() === 'km'
-                      ? 'ការជូនដំណឹងសម្រាប់ការជួបពិគ្រោះព្យាបាលខាងមុខ ការបញ្ជាក់ពីអ្នកឯកទេស និងបច្ចុប្បន្នភាពកាលវិភាគ។'
-                      : 'Notifications for upcoming clinical visits, specialist confirmations, and schedule updates.'
-                  }}</span>
-                </div>
-                <div class="toggle-action">
-                  <input
-                    type="checkbox"
-                    formControlName="appointmentAlerts"
-                    class="toggle-checkbox"
-                  />
-                </div>
-              </label>
-
-              <label class="toggle-card">
-                <div class="toggle-icon-wrap" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                  </svg>
-                </div>
-                <div class="toggle-info">
-                  <span class="toggle-title">{{
-                    currentLang() === 'km' ? 'របាយការណ៍សាលារៀន' : 'School reports'
-                  }}</span>
-                  <span class="toggle-desc">{{
-                    currentLang() === 'km'
-                      ? 'ការជូនដំណឹងនៅពេលគ្រូបង្រៀន និងអ្នកព្យាបាលនៅសាលាដាក់បញ្ចូលកំណត់សម្គាល់ការវិវត្តថ្មី។'
-                      : 'Alerts when teachers and school therapists file new developmental observation notes.'
-                  }}</span>
-                </div>
-                <div class="toggle-action">
-                  <input type="checkbox" formControlName="schoolReports" class="toggle-checkbox" />
-                </div>
-              </label>
-
-              <label class="toggle-card">
-                <div class="toggle-icon-wrap" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                  </svg>
-                </div>
-                <div class="toggle-info">
-                  <span class="toggle-title">{{
-                    currentLang() === 'km' ? 'សេចក្តីប្រកាសពីប្រព័ន្ធ' : 'System announcements'
-                  }}</span>
-                  <span class="toggle-desc">{{
-                    currentLang() === 'km'
-                      ? 'បច្ចុប្បន្នភាពសំខាន់ៗអំពីប្រព័ន្ធ AutiCare ការណែនាំអំពីការថែទាំគ្លីនិក និងសុវត្ថិភាព។'
-                      : 'Important updates about the AutiCare platform, clinical care guides, and security.'
-                  }}</span>
-                </div>
-                <div class="toggle-action">
-                  <input
-                    type="checkbox"
-                    formControlName="systemAnnouncements"
-                    class="toggle-checkbox"
-                  />
-                </div>
-              </label>
+              @for (option of notificationOptions; track option.key) {
+                <label class="toggle-card">
+                  <div class="toggle-info">
+                    <span class="toggle-title">{{
+                      currentLang() === 'km' ? option.titleKm : option.title
+                    }}</span>
+                    <span class="toggle-desc">{{
+                      currentLang() === 'km' ? option.descKm : option.desc
+                    }}</span>
+                  </div>
+                  <div class="toggle-action">
+                    <input type="checkbox" [formControlName]="option.key" class="toggle-checkbox" />
+                  </div>
+                </label>
+              }
             </div>
+            <p class="toggle-desc">
+              {{
+                currentLang() === 'km'
+                  ? 'ការជូនដំណឹងអំពីគណនី និងសុវត្ថិភាព តែងតែត្រូវបានផ្ញើ។'
+                  : 'Account and security notices are always sent.'
+              }}
+            </p>
 
+            @if (notificationError(); as message) {
+              <ac-ui-message tone="error">{{ message }}</ac-ui-message>
+            }
             @if (notificationSaved()) {
               <ac-ui-message tone="success">{{
                 currentLang() === 'km'
@@ -578,6 +526,107 @@ export const roleConfigs: Record<string, RoleSettingsContext> = getRoleConfigs(f
             </div>
           </form>
         </section>
+
+        <!-- Privacy & Sharing Section -->
+        @if (parent()?.role === 'PARENT') {
+          <section class="profile-panel" aria-labelledby="privacy-sharing-title">
+            <header class="panel-header">
+              <div class="header-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <div>
+                <h2 id="privacy-sharing-title">
+                  {{ currentLang() === 'km' ? 'ភាពឯកជន និងការចែករំលែក' : 'Privacy & sharing' }}
+                </h2>
+                <p>
+                  {{
+                    currentLang() === 'km'
+                      ? 'គ្រប់គ្រងការតភ្ជាប់សាលារៀន និងការអនុញ្ញាតមើលទិន្នន័យសម្រាប់កូនរបស់អ្នក។'
+                      : 'Manage connected schools and data visibility permissions for your children.'
+                  }}
+                </p>
+              </div>
+            </header>
+
+            <div class="privacy-sharing-body">
+              <div class="legal-notice-box">
+                <p class="legal-notice-text">
+                  {{
+                    currentLang() === 'km'
+                      ? 'ការលុបការតភ្ជាប់នឹងបញ្ឈប់ការចូលប្រើប្រាស់ថ្មីភ្លាមៗ។ កំណត់ត្រាដែលសាលារៀនបានកាន់កាប់រួចហើយ អាចត្រូវបានរក្សាទុកស្របតាមតម្រូវការច្បាប់។'
+                      : 'Revoking stops new access immediately; records the school already holds may be kept as required by law.'
+                  }}
+                </p>
+              </div>
+
+              <div class="connections-wrapper">
+                <div class="connections-header">
+                  <h3>
+                    {{ currentLang() === 'km' ? 'សាលារៀនដែលបានតភ្ជាប់' : 'Connected schools' }}
+                  </h3>
+                  <a routerLink="/connections" class="connect-new-link">
+                    {{
+                      currentLang() === 'km'
+                        ? 'ភ្ជាប់ជាមួយកូដថ្មី (សាលារបស់ខ្ញុំ)'
+                        : 'Connect with a new code (My schools)'
+                    }}
+                  </a>
+                </div>
+
+                @if (connectionsLoading()) {
+                  <p class="loading-text">
+                    {{
+                      currentLang() === 'km'
+                        ? 'កំពុងផ្ទុកការតភ្ជាប់…'
+                        : 'Loading connected schools…'
+                    }}
+                  </p>
+                } @else if (connections().length === 0) {
+                  <div class="empty-connections">
+                    <p>
+                      {{
+                        currentLang() === 'km'
+                          ? 'មិនទាន់មានសាលារៀនដែលបានតភ្ជាប់ទេ។'
+                          : 'No connected schools yet.'
+                      }}
+                    </p>
+                    <a routerLink="/connections" class="action-link">{{
+                      currentLang() === 'km' ? 'ទៅកាន់សាលារបស់ខ្ញុំ' : 'Go to My schools'
+                    }}</a>
+                  </div>
+                } @else {
+                  <div class="connections-list">
+                    @for (conn of connections(); track conn.enrollmentId) {
+                      <div class="connection-card">
+                        <div class="conn-main">
+                          <strong class="school-name">{{ conn.school.name }}</strong>
+                          <span class="child-badge">
+                            {{ currentLang() === 'km' ? 'កុមារ៖' : 'Child:' }}
+                            {{ conn.child.firstName }}
+                          </span>
+                          <p class="school-visibility">
+                            {{
+                              currentLang() === 'km'
+                                ? 'អ្វីដែលសាលាអាចមើលឃើញ៖ ប្រវត្តិរូបកុមារដែលបានចុះឈ្មោះ និងរបាយការណ៍វាយតម្លៃដែលបានដាក់បញ្ចូល។'
+                                : 'What the school sees: Enrolled child profile and submitted assessment reports.'
+                            }}
+                          </p>
+                        </div>
+                        <div class="conn-actions">
+                          <button type="button" class="revoke-btn" (click)="promptRevoke(conn)">
+                            {{ currentLang() === 'km' ? 'លុបការតភ្ជាប់' : 'Revoke' }}
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+        }
 
         <!-- 4. Accessibility & Sensory Suite Section -->
         <section class="profile-panel" aria-labelledby="accessibility-title">
@@ -1515,6 +1564,169 @@ export const roleConfigs: Record<string, RoleSettingsContext> = getRoleConfigs(f
         font-size: 14px;
         cursor: pointer;
       }
+
+      .always-sent-notice {
+        display: flex;
+        align-items: center;
+        gap: var(--ac-spacing-sm);
+        padding: var(--ac-spacing-md);
+        background: var(--ac-surface-variant);
+        border: 1px solid var(--ac-border);
+        border-radius: var(--ac-radius-md);
+        margin-top: var(--ac-spacing-md);
+        font-size: var(--ac-font-size-sm);
+        color: var(--ac-text-secondary);
+      }
+      .notice-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        flex-shrink: 0;
+        color: var(--ac-primary);
+      }
+      .privacy-sharing-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-spacing-lg);
+      }
+      .legal-notice-box {
+        background: var(--ac-surface-variant);
+        border-left: 3px solid var(--ac-primary);
+        padding: var(--ac-spacing-md);
+        border-radius: var(--ac-radius-sm);
+      }
+      .legal-notice-text {
+        font-size: var(--ac-font-size-sm);
+        color: var(--ac-text-secondary);
+        line-height: var(--ac-line-height-relaxed);
+        margin: 0;
+      }
+      .connections-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--ac-spacing-md);
+      }
+      .connections-header h3 {
+        font-size: var(--ac-font-size-base);
+        font-weight: 600;
+        color: var(--ac-text-primary);
+        margin: 0;
+      }
+      .connect-new-link {
+        color: var(--ac-primary);
+        font-size: var(--ac-font-size-sm);
+        font-weight: 500;
+        text-decoration: none;
+      }
+      .connect-new-link:hover {
+        text-decoration: underline;
+      }
+      .connections-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-spacing-md);
+      }
+      .connection-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--ac-spacing-md);
+        background: var(--ac-surface);
+        border: 1px solid var(--ac-border);
+        border-radius: var(--ac-radius-md);
+        gap: var(--ac-spacing-md);
+      }
+      .conn-main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-spacing-xs);
+      }
+      .school-name {
+        font-size: var(--ac-font-size-base);
+        color: var(--ac-text-primary);
+      }
+      .child-badge {
+        font-size: var(--ac-font-size-xs);
+        color: var(--ac-text-muted);
+      }
+      .school-visibility {
+        font-size: var(--ac-font-size-xs);
+        color: var(--ac-text-secondary);
+        margin: 0;
+      }
+      .revoke-btn {
+        background: transparent;
+        color: var(--ac-error);
+        border: 1px solid var(--ac-error);
+        border-radius: var(--ac-radius-sm);
+        padding: 0.375rem 0.75rem;
+        font-size: var(--ac-font-size-xs);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .revoke-btn:hover {
+        background: color-mix(in srgb, var(--ac-error) 10%, transparent);
+      }
+      .empty-connections {
+        padding: var(--ac-spacing-lg);
+        text-align: center;
+        border: 1px dashed var(--ac-border);
+        border-radius: var(--ac-radius-md);
+        color: var(--ac-text-muted);
+        font-size: var(--ac-font-size-sm);
+      }
+      .action-link {
+        color: var(--ac-primary);
+        text-decoration: none;
+        font-weight: 500;
+        margin-top: var(--ac-spacing-xs);
+        display: inline-block;
+      }
+      .action-link:hover {
+        text-decoration: underline;
+      }
+      .confirm-dialog-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-spacing-md);
+      }
+      .dialog-warning {
+        font-size: var(--ac-font-size-xs);
+        color: var(--ac-text-muted);
+        line-height: var(--ac-line-height-relaxed);
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--ac-spacing-sm);
+        margin-top: var(--ac-spacing-md);
+      }
+      .btn-cancel {
+        background: transparent;
+        border: 1px solid var(--ac-border);
+        border-radius: var(--ac-radius-sm);
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        color: var(--ac-text-primary);
+      }
+      .btn-danger {
+        background: var(--ac-error);
+        color: var(--ac-primary-contrast, var(--ac-surface));
+        border: none;
+        border-radius: var(--ac-radius-sm);
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-danger:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+      .btn-danger:disabled,
+      .btn-cancel:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -1523,6 +1735,13 @@ export class SettingsPage implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly preferences = inject(PreferencesService);
+  private readonly connectionsApi = inject(ConnectionsApi);
+
+  protected readonly connections = signal<ParentSchoolConnection[]>([]);
+  protected readonly connectionsLoading = signal(false);
+  protected readonly connectionToRevoke = signal<ParentSchoolConnection | null>(null);
+  protected readonly revoking = signal(false);
+  protected readonly revokeError = signal<string | null>(null);
   protected readonly i18n = inject(I18nService, { optional: true });
 
   readonly currentLang = computed(() => this.i18n?.currentLang?.() ?? 'en');
@@ -1544,6 +1763,7 @@ export class SettingsPage implements OnInit {
 
   protected readonly notificationSaving = signal(false);
   protected readonly notificationSaved = signal(false);
+  protected readonly notificationError = signal<string | null>(null);
 
   protected readonly preferencesSaving = signal(false);
   protected readonly preferencesSaved = signal(false);
@@ -1578,10 +1798,51 @@ export class SettingsPage implements OnInit {
     },
   );
 
+  /** The notification switches parents can turn off; stored on the server. */
+  protected readonly notificationOptions = [
+    {
+      key: 'notifyQuestionnaire',
+      title: 'Questionnaire reminders',
+      titleKm: 'ការរំលឹកកម្រងសំណួរ',
+      desc: "Reminders to finish a child's questionnaire.",
+      descKm: 'ការរំលឹកឱ្យបំពេញកម្រងសំណួររបស់កូន។',
+    },
+    {
+      key: 'notifyActivities',
+      title: 'Activity reminders',
+      titleKm: 'ការរំលឹកសកម្មភាព',
+      desc: 'Suggestions and reminders for activities at home.',
+      descKm: 'ការណែនាំ និងការរំលឹកសម្រាប់សកម្មភាពនៅផ្ទះ។',
+    },
+    {
+      key: 'notifyReports',
+      title: 'New reports and summaries',
+      titleKm: 'របាយការណ៍ និងសេចក្តីសង្ខេបថ្មី',
+      desc: 'When a school report or educational summary is ready.',
+      descKm: 'នៅពេលរបាយការណ៍សាលា ឬសេចក្តីសង្ខេបអប់រំរួចរាល់។',
+    },
+    {
+      key: 'notifySchool',
+      title: 'School invitations and access requests',
+      titleKm: 'ការអញ្ជើញ និងសំណើពីសាលា',
+      desc: 'When a school invites you or asks to connect with a child.',
+      descKm: 'នៅពេលសាលាអញ្ជើញអ្នក ឬស្នើភ្ជាប់ជាមួយកូន។',
+    },
+    {
+      key: 'notifyAnnouncements',
+      title: 'AutiCare announcements',
+      titleKm: 'សេចក្តីប្រកាសពី AutiCare',
+      desc: 'News and updates from the AutiCare team.',
+      descKm: 'ព័ត៌មាន និងបច្ចុប្បន្នភាពពីក្រុម AutiCare។',
+    },
+  ] as const;
+
   protected readonly notificationForm = this.fb.group({
-    appointmentAlerts: this.fb.control(true),
-    schoolReports: this.fb.control(true),
-    systemAnnouncements: this.fb.control(true),
+    notifyQuestionnaire: this.fb.control(true),
+    notifyActivities: this.fb.control(true),
+    notifyReports: this.fb.control(true),
+    notifySchool: this.fb.control(true),
+    notifyAnnouncements: this.fb.control(true),
   });
 
   protected readonly preferencesForm = this.fb.group({
@@ -1711,17 +1972,16 @@ export class SettingsPage implements OnInit {
   ngOnInit() {
     if (!this.parent()) this.auth.loadCurrentUser().subscribe();
 
-    // Initialize notification preferences from service if available
-    if (this.preferences.appointmentAlerts) {
-      this.notificationForm.patchValue({
-        appointmentAlerts: this.preferences.appointmentAlerts(),
-        schoolReports: this.preferences.schoolReports(),
-        systemAnnouncements: this.preferences.systemAnnouncements(),
-      });
-    }
-
     this.preferences.loadPreferences().subscribe({
       next: (res) => {
+        const pref = res.preference;
+        this.notificationForm.reset({
+          notifyQuestionnaire: pref?.notifyQuestionnaire ?? true,
+          notifyActivities: pref?.notifyActivities ?? true,
+          notifyReports: pref?.notifyReports ?? true,
+          notifySchool: pref?.notifySchool ?? true,
+          notifyAnnouncements: pref?.notifyAnnouncements ?? true,
+        });
         if (res.preference && this.preferencesForm.pristine) {
           this.preferencesForm.patchValue({
             reducedMotion: res.preference.reducedMotion,
@@ -1888,20 +2148,72 @@ export class SettingsPage implements OnInit {
     });
   }
 
+  protected loadConnections(): void {
+    if (this.parent()?.role !== 'PARENT') return;
+    this.connectionsLoading.set(true);
+    this.connectionsApi.list().subscribe({
+      next: (list) => {
+        this.connections.set(list || []);
+        this.connectionsLoading.set(false);
+      },
+      error: () => {
+        this.connectionsLoading.set(false);
+      },
+    });
+  }
+
+  protected promptRevoke(conn: ParentSchoolConnection): void {
+    this.connectionToRevoke.set(conn);
+    this.revokeError.set(null);
+  }
+
+  protected cancelRevoke(): void {
+    this.connectionToRevoke.set(null);
+    this.revokeError.set(null);
+  }
+
+  protected confirmRevoke(): void {
+    const conn = this.connectionToRevoke();
+    if (!conn) return;
+    this.revoking.set(true);
+    this.revokeError.set(null);
+    this.connectionsApi.disconnect(conn.enrollmentId).subscribe({
+      next: () => {
+        this.connections.update((list) => list.filter((c) => c.enrollmentId !== conn.enrollmentId));
+        this.revoking.set(false);
+        this.connectionToRevoke.set(null);
+      },
+      error: () => {
+        this.revokeError.set(
+          this.currentLang() === 'km'
+            ? 'មិនអាចលុបការតភ្ជាប់បានទេ។ សូមព្យាយាមម្តងទៀត។'
+            : 'Could not revoke connection. Please try again.',
+        );
+        this.revoking.set(false);
+      },
+    });
+  }
+
   protected saveNotifications(): void {
     this.notificationSaved.set(false);
     this.notificationSaving.set(true);
 
-    const val = this.notificationForm.getRawValue();
-    if (this.preferences.updateNotificationPreferences) {
-      this.preferences.updateNotificationPreferences(val);
-    }
-
-    setTimeout(() => {
-      this.notificationSaving.set(false);
-      this.notificationSaved.set(true);
-      this.notificationForm.markAsPristine();
-    }, 150);
+    this.notificationError.set(null);
+    this.preferences.updatePreferences(this.notificationForm.getRawValue()).subscribe({
+      next: () => {
+        this.notificationSaving.set(false);
+        this.notificationSaved.set(true);
+        this.notificationForm.markAsPristine();
+      },
+      error: () => {
+        this.notificationSaving.set(false);
+        this.notificationError.set(
+          this.currentLang() === 'km'
+            ? 'មិនអាចរក្សាទុកបានទេ។ សូមព្យាយាមម្តងទៀត។'
+            : 'Your notification preferences could not be saved. Please try again.',
+        );
+      },
+    });
   }
 
   protected savePreferences(): void {

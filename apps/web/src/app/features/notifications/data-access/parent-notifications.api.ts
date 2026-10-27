@@ -37,6 +37,15 @@ export class ParentNotificationsApi {
       .pipe(map((response) => response.data));
   }
 
+  archive(notificationId: string) {
+    return this.http
+      .patch<{ data: NotificationResponse }>(
+        `${this.apiBaseUrl}/parents/notifications/${notificationId}/archive`,
+        {},
+      )
+      .pipe(map((response) => response.data));
+  }
+
   markAllRead() {
     return this.http
       .patch<{ data: { updatedCount: number } }>(

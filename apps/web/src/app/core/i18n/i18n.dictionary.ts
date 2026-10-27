@@ -397,6 +397,7 @@ export interface TranslationDictionary {
     readonly myStudents: string;
     readonly progressReports: string;
     readonly parentCollaboration: string;
+    readonly parentInquiries: string;
     readonly subscriptionBilling: string;
     readonly helpSupport: string;
     readonly myProfile: string;
@@ -900,6 +901,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       myStudents: 'សិស្សរបស់ខ្ញុំ',
       progressReports: 'របាយការណ៍វឌ្ឍនភាព',
       parentCollaboration: 'កិច្ចសហការជាមួយឪពុកម្តាយ',
+      parentInquiries: 'សំណួរពីឪពុកម្តាយ',
       subscriptionBilling: 'ការជាវ និងវិក្កយបត្រ',
       helpSupport: 'ជំនួយ និងការគាំទ្រ',
       myProfile: 'ព័ត៌មានផ្ទាល់ខ្លួនរបស់ខ្ញុំ',
@@ -1419,6 +1421,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       myStudents: 'My Students',
       progressReports: 'Progress Reports',
       parentCollaboration: 'Parent Collaboration',
+      parentInquiries: 'Parent Inquiries',
       subscriptionBilling: 'Subscription & Billing',
       helpSupport: 'Help & Support',
       myProfile: 'My Profile',

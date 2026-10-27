@@ -1933,6 +1933,7 @@ export class AppShellComponent {
             items: [
               { label: s.settings, path: '/settings', icon: 'gear' },
               { label: s.parentCollaboration, path: '/schools/connect', icon: 'family' },
+              { label: s.parentInquiries, path: '/schools/inquiries', icon: 'chat' },
               { label: s.subscriptionBilling, path: '/schools/subscription', icon: 'card' },
             ],
           },
@@ -2019,12 +2020,12 @@ export class AppShellComponent {
         items: [
           { label: s.aiParentAssistant, path: '/ai', icon: 'ai' },
           { label: s.resourcesActivities, path: '/activities', icon: 'book' },
-          { label: s.findSupport, path: '/documents', icon: 'pin' },
+          { label: s.findSupport, path: '/find-support', icon: 'pin' },
         ],
       },
       {
         title: s.progress,
-        items: [{ label: s.reports, path: '/schools/reports', icon: 'file' }],
+        items: [{ label: s.reports, path: '/reports', icon: 'file' }],
       },
       {
         title: s.other,

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
-import type { ObservationCategory, ObservationResponse } from '@auticare/contracts';
-import type { ChildResponse } from '@auticare/contracts';
+import type { ObservationCategory, ObservationResponse, ChildResponse } from '@auticare/contracts';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ObservationsApi } from './data-access/observations.api';
@@ -12,25 +11,29 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
 // zod into the browser bundle, and the web app does not depend on zod. The
 // Record type makes the compiler flag a category added to the contract but not here.
 const CATEGORIES: Record<ObservationCategory, true> = {
-  CRYING: true,
-  SLEEP: true,
-  EATING: true,
+  COMMUNICATION: true,
   SENSORY: true,
   SOCIAL: true,
+  EMOTIONAL: true,
+  SLEEP: true,
+  EATING: true,
   ROUTINE: true,
+  CRYING: true,
   OTHER: true,
 };
 const observationCategories = Object.keys(CATEGORIES) as ObservationCategory[];
+
+type HistoryView = 'daily' | 'weekly' | 'monthly';
 
 const COPY = {
   en: {
     eyebrow: 'Observations',
     title: 'What you noticed',
     subtitle:
-      'A short record of the day-to-day. Nothing here is a diagnosis — it is the evidence you would otherwise have to remember at an appointment.',
-    record: 'Record something',
+      'A short record of day-to-day events to help notice patterns. Not clinical or diagnostic, and never good or bad.',
+    record: 'Record observation',
     cancel: 'Cancel',
-    save: 'Save',
+    save: 'Save observation',
     saving: 'Saving…',
     all: 'All',
     empty: 'Nothing recorded yet',
@@ -39,25 +42,43 @@ const COPY = {
     loadError: 'Your observations could not be loaded.',
     saveError: 'This observation could not be saved.',
     deleteError: 'This observation could not be deleted.',
-    confirmDelete: 'Delete?',
+    confirmDelete: 'Delete this observation?',
     delete: 'Delete',
+    selectChild: 'Child',
     whenLabel: 'When',
-    noteLabel: 'What happened (optional)',
-    notePlaceholder: 'e.g. Covered his ears at the market and cried for ten minutes.',
-    intensityLabel: 'How intense was it',
-    categoryLabel: 'What was it',
+    categoryLabel: 'Category',
+    intensityLabel: 'Intensity',
+    noteLabel: 'Observation (what happened)',
+    notePlaceholder: 'e.g. Covered ears during music class and sat in corner.',
+    triggerLabel: 'Possible trigger (optional)',
+    triggerPlaceholder: 'e.g. Loud bell rang unexpectedly.',
+    durationLabel: 'Duration in minutes (optional)',
+    responseLabel: 'Parent response (optional)',
+    responsePlaceholder: 'e.g. Offered noise-canceling headphones and quiet corner.',
+    outcomeLabel: 'Outcome (optional)',
+    outcomePlaceholder: 'e.g. Calmed down after 5 minutes and rejoined.',
     mild: 'Mild',
     severe: 'Severe',
     today: 'Today',
     yesterday: 'Yesterday',
     noChild: 'Add a child before recording an observation.',
+    daily: 'Daily',
+    weekly: 'Weekly',
+    monthly: 'Monthly',
+    trends: 'Pattern trends',
+    noTrends: 'No observations recorded in this period.',
+    calendar: 'Month calendar',
+    clearDateFilter: 'Show all dates',
+    showingDate: 'Showing records for',
     categories: {
-      CRYING: 'Crying',
-      SLEEP: 'Sleep',
-      EATING: 'Eating',
+      COMMUNICATION: 'Communication',
       SENSORY: 'Sensory',
       SOCIAL: 'Social',
+      EMOTIONAL: 'Emotional',
+      SLEEP: 'Sleep',
+      EATING: 'Eating',
       ROUTINE: 'Routine',
+      CRYING: 'Crying',
       OTHER: 'Other',
     },
   },
@@ -65,36 +86,54 @@ const COPY = {
     eyebrow: 'ការសង្កេត',
     title: 'អ្វីដែលអ្នកបានកត់សម្គាល់',
     subtitle:
-      'កំណត់ត្រាខ្លីៗប្រចាំថ្ងៃ។ គ្មានអ្វីនៅទីនេះជាការធ្វើរោគវិនិច្ឆ័យទេ — វាជាភស្តុតាងដែលអ្នកប្រហែលជាត្រូវចងចាំនៅពេលជួបគ្រូពេទ្យ។',
-    record: 'កត់ត្រាថ្មី',
+      'កំណត់ត្រាខ្លីៗប្រចាំថ្ងៃ ដើម្បីជួយកត់សម្គាល់លំនាំ។ មិនមែនជាការវិនិច្ឆ័យរោគទេ ហើយគ្មានអាកប្បកិរិយាល្អឬអាក្រក់ឡើយ។',
+    record: 'កត់ត្រាការសង្កេត',
     cancel: 'បោះបង់',
     save: 'រក្សាទុក',
     saving: 'កំពុងរក្សាទុក…',
     all: 'ទាំងអស់',
     empty: 'មិនទាន់មានកំណត់ត្រាទេ',
-    emptyBody: 'កត់ត្រាអ្វីដំបូងដែលអ្នកសង្កេតឃើញ ទោះតូចក៏ដោយ។ គំរូកើតចេញពីថ្ងៃធម្មតា។',
-    loadError: 'មិនអាចផ្ទុកកំណត់ត្រារបស់អ្នកបានទេ។',
+    emptyBody: 'កត់ត្រាអ្វីដំបូងដែលអ្នកកត់សម្គាល់ ទោះបីជារឿងតូចតាច។ លំនាំកើតចេញពីថ្ងៃធម្មតា។',
+    loadError: 'មិនអាចទាញយកកំណត់ត្រាបានទេ។',
     saveError: 'មិនអាចរក្សាទុកកំណត់ត្រានេះបានទេ។',
     deleteError: 'មិនអាចលុបកំណត់ត្រានេះបានទេ។',
-    confirmDelete: 'លុបមែនទេ?',
+    confirmDelete: 'លុបការសង្កេតនេះ?',
     delete: 'លុប',
-    whenLabel: 'ពេលណា',
-    noteLabel: 'មានអ្វីកើតឡើង (មិនចាំបាច់)',
-    notePlaceholder: 'ឧ. គាត់បិទត្រចៀកនៅផ្សារ ហើយយំដប់នាទី។',
-    intensityLabel: 'វាខ្លាំងប៉ុណ្ណា',
-    categoryLabel: 'វាជាអ្វី',
+    selectChild: 'កូន',
+    whenLabel: 'ពេលវេលា',
+    categoryLabel: 'ប្រភេទ',
+    intensityLabel: 'កម្រិត',
+    noteLabel: 'ការសង្កេត (អ្វីដែលបានកើតឡើង)',
+    notePlaceholder: 'ឧ. ខ្ទប់ត្រចៀកពេលម៉ោងតន្ត្រី ហើយទៅអង្គុយនៅជ្រុង។',
+    triggerLabel: 'កត្តាជម្រុញដែលអាចកើតមាន (ជម្រើស)',
+    triggerPlaceholder: 'ឧ. សំឡេងកណ្ដឹងរោទ៍ខ្លាំងភ្លាមៗ។',
+    durationLabel: 'រយៈពេលគិតជានាទី (ជម្រើស)',
+    responseLabel: 'ការឆ្លើយតបរបស់ឪពុកម្តាយ (ជម្រើស)',
+    responsePlaceholder: 'ឧ. ផ្តល់កាសទប់សំឡេង និងនាំទៅកន្លែងស្ងាត់។',
+    outcomeLabel: 'លទ្ធផល (ជម្រើស)',
+    outcomePlaceholder: 'ឧ. ស្ងប់ចិត្តវិញបន្ទាប់ពី ៥ នាទី ហើយចូលរួមវិញ។',
     mild: 'ស្រាល',
     severe: 'ខ្លាំង',
     today: 'ថ្ងៃនេះ',
     yesterday: 'ម្សិលមិញ',
-    noChild: 'សូមបន្ថែមកុមារមុនពេលកត់ត្រា។',
+    noChild: 'សូមបន្ថែមប្រវត្តិរូបកូនមុនពេលកត់ត្រា។',
+    daily: 'ប្រចាំថ្ងៃ',
+    weekly: 'ប្រចាំសប្តាហ៍',
+    monthly: 'ប្រចាំខែ',
+    trends: 'និន្នាការលំនាំ',
+    noTrends: 'គ្មានកំណត់ត្រាក្នុងកំឡុងពេលនេះទេ។',
+    calendar: 'ប្រតិទិនប្រចាំខែ',
+    clearDateFilter: 'បង្ហាញកាលបរិច្ឆេទទាំងអស់',
+    showingDate: 'បង្ហាញកំណត់ត្រាសម្រាប់ថ្ងៃ',
     categories: {
-      CRYING: 'យំ',
-      SLEEP: 'ការគេង',
-      EATING: 'ការញ៉ាំ',
+      COMMUNICATION: 'ការប្រាស្រ័យទាក់ទង',
       SENSORY: 'អារម្មណ៍វិញ្ញាណ',
       SOCIAL: 'ទំនាក់ទំនងសង្គម',
+      EMOTIONAL: 'អារម្មណ៍ផ្លូវចិត្ត',
+      SLEEP: 'ការគេង',
+      EATING: 'ការទទួលទាន',
       ROUTINE: 'ទម្លាប់ប្រចាំថ្ងៃ',
+      CRYING: 'ការយំ',
       OTHER: 'ផ្សេងៗ',
     },
   },
@@ -115,9 +154,21 @@ const COPY = {
         <h1>{{ copy().title }}</h1>
         <p class="subtitle">{{ copy().subtitle }}</p>
       </div>
-      <button type="button" class="primary" (click)="openForm()" [disabled]="!child()">
-        {{ copy().record }}
-      </button>
+      <div class="head-actions">
+        @if (children().length > 1) {
+          <label class="child-picker">
+            <span>{{ copy().selectChild }}:</span>
+            <select [value]="selectedChildId()" (change)="onChildChange($event)">
+              @for (c of children(); track c.id) {
+                <option [value]="c.id">{{ c.firstName }}</option>
+              }
+            </select>
+          </label>
+        }
+        <button type="button" class="primary" (click)="openForm()" [disabled]="!child()">
+          {{ copy().record }}
+        </button>
+      </div>
     </header>
 
     @if (error()) {
@@ -188,6 +239,51 @@ const COPY = {
           ></textarea>
         </label>
 
+        <label class="field">
+          <span>{{ copy().triggerLabel }}</span>
+          <input
+            type="text"
+            maxlength="2000"
+            [placeholder]="copy().triggerPlaceholder"
+            [value]="draftTrigger()"
+            (input)="onTrigger($event)"
+          />
+        </label>
+
+        <label class="field">
+          <span>{{ copy().durationLabel }}</span>
+          <input
+            type="number"
+            min="0"
+            max="1440"
+            placeholder="0"
+            [value]="draftDurationMinutes() ?? ''"
+            (input)="onDuration($event)"
+          />
+        </label>
+
+        <label class="field">
+          <span>{{ copy().responseLabel }}</span>
+          <input
+            type="text"
+            maxlength="2000"
+            [placeholder]="copy().responsePlaceholder"
+            [value]="draftParentResponse()"
+            (input)="onResponse($event)"
+          />
+        </label>
+
+        <label class="field">
+          <span>{{ copy().outcomeLabel }}</span>
+          <input
+            type="text"
+            maxlength="2000"
+            [placeholder]="copy().outcomePlaceholder"
+            [value]="draftOutcome()"
+            (input)="onOutcome($event)"
+          />
+        </label>
+
         <div class="actions">
           <button type="button" class="ghost" (click)="closeForm()" [disabled]="saving()">
             {{ copy().cancel }}
@@ -199,8 +295,132 @@ const COPY = {
       </section>
     }
 
-    <!-- Filters -->
+    <!-- Trends and Analytics Section -->
     @if (observations().length > 0) {
+      <div class="views-bar">
+        <div class="view-toggles" role="group" aria-label="History view">
+          <button
+            type="button"
+            class="view-btn"
+            [class.active]="viewMode() === 'daily'"
+            (click)="setViewMode('daily')"
+          >
+            {{ copy().daily }}
+          </button>
+          <button
+            type="button"
+            class="view-btn"
+            [class.active]="viewMode() === 'weekly'"
+            (click)="setViewMode('weekly')"
+          >
+            {{ copy().weekly }}
+          </button>
+          <button
+            type="button"
+            class="view-btn"
+            [class.active]="viewMode() === 'monthly'"
+            (click)="setViewMode('monthly')"
+          >
+            {{ copy().monthly }}
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="calendar-toggle-btn"
+          [class.active]="showCalendar()"
+          (click)="showCalendar.set(!showCalendar())"
+        >
+          📅 {{ copy().calendar }}
+        </button>
+      </div>
+
+      <!-- Month Calendar View -->
+      @if (showCalendar()) {
+        <section class="calendar-card" aria-label="Observation Calendar">
+          <div class="calendar-header">
+            <h3>{{ calendarTitle() }}</h3>
+            <div class="cal-nav">
+              <button
+                type="button"
+                class="icon-btn"
+                (click)="prevMonth()"
+                aria-label="Previous month"
+              >
+                ‹
+              </button>
+              <button type="button" class="icon-btn" (click)="nextMonth()" aria-label="Next month">
+                ›
+              </button>
+            </div>
+          </div>
+          <div class="calendar-grid">
+            <div class="cal-day-name">Sun</div>
+            <div class="cal-day-name">Mon</div>
+            <div class="cal-day-name">Tue</div>
+            <div class="cal-day-name">Wed</div>
+            <div class="cal-day-name">Thu</div>
+            <div class="cal-day-name">Fri</div>
+            <div class="cal-day-name">Sat</div>
+            @for (cell of calendarDays(); track cell.key) {
+              <button
+                type="button"
+                class="cal-day-cell"
+                [class.empty-cell]="cell.empty"
+                [class.has-records]="cell.hasRecords"
+                [class.selected-day]="selectedDate() === cell.dateStr"
+                [disabled]="cell.empty"
+                (click)="onSelectCalendarDate(cell.dateStr)"
+              >
+                @if (!cell.empty) {
+                  <span class="day-num">{{ cell.dayNum }}</span>
+                  @if (cell.hasRecords) {
+                    <span class="cal-dot" aria-hidden="true"></span>
+                  }
+                }
+              </button>
+            }
+          </div>
+          @if (selectedDate()) {
+            <div class="cal-selected-notice">
+              <span
+                >{{ copy().showingDate }}: <strong>{{ selectedDate() }}</strong></span
+              >
+              <button type="button" class="ghost-sm" (click)="clearSelectedDate()">
+                {{ copy().clearDateFilter }}
+              </button>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- Category Trends Bar Chart -->
+      <section class="trends-card" aria-label="Trends by category">
+        <h3>{{ copy().trends }}</h3>
+        @if (trendsData().length === 0) {
+          <p class="subtitle">{{ copy().noTrends }}</p>
+        } @else {
+          <div class="trends-list">
+            @for (t of trendsData(); track t.category) {
+              <div class="trend-item">
+                <div class="trend-label">
+                  <span class="trend-name">{{ copy().categories[t.category] }}</span>
+                  <span class="trend-count">{{ t.count }}</span>
+                </div>
+                <div class="trend-bar-track">
+                  <div
+                    class="trend-bar-fill"
+                    [style.width.%]="t.percent"
+                    [class]="'fill-' + t.category.toLowerCase()"
+                  ></div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Category Filter Chips -->
       <div class="filters" role="group" aria-label="Filter by category">
         <button
           type="button"
@@ -249,9 +469,30 @@ const COPY = {
               @if (item.note) {
                 <p class="entry-note">{{ item.note }}</p>
               }
+              @if (item.trigger) {
+                <p class="entry-meta">
+                  <strong>{{ copy().triggerLabel }}:</strong> {{ item.trigger }}
+                </p>
+              }
+              @if (item.durationMinutes !== null && item.durationMinutes !== undefined) {
+                <p class="entry-meta">
+                  <strong>{{ copy().durationLabel }}:</strong> {{ item.durationMinutes }}m
+                </p>
+              }
+              @if (item.parentResponse) {
+                <p class="entry-meta">
+                  <strong>{{ copy().responseLabel }}:</strong> {{ item.parentResponse }}
+                </p>
+              }
+              @if (item.outcome) {
+                <p class="entry-meta">
+                  <strong>{{ copy().outcomeLabel }}:</strong> {{ item.outcome }}
+                </p>
+              }
               <div
                 class="intensity"
-                [attr.aria-label]="copy().intensityLabel + ': ' + item.intensity + ' / 5'"
+                role="img"
+                [attr.aria-label]="item.intensity + ' of 5 intensity'"
               >
                 @for (level of intensityLevels; track level) {
                   <span class="pip" [class.on]="level <= item.intensity"></span>
@@ -259,17 +500,28 @@ const COPY = {
               </div>
             </div>
             @if (pendingDelete() === item.id) {
-              <button type="button" class="danger" (click)="remove(item)">
-                {{ copy().confirmDelete }}
-              </button>
+              <div class="confirm-del">
+                <span>{{ copy().confirmDelete }}</span>
+                <button
+                  type="button"
+                  class="del-btn"
+                  (click)="remove(item)"
+                  [attr.aria-label]="copy().delete"
+                >
+                  {{ copy().delete }}
+                </button>
+                <button type="button" class="ghost-sm" (click)="pendingDelete.set(null)">
+                  {{ copy().cancel }}
+                </button>
+              </div>
             } @else {
               <button
                 type="button"
                 class="icon-btn"
-                [attr.aria-label]="copy().delete"
                 (click)="pendingDelete.set(item.id)"
+                [attr.aria-label]="copy().delete"
               >
-                ×
+                🗑
               </button>
             }
           </li>
@@ -281,119 +533,168 @@ const COPY = {
     `
       :host {
         display: block;
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 32px 16px 80px;
       }
 
       .page-head {
         display: flex;
-        align-items: flex-start;
         justify-content: space-between;
-        gap: 18px;
-        margin-bottom: 22px;
-        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+
+      .head-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 12px;
+      }
+
+      .child-picker {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: var(--ac-type-meta);
+        color: var(--ac-color-text-muted);
+      }
+
+      .child-picker select {
+        padding: 6px 12px;
+        border-radius: var(--ac-radius-sm);
+        border: 1px solid var(--ac-color-border);
+        background: var(--ac-color-surface-elevated);
+        color: var(--ac-color-text-strong);
+        font: inherit;
       }
 
       .eyebrow {
         margin: 0 0 6px;
-        text-transform: uppercase;
+        font-size: var(--ac-type-meta);
         letter-spacing: 0.08em;
-        font-size: var(--ac-type-label);
-        font-weight: 700;
-        color: var(--ac-color-action);
+        text-transform: uppercase;
+        color: var(--ac-color-text-muted);
       }
 
       h1 {
         margin: 0 0 8px;
-        font-size: var(--ac-type-page-title);
-        color: var(--ac-color-text-strong);
-      }
-
-      h2 {
-        margin: 0 0 10px;
-        font-size: var(--ac-type-section-title);
+        font-size: clamp(24px, 3.2vw, 32px);
+        font-weight: 700;
         color: var(--ac-color-text-strong);
       }
 
       .subtitle {
         margin: 0;
-        max-width: 62ch;
         color: var(--ac-color-text-muted);
-        line-height: 1.6;
+        line-height: 1.5;
       }
 
-      .notice {
-        padding: 14px 16px;
-        border-radius: var(--ac-radius-md);
-        background: var(--ac-color-alert-surface);
-        color: var(--ac-color-alert-text);
+      .primary {
+        padding: 10px 20px;
+        border-radius: var(--ac-radius-pill);
+        border: none;
+        background: var(--ac-color-action);
+        color: var(--ac-color-action-contrast);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+      }
+
+      .primary:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+
+      .primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .ghost {
+        padding: 10px 18px;
+        border-radius: var(--ac-radius-pill);
+        border: 1px solid var(--ac-color-border);
+        background: transparent;
+        color: var(--ac-color-text-strong);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .ghost-sm {
+        padding: 4px 10px;
+        border-radius: var(--ac-radius-sm);
+        border: 1px solid var(--ac-color-border);
+        background: transparent;
+        color: var(--ac-color-text-muted);
         font-size: var(--ac-type-meta);
+        cursor: pointer;
+      }
+
+      .del-btn {
+        padding: 4px 10px;
+        border-radius: var(--ac-radius-sm);
+        border: 1px solid var(--ac-color-error, var(--ac-color-border));
+        background: var(--ac-color-surface-elevated);
+        color: var(--ac-color-error, var(--ac-color-text-strong));
+        font-size: var(--ac-type-meta);
+        font-weight: 600;
+        cursor: pointer;
       }
 
       .sheet {
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-action);
+        margin: 24px 0;
+        padding: 24px;
         border-radius: var(--ac-radius-lg);
-        padding: 22px;
-        margin-bottom: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
+        background: var(--ac-color-surface-elevated);
+        border: 1px solid var(--ac-color-border);
         box-shadow: var(--ac-shadow-sm);
       }
 
-      .group {
-        border: 0;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      legend,
-      .field span {
-        font-size: var(--ac-type-label);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
+      .sheet h2 {
+        margin: 0 0 16px;
+        font-size: 20px;
         font-weight: 700;
-        color: var(--ac-color-text-muted);
-        padding: 0;
-        margin-bottom: 6px;
+        color: var(--ac-color-text-strong);
       }
 
-      .chips,
-      .filters {
+      .group {
+        margin: 0 0 18px;
+        padding: 0;
+        border: none;
+      }
+
+      .group legend {
+        padding: 0;
+        margin-bottom: 8px;
+        font-size: var(--ac-type-meta);
+        font-weight: 600;
+        color: var(--ac-color-text-muted);
+      }
+
+      .chips {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
       }
 
-      .filters {
-        margin-bottom: 18px;
-      }
-
       .chip {
-        font: inherit;
-        font-size: var(--ac-type-meta);
-        font-weight: 600;
-        padding: 8px 14px;
+        padding: 6px 14px;
         border-radius: var(--ac-radius-pill);
         border: 1px solid var(--ac-color-border);
-        background: var(--ac-color-surface);
+        background: var(--ac-color-surface-slate);
         color: var(--ac-color-text-strong);
+        font: inherit;
+        font-size: 14px;
         cursor: pointer;
-        transition:
-          background var(--ac-motion-fast),
-          border-color var(--ac-motion-fast);
-      }
-
-      .chip:hover {
-        border-color: var(--ac-color-action);
+        transition: all 0.15s ease;
       }
 
       .chip.selected {
         background: var(--ac-color-action);
+        color: var(--ac-color-action-contrast);
         border-color: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
       }
 
       .scale {
@@ -402,94 +703,253 @@ const COPY = {
       }
 
       .level {
-        font: inherit;
-        width: 44px;
-        height: 44px;
-        border-radius: var(--ac-radius-md);
+        flex: 1;
+        padding: 10px 0;
+        border-radius: var(--ac-radius-sm);
         border: 1px solid var(--ac-color-border);
-        background: var(--ac-color-surface);
+        background: var(--ac-color-surface-slate);
         color: var(--ac-color-text-strong);
+        font: inherit;
         font-weight: 700;
         cursor: pointer;
       }
 
       .level.selected {
         background: var(--ac-color-action);
+        color: var(--ac-color-action-contrast);
         border-color: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
       }
 
       .scale-legend {
         display: flex;
         justify-content: space-between;
-        width: 252px;
-        max-width: 100%;
-        font-size: 11px;
+        margin-top: 4px;
+        font-size: var(--ac-type-meta);
         color: var(--ac-color-text-muted);
       }
 
       .field {
         display: flex;
         flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
       }
 
-      input,
-      textarea {
-        font: inherit;
-        padding: 11px 13px;
+      .field span {
+        font-size: var(--ac-type-meta);
+        font-weight: 600;
+        color: var(--ac-color-text-muted);
+      }
+
+      .field input,
+      .field textarea {
+        padding: 10px 14px;
         border-radius: var(--ac-radius-sm);
         border: 1px solid var(--ac-color-border);
-        background: var(--ac-color-surface);
+        background: var(--ac-color-surface-slate);
         color: var(--ac-color-text-strong);
-        resize: vertical;
-      }
-
-      input:focus-visible,
-      textarea:focus-visible,
-      button:focus-visible {
-        outline: 3px solid var(--ac-color-focus);
-        outline-offset: 2px;
+        font: inherit;
       }
 
       .actions {
         display: flex;
         justify-content: flex-end;
-        gap: 10px;
+        gap: 12px;
+        margin-top: 20px;
       }
 
-      .primary,
-      .ghost,
-      .danger {
-        font: inherit;
-        padding: 11px 20px;
+      .views-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 20px 0;
+      }
+
+      .view-toggles {
+        display: flex;
+        background: var(--ac-color-surface-slate);
+        padding: 4px;
         border-radius: var(--ac-radius-pill);
-        font-weight: 700;
+        border: 1px solid var(--ac-color-border);
+      }
+
+      .view-btn {
+        padding: 6px 14px;
+        border-radius: var(--ac-radius-pill);
+        border: none;
+        background: transparent;
+        color: var(--ac-color-text-muted);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
       }
 
-      .primary {
-        border: 1px solid var(--ac-color-action-deep);
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
+      .view-btn.active {
+        background: var(--ac-color-surface-elevated);
+        color: var(--ac-color-text-strong);
+        box-shadow: var(--ac-shadow-sm);
       }
 
-      .ghost {
+      .calendar-toggle-btn {
+        padding: 6px 14px;
+        border-radius: var(--ac-radius-pill);
         border: 1px solid var(--ac-color-border);
-        background: transparent;
+        background: var(--ac-color-surface-slate);
+        color: var(--ac-color-text-strong);
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .calendar-toggle-btn.active {
+        background: var(--ac-color-action);
+        color: var(--ac-color-action-contrast);
+        border-color: var(--ac-color-action);
+      }
+
+      .calendar-card {
+        margin-bottom: 24px;
+        padding: 20px;
+        border-radius: var(--ac-radius-lg);
+        background: var(--ac-color-surface-elevated);
+        border: 1px solid var(--ac-color-border);
+      }
+
+      .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .calendar-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
         color: var(--ac-color-text-strong);
       }
 
-      .danger {
-        border: 1px solid var(--ac-color-alert-strong);
-        background: var(--ac-color-alert-surface);
-        color: var(--ac-color-alert-text);
-        font-size: var(--ac-type-meta);
-        padding: 8px 12px;
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+        text-align: center;
       }
 
-      button:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
+      .cal-day-name {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ac-color-text-muted);
+        padding: 4px 0;
+      }
+
+      .cal-day-cell {
+        position: relative;
+        aspect-ratio: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--ac-radius-sm);
+        border: 1px solid transparent;
+        background: var(--ac-color-surface-slate);
+        color: var(--ac-color-text-strong);
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .cal-day-cell.empty-cell {
+        background: transparent;
+        cursor: default;
+      }
+
+      .cal-day-cell.selected-day {
+        border-color: var(--ac-color-action);
+        background: color-mix(in srgb, var(--ac-color-action) 15%, var(--ac-color-surface-slate));
+      }
+
+      .cal-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ac-color-action);
+        position: absolute;
+        bottom: 4px;
+      }
+
+      .cal-selected-notice {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--ac-color-border);
+        font-size: var(--ac-type-meta);
+        color: var(--ac-color-text-muted);
+      }
+
+      .trends-card {
+        margin-bottom: 24px;
+        padding: 20px;
+        border-radius: var(--ac-radius-lg);
+        background: var(--ac-color-surface-elevated);
+        border: 1px solid var(--ac-color-border);
+      }
+
+      .trends-card h3 {
+        margin: 0 0 14px;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ac-color-text-strong);
+      }
+
+      .trends-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .trend-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .trend-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ac-color-text-strong);
+      }
+
+      .trend-count {
+        color: var(--ac-color-text-muted);
+      }
+
+      .trend-bar-track {
+        height: 8px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface-slate);
+        overflow: hidden;
+      }
+
+      .trend-bar-fill {
+        height: 100%;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-action);
+        transition: width 0.3s ease;
+      }
+
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
       }
 
       .list {
@@ -498,17 +958,16 @@ const COPY = {
         padding: 0;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
       }
 
       .entry {
         display: flex;
-        align-items: flex-start;
-        gap: 14px;
+        gap: 16px;
         padding: 16px;
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border);
         border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface-elevated);
+        border: 1px solid var(--ac-color-border);
       }
 
       .dot {
@@ -520,30 +979,30 @@ const COPY = {
         background: var(--ac-color-action);
       }
 
-      .dot.cat-sleep {
-        background: var(--ac-color-category-1);
+      .dot.cat-communication {
+        background: var(--ac-color-action);
       }
-
-      .dot.cat-crying {
-        background: var(--ac-color-category-2);
-      }
-
-      .dot.cat-eating {
-        background: var(--ac-color-category-3);
-      }
-
       .dot.cat-sensory {
-        background: var(--ac-color-category-4);
+        background: var(--ac-color-category-4, var(--ac-color-action));
       }
-
       .dot.cat-social {
-        background: var(--ac-color-category-5);
+        background: var(--ac-color-category-5, var(--ac-color-action));
       }
-
+      .dot.cat-emotional {
+        background: var(--ac-color-category-2, var(--ac-color-action));
+      }
+      .dot.cat-sleep {
+        background: var(--ac-color-category-1, var(--ac-color-action));
+      }
+      .dot.cat-crying {
+        background: var(--ac-color-category-2, var(--ac-color-action));
+      }
+      .dot.cat-eating {
+        background: var(--ac-color-category-3, var(--ac-color-action));
+      }
       .dot.cat-routine {
-        background: var(--ac-color-category-6);
+        background: var(--ac-color-category-6, var(--ac-color-action));
       }
-
       .dot.cat-other {
         background: var(--ac-color-text-muted);
       }
@@ -578,6 +1037,17 @@ const COPY = {
         overflow-wrap: anywhere;
       }
 
+      .entry-meta {
+        margin: 4px 0 0;
+        font-size: var(--ac-type-meta);
+        color: var(--ac-color-text-muted);
+        line-height: 1.4;
+      }
+
+      .entry-meta strong {
+        color: var(--ac-color-text-strong);
+      }
+
       .intensity {
         display: flex;
         gap: 4px;
@@ -597,7 +1067,7 @@ const COPY = {
 
       .icon-btn {
         font: inherit;
-        font-size: 20px;
+        font-size: 16px;
         line-height: 1;
         width: 32px;
         height: 32px;
@@ -610,6 +1080,14 @@ const COPY = {
 
       .icon-btn:hover {
         background: var(--ac-color-surface-slate);
+      }
+
+      .confirm-del {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: var(--ac-type-meta);
+        color: var(--ac-color-text-muted);
       }
 
       .empty {
@@ -631,7 +1109,11 @@ const COPY = {
           align-items: stretch;
         }
 
-        .page-head .primary {
+        .head-actions {
+          align-items: stretch;
+        }
+
+        .head-actions .primary {
           width: 100%;
         }
 
@@ -652,7 +1134,13 @@ export class ObservationsPage implements OnInit {
   protected readonly intensityLevels = [1, 2, 3, 4, 5] as const;
 
   protected readonly children = signal<readonly ChildResponse[]>([]);
-  protected readonly child = computed(() => this.children()[0] ?? null);
+  protected readonly selectedChildId = signal<string>('');
+  protected readonly child = computed(() => {
+    const list = this.children();
+    const id = this.selectedChildId();
+    return list.find((c) => c.id === id) ?? list[0] ?? null;
+  });
+
   protected readonly observations = signal<readonly ObservationResponse[]>([]);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -660,11 +1148,22 @@ export class ObservationsPage implements OnInit {
   protected readonly filter = signal<ObservationCategory | null>(null);
   protected readonly pendingDelete = signal<string | null>(null);
 
+  // Views & Calendar
+  protected readonly viewMode = signal<HistoryView>('daily');
+  protected readonly showCalendar = signal(false);
+  protected readonly calendarDate = signal(new Date());
+  protected readonly selectedDate = signal<string | null>(null);
+
+  // Form drafts
   protected readonly formOpen = signal(false);
-  protected readonly draftCategory = signal<ObservationCategory>('CRYING');
+  protected readonly draftCategory = signal<ObservationCategory>('COMMUNICATION');
   protected readonly draftIntensity = signal(3);
   protected readonly draftWhen = signal(this.localNow());
   protected readonly draftNote = signal('');
+  protected readonly draftTrigger = signal('');
+  protected readonly draftDurationMinutes = signal<number | null>(null);
+  protected readonly draftParentResponse = signal('');
+  protected readonly draftOutcome = signal('');
 
   protected readonly categories = computed(() =>
     observationCategories.map((value) => ({ value, label: this.copy().categories[value] })),
@@ -679,6 +1178,7 @@ export class ObservationsPage implements OnInit {
           this.loading.set(false);
           return;
         }
+        this.selectedChildId.set(child.id);
         this.load(child.id);
       },
       error: () => {
@@ -686,6 +1186,12 @@ export class ObservationsPage implements OnInit {
         this.error.set(this.copy().loadError);
       },
     });
+  }
+
+  protected onChildChange(event: Event): void {
+    const id = (event.target as HTMLSelectElement).value;
+    this.selectedChildId.set(id);
+    this.load(id);
   }
 
   private load(childId: string): void {
@@ -702,6 +1208,11 @@ export class ObservationsPage implements OnInit {
     });
   }
 
+  protected setViewMode(mode: HistoryView): void {
+    this.viewMode.set(mode);
+    this.selectedDate.set(null);
+  }
+
   protected setFilter(category: ObservationCategory | null): void {
     this.filter.set(category);
   }
@@ -710,6 +1221,10 @@ export class ObservationsPage implements OnInit {
     this.formOpen.set(true);
     this.draftWhen.set(this.localNow());
     this.draftNote.set('');
+    this.draftTrigger.set('');
+    this.draftDurationMinutes.set(null);
+    this.draftParentResponse.set('');
+    this.draftOutcome.set('');
     this.error.set(null);
   }
 
@@ -723,6 +1238,23 @@ export class ObservationsPage implements OnInit {
 
   protected onNote(event: Event): void {
     this.draftNote.set((event.target as HTMLTextAreaElement).value);
+  }
+
+  protected onTrigger(event: Event): void {
+    this.draftTrigger.set((event.target as HTMLInputElement).value);
+  }
+
+  protected onDuration(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.draftDurationMinutes.set(val === '' ? null : Number(val));
+  }
+
+  protected onResponse(event: Event): void {
+    this.draftParentResponse.set((event.target as HTMLInputElement).value);
+  }
+
+  protected onOutcome(event: Event): void {
+    this.draftOutcome.set((event.target as HTMLInputElement).value);
   }
 
   protected save(): void {
@@ -740,6 +1272,14 @@ export class ObservationsPage implements OnInit {
         intensity: this.draftIntensity(),
         occurredAt: (Number.isNaN(when.getTime()) ? new Date() : when).toISOString(),
         ...(this.draftNote().trim() ? { note: this.draftNote().trim() } : {}),
+        ...(this.draftTrigger().trim() ? { trigger: this.draftTrigger().trim() } : {}),
+        ...(this.draftDurationMinutes() !== null
+          ? { durationMinutes: this.draftDurationMinutes()! }
+          : {}),
+        ...(this.draftParentResponse().trim()
+          ? { parentResponse: this.draftParentResponse().trim() }
+          : {}),
+        ...(this.draftOutcome().trim() ? { outcome: this.draftOutcome().trim() } : {}),
       })
       .subscribe({
         next: (row) => {
@@ -776,11 +1316,106 @@ export class ObservationsPage implements OnInit {
    * recent observations, and a filter tap should not cost a round trip.
    */
   protected readonly visible = computed(() => {
-    const category = this.filter();
-    return category
-      ? this.observations().filter((row) => row.category === category)
-      : this.observations();
+    let rows = [...this.observations()];
+    const selDate = this.selectedDate();
+    if (selDate) {
+      rows = rows.filter((r) => r.occurredAt.slice(0, 10) === selDate);
+    } else {
+      const mode = this.viewMode();
+      const now = new Date();
+      if (mode === 'daily') {
+        const todayStr = now.toISOString().slice(0, 10);
+        rows = rows.filter((r) => r.occurredAt.slice(0, 10) === todayStr);
+      } else if (mode === 'weekly') {
+        const weekAgo = new Date(now.getTime() - 7 * 86_400_000);
+        rows = rows.filter((r) => new Date(r.occurredAt) >= weekAgo);
+      } else if (mode === 'monthly') {
+        const monthAgo = new Date(now.getTime() - 30 * 86_400_000);
+        rows = rows.filter((r) => new Date(r.occurredAt) >= monthAgo);
+      }
+    }
+
+    const cat = this.filter();
+    return cat ? rows.filter((row) => row.category === cat) : rows;
   });
+
+  // Trends calculation
+  protected readonly trendsData = computed(() => {
+    const list = this.visible();
+    const counts = new Map<ObservationCategory, number>();
+    for (const cat of observationCategories) counts.set(cat, 0);
+    for (const r of list) {
+      counts.set(r.category, (counts.get(r.category) ?? 0) + 1);
+    }
+    const max = Math.max(1, ...counts.values());
+    return observationCategories
+      .map((category) => {
+        const count = counts.get(category) ?? 0;
+        return {
+          category,
+          count,
+          percent: Math.round((count / max) * 100),
+        };
+      })
+      .filter((t) => t.count > 0);
+  });
+
+  // Month Calendar data
+  protected readonly calendarTitle = computed(() => {
+    const d = this.calendarDate();
+    return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  });
+
+  protected readonly calendarDays = computed(() => {
+    const d = this.calendarDate();
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const recordDates = new Set(this.observations().map((o) => o.occurredAt.slice(0, 10)));
+
+    const cells: {
+      key: string;
+      dayNum: number;
+      dateStr: string;
+      empty: boolean;
+      hasRecords: boolean;
+    }[] = [];
+    for (let i = 0; i < firstDay; i++) {
+      cells.push({ key: `empty-${i}`, dayNum: 0, dateStr: '', empty: true, hasRecords: false });
+    }
+    const pad = (n: number) => String(n).padStart(2, '0');
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
+      cells.push({
+        key: `day-${day}`,
+        dayNum: day,
+        dateStr,
+        empty: false,
+        hasRecords: recordDates.has(dateStr),
+      });
+    }
+    return cells;
+  });
+
+  protected prevMonth(): void {
+    const d = this.calendarDate();
+    this.calendarDate.set(new Date(d.getFullYear(), d.getMonth() - 1, 1));
+  }
+
+  protected nextMonth(): void {
+    const d = this.calendarDate();
+    this.calendarDate.set(new Date(d.getFullYear(), d.getMonth() + 1, 1));
+  }
+
+  protected onSelectCalendarDate(dateStr: string): void {
+    this.selectedDate.set(dateStr);
+  }
+
+  protected clearSelectedDate(): void {
+    this.selectedDate.set(null);
+  }
 
   protected whenLabel(iso: string): string {
     const date = new Date(iso);
@@ -790,9 +1425,9 @@ export class ObservationsPage implements OnInit {
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
     const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
     const dayMs = 86_400_000;
-    if (day === startOfToday) return `${copy.today} · ${time}`;
-    if (day === startOfToday - dayMs) return `${copy.yesterday} · ${time}`;
-    return `${date.toLocaleDateString()} · ${time}`;
+    if (day === startOfToday) return `${copy.today} • ${time}`;
+    if (day === startOfToday - dayMs) return `${copy.yesterday} • ${time}`;
+    return `${date.toLocaleDateString()} • ${time}`;
   }
 
   private localNow(): string {

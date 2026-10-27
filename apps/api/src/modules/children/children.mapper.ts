@@ -1,7 +1,10 @@
 import type { Child } from '@prisma/client';
-import type { ChildResponse } from '@auticare/contracts';
+import type { ChildResponse, QuestionnaireStatus } from '@auticare/contracts';
 
-export const toChildResponse = (child: Child): ChildResponse => ({
+export const toChildResponse = (
+  child: Child,
+  questionnaireStatus?: QuestionnaireStatus,
+): ChildResponse => ({
   id: child.id,
   firstName: child.firstName,
   lastName: child.lastName ?? null,
@@ -9,4 +12,5 @@ export const toChildResponse = (child: Child): ChildResponse => ({
   address: child.address ?? null,
   notes: child.notes,
   archivedAt: child.archivedAt?.toISOString() ?? null,
+  ...(questionnaireStatus !== undefined ? { questionnaireStatus } : {}),
 });

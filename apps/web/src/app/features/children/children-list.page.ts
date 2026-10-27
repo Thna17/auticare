@@ -149,6 +149,20 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 </ac-screening-badge>
               </div>
 
+              <div class="questionnaire-row">
+                <span class="q-chip" [class]="'q-' + questionnaireState(child)">
+                  <span class="q-dot" aria-hidden="true"></span>
+                  <span class="q-label">{{ questionnaireLabel(child) }}</span>
+                </span>
+                <a
+                  class="q-action-btn"
+                  [routerLink]="['/screening']"
+                  [queryParams]="{ childId: child.id }"
+                >
+                  {{ questionnaireButtonLabel(child) }}
+                </a>
+              </div>
+
               <div class="notes-box">
                 @if (child.notes) {
                   <p class="notes-text">{{ child.notes }}</p>
@@ -570,6 +584,73 @@ import { I18nService } from '../../core/i18n/i18n.service';
         align-items: center;
       }
 
+      .questionnaire-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 6px 12px;
+        border-radius: var(--ac-radius-sm);
+        background: var(--ac-color-tint-blue-wash);
+        border: 1px solid var(--ac-color-border);
+      }
+
+      .q-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .q-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: var(--ac-radius-pill);
+      }
+
+      .q-completed .q-dot {
+        background: var(--ac-color-status-green);
+      }
+
+      .q-completed .q-label {
+        color: var(--ac-color-status-green);
+      }
+
+      .q-in_progress .q-dot {
+        background: var(--ac-color-accent-amber);
+      }
+
+      .q-in_progress .q-label {
+        color: var(--ac-color-accent-amber);
+      }
+
+      .q-not_started .q-dot {
+        background: var(--ac-color-text-muted);
+      }
+
+      .q-not_started .q-label {
+        color: var(--ac-color-text-muted);
+      }
+
+      .q-action-btn {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ac-color-action-deep);
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: var(--ac-radius-sm);
+        border: 1px solid var(--ac-color-action);
+        background: var(--ac-color-surface);
+        transition: all var(--ac-motion-fast);
+      }
+
+      .q-action-btn:hover {
+        background: var(--ac-color-action);
+        color: var(--ac-color-surface);
+      }
+
       .notes-box {
         min-height: 58px;
         border-radius: var(--ac-radius-md);
@@ -793,6 +874,31 @@ export class ChildrenListPage implements OnInit {
         );
       },
     });
+  }
+
+  questionnaireState(child: ChildResponse): 'completed' | 'in_progress' | 'not_started' {
+    if (child.questionnaireStatus === 'COMPLETED') return 'completed';
+    if (child.questionnaireStatus === 'IN_PROGRESS') return 'in_progress';
+    if (child.questionnaireStatus === 'NOT_STARTED') return 'not_started';
+    const risk = this.screeningRiskMap()[child.id];
+    if (risk) return 'completed';
+    return 'not_started';
+  }
+
+  questionnaireLabel(child: ChildResponse): string {
+    const isKm = this.currentLang() === 'km';
+    const state = this.questionnaireState(child);
+    if (state === 'completed') return isKm ? 'បានបញ្ចប់' : 'Completed';
+    if (state === 'in_progress') return isKm ? 'កំពុងដំណើរការ' : 'In progress';
+    return isKm ? 'មិនទាន់ចាប់ផ្ដើម' : 'Not started';
+  }
+
+  questionnaireButtonLabel(child: ChildResponse): string {
+    const isKm = this.currentLang() === 'km';
+    const state = this.questionnaireState(child);
+    if (state === 'completed') return isKm ? 'មើល' : 'View';
+    if (state === 'in_progress') return isKm ? 'បន្ត' : 'Continue';
+    return isKm ? 'ចាប់ផ្ដើម' : 'Start';
   }
 
   fullName(child: ChildResponse): string {

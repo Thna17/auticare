@@ -12,7 +12,8 @@ import {
   listActivities,
   listActivityProgress,
   startActivity,
-  updateActivityProgress,
+  toggleFavorite,
+  updateProgress,
 } from './activities.controller.js';
 
 export const activitiesRoutes = Router();
@@ -22,8 +23,11 @@ export const activitiesRoutes = Router();
 // in the service.
 activitiesRoutes.use(requireAuth, requireRole('PARENT'));
 
-/** GET /api/v1/activities — catalogue, optionally narrowed to a child's age. */
+/** GET /api/v1/activities — catalogue, optionally narrowed to a child's age or favorites. */
 activitiesRoutes.get('/', validateQuery(listActivitiesQuerySchema), listActivities);
+
+/** POST /api/v1/activities/:activityId/favorite — toggle favorite for caller parent. */
+activitiesRoutes.post('/:activityId/favorite', toggleFavorite);
 
 /** GET /api/v1/activities/progress?childId= — one child's activity history. */
 activitiesRoutes.get(
@@ -43,5 +47,5 @@ activitiesRoutes.post(
 activitiesRoutes.patch(
   '/progress/:progressId',
   validateBody(updateActivityProgressRequestSchema),
-  updateActivityProgress,
+  updateProgress,
 );

@@ -1,4 +1,4 @@
-import type { Activity, ActivityProgress, Child } from '@prisma/client';
+import type { Activity, ActivityFavorite, ActivityProgress, Child } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
 import { CHILD_NOT_ARCHIVED } from '../../database/active-child.js';
 
@@ -19,17 +19,32 @@ export class ActivitiesRepository {
    * range covers `ageMonths`. The composite index on
    * (category, minAgeMonths, maxAgeMonths) covers this.
    */
-  listActivities(filters: { category?: string; ageMonths?: number }): Promise<Activity[]> {
+  listActivities(filters: {
+    category?: string | undefined;
+    learningGoal?: string | undefined;
+    ageMonths?: number | undefined;
+    minAgeMonths?: number | undefined;
+    maxAgeMonths?: number | undefined;
+    activityIds?: string[] | undefined;
+  }): Promise<Activity[]> {
+    const cat = filters.category ?? filters.learningGoal;
     return prisma.activity.findMany({
       where: {
         // Drafts and archived activities are the admin's, never shown to families.
         status: 'PUBLISHED',
-        ...(filters.category !== undefined ? { category: filters.category } : {}),
+        ...(cat !== undefined ? { category: cat } : {}),
+        ...(filters.activityIds ? { id: { in: filters.activityIds } } : {}),
         ...(filters.ageMonths !== undefined
           ? {
               minAgeMonths: { lte: filters.ageMonths },
               maxAgeMonths: { gte: filters.ageMonths },
             }
+          : {}),
+        ...(filters.minAgeMonths !== undefined
+          ? { maxAgeMonths: { gte: filters.minAgeMonths } }
+          : {}),
+        ...(filters.maxAgeMonths !== undefined
+          ? { minAgeMonths: { lte: filters.maxAgeMonths } }
           : {}),
       },
       orderBy: [{ category: 'asc' }, { title: 'asc' }],
@@ -38,6 +53,31 @@ export class ActivitiesRepository {
 
   findActivityById(activityId: string): Promise<Activity | null> {
     return prisma.activity.findFirst({ where: { id: activityId, status: 'PUBLISHED' } });
+  }
+
+  findFavorite(parentId: string, activityId: string): Promise<ActivityFavorite | null> {
+    return prisma.activityFavorite.findUnique({
+      where: { parentId_activityId: { parentId, activityId } },
+    });
+  }
+
+  addFavorite(parentId: string, activityId: string): Promise<ActivityFavorite> {
+    return prisma.activityFavorite.create({
+      data: { parentId, activityId },
+    });
+  }
+
+  removeFavorite(parentId: string, activityId: string): Promise<ActivityFavorite> {
+    return prisma.activityFavorite.delete({
+      where: { parentId_activityId: { parentId, activityId } },
+    });
+  }
+
+  listFavoriteActivityIds(parentId: string): Promise<{ activityId: string }[]> {
+    return prisma.activityFavorite.findMany({
+      where: { parentId },
+      select: { activityId: true },
+    });
   }
 
   listProgressForChild(childId: string): Promise<ActivityProgressWithActivity[]> {

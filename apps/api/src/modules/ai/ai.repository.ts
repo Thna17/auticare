@@ -106,4 +106,38 @@ export class AiRepository {
       where: { role: 'USER', createdAt: { gte: since }, conversation: { parentId } },
     });
   }
+
+  findMessageWithConversation(
+    id: string,
+  ): Promise<(AiMessage & { conversation: { parentId: string } }) | null> {
+    return prisma.aiMessage.findUnique({
+      where: { id },
+      include: { conversation: { select: { parentId: true } } },
+    });
+  }
+
+  updateMessageSave(id: string, savedAt: Date | null): Promise<AiMessage> {
+    return prisma.aiMessage.update({
+      where: { id },
+      data: { savedAt },
+    });
+  }
+
+  listSavedMessages(parentId: string): Promise<AiMessage[]> {
+    return prisma.aiMessage.findMany({
+      where: {
+        conversation: { parentId },
+        savedAt: { not: null },
+        role: 'ASSISTANT',
+      },
+      orderBy: { savedAt: 'desc' },
+    });
+  }
+
+  updateFeedback(id: string, feedback: string, feedbackNote: string | null): Promise<AiMessage> {
+    return prisma.aiMessage.update({
+      where: { id },
+      data: { feedback, feedbackNote },
+    });
+  }
 }

@@ -206,7 +206,88 @@ export class DashboardService {
       };
     }
 
+    // 6. Recent behaviour records
+    const recentObservationsRaw = selectedChild
+      ? await prisma.behaviorObservation.findMany({
+          where: { childId: selectedChild.id },
+          take: 3,
+          orderBy: { occurredAt: 'desc' },
+          select: { id: true, category: true, occurredAt: true, note: true },
+        })
+      : [];
+    const recentObservations = recentObservationsRaw.map((obs) => ({
+      id: obs.id,
+      category: obs.category,
+      occurredAt: obs.occurredAt.toISOString(),
+      note: obs.note,
+    }));
+
+    // 7. Recent notifications
+    const recentNotificationsRaw = await prisma.notification.findMany({
+      where: { parentId, status: { not: 'ARCHIVED' } },
+      take: 3,
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, title: true, body: true, createdAt: true },
+    });
+    const recentNotifications = recentNotificationsRaw.map((n) => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      createdAt: n.createdAt.toISOString(),
+    }));
+
+    // 8. Recommended activities
+    let recommendedActivities: {
+      id: string;
+      title: string;
+      category: string;
+      minAgeMonths: number;
+      maxAgeMonths: number;
+      summary: string;
+    }[] = [];
+    if (selectedChild) {
+      const birthDate = selectedChild.dateOfBirth;
+      const ageMonths = Math.max(
+        0,
+        (now.getFullYear() - birthDate.getFullYear()) * 12 +
+          (now.getMonth() - birthDate.getMonth()),
+      );
+      const acts = await prisma.activity.findMany({
+        where: {
+          minAgeMonths: { lte: ageMonths },
+          maxAgeMonths: { gte: ageMonths },
+        },
+        take: 3,
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          minAgeMonths: true,
+          maxAgeMonths: true,
+          summary: true,
+        },
+      });
+      if (acts.length === 0) {
+        recommendedActivities = await prisma.activity.findMany({
+          take: 3,
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            minAgeMonths: true,
+            maxAgeMonths: true,
+            summary: true,
+          },
+        });
+      } else {
+        recommendedActivities = acts;
+      }
+    }
+
     return {
+      recentObservations,
+      recentNotifications,
+      recommendedActivities,
       selectedChild: selectedChild
         ? {
             id: selectedChild.id,

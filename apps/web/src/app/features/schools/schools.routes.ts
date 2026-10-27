@@ -88,6 +88,12 @@ export const SCHOOLS_ROUTES: Routes = [
     data: { roles: ['SCHOOL'] },
     loadComponent: () => import('./school-profile.page').then((m) => m.SchoolProfilePage),
   },
+  {
+    path: 'inquiries',
+    canActivate: [roleGuard],
+    data: { roles: ['SCHOOL'] },
+    loadComponent: () => import('./school-inquiries.page').then((m) => m.SchoolInquiriesPage),
+  },
   // Read-only public detail. Registered last so it never shadows the fixed
   // paths above. Any authenticated role may VIEW (read-only, no edit controls);
   // matches the API (GET /schools/:id).

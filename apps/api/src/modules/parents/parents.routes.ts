@@ -15,6 +15,7 @@ import {
   listEnrollmentRequests,
   listParentNotifications,
   markAllNotificationsRead,
+  archiveNotification,
   markNotificationRead,
   updateParentPreferences,
 } from './parents.controller.js';
@@ -64,6 +65,9 @@ parentsRoutes.patch('/notifications/read-all', requireRole('PARENT'), markAllNot
 // PATCH /api/v1/parents/notifications/:id/read
 // Mark a specific notification as read.
 parentsRoutes.patch('/notifications/:id/read', requireRole('PARENT'), markNotificationRead);
+
+// PATCH /api/v1/parents/notifications/:id/archive — hide one from the default list.
+parentsRoutes.patch('/notifications/:id/archive', requireRole('PARENT'), archiveNotification);
 
 // GET /api/v1/parents/preferences — load parent preferences
 parentsRoutes.get('/preferences', getParentPreferences);
