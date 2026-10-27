@@ -51,7 +51,12 @@ export class HospitalsRepository {
           },
         });
         const staff = await tx.hospitalStaff.create({
-          data: { parentId: account.id, hospitalId: hospital.id, title: input.account.title },
+          data: {
+            parentId: account.id,
+            hospitalId: hospital.id,
+            title: input.account.title,
+            role: 'ADMIN',
+          },
         });
         return { hospital, account, staff };
       },

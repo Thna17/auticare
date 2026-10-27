@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import {
+  BUSINESS_SPONSORED_SLOTS,
+  PLAN_PRICES_CENTS,
+  PRO_MAX_CHILDREN,
+} from '@auticare/contracts/plans';
 import { AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { NavIconComponent } from '../../core/layout/nav-icon.component';
@@ -106,10 +111,10 @@ const KM_STEPS = [
 type BillingPeriod = 'monthly' | 'yearly';
 
 type PricingPlan = {
-  readonly id: 'school' | 'family' | 'hospital';
+  readonly id: 'free' | 'pro' | 'business';
   readonly name: string;
   readonly info: string;
-  /** USD per month. Yearly is the per-month price when billed yearly. 0 means free. */
+  /** USD. Monthly is per month; yearly is the price for the whole year. 0 means free. */
   readonly price: { readonly monthly: number; readonly yearly: number };
   readonly features: readonly string[];
   readonly cta: { readonly label: string; readonly link: string };
@@ -117,113 +122,121 @@ type PricingPlan = {
 };
 
 /*
- * Families never pay: the landing page promises a free family account.
- * School and hospital prices are placeholders until the team sets real ones;
- * change them here and every card, badge and discount follows.
+ * Confirmed prices: Pro $20/month or $200/year, Business $60/month or $600/year.
+ * They come from the shared contracts so the pricing cards, the parent's plan
+ * page and the admin's plan register can never disagree.
  */
 const PLAN_PRICES = {
-  school: { monthly: 29, yearly: 24 },
-  family: { monthly: 0, yearly: 0 },
-  hospital: { monthly: 79, yearly: 66 },
+  free: { monthly: 0, yearly: 0 },
+  pro: {
+    monthly: PLAN_PRICES_CENTS.PRO.MONTHLY / 100,
+    yearly: PLAN_PRICES_CENTS.PRO.YEARLY / 100,
+  },
+  business: {
+    monthly: PLAN_PRICES_CENTS.BUSINESS.MONTHLY / 100,
+    yearly: PLAN_PRICES_CENTS.BUSINESS.YEARLY / 100,
+  },
 } as const;
 
+/*
+ * Free-plan limits are still an open product decision, so the Free card lists
+ * what a family gets without promising or naming any quota.
+ */
 const EN_PLANS: readonly PricingPlan[] = [
   {
-    id: 'school',
-    name: 'School',
-    info: 'For teachers and inclusive classrooms',
-    price: PLAN_PRICES.school,
+    id: 'free',
+    name: 'Free',
+    info: 'For parents and caregivers getting started',
+    price: PLAN_PRICES.free,
     features: [
-      'Student roster for enrolled children',
-      'Structured activity reports',
-      'Reports shared with parents',
-      'Photo and file attachments',
-      'School profile in the directory',
-      'Email support',
-    ],
-    cta: { label: 'Apply as a school', link: '/register-school' },
-  },
-  {
-    id: 'family',
-    name: 'Family',
-    info: 'For parents and guardians',
-    price: PLAN_PRICES.family,
-    features: [
-      'Three-minute check-in and full screening',
-      'Daily notes and pattern insights',
-      'Ask AutiCare in Khmer or English',
-      'Guidance from trusted sources',
-      "Play activities for your child's age",
-      'Book hospital appointments',
-      "Read your child's school reports",
+      'Sign up with your email',
+      'A child profile you control',
+      'Starter activities and resources',
+      'Try the AI Parent Assistant',
+      'Basic behaviour notes',
+      'School and healthcare directory',
     ],
     cta: { label: 'Create a free account', link: '/register' },
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    info: 'For families who want the full toolkit',
+    price: PLAN_PRICES.pro,
+    features: [
+      `Up to ${PRO_MAX_CHILDREN} child profiles`,
+      'A questionnaire for each child',
+      'A personalized dashboard for each child',
+      'AI Parent Assistant in Khmer and English',
+      'Daily behaviour tracking and trends',
+      'Progress summaries and downloadable reports',
+      'Expanded activities and resources',
+    ],
+    cta: { label: 'Sign up for Pro', link: '/register' },
     highlighted: true,
   },
   {
-    id: 'hospital',
-    name: 'Hospital',
-    info: 'For clinics and specialist teams',
-    price: PLAN_PRICES.hospital,
+    id: 'business',
+    name: 'Business',
+    info: 'For verified schools and organizations',
+    price: PLAN_PRICES.business,
     features: [
-      'Appointment requests in one list',
-      'Doctor and specialist listings',
-      'Hospital profile in the directory',
-      'Families arrive with dated notes',
-      'Multiple staff accounts',
-      'Priority support',
+      'Verified school profile and dashboard',
+      'School admin and teacher accounts',
+      'Reports on children only with parent consent',
+      `${BUSINESS_SPONSORED_SLOTS} sponsored Pro accounts for families`,
+      'Family connection codes',
     ],
-    cta: { label: 'Contact us', link: '/support' },
+    cta: { label: 'Request a school account', link: '/register-school' },
   },
 ];
 
 const KM_PLANS: readonly PricingPlan[] = [
   {
-    id: 'school',
-    name: 'សាលារៀន',
-    info: 'សម្រាប់គ្រូ និងថ្នាក់រៀនបរិយាបន្ន',
-    price: PLAN_PRICES.school,
+    id: 'free',
+    name: 'ឥតគិតថ្លៃ',
+    info: 'សម្រាប់ឪពុកម្តាយ និងអ្នកថែទាំដែលទើបចាប់ផ្តើម',
+    price: PLAN_PRICES.free,
     features: [
-      'បញ្ជីសិស្សដែលបានចុះឈ្មោះ',
-      'របាយការណ៍សកម្មភាពមានរចនាសម្ព័ន្ធ',
-      'ចែករំលែករបាយការណ៍ជាមួយឪពុកម្តាយ',
-      'ភ្ជាប់រូបភាព និងឯកសារ',
-      'ប្រវត្តិសាលានៅក្នុងបញ្ជី',
-      'ជំនួយតាមអ៊ីមែល',
-    ],
-    cta: { label: 'ដាក់ពាក្យជាសាលា', link: '/register-school' },
-  },
-  {
-    id: 'family',
-    name: 'គ្រួសារ',
-    info: 'សម្រាប់ឪពុកម្តាយ និងអាណាព្យាបាល',
-    price: PLAN_PRICES.family,
-    features: [
-      'ការពិនិត្យខ្លីបីនាទី និងការវាយតម្លៃពេញលេញ',
-      'កំណត់ត្រាប្រចាំថ្ងៃ និងការយល់ដឹងពីគំរូ',
-      'សួរ AutiCare ជាភាសាខ្មែរ ឬអង់គ្លេស',
-      'ការណែនាំពីប្រភពដែលទុកចិត្តបាន',
-      'សកម្មភាពលេងតាមអាយុកូន',
-      'ណាត់ជួបមន្ទីរពេទ្យ',
-      'អានរបាយការណ៍សាលារបស់កូន',
+      'ចុះឈ្មោះដោយប្រើអ៊ីមែលរបស់អ្នក',
+      'ប្រវត្តិកុមារដែលអ្នកគ្រប់គ្រង',
+      'សកម្មភាព និងធនធានដំបូង',
+      'សាកល្បងជំនួយការ AI សម្រាប់ឪពុកម្តាយ',
+      'កំណត់ត្រាអាកប្បកិរិយាមូលដ្ឋាន',
+      'បញ្ជីសាលារៀន និងសេវាសុខាភិបាល',
     ],
     cta: { label: 'បង្កើតគណនីឥតគិតថ្លៃ', link: '/register' },
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    info: 'សម្រាប់គ្រួសារដែលចង់បានឧបករណ៍ពេញលេញ',
+    price: PLAN_PRICES.pro,
+    features: [
+      `ប្រវត្តិកុមាររហូតដល់ ${PRO_MAX_CHILDREN} នាក់`,
+      'កម្រងសំណួរសម្រាប់កុមារម្នាក់ៗ',
+      'ផ្ទាំងគ្រប់គ្រងផ្ទាល់ខ្លួនសម្រាប់កុមារម្នាក់ៗ',
+      'ជំនួយការ AI ជាភាសាខ្មែរ និងអង់គ្លេស',
+      'តាមដានអាកប្បកិរិយាប្រចាំថ្ងៃ និងនិន្នាការ',
+      'សេចក្តីសង្ខេបវឌ្ឍនភាព និងរបាយការណ៍ទាញយកបាន',
+      'សកម្មភាព និងធនធានបន្ថែម',
+    ],
+    cta: { label: 'ចុះឈ្មោះសម្រាប់ Pro', link: '/register' },
     highlighted: true,
   },
   {
-    id: 'hospital',
-    name: 'មន្ទីរពេទ្យ',
-    info: 'សម្រាប់គ្លីនិក និងក្រុមអ្នកជំនាញ',
-    price: PLAN_PRICES.hospital,
+    id: 'business',
+    name: 'Business',
+    info: 'សម្រាប់សាលារៀន និងស្ថាប័នដែលបានផ្ទៀងផ្ទាត់',
+    price: PLAN_PRICES.business,
     features: [
-      'សំណើណាត់ជួបនៅក្នុងបញ្ជីតែមួយ',
-      'បញ្ជីវេជ្ជបណ្ឌិត និងអ្នកជំនាញ',
-      'ប្រវត្តិមន្ទីរពេទ្យនៅក្នុងបញ្ជី',
-      'គ្រួសារមកដល់ជាមួយកំណត់ត្រាមានកាលបរិច្ឆេទ',
-      'គណនីបុគ្គលិកច្រើន',
-      'ជំនួយអាទិភាព',
+      'ប្រវត្តិសាលា និងផ្ទាំងគ្រប់គ្រងដែលបានផ្ទៀងផ្ទាត់',
+      'គណនីអ្នកគ្រប់គ្រងសាលា និងគ្រូ',
+      'របាយការណ៍អំពីកុមារ តែពេលឪពុកម្តាយយល់ព្រម',
+      `គណនី Pro ឧបត្ថម្ភចំនួន ${BUSINESS_SPONSORED_SLOTS} សម្រាប់គ្រួសារ`,
+      'កូដភ្ជាប់គ្រួសារ',
     ],
-    cta: { label: 'ទាក់ទងយើង', link: '/support' },
+    cta: { label: 'ស្នើសុំគណនីសាលា', link: '/register-school' },
   },
 ];
 
@@ -1075,15 +1088,15 @@ const KM_AUTISM_NOTES = [
           <h2 id="pricing-title">
             {{
               currentLang() === 'km'
-                ? 'ឥតគិតថ្លៃសម្រាប់គ្រួសារ។ សាមញ្ញសម្រាប់ដៃគូ។'
-                : 'Free for families. Simple for partners.'
+                ? 'ចាប់ផ្តើមដោយឥតគិតថ្លៃ។ ដំឡើងនៅពេលអ្នកត្រូវការ។'
+                : 'Start free. Upgrade when you need more.'
             }}
           </h2>
           <p>
             {{
               currentLang() === 'km'
-                ? 'ឪពុកម្តាយមិនដែលបង់ប្រាក់ទេ។ សាលារៀន និងមន្ទីរពេទ្យជួយគាំទ្រវេទិកានេះ ដោយគ្មានថ្លៃលាក់កំបាំង។'
-                : 'Parents never pay. Schools and hospitals keep the platform running, with no hidden costs.'
+                ? 'គ្រួសារអាចចាប់ផ្តើមដោយឥតគិតថ្លៃ ហើយប្តូរទៅ Pro នៅពេលណាក៏បាន។ សាលារៀនដែលប្រើ Business អាចឧបត្ថម្ភ Pro ដល់គ្រួសារចំនួនប្រាំ។'
+                : 'Families can start free and move to Pro at any time. Schools on Business can sponsor Pro for five families.'
             }}
           </p>
         </div>
@@ -1123,15 +1136,15 @@ const KM_AUTISM_NOTES = [
                   @if (plan.highlighted) {
                     <span class="plan-badge">
                       <ac-nav-icon name="star" />
-                      {{ currentLang() === 'km' ? 'សម្រាប់គ្រប់គ្រួសារ' : 'For every family' }}
+                      {{ currentLang() === 'km' ? 'ល្អបំផុតសម្រាប់គ្រួសារ' : 'Best for families' }}
                     </span>
                   }
-                  @if (billing() === 'yearly' && discountPercent(plan) > 0) {
+                  @if (billing() === 'yearly' && yearlySaving(plan) > 0) {
                     <span class="plan-badge discount">
                       {{
                         currentLang() === 'km'
-                          ? 'បញ្ចុះ ' + discountPercent(plan) + '%'
-                          : discountPercent(plan) + '% off'
+                          ? 'សន្សំ $' + yearlySaving(plan)
+                          : 'Save $' + yearlySaving(plan)
                       }}
                     </span>
                   }
@@ -1144,12 +1157,20 @@ const KM_AUTISM_NOTES = [
                     <span class="plan-amount">{{ priceLabel(amount) }}</span>
                   }
                   @if (plan.price.monthly > 0) {
-                    <span class="plan-per">{{ currentLang() === 'km' ? '/ខែ' : '/month' }}</span>
+                    <span class="plan-per">{{
+                      billing() === 'yearly'
+                        ? currentLang() === 'km'
+                          ? '/ឆ្នាំ'
+                          : '/year'
+                        : currentLang() === 'km'
+                          ? '/ខែ'
+                          : '/month'
+                    }}</span>
                   }
                 </p>
                 <p class="plan-billed">
                   @if (plan.price.monthly === 0) {
-                    {{ currentLang() === 'km' ? 'ឥតគិតថ្លៃជារៀងរហូត' : 'Free forever' }}
+                    {{ currentLang() === 'km' ? 'មិនចាំបាច់បង់ប្រាក់' : 'No payment needed' }}
                   } @else if (billing() === 'yearly') {
                     {{ currentLang() === 'km' ? 'គិតថ្លៃប្រចាំឆ្នាំ' : 'Billed yearly' }}
                   } @else {
@@ -1178,6 +1199,16 @@ const KM_AUTISM_NOTES = [
             </article>
           }
         </div>
+        <p class="pricing-note">
+          {{
+            currentLang() === 'km'
+              ? 'តម្លៃគិតជាដុល្លារអាមេរិក។ មន្ទីរពេទ្យ ឬគ្លីនិក?'
+              : 'Prices in US dollars. Hospital or clinic?'
+          }}
+          <a routerLink="/register-hospital">{{
+            currentLang() === 'km' ? 'ស្នើសុំគណនីមន្ទីរពេទ្យ' : 'Request a hospital account'
+          }}</a>
+        </p>
       </section>
 
       <!-- Final Call to Action -->
@@ -1263,7 +1294,7 @@ const KM_AUTISM_NOTES = [
             <a routerLink="/crisis">{{
               currentLang() === 'km' ? 'ជំនួយបន្ទាន់' : 'Crisis support'
             }}</a>
-            <a routerLink="/support">{{
+            <a href="mailto:support&#64;auticare.local">{{
               currentLang() === 'km' ? 'ទំនាក់ទំនងយើង' : 'Contact us'
             }}</a>
           </nav>
@@ -2576,6 +2607,18 @@ const KM_AUTISM_NOTES = [
         fill: currentColor;
       }
 
+      .pricing-note {
+        margin: 20px auto 0;
+        text-align: center;
+        font-size: 14px;
+        color: var(--ac-color-text-muted);
+      }
+
+      .pricing-note a {
+        color: var(--ac-color-action-deep);
+        font-weight: 700;
+      }
+
       .plan-badge.discount {
         background: var(--ac-color-tint-blue-light);
         border-color: var(--ac-color-border-info);
@@ -3821,10 +3864,10 @@ export class LandingPage {
     this.mobileMenuOpen.set(false);
   }
 
-  /** The saving from paying yearly, rounded; 0 for free plans. */
-  discountPercent(plan: PricingPlan): number {
+  /** Dollars saved by paying yearly instead of twelve months; 0 for free plans. */
+  yearlySaving(plan: PricingPlan): number {
     const { monthly, yearly } = plan.price;
-    return monthly > yearly ? Math.round(((monthly - yearly) / monthly) * 100) : 0;
+    return Math.max(0, monthly * 12 - yearly);
   }
 
   priceLabel(amount: number): string {

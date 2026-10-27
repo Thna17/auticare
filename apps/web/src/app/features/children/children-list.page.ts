@@ -77,6 +77,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
       </div>
     </section>
 
+    @if (restoreError(); as message) {
+      <ac-ui-message tone="error">{{ message }}</ac-ui-message>
+    }
+
     @if (facade.loading()) {
       <div class="state-center">
         <ac-ui-spinner
@@ -714,6 +718,8 @@ export class ChildrenListPage implements OnInit {
   readonly canCreateChildren = computed(() => this.auth.parent()?.role === 'PARENT');
   readonly showArchived = signal(false);
   readonly restoringId = signal<string | null>(null);
+  /** Why a restore was refused, e.g. the plan's child-profile limit. */
+  readonly restoreError = signal<string | null>(null);
   readonly screeningRiskMap = signal<Record<string, RiskLevel | null>>({});
 
   readonly activeChildrenCount = computed(
@@ -774,9 +780,18 @@ export class ChildrenListPage implements OnInit {
 
   restore(childId: string) {
     this.restoringId.set(childId);
+    this.restoreError.set(null);
     this.facade.restore(childId).subscribe({
       next: () => this.restoringId.set(null),
-      error: () => this.restoringId.set(null),
+      error: (err: unknown) => {
+        this.restoringId.set(null);
+        this.restoreError.set(
+          (err as { error?: { error?: { message?: string } } })?.error?.error?.message ??
+            (this.currentLang() === 'km'
+              ? 'មិនអាចស្ដារប្រវត្តិបានទេ។'
+              : 'The profile could not be restored.'),
+        );
+      },
     });
   }
 

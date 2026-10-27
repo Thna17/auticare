@@ -20,6 +20,7 @@ export interface TranslationDictionary {
     readonly myChildren: string;
     readonly reports: string;
     readonly schoolRequests: string;
+    readonly hospitalRequests: string;
   };
   readonly common: {
     readonly save: string;
@@ -351,6 +352,7 @@ export interface TranslationDictionary {
     readonly closeDrawer: string;
     readonly autiCareUser: string;
     readonly schoolRequests: string;
+    readonly hospitalRequests: string;
     // The five parent-facing areas the app is organised by after the update.
     readonly dashboard: string;
     readonly aiAssistant: string;
@@ -359,6 +361,52 @@ export interface TranslationDictionary {
     readonly settings: string;
     readonly askAutiCare: string;
     readonly observations: string;
+    readonly platformAdministration: string;
+    readonly adminBadge: string;
+    readonly soon: string;
+    readonly userManagement: string;
+    readonly aiAndContent: string;
+    readonly subscriptionsRevenue: string;
+    readonly operationsGrowth: string;
+    readonly system: string;
+    readonly parentsFamilies: string;
+    readonly schoolsOrganizations: string;
+    readonly teachersStaff: string;
+    readonly adminTeamRoles: string;
+    readonly questionnaireManagement: string;
+    readonly aiConfiguration: string;
+    readonly resourcesActivities: string;
+    readonly supportServicesDirectory: string;
+    readonly subscriptionPlans: string;
+    readonly paymentsTransactions: string;
+    readonly sponsoredProAccounts: string;
+    readonly partnerships: string;
+    readonly inquiriesSupport: string;
+    readonly analyticsReports: string;
+    readonly announcementsPromotions: string;
+    readonly auditLogs: string;
+    readonly platformSettings: string;
+    readonly helpDocumentation: string;
+    readonly schoolManagementPortal: string;
+    readonly teacherPortal: string;
+    readonly studentManagement: string;
+    readonly organization: string;
+    readonly learningResources: string;
+    readonly other: string;
+    readonly account: string;
+    readonly myStudents: string;
+    readonly progressReports: string;
+    readonly parentCollaboration: string;
+    readonly subscriptionBilling: string;
+    readonly helpSupport: string;
+    readonly myProfile: string;
+    readonly parentPortal: string;
+    readonly behaviorTracking: string;
+    readonly supportLearning: string;
+    readonly aiParentAssistant: string;
+    readonly findSupport: string;
+    readonly settingsPrivacy: string;
+    readonly subscription: string;
   };
   readonly schoolRegistrations: {
     readonly title: string;
@@ -398,6 +446,44 @@ export interface TranslationDictionary {
     readonly reviewedAt: string;
     readonly schoolId: string;
   };
+  readonly hospitalRegistrations: {
+    readonly title: string;
+    readonly subtitle: string;
+    readonly hospitalName: string;
+    readonly city: string;
+    readonly address: string;
+    readonly contactFirstName: string;
+    readonly contactLastName: string;
+    readonly contactTitle: string;
+    readonly email: string;
+    readonly phone: string;
+    readonly services: string;
+    readonly message: string;
+    readonly submit: string;
+    readonly submitting: string;
+    readonly successTitle: string;
+    readonly successMessage: string;
+    readonly backHome: string;
+    readonly adminTitle: string;
+    readonly adminSubtitle: string;
+    readonly pending: string;
+    readonly approved: string;
+    readonly rejected: string;
+    readonly emptyPending: string;
+    readonly emptyApproved: string;
+    readonly emptyRejected: string;
+    readonly approve: string;
+    readonly reject: string;
+    readonly approveConfirmTitle: string;
+    readonly approveConfirmMessage: string;
+    readonly rejectDialogTitle: string;
+    readonly rejectReasonLabel: string;
+    readonly rejectReasonPlaceholder: string;
+    readonly rejectionReason: string;
+    readonly reviewedBy: string;
+    readonly reviewedAt: string;
+    readonly hospitalId: string;
+  };
   readonly invitation: {
     readonly verificationStepTitle: string;
     readonly verificationStepDesc: string;
@@ -432,6 +518,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       myChildren: 'កុមាររបស់ខ្ញុំ',
       reports: 'របាយការណ៍',
       schoolRequests: 'សំណើសាលារៀន',
+      hospitalRequests: 'សំណើមន្ទីរពេទ្យ',
     },
     common: {
       save: 'រក្សាទុក',
@@ -769,6 +856,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       closeDrawer: 'បិទម៉ឺនុយ',
       autiCareUser: 'អ្នកប្រើប្រាស់ AutiCare',
       schoolRequests: 'សំណើចុះឈ្មោះសាលា',
+      hospitalRequests: 'សំណើមន្ទីរពេទ្យ',
       dashboard: 'ផ្ទាំងគ្រប់គ្រង',
       aiAssistant: 'ជំនួយការ AI',
       documents: 'ឯកសារ',
@@ -776,11 +864,57 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       settings: 'ការកំណត់',
       askAutiCare: 'សួរ AutiCare',
       observations: 'ការសង្កេត',
+      platformAdministration: 'ការគ្រប់គ្រងប្រព័ន្ធ',
+      adminBadge: 'អ្នកគ្រប់គ្រង',
+      soon: 'ឆាប់ៗ',
+      userManagement: 'ការគ្រប់គ្រងអ្នកប្រើប្រាស់',
+      aiAndContent: 'AI និងខ្លឹមសារអប់រំ',
+      subscriptionsRevenue: 'ការជាវ និងចំណូល',
+      operationsGrowth: 'ប្រតិបត្តិការ និងការរីកចម្រើន',
+      system: 'ប្រព័ន្ធ',
+      parentsFamilies: 'ឪពុកម្តាយ និងគ្រួសារ',
+      schoolsOrganizations: 'សាលា និងអង្គការ',
+      teachersStaff: 'គ្រូ និងបុគ្គលិក',
+      adminTeamRoles: 'ក្រុមអ្នកគ្រប់គ្រង និងតួនាទី',
+      questionnaireManagement: 'ការគ្រប់គ្រងកម្រងសំណួរ',
+      aiConfiguration: 'ការកំណត់ និងតាមដាន AI',
+      resourcesActivities: 'ធនធាន និងសកម្មភាព',
+      supportServicesDirectory: 'បញ្ជីសេវាគាំទ្រ',
+      subscriptionPlans: 'គម្រោងការជាវ',
+      paymentsTransactions: 'ការទូទាត់ និងប្រតិបត្តិការ',
+      sponsoredProAccounts: 'គណនី Pro ឧបត្ថម្ភ',
+      partnerships: 'ភាពជាដៃគូ',
+      inquiriesSupport: 'សំណួរ និងការគាំទ្រ',
+      analyticsReports: 'ការវិភាគ និងរបាយការណ៍',
+      announcementsPromotions: 'សេចក្តីប្រកាស និងការផ្សព្វផ្សាយ',
+      auditLogs: 'កំណត់ហេតុសវនកម្ម',
+      platformSettings: 'ការកំណត់ប្រព័ន្ធ',
+      helpDocumentation: 'ជំនួយ និងឯកសារ',
+      schoolManagementPortal: 'វិបផតថលគ្រប់គ្រងសាលា',
+      teacherPortal: 'វិបផតថលគ្រូ',
+      studentManagement: 'ការគ្រប់គ្រងសិស្ស',
+      organization: 'ស្ថាប័ន',
+      learningResources: 'ការរៀន និងធនធាន',
+      other: 'ផ្សេងៗ',
+      account: 'គណនី',
+      myStudents: 'សិស្សរបស់ខ្ញុំ',
+      progressReports: 'របាយការណ៍វឌ្ឍនភាព',
+      parentCollaboration: 'កិច្ចសហការជាមួយឪពុកម្តាយ',
+      subscriptionBilling: 'ការជាវ និងវិក្កយបត្រ',
+      helpSupport: 'ជំនួយ និងការគាំទ្រ',
+      myProfile: 'ព័ត៌មានផ្ទាល់ខ្លួនរបស់ខ្ញុំ',
+      parentPortal: 'វិបផតថលឪពុកម្តាយ',
+      behaviorTracking: 'ការតាមដានឥរិយាបថ',
+      supportLearning: 'ការគាំទ្រ និងការរៀន',
+      aiParentAssistant: 'ជំនួយការ AI សម្រាប់ឪពុកម្តាយ',
+      findSupport: 'ស្វែងរកការគាំទ្រ',
+      settingsPrivacy: 'ការកំណត់ និងឯកជនភាព',
+      subscription: 'ការជាវ',
     },
     schoolRegistrations: {
-      title: 'ស្នើសុំចុះឈ្មោះសាលារៀន',
+      title: 'ស្នើសុំគណនីសាលា',
       subtitle:
-        'ភ្ជាប់សាលារបស់អ្នកជាមួយ AutiCare ដើម្បីគាំទ្រកុមារអូទីសឹម និងសហការជាមួយអាណាព្យាបាល។',
+        'ប្រាប់យើងអំពីសាលារបស់អ្នក។ ក្រុមការងារ AutiCare នឹងផ្ទៀងផ្ទាត់សាលា មុននឹងបង្កើតគណនី ហើយផ្ញើតំណកំណត់ពាក្យសម្ងាត់ទៅអ៊ីមែលរបស់អ្នក។',
       schoolName: 'ឈ្មោះសាលារៀន',
       city: 'រាជធានី/ខេត្ត',
       address: 'អាសយដ្ឋាន',
@@ -791,11 +925,11 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       phone: 'លេខទូរស័ព្ទ',
       studentCount: 'ចំនួនសិស្សប្រហាក់ប្រហែល',
       message: 'សារបន្ថែម',
-      submit: 'ផ្ញើសំណើចុះឈ្មោះ',
+      submit: 'ផ្ញើសំណើ',
       submitting: 'កំពុងផ្ញើ...',
       successTitle: 'សូមអរគុណ!',
       successMessage:
-        'យើងខ្ញុំបានទទួលសំណើរបស់អ្នកហើយ។ ក្រុមការងារយើងនឹងពិនិត្យ និងផ្ញើអ៊ីមែលជូនដំណឹងឆាប់ៗនេះ។',
+        'យើងខ្ញុំបានទទួលសំណើរបស់អ្នកហើយ។ យើងនឹងផ្ទៀងផ្ទាត់សាលារបស់អ្នក។ ប្រសិនបើត្រូវបានអនុម័ត អ្នកនឹងទទួលបានអ៊ីមែលដែលមានតំណកំណត់ពាក្យសម្ងាត់។',
       backHome: 'ត្រឡប់ទៅទំព័រដើម',
       adminTitle: 'សំណើសុំចុះឈ្មោះសាលារៀន',
       adminSubtitle: 'ពិនិត្យ អនុម័ត ឬបដិសេធសំណើបង្កើតគណនីសាលារៀនថ្មី។',
@@ -809,7 +943,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       reject: 'បដិសេធ',
       approveConfirmTitle: 'អនុម័តសំណើសាលារៀន?',
       approveConfirmMessage:
-        'ការអនុម័តនឹងបង្កើតគណនីសាលា និងផ្ញើលិខិតអញ្ជើញតាមអ៊ីមែលទៅកាន់អ្នកគ្រប់គ្រងសាលា។',
+        'សូមផ្ទៀងផ្ទាត់ថាសាលានេះពិតប្រាកដ (អាជ្ញាប័ណ្ណ អាសយដ្ឋាន ទំនាក់ទំនង) មុនពេលអនុម័ត។ ការអនុម័តនឹងបង្កើតគណនីសាលា និងផ្ញើលិខិតអញ្ជើញតាមអ៊ីមែលទៅកាន់អ្នកគ្រប់គ្រងសាលា។',
       rejectDialogTitle: 'បដិសេធសំណើសាលារៀន',
       rejectReasonLabel: 'មូលហេតុនៃការបដិសេធ (តម្រូវ)',
       rejectReasonPlaceholder: 'បញ្ជាក់មូលហេតុសម្រាប់ជូនដំណឹងទៅសាលា...',
@@ -817,6 +951,47 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       reviewedBy: 'ពិនិត្យដោយ',
       reviewedAt: 'កាលបរិច្ឆេទពិនិត្យ',
       schoolId: 'លេខសម្គាល់សាលា',
+    },
+    hospitalRegistrations: {
+      title: 'ស្នើសុំគណនីមន្ទីរពេទ្យ',
+      subtitle:
+        'ប្រាប់យើងអំពីមន្ទីរពេទ្យ ឬគ្លីនិករបស់អ្នក។ ក្រុមការងារ AutiCare នឹងផ្ទៀងផ្ទាត់ស្ថាប័ន មុននឹងបង្កើតគណនី ហើយផ្ញើតំណកំណត់ពាក្យសម្ងាត់ទៅអ៊ីមែលរបស់អ្នក។',
+      hospitalName: 'ឈ្មោះមន្ទីរពេទ្យ / គ្លីនិក',
+      city: 'រាជធានី/ខេត្ត',
+      address: 'អាសយដ្ឋាន',
+      contactFirstName: 'នាមខ្លួនអ្នកទំនាក់ទំនង',
+      contactLastName: 'គោត្តនាមអ្នកទំនាក់ទំនង',
+      contactTitle: 'តួនាទី / មុខតំណែង',
+      email: 'អ៊ីមែល',
+      phone: 'លេខទូរស័ព្ទ',
+      services: 'សេវាកម្មដែលផ្ដល់ជូន',
+      message: 'សារបន្ថែម',
+      submit: 'ផ្ញើសំណើ',
+      submitting: 'កំពុងផ្ញើ...',
+      successTitle: 'សូមអរគុណ!',
+      successMessage:
+        'យើងខ្ញុំបានទទួលសំណើរបស់អ្នកហើយ។ យើងនឹងផ្ទៀងផ្ទាត់មន្ទីរពេទ្យរបស់អ្នក។ ប្រសិនបើត្រូវបានអនុម័ត អ្នកនឹងទទួលបានអ៊ីមែលដែលមានតំណកំណត់ពាក្យសម្ងាត់។',
+      backHome: 'ត្រឡប់ទៅទំព័រដើម',
+      adminTitle: 'សំណើសុំចុះឈ្មោះមន្ទីរពេទ្យ',
+      adminSubtitle: 'ពិនិត្យ អនុម័ត ឬបដិសេធសំណើបង្កើតគណនីមន្ទីរពេទ្យថ្មី។',
+      pending: 'កំពុងរង់ចាំ',
+      approved: 'បានអនុម័ត',
+      rejected: 'បានបដិសេធ',
+      emptyPending: 'មិនមានសំណើកំពុងរង់ចាំទេ។',
+      emptyApproved: 'មិនទាន់មានសំណើដែលបានអនុម័តទេ។',
+      emptyRejected: 'មិនមានសំណើដែលត្រូវបានបដិសេធទេ។',
+      approve: 'អនុម័ត',
+      reject: 'បដិសេធ',
+      approveConfirmTitle: 'អនុម័តសំណើមន្ទីរពេទ្យ?',
+      approveConfirmMessage:
+        'សូមផ្ទៀងផ្ទាត់ថាមន្ទីរពេទ្យនេះពិតប្រាកដ (អាជ្ញាប័ណ្ណ អាសយដ្ឋាន ទំនាក់ទំនង) មុនពេលអនុម័ត។ ការអនុម័តនឹងបង្កើតគណនីមន្ទីរពេទ្យ និងផ្ញើលិខិតអញ្ជើញតាមអ៊ីមែលទៅកាន់អ្នកគ្រប់គ្រងមន្ទីរពេទ្យ។',
+      rejectDialogTitle: 'បដិសេធសំណើមន្ទីរពេទ្យ',
+      rejectReasonLabel: 'មូលហេតុនៃការបដិសេធ (តម្រូវ)',
+      rejectReasonPlaceholder: 'បញ្ជាក់មូលហេតុសម្រាប់ជូនដំណឹងទៅមន្ទីរពេទ្យ...',
+      rejectionReason: 'មូលហេតុបដិសេធ',
+      reviewedBy: 'ពិនិត្យដោយ',
+      reviewedAt: 'កាលបរិច្ឆេទពិនិត្យ',
+      hospitalId: 'លេខសម្គាល់មន្ទីរពេទ្យ',
     },
     invitation: {
       verificationStepTitle: 'ផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក',
@@ -850,6 +1025,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       myChildren: 'My Children',
       reports: 'Reports',
       schoolRequests: 'School Requests',
+      hospitalRequests: 'Hospital Requests',
     },
     common: {
       save: 'Save',
@@ -1199,6 +1375,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       closeDrawer: 'Close navigation drawer',
       autiCareUser: 'AutiCare user',
       schoolRequests: 'School requests',
+      hospitalRequests: 'Hospital requests',
       dashboard: 'Dashboard',
       aiAssistant: 'AI Assistant',
       documents: 'Documents',
@@ -1206,11 +1383,57 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       settings: 'Settings',
       askAutiCare: 'Ask AutiCare',
       observations: 'Observations',
+      platformAdministration: 'Platform Administration',
+      adminBadge: 'Admin',
+      soon: 'Soon',
+      userManagement: 'User management',
+      aiAndContent: 'AI & educational content',
+      subscriptionsRevenue: 'Subscriptions & revenue',
+      operationsGrowth: 'Operations & growth',
+      system: 'System',
+      parentsFamilies: 'Parents & Families',
+      schoolsOrganizations: 'Schools & Organizations',
+      teachersStaff: 'Teachers & Staff',
+      adminTeamRoles: 'Admin Team & Roles',
+      questionnaireManagement: 'Questionnaire Management',
+      aiConfiguration: 'AI Configuration & Monitoring',
+      resourcesActivities: 'Resources & Activities',
+      supportServicesDirectory: 'Support Services Directory',
+      subscriptionPlans: 'Subscription Plans',
+      paymentsTransactions: 'Payments & Transactions',
+      sponsoredProAccounts: 'Sponsored Pro Accounts',
+      partnerships: 'Partnerships',
+      inquiriesSupport: 'Inquiries & Support',
+      analyticsReports: 'Analytics & Reports',
+      announcementsPromotions: 'Announcements & Promotions',
+      auditLogs: 'Audit Logs',
+      platformSettings: 'Platform Settings',
+      helpDocumentation: 'Help & Documentation',
+      schoolManagementPortal: 'School Management Portal',
+      teacherPortal: 'Teacher Portal',
+      studentManagement: 'Student management',
+      organization: 'Organization',
+      learningResources: 'Learning & resources',
+      other: 'Other',
+      account: 'Account',
+      myStudents: 'My Students',
+      progressReports: 'Progress Reports',
+      parentCollaboration: 'Parent Collaboration',
+      subscriptionBilling: 'Subscription & Billing',
+      helpSupport: 'Help & Support',
+      myProfile: 'My Profile',
+      parentPortal: 'Parent Portal',
+      behaviorTracking: 'Behavior Tracking',
+      supportLearning: 'Support & learning',
+      aiParentAssistant: 'AI Parent Assistant',
+      findSupport: 'Find Support',
+      settingsPrivacy: 'Settings & Privacy',
+      subscription: 'Subscription',
     },
     schoolRegistrations: {
-      title: 'School Registration Request',
+      title: 'Request a school account',
       subtitle:
-        'Connect your school with AutiCare to support neurodivergent students and partner with families.',
+        'Tell us about your school. The AutiCare team verifies every school before creating an account, then emails you a link to set your password.',
       schoolName: 'School Name',
       city: 'City / Province',
       address: 'Address',
@@ -1221,11 +1444,11 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       phone: 'Phone Number',
       studentCount: 'Estimated Student Count',
       message: 'Additional Message',
-      submit: 'Submit Registration Request',
+      submit: 'Send request',
       submitting: 'Submitting...',
       successTitle: 'Thank You!',
       successMessage:
-        "We've received your registration request. Our team will review it and email you shortly.",
+        "We've received your request. We'll verify your school, and if it's approved you'll get an email with a link to set your password.",
       backHome: 'Back to Home',
       adminTitle: 'School Registration Requests',
       adminSubtitle:
@@ -1240,7 +1463,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       reject: 'Reject',
       approveConfirmTitle: 'Approve School Registration?',
       approveConfirmMessage:
-        'This will create the school organization, administrator account, and dispatch an invitation email.',
+        'Check that this school is real (licence, address, contact) before approving. Approving creates the school, its administrator account, and sends the invitation email.',
       rejectDialogTitle: 'Reject School Registration',
       rejectReasonLabel: 'Reason for rejection (required)',
       rejectReasonPlaceholder: 'Provide a reason to include in the email notification...',
@@ -1248,6 +1471,48 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       reviewedBy: 'Reviewed By',
       reviewedAt: 'Reviewed At',
       schoolId: 'School ID',
+    },
+    hospitalRegistrations: {
+      title: 'Request a hospital account',
+      subtitle:
+        'Tell us about your hospital or clinic. The AutiCare team verifies every healthcare partner before creating an account, then emails you a link to set your password.',
+      hospitalName: 'Hospital / Clinic Name',
+      city: 'City / Province',
+      address: 'Address',
+      contactFirstName: 'Contact First Name',
+      contactLastName: 'Contact Last Name',
+      contactTitle: 'Contact Title / Role',
+      email: 'Email',
+      phone: 'Phone Number',
+      services: 'Services Offered',
+      message: 'Additional Message',
+      submit: 'Send request',
+      submitting: 'Submitting...',
+      successTitle: 'Thank You!',
+      successMessage:
+        "We've received your request. We'll verify your hospital, and if it's approved you'll get an email with a link to set your password.",
+      backHome: 'Back to Home',
+      adminTitle: 'Hospital Registration Requests',
+      adminSubtitle:
+        'Review, approve, or reject incoming registration requests from healthcare providers.',
+      pending: 'Pending',
+      approved: 'Approved',
+      rejected: 'Rejected',
+      emptyPending: 'No pending registration requests.',
+      emptyApproved: 'No approved registration requests yet.',
+      emptyRejected: 'No rejected registration requests.',
+      approve: 'Approve',
+      reject: 'Reject',
+      approveConfirmTitle: 'Approve Hospital Registration?',
+      approveConfirmMessage:
+        'Check that this hospital is real (licence, address, contact) before approving. Approving creates the hospital, its administrator account, and sends the invitation email.',
+      rejectDialogTitle: 'Reject Hospital Registration',
+      rejectReasonLabel: 'Reason for rejection (required)',
+      rejectReasonPlaceholder: 'Provide a reason to include in the email notification...',
+      rejectionReason: 'Rejection Reason',
+      reviewedBy: 'Reviewed By',
+      reviewedAt: 'Reviewed At',
+      hospitalId: 'Hospital ID',
     },
     invitation: {
       verificationStepTitle: 'Verify your inbox',

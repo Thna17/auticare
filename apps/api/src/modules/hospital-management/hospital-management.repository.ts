@@ -16,7 +16,7 @@ export type AppointmentWithRelations = Prisma.AppointmentGetPayload<{
 export class HospitalManagementRepository {
   staff(parentId: string) {
     return prisma.hospitalStaff.findFirst({
-      where: { parentId },
+      where: { parentId, deactivatedAt: null },
       include: { hospital: true, parent: true },
     });
   }
@@ -42,8 +42,15 @@ export class HospitalManagementRepository {
       orderBy: { scheduledAt: 'asc' },
     });
   }
-  appointment(id: string, hospitalId: string) {
-    return prisma.appointment.findFirst({ where: { id, hospitalId }, include });
+  appointment(id: string, hospitalId: string, doctorId?: string) {
+    return prisma.appointment.findFirst({
+      where: {
+        id,
+        hospitalId,
+        ...(doctorId ? { doctorId } : {}),
+      },
+      include,
+    });
   }
   /**
    * `rejectionReason` is only passed when the hospital rejects a request; it is

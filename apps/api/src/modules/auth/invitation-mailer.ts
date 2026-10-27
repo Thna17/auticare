@@ -380,6 +380,164 @@ export class InvitationMailer {
       );
     }
   }
+
+  async sendHospitalRegistrationReceived({
+    recipient,
+    firstName,
+    hospitalName,
+  }: {
+    recipient: string;
+    firstName: string;
+    hospitalName: string;
+  }): Promise<void> {
+    if (!this.transporter) return;
+
+    const greeting = firstName.trim() || 'there';
+    const text = [
+      `Hello ${greeting},`,
+      '',
+      `Thank you for your interest in AutiCare. We have received the registration request for ${hospitalName}.`,
+      'Our team is reviewing your request and will reach out with next steps soon.',
+      '',
+      'AutiCare Team',
+    ].join('\n');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Hospital Registration Received</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f6fa; padding: 36px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(29, 91, 121, 0.08); border: 1px solid #e2e8f0;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #1d5b79 0%, #2e86ab 100%); padding: 32px 36px; text-align: left;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700;">AutiCare</h1>
+              <p style="margin: 6px 0 0 0; color: #dbeafe; font-size: 13px;">Hospital Registration Request</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px;">
+              <h2 style="margin: 0 0 16px 0; color: #0f172a; font-size: 20px; font-weight: 600;">Hello, ${escapeHtml(greeting)}!</h2>
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Thank you for submitting a registration request for <strong>${escapeHtml(hospitalName)}</strong>.
+              </p>
+              <p style="margin: 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Our administrative team will review your application and send an invitation link to set up your hospital account once approved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    try {
+      await this.transporter.sendMail({
+        from: env.SMTP_FROM ?? env.SMTP_USER,
+        to: recipient,
+        subject: `AutiCare: Registration request received for ${hospitalName}`,
+        text,
+        html,
+      });
+    } catch (error) {
+      logger.warn(
+        { err: error, recipient },
+        'Failed to deliver registration received email via SMTP',
+      );
+    }
+  }
+
+  async sendHospitalRegistrationRejected({
+    recipient,
+    firstName,
+    hospitalName,
+    reason,
+  }: {
+    recipient: string;
+    firstName: string;
+    hospitalName: string;
+    reason: string;
+  }): Promise<void> {
+    if (!this.transporter) return;
+
+    const greeting = firstName.trim() || 'there';
+    const text = [
+      `Hello ${greeting},`,
+      '',
+      `Thank you for your interest in AutiCare. Regarding the registration request for ${hospitalName}:`,
+      '',
+      `Reason: ${reason}`,
+      '',
+      'If you have questions or believe this was an error, please contact our support team.',
+      '',
+      'AutiCare Team',
+    ].join('\n');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Hospital Registration Update</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f6fa; padding: 36px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(29, 91, 121, 0.08); border: 1px solid #e2e8f0;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #1d5b79 0%, #2e86ab 100%); padding: 32px 36px; text-align: left;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700;">AutiCare</h1>
+              <p style="margin: 6px 0 0 0; color: #dbeafe; font-size: 13px;">Hospital Registration Update</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px;">
+              <h2 style="margin: 0 0 16px 0; color: #0f172a; font-size: 20px; font-weight: 600;">Hello, ${escapeHtml(greeting)}!</h2>
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Thank you for your interest in AutiCare. We are unable to approve the registration request for <strong>${escapeHtml(hospitalName)}</strong> at this time.
+              </p>
+              <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 14px 16px; border-radius: 6px; margin: 0 0 24px 0;">
+                <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.5;">
+                  <strong>Reason:</strong> ${escapeHtml(reason)}
+                </p>
+              </div>
+              <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 1.5;">
+                If you have questions or would like to provide additional information, please contact our support team.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    try {
+      await this.transporter.sendMail({
+        from: env.SMTP_FROM ?? env.SMTP_USER,
+        to: recipient,
+        subject: `AutiCare: Registration request update for ${hospitalName}`,
+        text,
+        html,
+      });
+    } catch (error) {
+      logger.warn(
+        { err: error, recipient },
+        'Failed to deliver registration rejection email via SMTP',
+      );
+    }
+  }
 }
 
 const escapeHtml = (value: string): string =>

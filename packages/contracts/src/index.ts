@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import {
+  billingIntervals,
+  sponsorshipStatuses,
+  subscriptionPlans,
+  subscriptionStatuses,
+} from './plans.js';
 
 export const riskLevels = ['LOW', 'MODERATE', 'HIGH'] as const;
 export type RiskLevel = (typeof riskLevels)[number];
@@ -33,6 +39,8 @@ export const errorCodes = [
   // rest of the app keeps working; this is a deliberate, reported state rather
   // than a failure a parent should retry.
   'AI_UNAVAILABLE',
+  // The account's plan does not allow this (for example a third child on Pro).
+  'PLAN_LIMIT_REACHED',
 ] as const;
 export type ErrorCode = (typeof errorCodes)[number];
 export type ApiSuccess<TData, TMeta = Record<string, never>> = {
@@ -411,11 +419,18 @@ export const createHospitalAccountRequestSchema = z.object({
   }),
 });
 export type CreateHospitalAccountRequest = z.infer<typeof createHospitalAccountRequestSchema>;
+export const hospitalStaffRoles = ['ADMIN', 'COORDINATOR', 'DOCTOR'] as const;
+export type HospitalStaffRole = (typeof hospitalStaffRoles)[number];
+
+export const hospitalStaffStatuses = ['ACTIVE', 'SETUP_PENDING', 'DEACTIVATED'] as const;
+export type HospitalStaffStatus = (typeof hospitalStaffStatuses)[number];
+
 export const hospitalStaffResponseSchema = z.object({
   id: z.string(),
   hospitalId: z.string(),
   parentId: z.string(),
   title: z.string().nullable(),
+  role: z.enum(hospitalStaffRoles).optional(),
 });
 export const adminHospitalAccountResponseSchema = z.object({
   hospital: hospitalResponseSchema,
@@ -425,6 +440,13 @@ export const adminHospitalAccountResponseSchema = z.object({
   invitationUrl: z.string().url().optional(),
 });
 export type AdminHospitalAccountResponse = z.infer<typeof adminHospitalAccountResponseSchema>;
+
+export const hospitalMeResponseSchema = z.object({
+  hospital: hospitalResponseSchema,
+  staff: hospitalStaffResponseSchema.optional(),
+  staffRole: z.enum(hospitalStaffRoles),
+});
+export type HospitalMeResponse = z.infer<typeof hospitalMeResponseSchema>;
 
 export const screeningDisclaimer =
   'AutiCare screening is informational support only and is not a medical diagnosis. Please consult a qualified clinician for diagnosis or treatment decisions.';
@@ -1403,6 +1425,10 @@ export const parentDashboardQuerySchema = z.object({
 });
 export type ParentDashboardQuery = z.infer<typeof parentDashboardQuerySchema>;
 
+/** A child's initial questionnaire. The personalized dashboard opens once it is COMPLETED. */
+export const questionnaireStatuses = ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'] as const;
+export type QuestionnaireStatus = (typeof questionnaireStatuses)[number];
+
 export const parentDashboardResponseSchema = z.object({
   selectedChild: z
     .object({
@@ -1425,6 +1451,8 @@ export const parentDashboardResponseSchema = z.object({
       }),
     )
     .optional(),
+  /** The selected child's questionnaire; null when there is no child. */
+  questionnaireStatus: z.enum(questionnaireStatuses).nullable().optional(),
   screeningSummary: parentDashboardScreeningSummarySchema,
   weeklyProgress: parentDashboardWeeklyProgressSchema,
   upcomingAppointment: parentDashboardUpcomingAppointmentSchema.nullable(),
@@ -1879,3 +1907,228 @@ export const rejectSchoolRegistrationRequestSchema = z.object({
   reason: z.string().trim().min(3, 'Reason must be at least 3 characters.').max(500),
 });
 export type RejectSchoolRegistrationRequest = z.infer<typeof rejectSchoolRegistrationRequestSchema>;
+
+// ── Hospital Registration Requests ────────────────────────────────────────
+
+export const hospitalRegistrationStatuses = ['PENDING', 'APPROVED', 'REJECTED'] as const;
+export type HospitalRegistrationStatus = (typeof hospitalRegistrationStatuses)[number];
+
+export const hospitalRegistrationRequestSchema = z.object({
+  hospitalName: z.string().trim().min(1, 'Hospital name is required.').max(160),
+  city: z.string().trim().min(1, 'City is required.').max(120),
+  address: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+  contactFirstName: z.string().trim().min(1, 'First name is required.').max(80),
+  contactLastName: z.string().trim().min(1, 'Last name is required.').max(80),
+  contactTitle: z
+    .string()
+    .trim()
+    .max(120)
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+  email: z.string().trim().toLowerCase().email('Enter a valid email address.'),
+  phone: z.string().trim().min(1, 'Phone number is required.').max(32),
+  services: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+  message: z
+    .string()
+    .trim()
+    .max(1000)
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+});
+export type HospitalRegistrationRequest = z.infer<typeof hospitalRegistrationRequestSchema>;
+
+export const hospitalRegistrationSchema = z.object({
+  id: z.string(),
+  hospitalName: z.string(),
+  city: z.string(),
+  address: z.string().nullable(),
+  contactFirstName: z.string(),
+  contactLastName: z.string(),
+  contactTitle: z.string().nullable(),
+  email: z.string().email(),
+  phone: z.string(),
+  services: z.string().nullable(),
+  message: z.string().nullable(),
+  status: z.enum(hospitalRegistrationStatuses),
+  rejectionReason: z.string().nullable(),
+  reviewedById: z.string().nullable(),
+  reviewedAt: z.string().nullable(),
+  hospitalId: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type HospitalRegistration = z.infer<typeof hospitalRegistrationSchema>;
+
+export const rejectHospitalRegistrationRequestSchema = z.object({
+  reason: z.string().trim().min(3, 'Reason must be at least 3 characters.').max(500),
+});
+export type RejectHospitalRegistrationRequest = z.infer<
+  typeof rejectHospitalRegistrationRequestSchema
+>;
+
+// ── Hospital Team ──────────────────────────────────────────────────────────
+
+export const hospitalStaffMemberSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  title: z.string().nullable(),
+  role: z.enum(hospitalStaffRoles),
+  username: z.string().nullable(),
+  status: z.enum(hospitalStaffStatuses),
+  doctorId: z.string().nullable().optional(),
+  doctorName: z.string().nullable().optional(),
+});
+export type HospitalStaffMember = z.infer<typeof hospitalStaffMemberSchema>;
+
+export const createHospitalStaffRequestSchema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
+  title: z.string().trim().max(80).optional(),
+  role: z.enum(['COORDINATOR', 'DOCTOR']),
+  doctorId: z.string().trim().min(1).optional(),
+});
+export type CreateHospitalStaffRequest = z.infer<typeof createHospitalStaffRequestSchema>;
+
+export const hospitalStaffCredentialsResponseSchema = z.object({
+  staff: hospitalStaffMemberSchema,
+  username: z.string(),
+  setupCode: z.string(),
+  setupCodeExpiresAt: z.string(),
+});
+export type HospitalStaffCredentialsResponse = z.infer<
+  typeof hospitalStaffCredentialsResponseSchema
+>;
+
+// ---------------------------------------------------------------------------
+// Subscriptions. Free is the absence of a plan that grants access; Pro belongs to
+// a parent and Business to a school. Prices are confirmed; everything marked as
+// an open decision in the product spec (Free quotas, grace periods, refunds) is
+// deliberately not modelled here.
+// ---------------------------------------------------------------------------
+
+export * from './plans.js';
+export const subscriptionSchema = z.object({
+  id: z.string(),
+  plan: z.enum(subscriptionPlans),
+  interval: z.enum(billingIntervals),
+  status: z.enum(subscriptionStatuses),
+  priceCents: z.number().int(),
+  currency: z.string(),
+  startedAt: z.string(),
+  currentPeriodEnd: z.string().nullable(),
+  canceledAt: z.string().nullable(),
+  provider: z.string(),
+  /** Whether this subscription gives access right now. */
+  grantsAccess: z.boolean(),
+});
+export type Subscription = z.infer<typeof subscriptionSchema>;
+
+/** A school's offer of a sponsored Pro account, as the invited parent sees it. */
+export const sponsorshipOfferSchema = z.object({
+  id: z.string(),
+  schoolName: z.string(),
+  invitedAt: z.string(),
+});
+export type SponsorshipOffer = z.infer<typeof sponsorshipOfferSchema>;
+
+export const parentPlanResponseSchema = z.object({
+  plan: z.enum(['FREE', 'PRO']),
+  /** Where Pro comes from. A personal plan is reported first when both apply. */
+  source: z.enum(['PERSONAL', 'SPONSORED']).nullable(),
+  subscription: subscriptionSchema.nullable(),
+  sponsorship: z
+    .object({
+      id: z.string(),
+      schoolName: z.string(),
+      acceptedAt: z.string().nullable(),
+      /** False while the school's Business plan is not active. */
+      grantsAccess: z.boolean(),
+    })
+    .nullable(),
+  /** Null when no limit applies. */
+  maxChildren: z.number().int().nullable(),
+  activeChildren: z.number().int(),
+  offers: z.array(sponsorshipOfferSchema),
+});
+export type ParentPlanResponse = z.infer<typeof parentPlanResponseSchema>;
+
+/** A sponsorship as the school sees it: who was invited and the slot state, never child data. */
+export const schoolSponsorshipSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  status: z.enum(sponsorshipStatuses),
+  invitedAt: z.string(),
+  acceptedAt: z.string().nullable(),
+  endedAt: z.string().nullable(),
+  endedReason: z.string().nullable(),
+});
+export type SchoolSponsorship = z.infer<typeof schoolSponsorshipSchema>;
+
+export const schoolSubscriptionResponseSchema = z.object({
+  subscription: subscriptionSchema.nullable(),
+  businessActive: z.boolean(),
+  slotsTotal: z.number().int(),
+  slotsUsed: z.number().int(),
+  sponsorships: z.array(schoolSponsorshipSchema),
+});
+export type SchoolSubscriptionResponse = z.infer<typeof schoolSubscriptionResponseSchema>;
+
+export const inviteSponsorshipRequestSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(191),
+});
+export type InviteSponsorshipRequest = z.infer<typeof inviteSponsorshipRequestSchema>;
+
+export const adminSubscriptionSchema = subscriptionSchema.extend({
+  owner: z.object({
+    type: z.enum(['PARENT', 'SCHOOL']),
+    id: z.string(),
+    name: z.string(),
+    email: z.string().nullable(),
+  }),
+  note: z.string().nullable(),
+});
+export type AdminSubscription = z.infer<typeof adminSubscriptionSchema>;
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD.');
+
+/**
+ * The admin records a plan by hand until a payment provider is chosen. Pro is
+ * set on a parent (by email), Business on a school (by id).
+ */
+export const createAdminSubscriptionRequestSchema = z
+  .object({
+    plan: z.enum(subscriptionPlans),
+    interval: z.enum(billingIntervals),
+    parentEmail: z.string().trim().toLowerCase().email().optional(),
+    schoolId: z.string().trim().min(1).optional(),
+    currentPeriodEnd: isoDate.optional(),
+    note: z.string().trim().max(500).optional(),
+  })
+  .refine(
+    (v) => (v.plan === 'PRO' ? !!v.parentEmail && !v.schoolId : !!v.schoolId && !v.parentEmail),
+    {
+      message: 'Pro needs a parent email; Business needs a school.',
+    },
+  );
+export type CreateAdminSubscriptionRequest = z.infer<typeof createAdminSubscriptionRequestSchema>;
+
+export const updateAdminSubscriptionRequestSchema = z.object({
+  status: z.enum(subscriptionStatuses),
+  currentPeriodEnd: isoDate.nullable().optional(),
+});
+export type UpdateAdminSubscriptionRequest = z.infer<typeof updateAdminSubscriptionRequestSchema>;

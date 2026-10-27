@@ -81,9 +81,7 @@ describe('RegisterSchoolPage', () => {
 
     expect(component.submitted()).toBe(true);
     expect(el.querySelector('.success-card')).toBeTruthy();
-    expect(el.querySelector('.success-card')?.textContent).toContain(
-      "We've received your registration request",
-    );
+    expect(el.querySelector('.success-card')?.textContent).toContain("We've received your request");
   });
 
   it('displays API error message when submission fails', () => {

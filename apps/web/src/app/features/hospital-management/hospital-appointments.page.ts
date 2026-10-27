@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { AppointmentResponse, AppointmentStatus } from '@auticare/contracts';
 import { HospitalManagementApi } from './hospital-management.api';
+import { HospitalStaffState } from './data-access/hospital-staff.state';
 import { UiBadgeComponent } from '../../design-system/components/ui-badge.component';
 import { UiButtonComponent } from '../../design-system/components/ui-button.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
@@ -197,19 +198,21 @@ export const statusFilters: ReadonlyArray<{
             }
           </div>
 
-          <div class="doctor-select-wrap">
-            <select
-              aria-label="Filter appointments by doctor"
-              class="doctor-select"
-              [value]="doctorFilter()"
-              (change)="doctorFilter.set($any($event.target).value)"
-            >
-              <option value="ALL">All doctors ({{ doctorNames().length }})</option>
-              @for (doctor of doctorNames(); track doctor) {
-                <option [value]="doctor">{{ doctor }}</option>
-              }
-            </select>
-          </div>
+          @if (!isDoctor()) {
+            <div class="doctor-select-wrap">
+              <select
+                aria-label="Filter appointments by doctor"
+                class="doctor-select"
+                [value]="doctorFilter()"
+                (change)="doctorFilter.set($any($event.target).value)"
+              >
+                <option value="ALL">All doctors ({{ doctorNames().length }})</option>
+                @for (doctor of doctorNames(); track doctor) {
+                  <option [value]="doctor">{{ doctor }}</option>
+                }
+              </select>
+            </div>
+          }
 
           <div class="view-switch-group" role="group" aria-label="View format">
             <button
@@ -1240,6 +1243,7 @@ export const statusFilters: ReadonlyArray<{
 })
 export class HospitalAppointmentsPage {
   private readonly api = inject(HospitalManagementApi);
+  protected readonly isDoctor = inject(HospitalStaffState).isDoctor;
 
   protected readonly appointments = signal<readonly AppointmentResponse[]>([]);
   protected readonly loading = signal(false);

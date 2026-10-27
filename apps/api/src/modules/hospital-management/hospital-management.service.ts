@@ -10,6 +10,8 @@ import type { Doctor } from '@prisma/client';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
 import { HospitalManagementRepository } from './hospital-management.repository.js';
 import type { AppointmentWithRelations } from './hospital-management.repository.js';
+import { requireHospitalAdmin, resolveHospitalScope } from './hospital.scope.js';
+
 type Actor = { parentId: string; role: UserRole };
 
 const isAppointmentStatus = (value: string): value is AppointmentStatus =>
@@ -62,6 +64,7 @@ const normalizeDays = (days?: string | readonly string[]): string | undefined =>
   }
   return typeof days === 'string' ? days : days.join(',');
 };
+
 const mapAppointment = (a: AppointmentWithRelations) => ({
   id: a.id,
   parentId: a.parentId,
@@ -81,16 +84,20 @@ const mapAppointment = (a: AppointmentWithRelations) => ({
   childDateOfBirth: a.child?.dateOfBirth ? a.child.dateOfBirth.toISOString().slice(0, 10) : null,
   childNotes: a.child?.notes ?? null,
 });
+
 export class HospitalManagementService {
   constructor(private readonly repository = new HospitalManagementRepository()) {}
+
   private async staff(actor: Actor) {
     if (actor.role !== 'HOSPITAL') throw forbidden();
     const staff = await this.repository.staff(actor.parentId);
     if (!staff) throw forbidden();
     return staff;
   }
+
   async me(actor: Actor) {
     const staff = await this.staff(actor);
+    const scope = resolveHospitalScope(staff);
     const phone = staff.parent.phoneNumber ?? null;
     return {
       staff: {
@@ -100,6 +107,7 @@ export class HospitalManagementService {
         title: staff.title,
         phone,
       },
+      staffRole: scope.role,
       hospital: {
         id: staff.hospital.id,
         name: staff.hospital.name,
@@ -112,8 +120,11 @@ export class HospitalManagementService {
       },
     };
   }
+
   async updateProfile(actor: Actor, input: UpdateHospitalProfileRequest) {
     const staff = await this.staff(actor);
+    requireHospitalAdmin(staff);
+
     const update: {
       name?: string;
       city?: string;
@@ -141,6 +152,7 @@ export class HospitalManagementService {
 
     return this.me(actor);
   }
+
   async appointments(
     actor: Actor,
     // `| undefined` is explicit because exactOptionalPropertyTypes is on and the
@@ -153,10 +165,13 @@ export class HospitalManagementService {
     },
   ) {
     const staff = await this.staff(actor);
+    const scope = resolveHospitalScope(staff);
+
     const from = filters.from ? new Date(filters.from) : undefined;
     const to = filters.to ? new Date(filters.to) : undefined;
     if ((from && Number.isNaN(from.getTime())) || (to && Number.isNaN(to.getTime())))
       throw new AppError('VALIDATION_ERROR', 'Invalid date filter.', 400);
+
     // `status` comes from the query string; narrow it before it reaches Prisma.
     // It was previously `any`, so an unrecognised value reached the query and
     // surfaced as a 500 rather than a 400.
@@ -170,18 +185,38 @@ export class HospitalManagementService {
         );
       status = filters.status;
     }
+
+    // A DOCTOR only ever sees their own appointments; any doctorId they send is ignored.
+    // One whose doctor record was deleted (doctorId set to null) sees nothing, never
+    // the whole hospital.
+    let effectiveDoctorId = filters.doctorId;
+    if (scope.role === 'DOCTOR') {
+      if (!scope.doctorId) return [];
+      effectiveDoctorId = scope.doctorId;
+    }
+
     const filter = {
       ...(status ? { status } : {}),
-      ...(filters.doctorId ? { doctorId: filters.doctorId } : {}),
+      ...(effectiveDoctorId ? { doctorId: effectiveDoctorId } : {}),
       ...(from ? { from } : {}),
       ...(to ? { to } : {}),
     };
     return (await this.repository.appointments(staff.hospitalId, filter)).map(mapAppointment);
   }
+
   async changeStatus(actor: Actor, id: string, input: UpdateAppointmentStatusRequest) {
     const staff = await this.staff(actor);
-    const appointment = await this.repository.appointment(id, staff.hospitalId);
+    const scope = resolveHospitalScope(staff);
+
+    // Same rule as the list: a DOCTOR may only touch their own appointments.
+    let doctorScopeId: string | undefined;
+    if (scope.role === 'DOCTOR') {
+      if (!scope.doctorId) throw notFound('Appointment was not found.');
+      doctorScopeId = scope.doctorId;
+    }
+    const appointment = await this.repository.appointment(id, staff.hospitalId, doctorScopeId);
     if (!appointment) throw notFound('Appointment was not found.');
+
     const valid: Record<string, string[]> = {
       REQUESTED: ['CONFIRMED', 'CANCELLED'],
       CONFIRMED: ['COMPLETED', 'CANCELLED'],
@@ -194,6 +229,7 @@ export class HospitalManagementService {
         'This appointment status transition is not allowed.',
         400,
       );
+
     // The explanation is a *rejection* reason, so it is only stored when the
     // request is actually being rejected. A reason sent with any other status is
     // ignored rather than recorded against, say, a confirmation.
@@ -203,12 +239,16 @@ export class HospitalManagementService {
         : undefined;
     return mapAppointment(await this.repository.updateStatus(id, input.status, rejectionReason));
   }
+
   async doctors(actor: Actor) {
     const staff = await this.staff(actor);
     return (await this.repository.doctors(staff.hospitalId)).map(mapDoctor);
   }
+
   async createDoctor(actor: Actor, input: DoctorRequest) {
     const staff = await this.staff(actor);
+    requireHospitalAdmin(staff);
+
     const availableDays =
       input.availableDays !== undefined ? normalizeDays(input.availableDays) : undefined;
     return mapDoctor(
@@ -226,8 +266,11 @@ export class HospitalManagementService {
       }),
     );
   }
+
   async updateDoctor(actor: Actor, id: string, input: Partial<DoctorRequest>) {
     const staff = await this.staff(actor);
+    requireHospitalAdmin(staff);
+
     if (!(await this.repository.doctor(id, staff.hospitalId)))
       throw notFound('Doctor was not found.');
     const availableDays =
@@ -247,8 +290,11 @@ export class HospitalManagementService {
       }),
     );
   }
+
   async deleteDoctor(actor: Actor, id: string) {
     const staff = await this.staff(actor);
+    requireHospitalAdmin(staff);
+
     if (!(await this.repository.doctor(id, staff.hospitalId)))
       throw notFound('Doctor was not found.');
     if (!(await this.repository.deleteDoctor(id)))

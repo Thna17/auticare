@@ -9,6 +9,10 @@
     ".": {
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./plans": {
+      "import": "./dist/plans.js",
+      "default": "./dist/plans.js"
     }
   },
   "scripts": {

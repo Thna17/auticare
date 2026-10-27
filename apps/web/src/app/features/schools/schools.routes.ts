@@ -67,6 +67,22 @@ export const SCHOOLS_ROUTES: Routes = [
     loadComponent: () => import('./school-connect.page').then((m) => m.SchoolConnectPage),
   },
   {
+    // The Business plan; school admin only (the server enforces it too).
+    path: 'subscription',
+    canActivate: [roleGuard],
+    data: { roles: ['SCHOOL'] },
+    loadComponent: () =>
+      import('../subscriptions/school-subscription.page').then((m) => m.SchoolSubscriptionPage),
+  },
+  {
+    // The five sponsored Pro family accounts. Not teacher seats.
+    path: 'sponsorships',
+    canActivate: [roleGuard],
+    data: { roles: ['SCHOOL'] },
+    loadComponent: () =>
+      import('../subscriptions/school-sponsorships.page').then((m) => m.SchoolSponsorshipsPage),
+  },
+  {
     path: 'profile',
     canActivate: [roleGuard],
     data: { roles: ['SCHOOL'] },

@@ -73,6 +73,21 @@ export class DashboardService {
       }
     }
 
+    // Each child must finish their own questionnaire (either form) before their
+    // personalized dashboard opens. A saved draft means it is in progress.
+    let questionnaireStatus: ParentDashboardResponse['questionnaireStatus'] = null;
+    if (selectedChild) {
+      if (screeningSummary.hasScreening) {
+        questionnaireStatus = 'COMPLETED';
+      } else {
+        const draft = await prisma.screening.findFirst({
+          where: { childId: selectedChild.id, status: 'DRAFT' },
+          select: { id: true },
+        });
+        questionnaireStatus = draft ? 'IN_PROGRESS' : 'NOT_STARTED';
+      }
+    }
+
     // 3. Weekly activity progress for the selected child
     // Calculate start of current week (Monday)
     const now = new Date();
@@ -209,6 +224,7 @@ export class DashboardService {
         dateOfBirth: c.dateOfBirth.toISOString().slice(0, 10),
         photoUrl: c.photoUrl,
       })),
+      questionnaireStatus,
       screeningSummary,
       weeklyProgress,
       upcomingAppointment,

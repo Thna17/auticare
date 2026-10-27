@@ -369,7 +369,45 @@ import { I18nService } from '../../core/i18n/i18n.service';
           </header>
 
           @if (selectedChild(); as child) {
-            <ac-parent-analysis [childId]="child.id" [childName]="child.firstName" />
+            @if (questionnaireLocked()) {
+              <!-- Each child finishes their own questionnaire before their personalized dashboard opens. -->
+              <section class="empty-state questionnaire-gate" aria-labelledby="gate-title">
+                <h2 id="gate-title">
+                  {{
+                    currentLang() === 'km'
+                      ? 'បំពេញកម្រងសំណួររបស់ ' + child.firstName + ' ដើម្បីបើកផ្ទាំងគ្រប់គ្រង'
+                      : 'Finish ' + child.firstName + "'s questionnaire to open their dashboard"
+                  }}
+                </h2>
+                <p>
+                  {{
+                    parentDashboard()?.questionnaireStatus === 'IN_PROGRESS'
+                      ? currentLang() === 'km'
+                        ? 'ចម្លើយរបស់អ្នកត្រូវបានរក្សាទុក។ បន្តពីកន្លែងដែលអ្នកឈប់។'
+                        : 'Your answers are saved. Pick up where you left off.'
+                      : currentLang() === 'km'
+                        ? 'សំណួរខ្លីៗអំពីការប្រាស្រ័យទាក់ទង ទម្លាប់ និងអារម្មណ៍។ វាជាការណែនាំអប់រំ មិនមែនជាការធ្វើរោគវិនិច្ឆ័យទេ។'
+                        : 'A few questions about communication, routines and senses. It guides learning activities; it is not a diagnosis.'
+                  }}
+                </p>
+                <a
+                  class="primary-button"
+                  routerLink="/screening/history"
+                  [queryParams]="{ childId: child.id }"
+                  >{{
+                    parentDashboard()?.questionnaireStatus === 'IN_PROGRESS'
+                      ? currentLang() === 'km'
+                        ? 'បន្តកម្រងសំណួរ'
+                        : 'Continue questionnaire'
+                      : currentLang() === 'km'
+                        ? 'ចាប់ផ្តើមកម្រងសំណួរ'
+                        : 'Start questionnaire'
+                  }}</a
+                >
+              </section>
+            } @else {
+              <ac-parent-analysis [childId]="child.id" [childName]="child.firstName" />
+            }
           } @else {
             <section class="empty-state">
               <h2>
@@ -1998,6 +2036,15 @@ export class DashboardPage implements OnInit {
 
   protected readonly activeChildren = computed(() => {
     return this.parentDashboard()?.children ?? [];
+  });
+
+  /**
+   * The selected child has not finished their questionnaire yet. Older API
+   * responses without the field leave the dashboard open, as before.
+   */
+  protected readonly questionnaireLocked = computed(() => {
+    const status = this.parentDashboard()?.questionnaireStatus;
+    return status === 'NOT_STARTED' || status === 'IN_PROGRESS';
   });
 
   // Selected child derived from parentDashboard first, falling back to children list if any

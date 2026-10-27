@@ -5,6 +5,8 @@ import type {
   UserRole,
 } from '@auticare/contracts';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
+import { prisma } from '../../database/prisma.js';
+import { EntitlementsService, lockParent } from '../subscriptions/entitlements.service.js';
 import { ChildrenRepository } from './children.repository.js';
 import { toChildResponse } from './children.mapper.js';
 
@@ -22,7 +24,10 @@ const parseDateOfBirth = (dateOfBirth: string): Date => {
 };
 
 export class ChildrenService {
-  constructor(private readonly repository = new ChildrenRepository()) {}
+  constructor(
+    private readonly repository = new ChildrenRepository(),
+    private readonly entitlements = new EntitlementsService(),
+  ) {}
 
   async list(actor: Actor, query?: ListChildrenQuery) {
     if (actor.role === 'ADMIN') {
@@ -46,13 +51,23 @@ export class ChildrenService {
 
   async create(actor: Actor, input: CreateChildRequest) {
     if (actor.role !== 'PARENT') throw forbidden();
-    const child = await this.repository.create({
-      parentId: actor.parentId,
-      firstName: input.firstName,
-      ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
-      dateOfBirth: parseDateOfBirth(input.dateOfBirth),
-      ...(input.address !== undefined ? { address: input.address } : {}),
-      ...(input.notes !== undefined ? { notes: input.notes } : {}),
+    const dateOfBirth = parseDateOfBirth(input.dateOfBirth);
+    // The plan limit is checked with the parent row locked, so two requests at
+    // once cannot both slip under it.
+    const child = await prisma.$transaction(async (tx) => {
+      await lockParent(tx, actor.parentId);
+      await this.entitlements.assertCanAddChild(actor.parentId, tx);
+      return this.repository.create(
+        {
+          parentId: actor.parentId,
+          firstName: input.firstName,
+          ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
+          dateOfBirth,
+          ...(input.address !== undefined ? { address: input.address } : {}),
+          ...(input.notes !== undefined ? { notes: input.notes } : {}),
+        },
+        tx,
+      );
     });
     return toChildResponse(child);
   }
@@ -78,8 +93,14 @@ export class ChildrenService {
   }
 
   async restore(actor: Actor, childId: string) {
-    await this.getAuthorizedChild(actor, childId);
-    const child = await this.repository.restore(childId);
+    const existing = await this.getAuthorizedChild(actor, childId);
+    if (!existing.archivedAt) return toChildResponse(existing);
+    // Restoring brings a profile back into the count, so it meets the same limit.
+    const child = await prisma.$transaction(async (tx) => {
+      await lockParent(tx, existing.parentId);
+      await this.entitlements.assertCanAddChild(existing.parentId, tx);
+      return this.repository.restore(childId, tx);
+    });
     return toChildResponse(child);
   }
 

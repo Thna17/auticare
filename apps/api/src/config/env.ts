@@ -50,6 +50,14 @@ const envSchema = z
     SMTP_PASS: optionalTrimmedString,
     SMTP_FROM: optionalTrimmedString,
     /**
+     * Child profiles allowed on the Free plan. The number is an open product
+     * decision, so it is unset (no limit) unless someone deliberately chooses one.
+     */
+    FREE_PLAN_CHILD_LIMIT: z.preprocess(
+      (val) => (val === '' || val === undefined || val === null ? undefined : val),
+      z.coerce.number().int().min(1).optional(),
+    ),
+    /**
      * Model provider, deliberately provider-agnostic: any OpenAI-compatible
      * chat-completions endpoint. Nothing here is assumed to be a particular
      * vendor — no key means the assistant reports itself as unconfigured and the

@@ -18,6 +18,11 @@ export class AuthRepository {
     return prisma.schoolStaff.findMany({ where: { parentId }, select: { deactivatedAt: true } });
   }
 
+  /** Deactivation state of every hospital this account works at. */
+  listHospitalStaffStates(parentId: string): Promise<{ deactivatedAt: Date | null }[]> {
+    return prisma.hospitalStaff.findMany({ where: { parentId }, select: { deactivatedAt: true } });
+  }
+
   /** An open setup invitation that belongs to exactly this account. */
   findOpenStaffSetup(parentId: string, tokenHash: string) {
     return prisma.accountInvitation.findFirst({

@@ -11,6 +11,9 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "baseUrl": ".",
-    "paths": { "@auticare/contracts": ["packages/contracts/src/index.ts"] }
+    "paths": {
+      "@auticare/contracts/plans": ["packages/contracts/src/plans.ts"],
+      "@auticare/contracts": ["packages/contracts/src/index.ts"]
+    }
   }
 }

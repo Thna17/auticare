@@ -1,9 +1,11 @@
+import { signal } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { DoctorResponse } from '@auticare/contracts';
 import { HospitalManagementApi } from './hospital-management.api';
 import { HospitalDoctorsPage } from './hospital-doctors.page';
+import { HospitalStaffState } from './data-access/hospital-staff.state';
 
 describe('HospitalDoctorsPage', () => {
   let fixture: ComponentFixture<HospitalDoctorsPage>;
@@ -44,7 +46,17 @@ describe('HospitalDoctorsPage', () => {
 
     await TestBed.configureTestingModule({
       imports: [HospitalDoctorsPage],
-      providers: [{ provide: HospitalManagementApi, useValue: mockApi }],
+      providers: [
+        { provide: HospitalManagementApi, useValue: mockApi },
+        {
+          provide: HospitalStaffState,
+          useValue: {
+            isHospitalAdmin: signal(true),
+            isDoctor: signal(false),
+            role: signal('ADMIN'),
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HospitalDoctorsPage);

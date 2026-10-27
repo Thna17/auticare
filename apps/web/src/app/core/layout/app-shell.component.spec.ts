@@ -11,6 +11,8 @@ import { I18nService, LANG_STORAGE_KEY } from '../i18n/i18n.service';
 import { AppShellComponent } from './app-shell.component';
 import { SchoolStaffState } from '../../features/schools/data-access/school-staff.state';
 import { SchoolRegistrationsService } from '../../features/admin/data-access/school-registrations.service';
+import { HospitalRegistrationsService } from '../../features/admin/data-access/hospital-registrations.service';
+import { HospitalStaffState } from '../../features/hospital-management/data-access/hospital-staff.state';
 
 describe('AppShellComponent', () => {
   let fixture: ComponentFixture<AppShellComponent>;
@@ -64,6 +66,17 @@ describe('AppShellComponent', () => {
     fetchPendingCount: vi.fn(() => of(mockPendingCountSignal())),
   };
 
+  const mockHospitalPendingCountSignal = signal(0);
+  const mockHospitalRegistrationsService = {
+    pendingCount: mockHospitalPendingCountSignal,
+    fetchPendingCount: vi.fn(() => of(mockHospitalPendingCountSignal())),
+  };
+
+  const mockHospitalAdminSignal = signal(false);
+  const mockHospitalStaffState = {
+    isHospitalAdmin: mockHospitalAdminSignal,
+  };
+
   beforeEach(async () => {
     mockParentSignal.set({
       id: 'user_1',
@@ -80,6 +93,8 @@ describe('AppShellComponent', () => {
     mockCalmingPaletteSignal.set(false);
     mockReducedMotionSignal.set(false);
     mockPendingCountSignal.set(0);
+    mockHospitalPendingCountSignal.set(0);
+    mockHospitalAdminSignal.set(false);
     localStorage.removeItem(LANG_STORAGE_KEY);
     vi.clearAllMocks();
 
@@ -93,6 +108,8 @@ describe('AppShellComponent', () => {
         { provide: PreferencesService, useValue: mockPreferencesService },
         { provide: SchoolStaffState, useValue: mockSchoolStaffState },
         { provide: SchoolRegistrationsService, useValue: mockSchoolRegistrationsService },
+        { provide: HospitalStaffState, useValue: mockHospitalStaffState },
+        { provide: HospitalRegistrationsService, useValue: mockHospitalRegistrationsService },
       ],
     }).compileComponents();
 
@@ -123,33 +140,21 @@ describe('AppShellComponent', () => {
     const kmSectionTitles = Array.from(el.querySelectorAll('.nav-section-title')).map((node) =>
       node.textContent?.trim(),
     );
-    // The parent app is organised by intent after the update: five areas, the
-    // existing screens regrouped underneath them.
     expect(kmSectionTitles).toEqual([
-      'ផ្ទាំងគ្រប់គ្រង',
-      'ជំនួយការ AI',
-      'ឯកសារ',
-      'ព័ត៌មានផ្ទាល់ខ្លួន',
-      'ការកំណត់',
+      'កុមាររបស់ខ្ញុំ',
+      'ការគាំទ្រ និងការរៀន',
+      'ការវិវត្ត',
+      'ផ្សេងៗ',
+      'គណនី',
     ]);
 
     const kmNavLinks = Array.from(el.querySelectorAll('.sidebar .nav-link')).map((node) =>
       node.querySelector('.nav-label')?.textContent?.trim(),
     );
-    expect(kmNavLinks).toContain('ទំព័រដើម');
-    expect(kmNavLinks).toContain('ការសង្កេត');
-    expect(kmNavLinks).toContain('ជំនួយការ AI');
-    expect(kmNavLinks).toContain('កុមាររបស់ខ្ញុំ');
-    expect(kmNavLinks).toContain('ការវាយតម្លៃ');
-    expect(kmNavLinks).toContain('សកម្មភាពលេង');
-    expect(kmNavLinks).toContain('ការវិវត្ត');
-    expect(kmNavLinks).toContain('ការណាត់ជួប');
-    expect(kmNavLinks).toContain('សាលារៀន');
-    expect(kmNavLinks).toContain('មន្ទីរពេទ្យ');
-    expect(kmNavLinks).toContain('ការជូនដំណឹង');
-    expect(kmNavLinks).toContain('ការកំណត់');
-    expect(kmNavLinks).not.toContain('ជំនួយបន្ទាន់');
-    expect(kmNavLinks).not.toContain('មជ្ឈមណ្ឌលជំនួយ');
+    expect(kmNavLinks).toContain('ផ្ទាំងគ្រប់គ្រង');
+    expect(kmNavLinks).toContain('ការតាមដានឥរិយាបថ');
+    expect(kmNavLinks).toContain('ជំនួយការ AI សម្រាប់ឪពុកម្តាយ');
+    expect(el.querySelector('.sidebar .brand-sub')?.textContent?.trim()).toBe('វិបផតថលឪពុកម្តាយ');
 
     const kmPrimaryAction = el.querySelector('.sidebar .role-action');
     expect(kmPrimaryAction?.textContent?.trim()).toContain('សួរ AutiCare');
@@ -165,33 +170,30 @@ describe('AppShellComponent', () => {
       node.textContent?.trim(),
     );
     expect(enSectionTitles).toEqual([
-      'Dashboard',
-      'AI Assistant',
-      'Documents',
-      'Profile',
-      'Settings',
+      'My Children',
+      'Support & learning',
+      'Progress',
+      'Other',
+      'Account',
     ]);
 
     const enNavLinks = Array.from(el.querySelectorAll('.sidebar .nav-link')).map((node) =>
       node.querySelector('.nav-label')?.textContent?.trim(),
     );
-    expect(enNavLinks).toContain('Overview');
-    expect(enNavLinks).toContain('Observations');
-    expect(enNavLinks).toContain('AI Assistant');
-    expect(enNavLinks).toContain('My Children');
-    expect(enNavLinks).toContain('My schools');
-    expect(enNavLinks).toContain('Screening');
-    expect(enNavLinks).toContain('Activities');
-    expect(enNavLinks).toContain('Progress');
-    expect(enNavLinks).toContain('Appointments');
-    expect(enNavLinks).toContain('Schools');
-    expect(enNavLinks).toContain('Hospitals');
-    expect(enNavLinks).toContain('Notifications');
-    // Settings is a single entry; Help Center and crisis support live in the
-    // account menu and the sidebar footer instead.
-    expect(enNavLinks).toContain('Settings');
-    expect(enNavLinks).not.toContain('Help Center');
-    expect(enNavLinks).not.toContain('Crisis Support');
+    expect(enNavLinks).toEqual([
+      'Dashboard',
+      'My Children',
+      'Behavior Tracking',
+      'My schools',
+      'AI Parent Assistant',
+      'Resources & Activities',
+      'Find Support',
+      'Reports',
+      'Notifications',
+      'Subscription',
+      'Settings & Privacy',
+    ]);
+    expect(el.querySelector('.sidebar .brand-sub')?.textContent?.trim()).toBe('Parent Portal');
 
     const enPrimaryAction = el.querySelector('.sidebar .role-action');
     expect(enPrimaryAction?.textContent?.trim()).toContain('Ask AutiCare');
@@ -216,10 +218,11 @@ describe('AppShellComponent', () => {
     const kmNavLinks = Array.from(el.querySelectorAll('.sidebar .nav-link')).map((node) =>
       node.querySelector('.nav-label')?.textContent?.trim(),
     );
+    // A teacher (the default here) gets the Teacher Portal menu.
     expect(kmNavLinks).toContain('ទំព័រដើម');
-    expect(kmNavLinks).toContain('សិស្សានុសិស្ស');
-    expect(kmNavLinks).toContain('របាយការណ៍');
-    expect(kmNavLinks).toContain('ព័ត៌មានសាលារៀន');
+    expect(kmNavLinks).toContain('សិស្សរបស់ខ្ញុំ');
+    expect(kmNavLinks).toContain('របាយការណ៍វឌ្ឍនភាព');
+    expect(el.querySelector('.sidebar .brand-sub')?.textContent?.trim()).toBe('វិបផតថលគ្រូ');
 
     const kmPrimaryAction = el.querySelector('.sidebar .role-action');
     expect(kmPrimaryAction?.textContent?.trim()).toContain('បន្ថែមសកម្មភាព');
@@ -234,14 +237,18 @@ describe('AppShellComponent', () => {
       node.querySelector('.nav-label')?.textContent?.trim(),
     );
     expect(enNavLinks).toContain('Overview');
-    expect(enNavLinks).toContain('Students');
-    expect(enNavLinks).toContain('Reports');
-    expect(enNavLinks).toContain('School Profile');
+    expect(enNavLinks).toContain('My Students');
+    expect(enNavLinks).toContain('Progress Reports');
+    expect(enNavLinks).toContain('Notifications');
+    expect(enNavLinks).toContain('Settings');
+    expect(el.querySelector('.sidebar .brand-sub')?.textContent?.trim()).toBe('Teacher Portal');
+    expect(el.querySelector('.sidebar .role-pill')).toBeNull();
     expect(kmPrimaryAction?.textContent?.trim()).toContain('Add Activity');
 
-    // A teacher does not see the admin's team and family-code links…
-    expect(enNavLinks).not.toContain('Team');
-    expect(enNavLinks).not.toContain('Family codes');
+    // A teacher does not see the admin's staff, family-code or profile links…
+    expect(enNavLinks).not.toContain('Teachers & Staff');
+    expect(enNavLinks).not.toContain('Parent Collaboration');
+    expect(enNavLinks).not.toContain('School Profile');
 
     // …the school admin does.
     mockSchoolAdminSignal.set(true);
@@ -249,8 +256,14 @@ describe('AppShellComponent', () => {
     const adminLinks = Array.from(el.querySelectorAll('.sidebar .nav-link')).map((node) =>
       node.querySelector('.nav-label')?.textContent?.trim(),
     );
-    expect(adminLinks).toContain('Team');
-    expect(adminLinks).toContain('Family codes');
+    expect(adminLinks).toContain('Students');
+    expect(adminLinks).toContain('Teachers & Staff');
+    expect(adminLinks).toContain('Parent Collaboration');
+    expect(adminLinks).toContain('School Profile');
+    expect(adminLinks).toContain('Help & Support');
+    expect(el.querySelector('.sidebar .brand-sub')?.textContent?.trim()).toBe(
+      'School Management Portal',
+    );
   });
 
   it('renders hospital navigation items and brand link for HOSPITAL role in both languages', () => {
@@ -320,10 +333,13 @@ describe('AppShellComponent', () => {
     const kmNavLinks = Array.from(el.querySelectorAll('.sidebar .nav-link')).map((node) =>
       node.querySelector('.nav-label')?.textContent?.trim(),
     );
-    expect(kmNavLinks).toContain('កំណត់ត្រាគ្រួសារ');
-    expect(kmNavLinks).toContain('សាលារៀន');
-    expect(kmNavLinks).toContain('មន្ទីរពេទ្យ');
-    expect(kmNavLinks).toContain('របាយការណ៍សាលា');
+    expect(kmNavLinks).toContain('ឪពុកម្តាយ និងគ្រួសារ');
+    expect(kmNavLinks).toContain('សាលា និងអង្គការ');
+    expect(kmNavLinks).toContain('បញ្ជីសេវាគាំទ្រ');
+    expect(kmNavLinks).toContain('ការវិភាគ និងរបាយការណ៍');
+    expect(el.querySelector('.sidebar .brand-sub')?.textContent?.trim()).toBe(
+      'ការគ្រប់គ្រងប្រព័ន្ធ',
+    );
 
     const kmPrimaryAction = el.querySelector('.sidebar .role-action');
     expect(kmPrimaryAction?.textContent?.trim()).toContain('បង្កើតគណនីសាលា');
@@ -337,10 +353,19 @@ describe('AppShellComponent', () => {
     const enNavLinks = Array.from(el.querySelectorAll('.sidebar .nav-link')).map((node) =>
       node.querySelector('.nav-label')?.textContent?.trim(),
     );
-    expect(enNavLinks).toContain('Family Records');
-    expect(enNavLinks).toContain('Schools');
-    expect(enNavLinks).toContain('Hospitals');
-    expect(enNavLinks).toContain('School Reports');
+    expect(enNavLinks).toContain('Parents & Families');
+    expect(enNavLinks).toContain('Schools & Organizations');
+    expect(enNavLinks).toContain('Support Services Directory');
+    expect(enNavLinks).toContain('Analytics & Reports');
+    expect(el.querySelector('.sidebar .role-pill')?.textContent?.trim()).toBe('Admin');
+
+    // Planned areas are shown but not linked.
+    const soon = Array.from(el.querySelectorAll('.sidebar .nav-link.soon'));
+    const audit = soon.find((node) => node.textContent?.includes('Audit Logs'));
+    expect(audit?.tagName).toBe('SPAN');
+    expect(audit?.getAttribute('aria-disabled')).toBe('true');
+    expect(audit?.querySelector('.soon-tag')?.textContent?.trim()).toBe('Soon');
+    expect(el.querySelector('.sidebar a[href*="soon"]')).toBeNull();
     expect(kmPrimaryAction?.textContent?.trim()).toContain('Create School Account');
   });
 
@@ -594,5 +619,67 @@ describe('AppShellComponent', () => {
     expect(schoolReqLink).toBeTruthy();
     expect(schoolReqLink?.textContent).toContain('School requests');
     expect(schoolReqLink?.querySelector('.badge')?.textContent?.trim()).toBe('3');
+  });
+
+  it('renders Hospital requests nav item with badge for ADMIN role', () => {
+    mockParentSignal.set({
+      id: 'admin_1',
+      firstName: 'System',
+      lastName: 'Admin',
+      role: 'ADMIN',
+      email: 'admin@auticare.test',
+      phoneNumber: null,
+      socialMediaAccount: null,
+    });
+    mockHospitalPendingCountSignal.set(5);
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const links = Array.from(el.querySelectorAll('.sidebar .nav-link'));
+    const hospitalReqLink = links.find(
+      (l) =>
+        (l.getAttribute('href') ?? l.getAttribute('routerLink')) ===
+        '/admin/hospital-registrations',
+    );
+    expect(hospitalReqLink).toBeTruthy();
+    expect(hospitalReqLink?.textContent).toContain('Hospital requests');
+    expect(hospitalReqLink?.querySelector('.badge')?.textContent?.trim()).toBe('5');
+  });
+
+  it('renders Team nav item for HOSPITAL admin role and hides it for non-admin', () => {
+    mockParentSignal.set({
+      id: 'hosp_user_1',
+      firstName: 'Dr. Jane',
+      lastName: 'Smith',
+      role: 'HOSPITAL',
+      email: 'doctor@hospital.test',
+      phoneNumber: null,
+      socialMediaAccount: null,
+    });
+    mockHospitalAdminSignal.set(true);
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('en');
+    fixture.detectChanges();
+
+    let el = fixture.nativeElement as HTMLElement;
+    let links = Array.from(el.querySelectorAll('.sidebar .nav-link'));
+    let teamLink = links.find(
+      (l) => (l.getAttribute('href') ?? l.getAttribute('routerLink')) === '/hospital/team',
+    );
+    expect(teamLink).toBeTruthy();
+    expect(teamLink?.textContent).toContain('Team');
+
+    // When not admin
+    mockHospitalAdminSignal.set(false);
+    fixture.detectChanges();
+
+    el = fixture.nativeElement as HTMLElement;
+    links = Array.from(el.querySelectorAll('.sidebar .nav-link'));
+    teamLink = links.find(
+      (l) => (l.getAttribute('href') ?? l.getAttribute('routerLink')) === '/hospital/team',
+    );
+    expect(teamLink).toBeFalsy();
   });
 });

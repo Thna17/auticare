@@ -189,7 +189,7 @@ describe('LandingPage', () => {
     }
   });
 
-  it('prices three plans, keeps families free, and switches to yearly with a discount badge', () => {
+  it('prices Free, Pro and Business at the confirmed prices, with yearly savings', () => {
     i18nService.setLanguage('en');
     fixture = TestBed.createComponent(LandingPage);
     fixture.detectChanges();
@@ -197,16 +197,26 @@ describe('LandingPage', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const cards = Array.from(compiled.querySelectorAll('#pricing .plan-card'));
     expect(cards.map((card) => card.querySelector('h3')?.textContent?.trim())).toEqual([
-      'School',
-      'Family',
-      'Hospital',
+      'Free',
+      'Pro',
+      'Business',
     ]);
 
-    const family = cards[1];
-    expect(family.classList.contains('highlighted')).toBe(true);
-    expect(family.querySelector('.plan-amount')?.textContent).toContain('Free');
-    expect(family.querySelector('.plan-cta')?.getAttribute('href')).toBe('/register');
+    const [free, pro, business] = cards;
+    expect(free.querySelector('.plan-amount')?.textContent).toContain('Free');
+    expect(free.querySelector('.plan-cta')?.getAttribute('href')).toBe('/register');
+    expect(pro.classList.contains('highlighted')).toBe(true);
+    expect(pro.querySelector('.plan-amount')?.textContent).toContain('$20');
+    expect(pro.textContent).toContain('Up to 2 child profiles');
+    expect(business.querySelector('.plan-amount')?.textContent).toContain('$60');
+    expect(business.textContent).toContain('5 sponsored Pro accounts for families');
+    expect(business.querySelector('.plan-cta')?.getAttribute('href')).toBe('/register-school');
     expect(compiled.querySelector('#pricing .discount')).toBeNull();
+
+    // Hospitals have no plan yet; they still have a way to request an account.
+    const hospitalLink = compiled.querySelector('#pricing .pricing-note a');
+    expect(hospitalLink?.getAttribute('href')).toBe('/register-hospital');
+    expect(hospitalLink?.textContent?.trim()).toBe('Request a hospital account');
 
     const [, yearly] = Array.from(
       compiled.querySelectorAll<HTMLButtonElement>('.billing-toggle button'),
@@ -215,10 +225,14 @@ describe('LandingPage', () => {
     fixture.detectChanges();
 
     expect(yearly.getAttribute('aria-checked')).toBe('true');
-    // Discounts only on paid plans; the free family plan never shows one.
+    // Savings only on paid plans: $240 - $200 and $720 - $600.
     expect(compiled.querySelectorAll('#pricing .discount').length).toBe(2);
-    expect(family.querySelector('.discount')).toBeNull();
-    expect(cards[0].querySelector('.plan-billed')?.textContent).toContain('Billed yearly');
+    expect(free.querySelector('.discount')).toBeNull();
+    expect(pro.querySelector('.discount')?.textContent).toContain('Save $40');
+    expect(business.querySelector('.discount')?.textContent).toContain('Save $120');
+    expect(pro.querySelector('.plan-amount')?.textContent).toContain('$200');
+    expect(pro.querySelector('.plan-per')?.textContent).toContain('/year');
+    expect(business.querySelector('.plan-billed')?.textContent).toContain('Billed yearly');
   });
 
   it('lights up the preview panel for the step a visitor picks', () => {

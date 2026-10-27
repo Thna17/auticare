@@ -18,12 +18,16 @@ import { DICTIONARY } from '../i18n/i18n.dictionary';
 import { NavIconComponent } from './nav-icon.component';
 import { SchoolStaffState } from '../../features/schools/data-access/school-staff.state';
 import { SchoolRegistrationsService } from '../../features/admin/data-access/school-registrations.service';
+import { HospitalRegistrationsService } from '../../features/admin/data-access/hospital-registrations.service';
+import { HospitalStaffState } from '../../features/hospital-management/data-access/hospital-staff.state';
 
 export type NavItem = {
   readonly label: string;
   readonly path: string;
   readonly icon: string;
   readonly badge?: string;
+  /** Planned area with no page yet: shown greyed out with a "Soon" tag, not linked. */
+  readonly soon?: boolean;
 };
 
 export type NavSection = {
@@ -53,8 +57,16 @@ export type NavSection = {
             width="32"
             height="32"
           />
-          <span class="brand-text">AutiCare</span>
+          <span class="brand-copy">
+            <span class="brand-text">AutiCare</span>
+            @if (sidebarSubtitle(); as subtitle) {
+              <span class="brand-sub">{{ subtitle }}</span>
+            }
+          </span>
         </a>
+        @if (role() === 'ADMIN') {
+          <span class="role-pill">{{ shellTexts().adminBadge }}</span>
+        }
         <button
           class="collapse-btn"
           type="button"
@@ -87,24 +99,40 @@ export type NavSection = {
       <nav class="sidebar-nav" aria-label="Primary navigation sections">
         @for (section of navSections(); track section.title) {
           <div class="nav-section">
-            <span class="nav-section-title" aria-hidden="true">{{ section.title }}</span>
+            @if (section.title) {
+              <span class="nav-section-title" aria-hidden="true">{{ section.title }}</span>
+            }
             <div class="nav-section-items">
-              @for (item of section.items; track item.path) {
-                <a
-                  class="nav-link"
-                  [routerLink]="item.path"
-                  routerLinkActive="active"
-                  [routerLinkActiveOptions]="{
-                    exact: item.path === '/dashboard' || item.path === '/hospital/dashboard',
-                  }"
-                  [attr.title]="sidebarCollapsed() ? item.label : null"
-                >
-                  <ac-nav-icon class="nav-icon" [name]="item.icon" />
-                  <span class="nav-label">{{ item.label }}</span>
-                  @if (item.badge) {
-                    <span class="badge" aria-label="Unread count">{{ item.badge }}</span>
-                  }
-                </a>
+              @for (item of section.items; track item.label) {
+                @if (item.soon) {
+                  <span
+                    class="nav-link soon"
+                    aria-disabled="true"
+                    [attr.title]="
+                      sidebarCollapsed() ? item.label + ' · ' + shellTexts().soon : null
+                    "
+                  >
+                    <ac-nav-icon class="nav-icon" [name]="item.icon" />
+                    <span class="nav-label">{{ item.label }}</span>
+                    <span class="soon-tag">{{ shellTexts().soon }}</span>
+                  </span>
+                } @else {
+                  <a
+                    class="nav-link"
+                    [routerLink]="item.path"
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{
+                      exact: item.path === '/dashboard' || item.path === '/hospital/dashboard',
+                    }"
+                    [attr.title]="sidebarCollapsed() ? item.label : null"
+                  >
+                    <ac-nav-icon class="nav-icon" [name]="item.icon" />
+                    <span class="nav-label">{{ item.label }}</span>
+                    @if (item.badge) {
+                      <span class="badge" aria-label="Unread count">{{ item.badge }}</span>
+                    }
+                  </a>
+                }
               }
             </div>
           </div>
@@ -420,21 +448,31 @@ export type NavSection = {
         <nav class="mobile-drawer-nav" aria-label="Mobile drawer navigation">
           @for (section of navSections(); track section.title) {
             <div class="nav-section">
-              <span class="nav-section-title">{{ section.title }}</span>
+              @if (section.title) {
+                <span class="nav-section-title">{{ section.title }}</span>
+              }
               <div class="nav-section-items">
-                @for (item of section.items; track item.path) {
-                  <a
-                    class="nav-link"
-                    [routerLink]="item.path"
-                    routerLinkActive="active"
-                    (click)="closeMobileDrawer()"
-                  >
-                    <ac-nav-icon class="nav-icon" [name]="item.icon" />
-                    <span class="nav-label">{{ item.label }}</span>
-                    @if (item.badge) {
-                      <span class="badge">{{ item.badge }}</span>
-                    }
-                  </a>
+                @for (item of section.items; track item.label) {
+                  @if (item.soon) {
+                    <span class="nav-link soon" aria-disabled="true">
+                      <ac-nav-icon class="nav-icon" [name]="item.icon" />
+                      <span class="nav-label">{{ item.label }}</span>
+                      <span class="soon-tag">{{ shellTexts().soon }}</span>
+                    </span>
+                  } @else {
+                    <a
+                      class="nav-link"
+                      [routerLink]="item.path"
+                      routerLinkActive="active"
+                      (click)="closeMobileDrawer()"
+                    >
+                      <ac-nav-icon class="nav-icon" [name]="item.icon" />
+                      <span class="nav-label">{{ item.label }}</span>
+                      @if (item.badge) {
+                        <span class="badge">{{ item.badge }}</span>
+                      }
+                    </a>
+                  }
                 }
               </div>
             </div>
@@ -556,6 +594,33 @@ export type NavSection = {
         min-width: 0;
       }
 
+      .brand-copy {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .brand-sub {
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-medium);
+        letter-spacing: 0;
+        color: var(--ac-color-text-slate);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .role-pill {
+        margin-left: auto;
+        padding: 3px 10px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-brand-100);
+        color: var(--ac-brand-700);
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-semibold);
+        white-space: nowrap;
+      }
+
       .brand-mark {
         width: 32px;
         height: 32px;
@@ -609,7 +674,9 @@ export type NavSection = {
         padding: 2px 0 14px;
       }
 
-      .sidebar.collapsed .brand-text,
+      .sidebar.collapsed .brand-copy,
+      .sidebar.collapsed .role-pill,
+      .sidebar.collapsed .soon-tag,
       .sidebar.collapsed .nav-section-title,
       .sidebar.collapsed .nav-label,
       .sidebar.collapsed .badge,
@@ -736,6 +803,35 @@ export type NavSection = {
         width: 3px;
         border-radius: 0 3px 3px 0;
         background: var(--ac-color-action-mid);
+      }
+
+      /* Planned areas: visible so the admin sees the roadmap, but not clickable. */
+      .nav-link.soon {
+        color: var(--ac-color-text-slate);
+        cursor: default;
+      }
+
+      .nav-link.soon:hover {
+        background: transparent;
+        color: var(--ac-color-text-slate);
+      }
+
+      .nav-link.soon .nav-icon,
+      .nav-link.soon:hover .nav-icon {
+        color: var(--ac-color-slate-icon);
+        opacity: 0.7;
+      }
+
+      .soon-tag {
+        margin-left: auto;
+        padding: 1px 7px;
+        border-radius: var(--ac-radius-pill);
+        border: 1px solid var(--ac-color-ice-blue-frost);
+        font-size: 10.5px;
+        font-weight: var(--ac-font-weight-semibold);
+        letter-spacing: 0.02em;
+        color: var(--ac-color-text-slate);
+        white-space: nowrap;
       }
 
       /* In the sidebar the marker sits on the panel edge, outside the pill. */
@@ -1587,12 +1683,15 @@ export class AppShellComponent {
   private readonly i18n = inject(I18nService, { optional: true });
   private readonly schoolStaff = inject(SchoolStaffState);
   private readonly schoolRegistrations = inject(SchoolRegistrationsService, { optional: true });
+  private readonly hospitalStaffState = inject(HospitalStaffState, { optional: true });
+  private readonly hospitalRegistrations = inject(HospitalRegistrationsService, { optional: true });
 
   constructor() {
     effect(() => {
       if (this.role() === 'ADMIN') {
         untracked(() => {
           this.schoolRegistrations?.fetchPendingCount().subscribe({ error: () => {} });
+          this.hospitalRegistrations?.fetchPendingCount().subscribe({ error: () => {} });
         });
       }
     });
@@ -1687,7 +1786,7 @@ export class AppShellComponent {
     return '';
   });
 
-  private readonly role = computed<UserRole | undefined>(() => this.auth.parent()?.role);
+  protected readonly role = computed<UserRole | undefined>(() => this.auth.parent()?.role);
 
   protected readonly brandLink = computed(() =>
     this.role() === 'HOSPITAL' ? '/hospital/dashboard' : '/dashboard',
@@ -1711,6 +1810,17 @@ export class AppShellComponent {
     return s.familyPortal;
   });
 
+  /** Line under "AutiCare" in the sidebar for the portals that have one. */
+  protected readonly sidebarSubtitle = computed(() => {
+    const s = this.shellTexts();
+    if (this.role() === 'ADMIN') return s.platformAdministration;
+    if (this.role() === 'SCHOOL') {
+      return this.schoolStaff.isSchoolAdmin() ? s.schoolManagementPortal : s.teacherPortal;
+    }
+    if (this.role() === 'PARENT') return s.parentPortal;
+    return null;
+  });
+
   protected readonly navSections = computed<readonly NavSection[]>(() => {
     const s = this.shellTexts();
     const role = this.role();
@@ -1720,84 +1830,163 @@ export class AppShellComponent {
     if (role === 'ADMIN') {
       const pendingCount = this.schoolRegistrations?.pendingCount() ?? 0;
       const requestBadge = pendingCount > 0 ? String(pendingCount) : undefined;
+      const hospitalPendingCount = this.hospitalRegistrations?.pendingCount() ?? 0;
+      const hospitalRequestBadge =
+        hospitalPendingCount > 0 ? String(hospitalPendingCount) : undefined;
+      // Areas without a page yet are listed as `soon` (greyed out, not linked).
+      // Their `soon:` paths are placeholders that are never navigated to.
       return [
         {
-          title: s.careAndDevelopment,
-          items: [
-            { label: s.overview, path: '/dashboard', icon: 'grid' },
-            { label: s.familyRecords, path: '/children', icon: 'children' },
-          ],
+          // Overview stands alone at the top, without a section heading.
+          title: '',
+          items: [{ label: s.overview, path: '/dashboard', icon: 'grid' }],
         },
         {
-          title: s.directoryAndVisits,
+          title: s.userManagement,
           items: [
-            { label: s.schools, path: '/schools/admin', icon: 'school' },
+            { label: s.parentsFamilies, path: '/children', icon: 'family' },
+            { label: s.schoolsOrganizations, path: '/schools/admin', icon: 'building' },
             {
               label: s.schoolRequests,
               path: '/admin/school-registrations',
               icon: 'checklist',
               badge: requestBadge,
             },
-            { label: s.hospitals, path: '/hospitals/admin', icon: 'hospital' },
-            { label: s.schoolReports, path: '/schools/reports', icon: 'checklist' },
+            {
+              label: s.hospitalRequests,
+              path: '/admin/hospital-registrations',
+              icon: 'checklist',
+              badge: hospitalRequestBadge,
+            },
+            { label: s.teachersStaff, path: 'soon:teachers', icon: 'school', soon: true },
+            { label: s.adminTeamRoles, path: 'soon:admin-team', icon: 'shield', soon: true },
           ],
         },
         {
-          title: s.support,
+          title: s.aiAndContent,
           items: [
-            { label: s.notifications, path: '/notifications', icon: 'bell', badge },
-            { label: s.crisisSupport, path: '/crisis', icon: 'help' },
-            { label: s.helpCenter, path: '/support', icon: 'help' },
-            { label: s.accountSettings, path: '/settings', icon: 'settings' },
+            {
+              label: s.questionnaireManagement,
+              path: 'soon:questionnaire',
+              icon: 'report',
+              soon: true,
+            },
+            { label: s.aiConfiguration, path: 'soon:ai', icon: 'brain', soon: true },
+            { label: s.resourcesActivities, path: 'soon:resources', icon: 'book', soon: true },
+            { label: s.supportServicesDirectory, path: '/hospitals/admin', icon: 'pin' },
+          ],
+        },
+        {
+          title: s.subscriptionsRevenue,
+          items: [
+            { label: s.subscriptionPlans, path: '/admin/subscriptions', icon: 'card' },
+            { label: s.paymentsTransactions, path: 'soon:payments', icon: 'receipt', soon: true },
+            { label: s.sponsoredProAccounts, path: 'soon:sponsored', icon: 'gift', soon: true },
+          ],
+        },
+        {
+          title: s.operationsGrowth,
+          items: [
+            { label: s.partnerships, path: 'soon:partnerships', icon: 'handshake', soon: true },
+            { label: s.inquiriesSupport, path: 'soon:inquiries', icon: 'chat', soon: true },
+            { label: s.analyticsReports, path: '/schools/reports', icon: 'chart' },
+            {
+              label: s.announcementsPromotions,
+              path: 'soon:announcements',
+              icon: 'megaphone',
+              soon: true,
+            },
+          ],
+        },
+        {
+          title: s.system,
+          items: [
+            { label: s.auditLogs, path: 'soon:audit', icon: 'file', soon: true },
+            { label: s.platformSettings, path: '/settings', icon: 'gear' },
+            { label: s.helpDocumentation, path: '/support', icon: 'help' },
           ],
         },
       ];
     }
 
     if (role === 'SCHOOL') {
+      // The school admin runs the school; a teacher sees only their own students.
+      // Planned areas are `soon`: greyed out, never linked.
+      if (this.schoolStaff.isSchoolAdmin()) {
+        return [
+          { title: '', items: [{ label: s.overview, path: '/dashboard', icon: 'grid' }] },
+          {
+            title: s.studentManagement,
+            items: [
+              { label: s.students, path: '/schools/enrollments', icon: 'family' },
+              { label: s.progressReports, path: '/schools/reports', icon: 'chart' },
+            ],
+          },
+          {
+            title: s.organization,
+            items: [
+              { label: s.teachersStaff, path: '/schools/staff', icon: 'school' },
+              { label: s.sponsoredProAccounts, path: '/schools/sponsorships', icon: 'gift' },
+              { label: s.schoolProfile, path: '/schools/profile', icon: 'building' },
+            ],
+          },
+          {
+            title: s.settings,
+            items: [
+              { label: s.settings, path: '/settings', icon: 'gear' },
+              { label: s.parentCollaboration, path: '/schools/connect', icon: 'family' },
+              { label: s.subscriptionBilling, path: '/schools/subscription', icon: 'card' },
+            ],
+          },
+          {
+            title: s.support,
+            items: [{ label: s.helpSupport, path: '/support', icon: 'help' }],
+          },
+        ];
+      }
       return [
+        { title: '', items: [{ label: s.overview, path: '/dashboard', icon: 'grid' }] },
         {
-          title: s.careAndDevelopment,
+          title: s.studentManagement,
           items: [
-            { label: s.overview, path: '/dashboard', icon: 'grid' },
-            { label: s.students, path: '/schools/enrollments', icon: 'children' },
-            { label: s.reports, path: '/schools/reports', icon: 'report' },
+            { label: s.myStudents, path: '/schools/enrollments', icon: 'family' },
+            { label: s.progressReports, path: '/schools/reports', icon: 'chart' },
           ],
         },
         {
-          title: s.directoryAndVisits,
+          title: s.learningResources,
           items: [
-            { label: s.schoolProfile, path: '/schools/profile', icon: 'school' },
-            // Running the team and enrolling families is the school admin's job.
-            ...(this.schoolStaff.isSchoolAdmin()
-              ? [
-                  { label: s.team, path: '/schools/staff', icon: 'family' },
-                  { label: s.familyCodes, path: '/schools/connect', icon: 'person' },
-                ]
-              : []),
+            { label: s.resourcesActivities, path: 'soon:resources', icon: 'book', soon: true },
           ],
         },
         {
-          title: s.support,
+          title: s.other,
+          items: [{ label: s.notifications, path: '/notifications', icon: 'bell', badge }],
+        },
+        {
+          title: s.account,
           items: [
-            { label: s.notifications, path: '/notifications', icon: 'bell', badge },
-            { label: s.crisisSupport, path: '/crisis', icon: 'help' },
-            { label: s.helpCenter, path: '/support', icon: 'help' },
-            { label: s.accountSettings, path: '/settings', icon: 'settings' },
+            { label: s.myProfile, path: 'soon:profile', icon: 'person', soon: true },
+            { label: s.settings, path: '/settings', icon: 'gear' },
           ],
         },
       ];
     }
 
     if (role === 'HOSPITAL') {
+      const hospitalCareItems: NavItem[] = [
+        { label: s.overview, path: '/hospital/dashboard', icon: 'grid' },
+        { label: s.appointments, path: '/hospital/appointments', icon: 'calendar' },
+        { label: s.doctors, path: '/hospital/doctors', icon: 'hospital' },
+      ];
+      if (this.hospitalStaffState?.isHospitalAdmin()) {
+        hospitalCareItems.push({ label: s.team, path: '/hospital/team', icon: 'family' });
+      }
+
       return [
         {
           title: s.careAndDevelopment,
-          items: [
-            { label: s.overview, path: '/hospital/dashboard', icon: 'grid' },
-            { label: s.appointments, path: '/hospital/appointments', icon: 'calendar' },
-            { label: s.doctors, path: '/hospital/doctors', icon: 'hospital' },
-          ],
+          items: hospitalCareItems,
         },
         {
           title: s.directoryAndVisits,
@@ -1815,49 +2004,40 @@ export class AppShellComponent {
       ];
     }
 
-    // Default: PARENT
-    //
-    // Five areas organised by what the parent is trying to do, not by which
-    // feature implements it: look at how things are (Dashboard), ask something
-    // (AI), find what we have (Documents), who we are (Profile), and settings.
-    // The existing screens all keep their routes; they are regrouped, not rebuilt.
+    // Default: PARENT. Every item opens an existing parent page.
     return [
+      { title: '', items: [{ label: s.dashboard, path: '/dashboard', icon: 'grid' }] },
       {
-        title: s.dashboard,
+        title: s.myChildren,
         items: [
-          { label: s.overview, path: '/dashboard', icon: 'grid' },
-          { label: s.observations, path: '/observations', icon: 'report' },
-          { label: s.screening, path: '/screening', icon: 'checklist' },
-          { label: s.progress, path: '/progress', icon: 'trend' },
-        ],
-      },
-      {
-        title: s.aiAssistant,
-        items: [{ label: s.aiAssistant, path: '/ai', icon: 'ai' }],
-      },
-      {
-        title: s.documents,
-        items: [
-          { label: s.schools, path: '/schools', icon: 'school' },
-          { label: s.hospitals, path: '/hospitals', icon: 'hospital' },
-          { label: s.activities, path: '/activities', icon: 'activity' },
-          { label: s.appointments, path: '/appointments', icon: 'calendar' },
-        ],
-      },
-      {
-        title: s.profile,
-        items: [
-          { label: s.myChildren, path: '/children', icon: 'family' },
+          { label: s.myChildren, path: '/children', icon: 'children' },
+          { label: s.behaviorTracking, path: '/observations', icon: 'report' },
+          // Not in the design, but the only way in to enter a school's family code.
           { label: s.mySchools, path: '/connections', icon: 'school' },
-          { label: s.notifications, path: '/notifications', icon: 'bell', badge },
         ],
       },
       {
-        // One door, so a new parent is not faced with a menu here. Help Center
-        // stays in the account menu, and crisis support keeps its always-visible
-        // shortcut in the sidebar footer as well as the account menu.
-        title: s.settings,
-        items: [{ label: s.settings, path: '/settings', icon: 'settings' }],
+        title: s.supportLearning,
+        items: [
+          { label: s.aiParentAssistant, path: '/ai', icon: 'ai' },
+          { label: s.resourcesActivities, path: '/activities', icon: 'book' },
+          { label: s.findSupport, path: '/documents', icon: 'pin' },
+        ],
+      },
+      {
+        title: s.progress,
+        items: [{ label: s.reports, path: '/schools/reports', icon: 'file' }],
+      },
+      {
+        title: s.other,
+        items: [{ label: s.notifications, path: '/notifications', icon: 'bell', badge }],
+      },
+      {
+        title: s.account,
+        items: [
+          { label: s.subscription, path: '/subscription', icon: 'card' },
+          { label: s.settingsPrivacy, path: '/settings', icon: 'gear' },
+        ],
       },
     ];
   });

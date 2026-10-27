@@ -12,12 +12,12 @@ import { matchingPasswords } from './accept-invitation.page';
 
 const COPY = {
   en: {
-    title: 'Set up your teacher account',
+    title: 'Set up your account',
     intro:
-      'Your school gave you a username and a one-time setup code. Enter them here and choose your own password.',
+      'Your school or hospital gave you a username and a one-time setup code. Enter them here and choose your own password.',
     username: 'Username',
     usernameHint: 'For example: sereysokbotra.ssla',
-    usernameError: 'Enter the username your school gave you.',
+    usernameError: 'Enter the username your school or hospital gave you.',
     code: 'Setup code',
     codeHint: 'Eight letters and numbers, e.g. K7QM-4XPA. It works once and expires after 3 days.',
     codeError: 'Enter the setup code.',
@@ -28,17 +28,17 @@ const COPY = {
     mismatch: 'The passwords do not match.',
     submit: 'Set password and sign in',
     working: 'Setting up…',
-    lost: 'Lost your code, or it expired? Ask your school admin for a new one.',
+    lost: 'Lost your code, or it expired? Ask your school or hospital admin for a new one.',
     login: 'Already set up? Sign in',
     failed: 'Something went wrong. Please try again.',
   },
   km: {
-    title: 'រៀបចំគណនីគ្រូរបស់អ្នក',
+    title: 'រៀបចំគណនីរបស់អ្នក',
     intro:
-      'សាលារបស់អ្នកបានផ្តល់ឈ្មោះអ្នកប្រើ និងលេខកូដរៀបចំមួយដង។ បញ្ចូលវានៅទីនេះ ហើយជ្រើសរើសពាក្យសម្ងាត់ផ្ទាល់ខ្លួន។',
+      'សាលា ឬមន្ទីរពេទ្យរបស់អ្នកបានផ្តល់ឈ្មោះអ្នកប្រើ និងលេខកូដរៀបចំមួយដង។ បញ្ចូលវានៅទីនេះ ហើយជ្រើសរើសពាក្យសម្ងាត់ផ្ទាល់ខ្លួន។',
     username: 'ឈ្មោះអ្នកប្រើ',
     usernameHint: 'ឧទាហរណ៍៖ sereysokbotra.ssla',
-    usernameError: 'បញ្ចូលឈ្មោះអ្នកប្រើដែលសាលាបានផ្តល់។',
+    usernameError: 'បញ្ចូលឈ្មោះអ្នកប្រើដែលសាលា ឬមន្ទីរពេទ្យបានផ្តល់។',
     code: 'លេខកូដរៀបចំ',
     codeHint: 'អក្សរ និងលេខប្រាំបីខ្ទង់ ឧ. K7QM-4XPA។ ប្រើបានតែម្តង ហើយផុតកំណត់ក្រោយ ៣ ថ្ងៃ។',
     codeError: 'បញ្ចូលលេខកូដរៀបចំ។',
@@ -49,7 +49,7 @@ const COPY = {
     mismatch: 'ពាក្យសម្ងាត់មិនដូចគ្នាទេ។',
     submit: 'កំណត់ពាក្យសម្ងាត់ ហើយចូល',
     working: 'កំពុងរៀបចំ…',
-    lost: 'បាត់លេខកូដ ឬផុតកំណត់? សុំលេខកូដថ្មីពីអ្នកគ្រប់គ្រងសាលា។',
+    lost: 'បាត់លេខកូដ ឬផុតកំណត់? សុំលេខកូដថ្មីពីអ្នកគ្រប់គ្រងសាលា ឬមន្ទីរពេទ្យ។',
     login: 'បានរៀបចំរួចហើយ? ចូលប្រើ',
     failed: 'មានបញ្ហាកើតឡើង។ សូមព្យាយាមម្តងទៀត។',
   },

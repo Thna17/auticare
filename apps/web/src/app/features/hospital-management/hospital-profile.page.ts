@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, signal, type OnInit } from 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import type { HospitalResponse } from '@auticare/contracts';
-import { HospitalManagementApi, type HospitalStaffMember } from './hospital-management.api';
+import { HospitalManagementApi, type HospitalMeData } from './hospital-management.api';
+import { HospitalStaffState } from './data-access/hospital-staff.state';
 import { UiCardComponent } from '../../design-system/components/ui-card.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
@@ -36,7 +37,7 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
           clinical departments.
         </p>
       </div>
-      @if (mode() === 'view' && hospital()) {
+      @if (mode() === 'view' && hospital() && isHospitalAdmin()) {
         <button type="button" class="btn-primary" (click)="startEditing()">Edit Profile</button>
       }
     </header>
@@ -123,11 +124,11 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
               </div>
               <div class="detail-item">
                 <dt>Staff Coordinator</dt>
-                <dd>{{ staff()?.firstName }} {{ staff()?.lastName }} ({{ staff()?.role }})</dd>
+                <dd>{{ staff()?.title || 'Hospital Staff' }} ({{ staffRole() || 'STAFF' }})</dd>
               </div>
               <div class="detail-item">
                 <dt>Liaison Email</dt>
-                <dd>{{ staff()?.email || 'hospital-desk@auticare.kh' }}</dd>
+                <dd>hospital-desk&#64;auticare.kh</dd>
               </div>
             </dl>
           </ac-ui-card>
@@ -633,9 +634,12 @@ import { AccessibleFormDirective } from '../../design-system/directives/accessib
 export class HospitalProfilePage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(HospitalManagementApi);
+  private readonly staffState = inject(HospitalStaffState);
 
+  readonly isHospitalAdmin = this.staffState.isHospitalAdmin;
+  readonly staffRole = this.staffState.role;
   readonly hospital = signal<HospitalResponse | null>(null);
-  readonly staff = signal<HospitalStaffMember | null>(null);
+  readonly staff = signal<HospitalMeData['staff'] | null>(null);
   readonly phone = signal<string | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -674,7 +678,7 @@ export class HospitalProfilePage implements OnInit {
       next: (data) => {
         this.hospital.set(data.hospital);
         this.staff.set(data.staff ?? null);
-        const contactPhone = data.staff?.phone || data.staff?.phoneNumber || null;
+        const contactPhone = data.staff?.phone || null;
         this.phone.set(contactPhone);
         this.form.patchValue({
           name: data.hospital.name,

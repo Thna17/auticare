@@ -6,6 +6,7 @@ import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-s
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { HospitalManagementApi } from './hospital-management.api';
+import { HospitalStaffState } from './data-access/hospital-staff.state';
 
 @Component({
   standalone: true,
@@ -37,104 +38,106 @@ import { HospitalManagementApi } from './hospital-management.api';
 
     <section class="list-section">
       <!-- Add Specialist Card -->
-      <form class="add-form" (submit)="add($event)">
-        <div class="form-title">
-          <h2>Add new specialist</h2>
-          <p>
-            Register a clinical specialist with their expertise, active consultation days, and slot
-            duration.
-          </p>
-        </div>
-
-        <div class="form-grid">
-          <label class="field">
-            <span>Full name *</span>
-            <input
-              name="fullName"
-              [value]="formFullName()"
-              (input)="formFullName.set($any($event.target).value)"
-              required
-              placeholder="Dr. Jane Smith"
-            />
-          </label>
-          <label class="field">
-            <span>Specialty *</span>
-            <input
-              name="specialty"
-              [value]="formSpecialty()"
-              (input)="formSpecialty.set($any($event.target).value)"
-              required
-              placeholder="Developmental Pediatrician"
-            />
-          </label>
-          <label class="field field-full">
-            <span>Professional bio</span>
-            <textarea
-              name="bio"
-              rows="2"
-              [value]="formBio()"
-              (input)="formBio.set($any($event.target).value)"
-              placeholder="Clinical expertise, certifications, and background..."
-            ></textarea>
-          </label>
-
-          <div class="field field-full">
-            <span>Available days</span>
-            <div class="day-chips" role="group" aria-label="Available Days">
-              @for (day of weekDays; track day.value) {
-                <button
-                  type="button"
-                  class="day-chip"
-                  [class.active]="selectedDays().has(day.value)"
-                  (click)="toggleDay(day.value)"
-                >
-                  {{ day.label }}
-                </button>
-              }
-            </div>
+      @if (isHospitalAdmin()) {
+        <form class="add-form" (submit)="add($event)">
+          <div class="form-title">
+            <h2>Add new specialist</h2>
+            <p>
+              Register a clinical specialist with their expertise, active consultation days, and
+              slot duration.
+            </p>
           </div>
 
-          <label class="field">
-            <span>Start hour (0–23)</span>
-            <input
-              type="number"
-              min="0"
-              max="23"
-              [value]="formStartHour()"
-              (input)="formStartHour.set(toNumber($any($event.target).value, 9))"
-            />
-          </label>
-          <label class="field">
-            <span>End hour (1–24)</span>
-            <input
-              type="number"
-              min="1"
-              max="24"
-              [value]="formEndHour()"
-              (input)="formEndHour.set(toNumber($any($event.target).value, 17))"
-            />
-          </label>
-          <label class="field">
-            <span>Slot duration</span>
-            <select
-              [value]="formSlotDuration()"
-              (change)="formSlotDuration.set(toNumber($any($event.target).value, 30))"
-            >
-              <option [value]="15">15 minutes</option>
-              <option [value]="20">20 minutes</option>
-              <option [value]="30">30 minutes</option>
-              <option [value]="45">45 minutes</option>
-              <option [value]="60">60 minutes</option>
-            </select>
-          </label>
-        </div>
+          <div class="form-grid">
+            <label class="field">
+              <span>Full name *</span>
+              <input
+                name="fullName"
+                [value]="formFullName()"
+                (input)="formFullName.set($any($event.target).value)"
+                required
+                placeholder="Dr. Jane Smith"
+              />
+            </label>
+            <label class="field">
+              <span>Specialty *</span>
+              <input
+                name="specialty"
+                [value]="formSpecialty()"
+                (input)="formSpecialty.set($any($event.target).value)"
+                required
+                placeholder="Developmental Pediatrician"
+              />
+            </label>
+            <label class="field field-full">
+              <span>Professional bio</span>
+              <textarea
+                name="bio"
+                rows="2"
+                [value]="formBio()"
+                (input)="formBio.set($any($event.target).value)"
+                placeholder="Clinical expertise, certifications, and background..."
+              ></textarea>
+            </label>
 
-        <div class="form-actions">
-          <ac-ui-button type="submit" variant="primary" [disabled]="submitting()">
-            {{ submitting() ? 'Adding specialist…' : 'Add doctor' }}
-          </ac-ui-button>
-        </div>
-      </form>
+            <div class="field field-full">
+              <span>Available days</span>
+              <div class="day-chips" role="group" aria-label="Available Days">
+                @for (day of weekDays; track day.value) {
+                  <button
+                    type="button"
+                    class="day-chip"
+                    [class.active]="selectedDays().has(day.value)"
+                    (click)="toggleDay(day.value)"
+                  >
+                    {{ day.label }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <label class="field">
+              <span>Start hour (0–23)</span>
+              <input
+                type="number"
+                min="0"
+                max="23"
+                [value]="formStartHour()"
+                (input)="formStartHour.set(toNumber($any($event.target).value, 9))"
+              />
+            </label>
+            <label class="field">
+              <span>End hour (1–24)</span>
+              <input
+                type="number"
+                min="1"
+                max="24"
+                [value]="formEndHour()"
+                (input)="formEndHour.set(toNumber($any($event.target).value, 17))"
+              />
+            </label>
+            <label class="field">
+              <span>Slot duration</span>
+              <select
+                [value]="formSlotDuration()"
+                (change)="formSlotDuration.set(toNumber($any($event.target).value, 30))"
+              >
+                <option [value]="15">15 minutes</option>
+                <option [value]="20">20 minutes</option>
+                <option [value]="30">30 minutes</option>
+                <option [value]="45">45 minutes</option>
+                <option [value]="60">60 minutes</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <ac-ui-button type="submit" variant="primary" [disabled]="submitting()">
+              {{ submitting() ? 'Adding specialist…' : 'Add doctor' }}
+            </ac-ui-button>
+          </div>
+        </form>
+      }
 
       @if (error()) {
         <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
@@ -198,21 +201,23 @@ import { HospitalManagementApi } from './hospital-management.api';
                 }
               </div>
 
-              <div class="doctor-actions">
-                <button type="button" class="edit-button" (click)="openEditModal(doctor)">
-                  Edit Specialist
-                </button>
-                <button type="button" class="remove-button" (click)="doctorToRemove.set(doctor)">
-                  Remove
-                </button>
-              </div>
+              @if (isHospitalAdmin()) {
+                <div class="doctor-actions">
+                  <button type="button" class="edit-button" (click)="openEditModal(doctor)">
+                    Edit Specialist
+                  </button>
+                  <button type="button" class="remove-button" (click)="doctorToRemove.set(doctor)">
+                    Remove
+                  </button>
+                </div>
+              }
             </li>
           }
         </ul>
       }
 
       <!-- Edit Specialist Modal Dialog -->
-      @if (doctorToEdit()) {
+      @if (doctorToEdit() && isHospitalAdmin()) {
         <ac-ui-dialog
           heading="Edit Specialist"
           description="Update doctor profile and clinical appointment schedule."
@@ -318,7 +323,7 @@ import { HospitalManagementApi } from './hospital-management.api';
       }
 
       <!-- Remove Confirmation Modal Dialog -->
-      @if (doctorToRemove()) {
+      @if (doctorToRemove() && isHospitalAdmin()) {
         <ac-ui-dialog
           heading="Remove Specialist?"
           description="Remove Specialist? This cannot be undone."
@@ -708,6 +713,7 @@ import { HospitalManagementApi } from './hospital-management.api';
 })
 export class HospitalDoctorsPage {
   private readonly api = inject(HospitalManagementApi);
+  readonly isHospitalAdmin = inject(HospitalStaffState).isHospitalAdmin;
   readonly doctors = signal<readonly DoctorResponse[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');

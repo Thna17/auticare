@@ -15,6 +15,7 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
+      "@auticare/contracts/plans": ["../../packages/contracts/src/plans.ts"],
       "@auticare/contracts": ["../../packages/contracts/src/index.ts"]
     }
   },

@@ -525,11 +525,13 @@ export class CreateChildPage {
 
   private errorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
+      const body = (error.error as { error?: { code?: string; message?: string } } | null)?.error;
+      // The plan's child limit is also a 403; its message says what to do next.
+      if (body?.code === 'PLAN_LIMIT_REACHED' && body.message) return body.message;
       if (error.status === 403) {
         return 'Only parent accounts can create child profiles. Log in with a parent account.';
       }
-      const message = (error.error as { error?: { message?: string } } | null)?.error?.message;
-      if (message) return message;
+      if (body?.message) return body.message;
     }
     return 'Child profile could not be created. Please try again.';
   }

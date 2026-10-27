@@ -269,7 +269,7 @@ export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL' | 'ADMIN';
             <a routerLink="/register">Create account</a>
           </p>
           <p class="create-account">
-            Teacher with a setup code from your school?
+            Staff with a setup code?
             <a routerLink="/staff-setup">Set up your account</a>
           </p>
 

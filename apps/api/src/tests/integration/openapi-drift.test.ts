@@ -55,6 +55,11 @@ function extractRoutesFromApp(app: ExpressApp): RouteDefinition[] {
     '/api/v1/dashboard',
     '/api/v1/school-registrations',
     '/api/v1/admin/school-registrations',
+    '/api/v1/hospital',
+    '/api/v1/hospital-registrations',
+    '/api/v1/admin/hospital-registrations',
+    '/api/v1/subscriptions',
+    '/api/v1/admin/subscriptions',
   ];
 
   function traverse(stack: ExpressLayer[], prefix = '') {

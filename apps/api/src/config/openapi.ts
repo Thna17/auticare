@@ -38,6 +38,10 @@ export const openApiDocument: Record<string, unknown> = {
     },
   ],
   tags: [
+    {
+      name: 'Subscriptions',
+      description: 'Pro and Business plans, and sponsored Pro family accounts',
+    },
     { name: 'Auth', description: 'Authentication, session lifecycle, and invitations' },
     { name: 'Children', description: 'Child profile management and developmental records' },
     { name: 'Screening', description: 'M-CHAT-R/F neurodevelopmental screening workflow' },
@@ -58,6 +62,14 @@ export const openApiDocument: Record<string, unknown> = {
     {
       name: 'School Registrations',
       description: 'Public registration requests and admin review workflow',
+    },
+    {
+      name: 'Hospital Registrations',
+      description: 'Public hospital registration requests and admin review workflow',
+    },
+    {
+      name: 'Hospital Team',
+      description: 'Hospital staff accounts and credentials management',
     },
   ],
   components: {
@@ -301,6 +313,138 @@ export const openApiDocument: Record<string, unknown> = {
           schoolId: { type: 'string', nullable: true, example: null },
           createdAt: { type: 'string', format: 'date-time', example: '2026-10-27T10:00:00.000Z' },
           updatedAt: { type: 'string', format: 'date-time', example: '2026-10-27T10:00:00.000Z' },
+        },
+      },
+      HospitalRegistrationRequest: {
+        type: 'object',
+        required: ['hospitalName', 'city', 'contactFirstName', 'contactLastName', 'email', 'phone'],
+        properties: {
+          hospitalName: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 160,
+            example: 'Calmette Hospital',
+          },
+          city: { type: 'string', minLength: 1, maxLength: 120, example: 'Phnom Penh' },
+          address: {
+            type: 'string',
+            maxLength: 500,
+            nullable: true,
+            example: 'Monivong Blvd',
+          },
+          contactFirstName: { type: 'string', minLength: 1, maxLength: 80, example: 'Chan' },
+          contactLastName: { type: 'string', minLength: 1, maxLength: 80, example: 'Vannak' },
+          contactTitle: {
+            type: 'string',
+            maxLength: 120,
+            nullable: true,
+            example: 'Medical Director',
+          },
+          email: { type: 'string', format: 'email', example: 'chan.vannak@calmette.gov.kh' },
+          phone: { type: 'string', minLength: 1, maxLength: 32, example: '+85512345678' },
+          services: {
+            type: 'string',
+            maxLength: 1000,
+            nullable: true,
+            example: 'Pediatrics, Neurological screening, Speech therapy',
+          },
+          message: {
+            type: 'string',
+            maxLength: 1000,
+            nullable: true,
+            example: 'Looking to integrate AutiCare in our pediatric ward.',
+          },
+        },
+      },
+      RejectHospitalRegistrationRequest: {
+        type: 'object',
+        required: ['reason'],
+        properties: {
+          reason: {
+            type: 'string',
+            minLength: 3,
+            maxLength: 500,
+            example: 'Unable to verify medical facility licensing with MoH.',
+          },
+        },
+      },
+      HospitalRegistration: {
+        type: 'object',
+        required: [
+          'id',
+          'hospitalName',
+          'city',
+          'contactFirstName',
+          'contactLastName',
+          'email',
+          'phone',
+          'status',
+          'createdAt',
+          'updatedAt',
+        ],
+        properties: {
+          id: { type: 'string', example: 'cuid_hosp_reg_101' },
+          hospitalName: { type: 'string', example: 'Calmette Hospital' },
+          city: { type: 'string', example: 'Phnom Penh' },
+          address: { type: 'string', nullable: true, example: 'Monivong Blvd' },
+          contactFirstName: { type: 'string', example: 'Chan' },
+          contactLastName: { type: 'string', example: 'Vannak' },
+          contactTitle: { type: 'string', nullable: true, example: 'Medical Director' },
+          email: { type: 'string', format: 'email', example: 'chan.vannak@calmette.gov.kh' },
+          phone: { type: 'string', example: '+85512345678' },
+          services: {
+            type: 'string',
+            nullable: true,
+            example: 'Pediatrics, Neurological screening',
+          },
+          message: {
+            type: 'string',
+            nullable: true,
+            example: 'Looking to integrate AutiCare in our pediatric ward.',
+          },
+          status: { type: 'string', enum: ['PENDING', 'APPROVED', 'REJECTED'], example: 'PENDING' },
+          rejectionReason: { type: 'string', nullable: true, example: null },
+          reviewedById: { type: 'string', nullable: true, example: null },
+          reviewedAt: { type: 'string', format: 'date-time', nullable: true, example: null },
+          hospitalId: { type: 'string', nullable: true, example: null },
+          createdAt: { type: 'string', format: 'date-time', example: '2026-10-28T10:00:00.000Z' },
+          updatedAt: { type: 'string', format: 'date-time', example: '2026-10-28T10:00:00.000Z' },
+        },
+      },
+      CreateHospitalStaffRequest: {
+        type: 'object',
+        required: ['firstName', 'lastName', 'role'],
+        properties: {
+          firstName: { type: 'string', minLength: 1, maxLength: 80, example: 'Sok' },
+          lastName: { type: 'string', minLength: 1, maxLength: 80, example: 'Dara' },
+          title: { type: 'string', maxLength: 120, nullable: true, example: 'Coordinator' },
+          role: { type: 'string', enum: ['COORDINATOR', 'DOCTOR'], example: 'COORDINATOR' },
+          doctorId: { type: 'string', nullable: true, example: 'doc_sarah_miller' },
+        },
+      },
+      HospitalStaffMember: {
+        type: 'object',
+        required: ['id', 'hospitalId', 'firstName', 'lastName', 'role', 'status', 'createdAt'],
+        properties: {
+          id: { type: 'string', example: 'cuid_hstaff_101' },
+          hospitalId: { type: 'string', example: 'cuid_hospital_123' },
+          parentId: { type: 'string', example: 'cuid_parent_123' },
+          firstName: { type: 'string', example: 'Sok' },
+          lastName: { type: 'string', example: 'Dara' },
+          title: { type: 'string', nullable: true, example: 'Coordinator' },
+          role: {
+            type: 'string',
+            enum: ['ADMIN', 'COORDINATOR', 'DOCTOR'],
+            example: 'COORDINATOR',
+          },
+          doctorId: { type: 'string', nullable: true, example: null },
+          status: {
+            type: 'string',
+            enum: ['ACTIVE', 'SETUP_PENDING', 'DEACTIVATED'],
+            example: 'ACTIVE',
+          },
+          username: { type: 'string', nullable: true, example: 'sdara' },
+          createdAt: { type: 'string', format: 'date-time', example: '2026-10-28T10:00:00.000Z' },
         },
       },
       ResendInvitationRequest: {
@@ -2421,6 +2565,134 @@ export const openApiDocument: Record<string, unknown> = {
         responses: { '200': dataResponse('Revoked') },
       },
     },
+    '/api/v1/subscriptions/me': {
+      get: {
+        tags: ['Subscriptions'],
+        summary: "The parent's plan (Free or Pro), child limit and open sponsorship offers",
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: { '200': dataResponse('Parent plan') },
+      },
+    },
+    '/api/v1/subscriptions/offers/{id}/accept': {
+      post: {
+        tags: ['Subscriptions'],
+        summary: "Accept a school's sponsored Pro offer with the parent's own account",
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': dataResponse('Updated parent plan'),
+          '404': dataResponse('Offer not found or no longer open'),
+          '409': dataResponse("Already sponsored, or the school's plan is not active"),
+        },
+      },
+    },
+    '/api/v1/subscriptions/offers/{id}/decline': {
+      post: {
+        tags: ['Subscriptions'],
+        summary: "Decline a school's sponsored Pro offer",
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': dataResponse('Updated parent plan'),
+          '404': dataResponse('Offer not found or no longer open'),
+        },
+      },
+    },
+    '/api/v1/subscriptions/sponsorship/leave': {
+      post: {
+        tags: ['Subscriptions'],
+        summary: 'Give up a sponsored Pro account (no data is removed)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: {
+          '200': dataResponse('Updated parent plan'),
+          '404': dataResponse('No sponsored account'),
+        },
+      },
+    },
+    '/api/v1/subscriptions/school': {
+      get: {
+        tags: ['Subscriptions'],
+        summary: "The school's Business plan and its five sponsored Pro family slots",
+        description: 'Shows slot status only; never child data.',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: {
+          '200': dataResponse('School subscription'),
+          '403': dataResponse('School admin only'),
+        },
+      },
+    },
+    '/api/v1/subscriptions/school/sponsorships': {
+      post: {
+        tags: ['Subscriptions'],
+        summary: 'Offer a sponsored Pro account to a parent by email',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: {
+          '201': dataResponse('Updated school subscription'),
+          '403': dataResponse('No active Business plan, or all slots in use'),
+          '409': dataResponse('This email already has an open offer'),
+        },
+      },
+    },
+    '/api/v1/subscriptions/school/sponsorships/{id}/withdraw': {
+      post: {
+        tags: ['Subscriptions'],
+        summary: 'Withdraw an offer or end a sponsored account',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': dataResponse('Updated school subscription'),
+          '404': dataResponse('Not found or already ended'),
+        },
+      },
+    },
+    '/api/v1/admin/subscriptions': {
+      get: {
+        tags: ['Subscriptions'],
+        summary: 'List subscriptions (newest first)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [
+          {
+            name: 'plan',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', enum: ['PRO', 'BUSINESS'] },
+          },
+        ],
+        responses: { '200': dataResponse('Subscriptions') },
+      },
+      post: {
+        tags: ['Subscriptions'],
+        summary: 'Record a Pro or Business plan by hand (no payment provider yet)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: {
+          '201': dataResponse('Created subscription'),
+          '404': dataResponse('Parent or school not found'),
+          '409': dataResponse('The account already has a running plan'),
+        },
+      },
+    },
+    '/api/v1/admin/subscriptions/{id}': {
+      patch: {
+        tags: ['Subscriptions'],
+        summary: 'Change a subscription status or paid-through date (never deletes data)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': dataResponse('Updated subscription'),
+          '400': dataResponse('Transition not allowed'),
+        },
+      },
+    },
     '/api/v1/connections': {
       get: {
         tags: ['Connections'],
@@ -3694,6 +3966,524 @@ export const openApiDocument: Record<string, unknown> = {
           },
           '409': {
             description: 'Request already reviewed',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+
+    // ── Hospital Registrations ────────────────────────────────────────────────
+    '/api/v1/hospital-registrations': {
+      post: {
+        tags: ['Hospital Registrations'],
+        summary: 'Submit a hospital registration request',
+        description:
+          'Public submission for hospitals requesting an AutiCare account. Responds 202 to prevent email enumeration.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/HospitalRegistrationRequest' },
+            },
+          },
+        },
+        responses: {
+          '202': {
+            description: 'Request received',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        received: { type: 'boolean', example: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Validation error',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '429': {
+            description: 'Rate limit exceeded',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/hospital-registrations': {
+      get: {
+        tags: ['Admin', 'Hospital Registrations'],
+        summary: 'List hospital registration requests',
+        description: 'Admin endpoint to view registration requests, newest first.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [
+          {
+            name: 'status',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['PENDING', 'APPROVED', 'REJECTED'],
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'List of hospital registration requests',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/HospitalRegistration' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Validation error (unknown status query parameter)',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - ADMIN role required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/hospital-registrations/pending-count': {
+      get: {
+        tags: ['Admin', 'Hospital Registrations'],
+        summary: 'Get pending registration count',
+        description:
+          'Returns the number of pending hospital registration requests for admin navigation badges.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: {
+          '200': {
+            description: 'Pending request count',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        count: { type: 'integer', example: 3 },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - ADMIN role required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/hospital-registrations/{id}/approve': {
+      post: {
+        tags: ['Admin', 'Hospital Registrations'],
+        summary: 'Approve a hospital registration request',
+        description:
+          'Atomically claims a pending request, provisions the hospital organization, staff account and invitation email.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': {
+            description: 'Registration request approved and hospital provisioned',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        approved: { type: 'boolean', example: true },
+                        hospitalId: { type: 'string', example: 'cuid_hospital_123' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - ADMIN role required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '404': {
+            description: 'Request not found',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '409': {
+            description: 'Request already reviewed or email conflict',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/hospital-registrations/{id}/reject': {
+      post: {
+        tags: ['Admin', 'Hospital Registrations'],
+        summary: 'Reject a hospital registration request',
+        description:
+          'Atomically claims a pending request, records the rejection reason, and notifies the applicant by email.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RejectHospitalRegistrationRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Registration request rejected',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        rejected: { type: 'boolean', example: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Validation error',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - ADMIN role required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '409': {
+            description: 'Request already reviewed',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+
+    // ── Hospital Team ─────────────────────────────────────────────────────────
+    '/api/v1/hospital/staff': {
+      get: {
+        tags: ['Hospital Team'],
+        summary: 'List hospital staff accounts',
+        description: 'Lists all coordinators, doctors, and admin staff for the callers hospital.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['HOSPITAL'],
+        responses: {
+          '200': {
+            description: 'List of hospital staff members',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/HospitalStaffMember' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - Hospital Admin required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Hospital Team'],
+        summary: 'Create a hospital staff member (Coordinator or Doctor)',
+        description:
+          'Provisions a staff account, generates a unique username and a short setup code valid for 72 hours.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['HOSPITAL'],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreateHospitalStaffRequest' },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Staff account created with setup credentials',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        staff: { $ref: '#/components/schemas/HospitalStaffMember' },
+                        username: { type: 'string', example: 'sdara' },
+                        setupCode: { type: 'string', example: '123-456' },
+                        expiresAt: {
+                          type: 'string',
+                          format: 'date-time',
+                          example: '2026-10-31T10:00:00.000Z',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Validation error (e.g. doctorId missing for DOCTOR role)',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - Hospital Admin required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '409': {
+            description: 'Conflict (doctor already linked)',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/hospital/staff/{id}/setup-code': {
+      post: {
+        tags: ['Hospital Team'],
+        summary: 'Issue new setup code for a staff member',
+        description: 'Revokes open setup invitations and issues a new 72-hour setup code.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['HOSPITAL'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': {
+            description: 'New setup code issued',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        setupCode: { type: 'string', example: '123-456' },
+                        expiresAt: {
+                          type: 'string',
+                          format: 'date-time',
+                          example: '2026-10-31T10:00:00.000Z',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - Hospital Admin required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '404': {
+            description: 'Staff member not found',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '409': {
+            description: 'Cannot issue code to active or deactivated account',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/hospital/staff/{id}/deactivate': {
+      post: {
+        tags: ['Hospital Team'],
+        summary: 'Deactivate a hospital staff member',
+        description: 'Deactivates the staff member and revokes active refresh tokens.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['HOSPITAL'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': {
+            description: 'Staff member deactivated',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        deactivated: { type: 'boolean', example: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - Hospital Admin required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '404': {
+            description: 'Staff member not found',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '409': {
+            description: 'Cannot deactivate yourself or another admin',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/hospital/staff/{id}/reactivate': {
+      post: {
+        tags: ['Hospital Team'],
+        summary: 'Reactivate a deactivated hospital staff member',
+        description: 'Restores access for a deactivated staff member.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['HOSPITAL'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': {
+            description: 'Staff member reactivated',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        reactivated: { type: 'boolean', example: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - Hospital Admin required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '404': {
+            description: 'Staff member not found',
             content: {
               'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
             },

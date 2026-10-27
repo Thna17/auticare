@@ -1,4 +1,4 @@
-import type { Child } from '@prisma/client';
+import type { Child, Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
 
 export class ChildrenRepository {
@@ -29,15 +29,19 @@ export class ChildrenRepository {
     return prisma.child.findUnique({ where: { id: childId } });
   }
 
-  create(input: {
-    parentId: string;
-    firstName: string;
-    lastName?: string;
-    dateOfBirth: Date;
-    address?: string;
-    notes?: string;
-  }): Promise<Child> {
-    return prisma.child.create({
+  /** `db` is a transaction client when the caller has locked the parent for a plan check. */
+  create(
+    input: {
+      parentId: string;
+      firstName: string;
+      lastName?: string;
+      dateOfBirth: Date;
+      address?: string;
+      notes?: string;
+    },
+    db: Prisma.TransactionClient = prisma,
+  ): Promise<Child> {
+    return db.child.create({
       data: {
         parentId: input.parentId,
         firstName: input.firstName,
@@ -66,7 +70,7 @@ export class ChildrenRepository {
     return prisma.child.update({ where: { id: childId }, data: { archivedAt: new Date() } });
   }
 
-  restore(childId: string): Promise<Child> {
-    return prisma.child.update({ where: { id: childId }, data: { archivedAt: null } });
+  restore(childId: string, db: Prisma.TransactionClient = prisma): Promise<Child> {
+    return db.child.update({ where: { id: childId }, data: { archivedAt: null } });
   }
 }

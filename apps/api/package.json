@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --exclude \"src/tests/integration/**\" --exclude \"dist/**\"",
     "test:unit": "vitest run --exclude \"src/tests/integration/**\" --exclude \"dist/**\"",
     "test:integration": "dotenv -e ../../.env -- vitest run src/tests/integration --exclude \"dist/**\"",
     "db:generate": "dotenv -e ../../.env -- prisma generate",

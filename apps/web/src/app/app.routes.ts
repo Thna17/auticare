@@ -23,6 +23,11 @@ export const routes: Routes = [
       import('./features/public/register-school.page').then((m) => m.RegisterSchoolPage),
   },
   {
+    path: 'register-hospital',
+    loadComponent: () =>
+      import('./features/public/register-hospital.page').then((m) => m.RegisterHospitalPage),
+  },
+  {
     path: 'terms',
     loadComponent: () => import('./features/public/terms.page').then((m) => m.TermsPage),
   },
@@ -120,6 +125,33 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/school-registrations.page').then(
             (m) => m.SchoolRegistrationsPage,
+          ),
+      },
+      {
+        path: 'admin/subscriptions',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/subscriptions/admin-subscriptions.page').then(
+            (m) => m.AdminSubscriptionsPage,
+          ),
+      },
+      {
+        path: 'subscription',
+        canActivate: [roleGuard],
+        data: { roles: ['PARENT'] },
+        loadComponent: () =>
+          import('./features/subscriptions/parent-subscription.page').then(
+            (m) => m.ParentSubscriptionPage,
+          ),
+      },
+      {
+        path: 'admin/hospital-registrations',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/hospital-registrations.page').then(
+            (m) => m.HospitalRegistrationsPage,
           ),
       },
       {

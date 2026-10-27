@@ -2,40 +2,79 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type {
   AppointmentResponse,
+  CreateHospitalStaffRequest,
   DoctorRequest,
   DoctorResponse,
   HospitalResponse,
+  HospitalStaffCredentialsResponse,
+  HospitalStaffMember,
+  HospitalStaffRole,
   UpdateHospitalProfileRequest,
 } from '@auticare/contracts';
 import { map } from 'rxjs';
 import { API_BASE_URL } from '../../core/config/api.config';
-export type HospitalStaffMember = {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  phone?: string | null;
-  phoneNumber?: string | null;
+
+export type { HospitalStaffMember };
+
+export type HospitalMeData = {
+  hospital: HospitalResponse;
+  staff?: {
+    id: string;
+    parentId: string;
+    hospitalId: string;
+    title: string | null;
+    phone: string | null;
+  };
+  staffRole?: HospitalStaffRole;
 };
 
 @Injectable({ providedIn: 'root' })
 export class HospitalManagementApi {
   private readonly http = inject(HttpClient);
   private readonly base = inject(API_BASE_URL);
+
   me() {
     return this.http
-      .get<{ data: { hospital: HospitalResponse; staff?: HospitalStaffMember } }>(
-        `${this.base}/hospital-management/me`,
+      .get<{ data: HospitalMeData }>(`${this.base}/hospital-management/me`)
+      .pipe(map((r) => r.data));
+  }
+
+  updateProfile(input: UpdateHospitalProfileRequest) {
+    return this.http
+      .patch<{ data: HospitalMeData }>(`${this.base}/hospital-management/me`, input)
+      .pipe(map((r) => r.data));
+  }
+
+  listStaff() {
+    return this.http
+      .get<{ data: HospitalStaffMember[] }>(`${this.base}/hospital/staff`)
+      .pipe(map((r) => r.data));
+  }
+
+  createStaff(input: CreateHospitalStaffRequest) {
+    return this.http
+      .post<{ data: HospitalStaffCredentialsResponse }>(`${this.base}/hospital/staff`, input)
+      .pipe(map((r) => r.data));
+  }
+
+  issueSetupCode(staffId: string) {
+    return this.http
+      .post<{ data: HospitalStaffCredentialsResponse }>(
+        `${this.base}/hospital/staff/${staffId}/setup-code`,
+        {},
       )
       .pipe(map((r) => r.data));
   }
-  updateProfile(input: UpdateHospitalProfileRequest) {
+
+  deactivateStaff(staffId: string) {
     return this.http
-      .patch<{ data: { hospital: HospitalResponse; staff?: HospitalStaffMember } }>(
-        `${this.base}/hospital-management/me`,
-        input,
-      )
+      .post<{ data: HospitalStaffMember }>(`${this.base}/hospital/staff/${staffId}/deactivate`, {})
+      .pipe(map((r) => r.data));
+  }
+
+  reactivateStaff(staffId: string) {
+    return this.http
+      .post<{ data: HospitalStaffMember }>(`${this.base}/hospital/staff/${staffId}/reactivate`, {})
       .pipe(map((r) => r.data));
   }
   appointments() {

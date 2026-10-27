@@ -89,6 +89,12 @@ enum SchoolRegistrationStatus {
   REJECTED
 }
 
+enum HospitalRegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // Which question set a screening belongs to. FULL is the long instrument that
 // already exists (46 items per age band). SHORT is the handful of threshold
 // questions a parent meets straight after login, before the app opens. Both are
@@ -156,6 +162,8 @@ model Parent {
   reportAttachmentUploads ReportAttachmentUpload[]
   observations            BehaviorObservation[]
   aiConversations         AiConversation[]
+  subscriptions           Subscription[]
+  sponsorships            Sponsorship[]
 
   @@index([email])
 }
@@ -373,6 +381,8 @@ model School {
   notifications           Notification[]
   reportAttachmentUploads ReportAttachmentUpload[]
   connectionCodes         SchoolConnectionCode[]
+  subscriptions           Subscription[]
+  sponsorships            Sponsorship[]
 
   @@index([city, name])
 }
@@ -481,6 +491,30 @@ model SchoolRegistrationRequest {
   @@index([email])
 }
 
+model HospitalRegistrationRequest {
+  id               String                     @id @default(cuid())
+  hospitalName     String
+  city             String
+  address          String?
+  contactFirstName String
+  contactLastName  String
+  contactTitle     String?
+  email            String
+  phone            String
+  services         String?                    @db.Text
+  message          String?                    @db.Text
+  status           HospitalRegistrationStatus @default(PENDING)
+  rejectionReason  String?                    @db.Text
+  reviewedById     String?
+  reviewedAt       DateTime?
+  hospitalId       String?
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
 model FavoriteSchool {
   id        String   @id @default(cuid())
   parentId  String
@@ -538,34 +572,39 @@ model Hospital {
 }
 
 model HospitalStaff {
-  id         String   @id @default(cuid())
-  parentId   String
-  hospitalId String
-  title      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  parent     Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  id            String    @id @default(cuid())
+  parentId      String
+  hospitalId    String
+  role          String    @default("COORDINATOR")
+  title         String?
+  deactivatedAt DateTime?
+  doctorId      String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  parent        Parent    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  hospital      Hospital  @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  doctor        Doctor?   @relation(fields: [doctorId], references: [id], onDelete: SetNull)
 
   @@unique([parentId, hospitalId])
   @@index([hospitalId])
 }
 
 model Doctor {
-  id                  String        @id @default(cuid())
+  id                  String         @id @default(cuid())
   hospitalId          String
   fullName            String
   specialty           String
-  bio                 String?       @db.Text
-  availableDays       String        @default("1,2,3,4,5")
-  startHour           Int           @default(9)
-  endHour             Int           @default(17)
-  slotDurationMinutes Int           @default(30)
-  timezone            String        @default("Asia/Phnom_Penh")
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  hospital            Hospital      @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  bio                 String?        @db.Text
+  availableDays       String         @default("1,2,3,4,5")
+  startHour           Int            @default(9)
+  endHour             Int            @default(17)
+  slotDurationMinutes Int            @default(30)
+  timezone            String         @default("Asia/Phnom_Penh")
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  hospital            Hospital       @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   appointments        Appointment[]
+  staffAccount        HospitalStaff?
 
   @@index([hospitalId])
 }
@@ -687,11 +726,11 @@ model AccountInvitation {
   hospitalId  String?
   title       String?
   expiresAt   DateTime
-  acceptedAt         DateTime?
-  revokedAt          DateTime?
-  createdById        String?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   parent      Parent?   @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
   @@index([email])
@@ -864,4 +903,94 @@ model KnowledgeChunk {
   document     KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, displayOrder])
+}
+
+// ---------------------------------------------------------------------------
+// Subscriptions. PRO belongs to a parent, BUSINESS to a school; "Free" is simply
+// having no subscription that currently grants access. Until a payment provider
+// is chosen, the platform admin records subscriptions by hand (provider MANUAL).
+// Nothing here is deleted when a plan ends: rows move to CANCELED or EXPIRED and
+// every child record stays where it is.
+// ---------------------------------------------------------------------------
+
+enum SubscriptionPlan {
+  PRO
+  BUSINESS
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+model Subscription {
+  id                String             @id @default(cuid())
+  plan              SubscriptionPlan
+  interval          BillingInterval
+  status            SubscriptionStatus @default(ACTIVE)
+  // Exactly one owner: parentId for PRO, schoolId for BUSINESS.
+  parentId          String?
+  schoolId          String?
+  // Price recorded when the plan was set, in cents.
+  priceCents        Int
+  currency          String             @default("USD")
+  startedAt         DateTime           @default(now())
+  // Paid-through date. A CANCELED plan keeps access until then.
+  currentPeriodEnd  DateTime?
+  canceledAt        DateTime?
+  provider          String             @default("MANUAL")
+  providerReference String?
+  note              String?            @db.Text
+  createdById       String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  parent            Parent?            @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  school            School?            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  sponsorships      Sponsorship[]
+
+  @@index([parentId, status])
+  @@index([schoolId, status])
+}
+
+enum SponsorshipStatus {
+  INVITED
+  ACTIVE
+  ENDED
+}
+
+// One of the five sponsored Pro family accounts a Business school includes. The
+// school pays; the parent keeps their own login and their own data. A
+// sponsorship never gives the school access to any child record.
+model Sponsorship {
+  id             String            @id @default(cuid())
+  schoolId       String
+  subscriptionId String
+  email          String
+  parentId       String?
+  status         SponsorshipStatus @default(INVITED)
+  // Set while the slot is open (INVITED or ACTIVE) and cleared when it ends, so
+  // the unique indexes stop a school inviting the same email twice and stop one
+  // parent holding two live sponsorships. MySQL allows many NULLs in a unique index.
+  openKey        String?           @unique
+  activeParentId String?           @unique
+  invitedById    String
+  invitedAt      DateTime          @default(now())
+  acceptedAt     DateTime?
+  endedAt        DateTime?
+  endedReason    String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  school         School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  subscription   Subscription      @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  parent         Parent?           @relation(fields: [parentId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId, status])
+  @@index([email, status])
 }

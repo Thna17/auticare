@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import {
+  hospitalRegistrationRequestSchema,
+  rejectHospitalRegistrationRequestSchema,
   rejectSchoolRegistrationRequestSchema,
   schoolRegistrationRequestSchema,
 } from '@auticare/contracts';
@@ -13,6 +15,13 @@ import {
   rejectRegistration,
   submitRegistration,
 } from './registrations.controller.js';
+import {
+  approveHospitalRegistration,
+  getHospitalPendingCount,
+  listHospitalRegistrations,
+  rejectHospitalRegistration,
+  submitHospitalRegistration,
+} from './registrations.hospital.controller.js';
 
 /** Public route for schools submitting a registration request. */
 export const schoolRegistrationPublicRoutes = Router();
@@ -36,4 +45,28 @@ schoolRegistrationAdminRoutes.post(
   '/:id/reject',
   validateBody(rejectSchoolRegistrationRequestSchema),
   rejectRegistration,
+);
+
+/** Public route for hospitals submitting a registration request. */
+export const hospitalRegistrationPublicRoutes = Router();
+
+hospitalRegistrationPublicRoutes.post(
+  '/',
+  schoolRegistrationRateLimit,
+  validateBody(hospitalRegistrationRequestSchema),
+  submitHospitalRegistration,
+);
+
+/** Admin-only routes for reviewing and approving/rejecting hospital registration requests. */
+export const hospitalRegistrationAdminRoutes = Router();
+
+hospitalRegistrationAdminRoutes.use(requireAuth, requireRole('ADMIN'));
+
+hospitalRegistrationAdminRoutes.get('/', listHospitalRegistrations);
+hospitalRegistrationAdminRoutes.get('/pending-count', getHospitalPendingCount);
+hospitalRegistrationAdminRoutes.post('/:id/approve', approveHospitalRegistration);
+hospitalRegistrationAdminRoutes.post(
+  '/:id/reject',
+  validateBody(rejectHospitalRegistrationRequestSchema),
+  rejectHospitalRegistration,
 );

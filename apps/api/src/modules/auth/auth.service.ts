@@ -106,10 +106,16 @@ export class AuthService {
    * any active one) are unaffected.
    */
   private async assertNotDeactivated(parentId: string, role: UserRole): Promise<void> {
-    if (role !== 'SCHOOL') return;
-    const states = await this.repository.listSchoolStaffStates(parentId);
-    if (states.length > 0 && states.every((state) => state.deactivatedAt !== null)) {
-      throw forbidden('This account has been deactivated by your school.');
+    if (role === 'SCHOOL') {
+      const states = await this.repository.listSchoolStaffStates(parentId);
+      if (states.length > 0 && states.every((state) => state.deactivatedAt !== null)) {
+        throw forbidden('This account has been deactivated by your school.');
+      }
+    } else if (role === 'HOSPITAL') {
+      const states = await this.repository.listHospitalStaffStates(parentId);
+      if (states.length > 0 && states.every((state) => state.deactivatedAt !== null)) {
+        throw forbidden('This account has been deactivated by your hospital.');
+      }
     }
   }
 
@@ -128,6 +134,8 @@ export class AuthService {
       await this.repository.revokeRefreshToken(tokenHash);
       throw unauthorized();
     }
+
+    await this.assertNotDeactivated(storedToken.parent.id, storedToken.parent.role);
 
     const nextRefreshToken = this.tokenService.createRefreshToken();
     await this.repository.rotateRefreshToken({
