@@ -83,6 +83,12 @@ enum ActivityReportStatus {
   SUBMITTED
 }
 
+enum SchoolRegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // Which question set a screening belongs to. FULL is the long instrument that
 // already exists (46 items per age band). SHORT is the handful of threshold
 // questions a parent meets straight after login, before the app opens. Both are
@@ -122,6 +128,9 @@ enum AiMessageKind {
 model Parent {
   id                      String                   @id @default(cuid())
   email                   String                   @unique
+  // Login name for accounts a school creates without an email (teachers).
+  // Such accounts get an undeliverable `@staff.auticare.invalid` email.
+  username                String?                  @unique
   passwordHash            String
   firstName               String
   lastName                String
@@ -363,6 +372,7 @@ model School {
   activityReports         ActivityReport[]
   notifications           Notification[]
   reportAttachmentUploads ReportAttachmentUpload[]
+  connectionCodes         SchoolConnectionCode[]
 
   @@index([city, name])
 }
@@ -371,12 +381,18 @@ model SchoolStaff {
   id                  String                  @id @default(cuid())
   parentId            String
   schoolId            String
+  // "ADMIN" manages the school, its staff and its connection codes; "TEACHER"
+  // sees only the children assigned to them.
   role                String                  @default("TEACHER")
   title               String?
+  // Set when the school admin removes the teacher; the account can no longer
+  // sign in or reach school data.
+  deactivatedAt       DateTime?
   createdAt           DateTime                @default(now())
   parent              Parent                  @relation(fields: [parentId], references: [id], onDelete: Cascade)
   school              School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   assignedEnrollments SchoolChildEnrollment[]
+  teaching            EnrollmentTeacher[]
 
   @@unique([parentId, schoolId])
   @@index([schoolId])
@@ -395,11 +411,74 @@ model SchoolChildEnrollment {
   school           School                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   child            Child                       @relation(fields: [childId], references: [id], onDelete: Cascade)
   leadSpecialist   SchoolStaff?                @relation(fields: [leadSpecialistId], references: [id], onDelete: SetNull)
+  teachers         EnrollmentTeacher[]
+  connectionCodes  SchoolConnectionCode[]
 
   @@unique([schoolId, childId])
   @@index([childId, status])
   @@index([schoolId, status])
   @@index([leadSpecialistId])
+}
+
+/// A teacher assigned to a child's enrollment. A child can have several.
+model EnrollmentTeacher {
+  id           String                @id @default(cuid())
+  enrollmentId String
+  staffId      String
+  createdAt    DateTime              @default(now())
+  enrollment   SchoolChildEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  staff        SchoolStaff           @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, staffId])
+  @@index([staffId])
+}
+
+/// A single-use code a school hands a family in person. The parent enters it,
+/// picks one of their children and consents; that creates or reactivates the
+/// enrollment. Only an HMAC of the code is stored.
+model SchoolConnectionCode {
+  id               String                 @id @default(cuid())
+  schoolId         String
+  codeHash         String                 @unique
+  // A note for the school, e.g. the family's name. Shown to the parent too.
+  label            String?
+  // SchoolStaff ids to assign as teachers when the code is used.
+  teacherStaffIds  Json?
+  createdByStaffId String?
+  expiresAt        DateTime
+  usedAt           DateTime?
+  usedByParentId   String?
+  enrollmentId     String?
+  revokedAt        DateTime?
+  createdAt        DateTime               @default(now())
+  school           School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  enrollment       SchoolChildEnrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId, createdAt])
+}
+
+model SchoolRegistrationRequest {
+  id               String                   @id @default(cuid())
+  schoolName       String
+  city             String
+  address          String?
+  contactFirstName String
+  contactLastName  String
+  contactTitle     String?
+  email            String
+  phone            String
+  studentCount     Int?
+  message          String?                  @db.Text
+  status           SchoolRegistrationStatus @default(PENDING)
+  rejectionReason  String?                  @db.Text
+  reviewedById     String?
+  reviewedAt       DateTime?
+  schoolId         String?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
 }
 
 model FavoriteSchool {
@@ -608,11 +687,11 @@ model AccountInvitation {
   hospitalId  String?
   title       String?
   expiresAt   DateTime
-  acceptedAt  DateTime?
-  revokedAt   DateTime?
-  createdById String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  acceptedAt         DateTime?
+  revokedAt          DateTime?
+  createdById        String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
   parent      Parent?   @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
   @@index([email])

@@ -8,10 +8,11 @@ import type {
   RegisterRequest,
   ResetPasswordRequest,
   ResetPasswordResponse,
+  StaffSetupRequest,
   UserRole,
   UpdateMyProfileRequest,
 } from '@auticare/contracts';
-import { AppError, unauthorized } from '../../common/errors/app-error.js';
+import { AppError, forbidden, unauthorized } from '../../common/errors/app-error.js';
 import { env, isProduction } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
 import { AuthRepository } from './auth.repository.js';
@@ -19,6 +20,9 @@ import { toParentResponse } from './auth.mapper.js';
 import { PasswordService } from './password.service.js';
 import { PasswordResetMailer } from './password-reset-mailer.js';
 import { TokenService } from './token.service.js';
+import { hashShortCode } from './short-code.js';
+import { isStaffPlaceholderEmail } from '../schools/staff-usernames.js';
+import { auditService } from '../audit/audit.service.js';
 
 export type AuthSession = AuthResponse & { accessToken: string; refreshToken: string };
 
@@ -43,12 +47,70 @@ export class AuthService {
     return this.issueSession(parent.id, parent.role, { parent: toParentResponse(parent) });
   }
 
+  /**
+   * `input.email` is the login identifier: an email address, or the username
+   * of a school-managed teacher account. Usernames never contain "@".
+   */
   async login(input: LoginRequest): Promise<AuthSession> {
-    const parent = await this.repository.findParentByEmail(input.email.toLowerCase());
+    const identifier = input.email.trim().toLowerCase();
+    const parent = identifier.includes('@')
+      ? await this.repository.findParentByEmail(identifier)
+      : await this.repository.findParentByUsername(identifier);
     if (!parent) throw unauthorized();
     const valid = await this.passwordService.verify(parent.passwordHash, input.password);
     if (!valid) throw unauthorized();
+    await this.assertNotDeactivated(parent.id, parent.role);
     return this.issueSession(parent.id, parent.role, { parent: toParentResponse(parent) });
+  }
+
+  /**
+   * A teacher's first sign-in with the username and setup code their school
+   * gave them. The code only works together with that username, once, before
+   * it expires. Every failure gives the same answer so neither part can be
+   * probed on its own.
+   */
+  async staffSetup(input: StaffSetupRequest): Promise<AuthSession> {
+    const rejected = () =>
+      new AppError('VALIDATION_ERROR', 'That username and setup code do not match.', 400);
+
+    const parent = await this.repository.findParentByUsername(input.username.trim().toLowerCase());
+    if (!parent) throw rejected();
+
+    const tokenHash = hashShortCode(input.setupCode, env.JWT_ACCESS_SECRET, 'staff-setup');
+    const invitation = await this.repository.findOpenStaffSetup(parent.id, tokenHash);
+    if (!invitation || invitation.expiresAt <= new Date()) throw rejected();
+
+    await this.assertNotDeactivated(parent.id, parent.role);
+
+    const passwordHash = await this.passwordService.hash(input.password);
+    const updated = await this.repository.completeStaffSetup({
+      parentId: parent.id,
+      invitationId: invitation.id,
+      passwordHash,
+    });
+
+    await auditService.record({
+      action: 'STAFF_SETUP_COMPLETED',
+      actorId: updated.id,
+      actorRole: updated.role,
+      targetId: updated.id,
+      metadata: { invitationId: invitation.id },
+    });
+
+    return this.issueSession(updated.id, updated.role, { parent: toParentResponse(updated) });
+  }
+
+  /**
+   * A school can deactivate a teacher. If every school this account belongs to
+   * has done so, the account cannot sign in. Accounts with no staff rows (or
+   * any active one) are unaffected.
+   */
+  private async assertNotDeactivated(parentId: string, role: UserRole): Promise<void> {
+    if (role !== 'SCHOOL') return;
+    const states = await this.repository.listSchoolStaffStates(parentId);
+    if (states.length > 0 && states.every((state) => state.deactivatedAt !== null)) {
+      throw forbidden('This account has been deactivated by your school.');
+    }
   }
 
   async refresh(refreshToken?: string): Promise<AuthSession> {
@@ -126,7 +188,8 @@ export class AuthService {
   async requestPasswordReset(input: PasswordResetRequest): Promise<PasswordResetResponse> {
     const message = 'If an account exists for that email, a password reset link has been prepared.';
     const parent = await this.repository.findParentByEmail(input.email.toLowerCase());
-    if (!parent) return { message };
+    // School-managed teacher accounts have no inbox; their school resets them.
+    if (!parent || isStaffPlaceholderEmail(parent.email)) return { message };
 
     const resetToken = this.tokenService.createPasswordResetToken();
     await this.repository.createPasswordResetToken({
@@ -207,7 +270,7 @@ export class AuthService {
     }
   }
 
-  private async issueSession(
+  async issueSession(
     parentId: string,
     role: UserRole,
     response: AuthResponse,

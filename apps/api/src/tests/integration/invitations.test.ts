@@ -64,6 +64,8 @@ beforeAll(async () => {
         create: {
           schoolId: school.id,
           title: 'Specialist',
+          // The school's own account: only the school admin enrols students.
+          role: 'ADMIN',
         },
       },
     },
@@ -308,11 +310,12 @@ describe('Privileged Account Invitations & Provisioning', () => {
       expect(verifyRes.body.error.message).toContain('expired');
     });
 
-    it('accepts an invitation, sets initial password, clears mustResetPassword, and rejects replay', async () => {
+    it('accepts an invitation, returns 200 with data.parent, sets auth cookies, issues a working session, and clears mustResetPassword', async () => {
       // Create user and token for acceptance test
       const testEmail = `accept-${unique}@auticare.test`;
       const plainToken = tokenService.createInvitationToken();
       const tokenHash = tokenService.hashInvitationToken(plainToken);
+
       const parent = await prisma.parent.create({
         data: {
           email: testEmail,
@@ -343,7 +346,21 @@ describe('Privileged Account Invitations & Provisioning', () => {
       });
 
       expect(acceptRes.status).toBe(200);
+      expect(acceptRes.body.data.parent).toBeTruthy();
+      expect(acceptRes.body.data.parent.email).toBe(testEmail);
       expect(acceptRes.body.data.parent.mustResetPassword).toBe(false);
+
+      // Assert auth cookies are set
+      const cookies = acceptRes.headers['set-cookie'] as string[] | undefined;
+      expect(cookies).toBeDefined();
+      expect(cookies?.some((c) => c.includes('auticare_access='))).toBe(true);
+      expect(cookies?.some((c) => c.includes('auticare_refresh='))).toBe(true);
+
+      // Verify the session works: GET /api/v1/auth/me returns the account
+      const meRes = await request(app).get('/api/v1/auth/me').set('Cookie', cookies!);
+      expect(meRes.status).toBe(200);
+      expect(meRes.body.data.parent.id).toBe(parent.id);
+      expect(meRes.body.data.parent.email).toBe(testEmail);
 
       // Verify database updated
       const updatedParent = await prisma.parent.findUnique({ where: { email: testEmail } });
@@ -363,20 +380,186 @@ describe('Privileged Account Invitations & Provisioning', () => {
       });
       expect(audit).toBeTruthy();
 
-      // Verify login works with the newly set password
-      const loginRes = await request(app)
-        .post('/api/v1/auth/login')
-        .send({ email: testEmail, password: newPassword });
-      expect(loginRes.status).toBe(200);
-      expect(loginRes.body.data.parent.email).toBe(testEmail);
-
-      // Single-use token enforcement: Replay attempt must fail
+      // Accepting the same token twice fails the second time
       const replayRes = await request(app).post('/api/v1/auth/invitations/accept').send({
         token: plainToken,
         password: 'AnotherPassword456!',
       });
       expect(replayRes.status).toBe(400);
       expect(replayRes.body.error.message).toContain('already been accepted');
+    });
+
+    it('two parallel accepts give exactly one success (atomic single use)', async () => {
+      const email = `parallel-${unique}@auticare.test`;
+      const token = tokenService.createInvitationToken();
+      const tokenHash = tokenService.hashInvitationToken(token);
+
+      const parent = await prisma.parent.create({
+        data: {
+          email,
+          firstName: 'Parallel',
+          lastName: 'Tester',
+          role: 'SCHOOL',
+          mustResetPassword: true,
+          passwordHash: await passwordService.hash('InitialUnusableHash123'),
+          preference: { create: {} },
+        },
+      });
+      createdParentIds.push(parent.id);
+
+      await prisma.accountInvitation.create({
+        data: {
+          email,
+          tokenHash,
+          role: 'SCHOOL',
+          parentId: parent.id,
+          expiresAt: tokenService.invitationTokenExpiresAt(),
+        },
+      });
+
+      // Submit two parallel accepts with the same token
+      const [res1, res2] = await Promise.all([
+        request(app).post('/api/v1/auth/invitations/accept').send({
+          token,
+          password: newPassword,
+        }),
+        request(app).post('/api/v1/auth/invitations/accept').send({
+          token,
+          password: newPassword,
+        }),
+      ]);
+
+      const statuses = [res1.status, res2.status].sort();
+      expect(statuses).toEqual([200, 400]);
+
+      const successfulRes = res1.status === 200 ? res1 : res2;
+      const failingRes = res1.status === 400 ? res1 : res2;
+
+      expect(successfulRes.body.data.parent.email).toBe(email);
+      expect(failingRes.body.error.message).toContain('already been accepted');
+    });
+
+    it('the verify GET does not consume the token (verify, then accept still works)', async () => {
+      const email = `verify-noconsume-${unique}@auticare.test`;
+      const token = tokenService.createInvitationToken();
+      const tokenHash = tokenService.hashInvitationToken(token);
+
+      const parent = await prisma.parent.create({
+        data: {
+          email,
+          firstName: 'NoConsume',
+          lastName: 'Tester',
+          role: 'HOSPITAL',
+          mustResetPassword: true,
+          passwordHash: await passwordService.hash('InitialUnusableHash123'),
+          preference: { create: {} },
+        },
+      });
+      createdParentIds.push(parent.id);
+
+      await prisma.accountInvitation.create({
+        data: {
+          email,
+          tokenHash,
+          role: 'HOSPITAL',
+          parentId: parent.id,
+          expiresAt: tokenService.invitationTokenExpiresAt(),
+        },
+      });
+
+      // 1. Verify GET (read-only)
+      const verifyRes = await request(app).get('/api/v1/auth/invitations/verify').query({ token });
+      expect(verifyRes.status).toBe(200);
+      expect(verifyRes.body.data.valid).toBe(true);
+
+      // Verify token in DB is NOT marked accepted
+      const unaccepted = await prisma.accountInvitation.findUnique({ where: { tokenHash } });
+      expect(unaccepted?.acceptedAt).toBeNull();
+
+      // 2. Accept POST succeeds afterwards
+      const acceptRes = await request(app).post('/api/v1/auth/invitations/accept').send({
+        token,
+        password: newPassword,
+      });
+      expect(acceptRes.status).toBe(200);
+      expect(acceptRes.body.data.parent.email).toBe(email);
+    });
+
+    it('rejects an expired or revoked invitation token on accept', async () => {
+      const expiredEmail = `expired-accept-${unique}@auticare.test`;
+      const expiredToken = tokenService.createInvitationToken();
+      const expiredHash = tokenService.hashInvitationToken(expiredToken);
+
+      const expiredParent = await prisma.parent.create({
+        data: {
+          email: expiredEmail,
+          firstName: 'Expired',
+          lastName: 'Tester',
+          role: 'PARENT',
+          passwordHash: await passwordService.hash('Unusable123!'),
+          preference: { create: {} },
+        },
+      });
+      createdParentIds.push(expiredParent.id);
+
+      await prisma.accountInvitation.create({
+        data: {
+          email: expiredEmail,
+          tokenHash: expiredHash,
+          role: 'PARENT',
+          parentId: expiredParent.id,
+          expiresAt: new Date(Date.now() - 60 * 1000), // expired 1 min ago
+        },
+      });
+
+      const expiredRes = await request(app).post('/api/v1/auth/invitations/accept').send({
+        token: expiredToken,
+        password: newPassword,
+      });
+      expect(expiredRes.status).toBe(400);
+      expect(expiredRes.body.error.message).toContain('expired');
+
+      // Revoked token
+      const revokedEmail = `revoked-accept-${unique}@auticare.test`;
+      const revokedToken = tokenService.createInvitationToken();
+      const revokedHash = tokenService.hashInvitationToken(revokedToken);
+
+      const revokedParent = await prisma.parent.create({
+        data: {
+          email: revokedEmail,
+          firstName: 'Revoked',
+          lastName: 'Tester',
+          role: 'PARENT',
+          passwordHash: await passwordService.hash('Unusable123!'),
+          preference: { create: {} },
+        },
+      });
+      createdParentIds.push(revokedParent.id);
+
+      await prisma.accountInvitation.create({
+        data: {
+          email: revokedEmail,
+          tokenHash: revokedHash,
+          role: 'PARENT',
+          parentId: revokedParent.id,
+          expiresAt: tokenService.invitationTokenExpiresAt(),
+          revokedAt: new Date(),
+        },
+      });
+
+      const revokedRes = await request(app).post('/api/v1/auth/invitations/accept').send({
+        token: revokedToken,
+        password: newPassword,
+      });
+      expect(revokedRes.status).toBe(400);
+      expect(revokedRes.body.error.message).toContain('revoked');
+    });
+
+    it('the send-code route is gone (404)', async () => {
+      const res = await request(app)
+        .post('/api/v1/auth/invitations/send-code')
+        .send({ token: 'test-token' });
+      expect(res.status).toBe(404);
     });
 
     it('resends invitation, revokes previous token, and logs audit event', async () => {

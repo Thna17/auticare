@@ -1,10 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import type { AcceptInvitationResponse, VerifyInvitationResponse } from '@auticare/contracts';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL } from '../../core/config/api.config';
+import { AuthService } from '../../core/auth/auth.service';
 import { AcceptInvitationPage } from './accept-invitation.page';
 
 describe('AcceptInvitationPage', () => {
@@ -20,7 +21,6 @@ describe('AcceptInvitationPage', () => {
   };
 
   const dummyAcceptResponse: AcceptInvitationResponse = {
-    message: 'Account password configured successfully. You may now sign in.',
     parent: {
       id: 'parent_new',
       email: 'new-staff@auticare.test',
@@ -63,12 +63,52 @@ describe('AcceptInvitationPage', () => {
     });
 
     httpTesting = TestBed.inject(HttpTestingController);
+    const router = TestBed.inject(Router);
+    const auth = TestBed.inject(AuthService);
     const fixture = TestBed.createComponent(AcceptInvitationPage);
     const component = fixture.componentInstance;
-    return { fixture, component };
+    return { fixture, component, router, auth };
   };
 
-  it('verifies token from URL on init and populates invitation details', () => {
+  it('reads token into signal and strips it from the address bar on load', () => {
+    TestBed.configureTestingModule({
+      imports: [AcceptInvitationPage],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: API_BASE_URL, useValue: '/api/v1' },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: (key: string) => (key === 'token' ? 'secret-token-123' : null),
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    httpTesting = TestBed.inject(HttpTestingController);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const fixture = TestBed.createComponent(AcceptInvitationPage);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.token()).toBe('secret-token-123');
+    expect(navigateSpy).toHaveBeenCalledWith([], { queryParams: {}, replaceUrl: true });
+
+    const verifyReq = httpTesting.expectOne(
+      '/api/v1/auth/invitations/verify?token=secret-token-123',
+    );
+    verifyReq.flush({ data: dummyVerified });
+  });
+
+  it('verifies token on init and populates invitation details', () => {
     const { fixture, component } = setupComponent('valid-token-abc');
     fixture.detectChanges();
 
@@ -83,26 +123,28 @@ describe('AcceptInvitationPage', () => {
     expect(component.verificationError()).toBeNull();
   });
 
-  it('handles verification error gracefully when token is invalid or expired', () => {
-    const { fixture, component } = setupComponent('expired-token-xyz');
+  it('does not have 6-digit code UI or form controls', () => {
+    const { fixture, component } = setupComponent('valid-token-abc');
     fixture.detectChanges();
 
     const verifyReq = httpTesting.expectOne(
-      '/api/v1/auth/invitations/verify?token=expired-token-xyz',
+      '/api/v1/auth/invitations/verify?token=valid-token-abc',
     );
-    verifyReq.flush(
-      { error: { message: 'This invitation has expired. Please request a new one.' } },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    verifyReq.flush({ data: dummyVerified });
+    fixture.detectChanges();
 
-    expect(component.verifying()).toBe(false);
-    expect(component.verificationError()).toBe(
-      'This invitation has expired. Please request a new one.',
-    );
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.send-code-btn')).toBeNull();
+    expect(el.querySelector('input[formControlName="code"]')).toBeNull();
+    expect(el.textContent).not.toContain('6-digit verification code');
+    expect(el.textContent).not.toContain('Send code');
+    expect(component.form.contains('code' as never)).toBe(false);
   });
 
-  it('submits valid password setup and displays success message', () => {
-    const { fixture, component } = setupComponent('valid-token-abc');
+  it('auto signs in after setting password and navigates to the role home', () => {
+    const { fixture, component, router, auth } = setupComponent('valid-token-abc');
+    const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
     fixture.detectChanges();
 
     const verifyReq = httpTesting.expectOne(
@@ -125,7 +167,9 @@ describe('AcceptInvitationPage', () => {
     acceptReq.flush({ data: dummyAcceptResponse });
 
     expect(component.submitting()).toBe(false);
-    expect(component.success()).toBe(dummyAcceptResponse.message);
+    expect(auth.isAuthenticated()).toBe(true);
+    expect(auth.parent()).toEqual(dummyAcceptResponse.parent);
+    expect(navigateByUrlSpy).toHaveBeenCalledWith('/schools/enrollments', { replaceUrl: true });
   });
 
   it('rejects form if passwords do not match or are too short', () => {

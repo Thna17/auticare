@@ -6,6 +6,7 @@ export {
   registerRequestSchema,
   resendInvitationRequestSchema,
   resetPasswordRequestSchema,
+  staffSetupRequestSchema,
   updateMyProfileRequestSchema,
   verifyInvitationQuerySchema,
 } from '@auticare/contracts';

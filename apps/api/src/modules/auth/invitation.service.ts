@@ -1,6 +1,5 @@
 import type {
   AcceptInvitationRequest,
-  AcceptInvitationResponse,
   ResendInvitationRequest,
   ResendInvitationResponse,
   VerifyInvitationResponse,
@@ -11,6 +10,7 @@ import { env, isProduction } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
 import { prisma } from '../../database/prisma.js';
 import { auditService } from '../audit/audit.service.js';
+import { AuthService, type AuthSession } from './auth.service.js';
 import { toParentResponse } from './auth.mapper.js';
 import { InvitationMailer } from './invitation-mailer.js';
 import { PasswordService } from './password.service.js';
@@ -21,6 +21,7 @@ export class InvitationService {
     private readonly tokenService = new TokenService(),
     private readonly passwordService = new PasswordService(),
     private readonly mailer = new InvitationMailer(),
+    private readonly authService = new AuthService(),
   ) {}
 
   /**
@@ -82,6 +83,11 @@ export class InvitationService {
         .catch((err: unknown) => {
           logger.warn({ err, email }, 'Failed to deliver invitation email in background');
         });
+    } else if (env.NODE_ENV === 'development' && !this.mailer.isConfigured()) {
+      logger.info(
+        { email, invitationUrl: invitationUrl.toString() },
+        '[DEV] Invitation link generated',
+      );
     }
 
     await auditService.record({
@@ -156,9 +162,9 @@ export class InvitationService {
 
   /**
    * Accept an invitation: set the initial password, clear mustResetPassword,
-   * mark invitation accepted, revoke active sessions, and record audit event.
+   * mark invitation accepted, revoke active sessions, record audit event, and auto sign-in.
    */
-  async acceptInvitation(input: AcceptInvitationRequest): Promise<AcceptInvitationResponse> {
+  async acceptInvitation(input: AcceptInvitationRequest): Promise<AuthSession> {
     const tokenHash = this.tokenService.hashInvitationToken(input.token);
     const invitation = await prisma.accountInvitation.findUnique({
       where: { tokenHash },
@@ -197,19 +203,34 @@ export class InvitationService {
     }
 
     const passwordHash = await this.passwordService.hash(input.password);
+    const now = new Date();
 
     const updatedParent = await prisma.$transaction(async (tx) => {
+      // Atomic claim of single-use invitation
+      const claimed = await tx.accountInvitation.updateMany({
+        where: {
+          id: invitation.id,
+          acceptedAt: null,
+          revokedAt: null,
+          expiresAt: { gt: now },
+        },
+        data: { acceptedAt: now },
+      });
+
+      if (claimed.count === 0) {
+        throw new AppError(
+          'VALIDATION_ERROR',
+          'This invitation has expired or has already been accepted.',
+          400,
+        );
+      }
+
       const updated = await tx.parent.update({
         where: { id: parent.id },
         data: {
           passwordHash,
           mustResetPassword: false,
         },
-      });
-
-      await tx.accountInvitation.update({
-        where: { id: invitation.id },
-        data: { acceptedAt: new Date() },
       });
 
       // Revoke any other pending invitations for this email
@@ -220,13 +241,13 @@ export class InvitationService {
           acceptedAt: null,
           revokedAt: null,
         },
-        data: { revokedAt: new Date() },
+        data: { revokedAt: now },
       });
 
       // Revoke existing refresh tokens if any exist
       await tx.refreshToken.updateMany({
         where: { parentId: parent.id, revokedAt: null },
-        data: { revokedAt: new Date() },
+        data: { revokedAt: now },
       });
 
       return updated;
@@ -243,10 +264,25 @@ export class InvitationService {
       },
     });
 
-    return {
-      message: 'Account password configured successfully. You may now sign in.',
+    const isTestRun = env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+    if (!isTestRun && this.mailer.isConfigured()) {
+      void this.mailer
+        .sendAccountActivated({
+          recipient: updatedParent.email,
+          firstName: updatedParent.firstName,
+          activatedAt: now,
+        })
+        .catch((err: unknown) => {
+          logger.warn(
+            { err, email: updatedParent.email },
+            'Failed to deliver account activation email in background',
+          );
+        });
+    }
+
+    return this.authService.issueSession(updatedParent.id, updatedParent.role, {
       parent: toParentResponse(updatedParent),
-    };
+    });
   }
 
   /**

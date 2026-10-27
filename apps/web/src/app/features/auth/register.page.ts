@@ -33,7 +33,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
       <section class="form-panel" aria-labelledby="register-title">
         <div class="form-shell">
           <a class="brand" routerLink="/" aria-label="AutiCare home">
-            <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" width="36" height="34" />
+            <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
             <span>AutiCare</span>
           </a>
 
@@ -804,7 +804,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         font-size: 17px;
         font-weight: var(--ac-font-weight-semibold);
         line-height: 1;
-        box-shadow: 0 8px 20px rgb(41 74 90 / 0.16);
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--ac-brand-800) 16%, transparent);
         transition:
           background 160ms ease,
           box-shadow 160ms ease,
@@ -819,7 +819,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
       .submit-button:hover:not(:disabled) {
         background: var(--ac-color-action-alt);
-        box-shadow: 0 10px 24px rgb(41 74 90 / 0.22);
+        box-shadow: 0 10px 24px color-mix(in srgb, var(--ac-brand-800) 22%, transparent);
       }
 
       .submit-button:active:not(:disabled) {
@@ -969,8 +969,16 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         position: absolute;
         inset: 0;
         background:
-          linear-gradient(180deg, rgb(244 250 255 / 0.06), rgb(219 241 255 / 0.38)),
-          linear-gradient(90deg, rgb(255 255 255 / 0.1), rgb(244 250 255 / 0.18));
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--ac-brand-50) 6%, transparent),
+            color-mix(in srgb, var(--ac-brand-100) 38%, transparent)
+          ),
+          linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--ac-color-white) 10%, transparent),
+            color-mix(in srgb, var(--ac-brand-50) 18%, transparent)
+          );
       }
 
       .support-card {
@@ -979,10 +987,10 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         bottom: 8%;
         width: min(520px, 75%);
         min-height: 280px;
-        border: 1px solid rgb(255 255 255 / 0.7);
+        border: 1px solid color-mix(in srgb, var(--ac-color-white) 70%, transparent);
         border-radius: 24px;
-        background: rgb(255 255 255 / 0.78);
-        box-shadow: 0 24px 60px rgb(16 52 67 / 0.18);
+        background: color-mix(in srgb, var(--ac-color-white) 78%, transparent);
+        box-shadow: 0 24px 60px color-mix(in srgb, var(--ac-brand-900) 18%, transparent);
         backdrop-filter: blur(14px);
         display: grid;
         justify-items: center;

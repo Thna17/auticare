@@ -50,7 +50,7 @@ export class InvitationMailer {
       `Hello ${greeting},`,
       '',
       `You have been invited to AutiCare as a ${roleLabel}.`,
-      'Please click the link below to set your account password and activate your account:',
+      "Set a password to finish setting up your account. You'll be signed in straight away.",
       invitationUrl,
       '',
       'This invitation is secure, single-use, and expires in 72 hours.',
@@ -83,7 +83,7 @@ export class InvitationMailer {
                 You have been invited to join <strong>AutiCare</strong> as a <strong>${escapeHtml(roleLabel)}</strong>.
               </p>
               <p style="margin: 0 0 28px 0; color: #475569; font-size: 15px; line-height: 1.6;">
-                Activate your account to collaborate seamlessly with parents, clinical specialists, and educational teams. Click the button below to set up your password:
+                Set a password to finish setting up your account. You'll be signed in straight away. Click the button below to set up your password:
               </p>
               <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 0 28px 0;">
                 <tr>
@@ -137,6 +137,246 @@ export class InvitationMailer {
       logger.warn(
         { err: error, recipient, role },
         'Failed to deliver invitation email via SMTP; account provisioning completed',
+      );
+    }
+  }
+
+  async sendAccountActivated({
+    recipient,
+    firstName,
+    activatedAt = new Date(),
+  }: {
+    recipient: string;
+    firstName?: string;
+    activatedAt?: Date;
+  }): Promise<void> {
+    if (!this.transporter || recipient.endsWith('@staff.auticare.invalid')) return;
+
+    const greeting = (firstName ?? '').trim() || 'there';
+    const dateFormatted =
+      activatedAt.toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'UTC',
+      }) + ' UTC';
+
+    const text = [
+      `Hello ${greeting},`,
+      '',
+      `Your AutiCare account was activated on ${dateFormatted}. If this wasn't you, contact support immediately.`,
+      '',
+      'AutiCare Team',
+    ].join('\n');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Account Activated</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f6fa; padding: 36px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(29, 91, 121, 0.08); border: 1px solid #e2e8f0;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #1d5b79 0%, #2e86ab 100%); padding: 32px 36px; text-align: left;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700;">AutiCare</h1>
+              <p style="margin: 6px 0 0 0; color: #dbeafe; font-size: 13px;">Security Notice</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px;">
+              <h2 style="margin: 0 0 16px 0; color: #0f172a; font-size: 20px; font-weight: 600;">Hello, ${escapeHtml(greeting)}!</h2>
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Your AutiCare account was activated on <strong>${escapeHtml(dateFormatted)}</strong>.
+              </p>
+              <div style="background-color: #f8fafc; border-left: 4px solid #2e86ab; padding: 14px 16px; border-radius: 6px; margin: 0 0 24px 0;">
+                <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 1.5;">
+                  If this wasn't you, please contact support immediately to secure your account.
+                </p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    try {
+      await this.transporter.sendMail({
+        from: env.SMTP_FROM ?? env.SMTP_USER,
+        to: recipient,
+        subject: 'AutiCare: Your account has been activated',
+        text,
+        html,
+      });
+    } catch (error) {
+      logger.warn(
+        { err: error, recipient },
+        'Failed to deliver account activation notice via SMTP',
+      );
+    }
+  }
+
+  async sendSchoolRegistrationReceived({
+    recipient,
+    firstName,
+    schoolName,
+  }: {
+    recipient: string;
+    firstName: string;
+    schoolName: string;
+  }): Promise<void> {
+    if (!this.transporter) return;
+
+    const greeting = firstName.trim() || 'there';
+    const text = [
+      `Hello ${greeting},`,
+      '',
+      `Thank you for your interest in AutiCare. We have received the registration request for ${schoolName}.`,
+      'Our team is reviewing your request and will reach out with next steps soon.',
+      '',
+      'AutiCare Team',
+    ].join('\n');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>School Registration Received</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f6fa; padding: 36px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(29, 91, 121, 0.08); border: 1px solid #e2e8f0;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #1d5b79 0%, #2e86ab 100%); padding: 32px 36px; text-align: left;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700;">AutiCare</h1>
+              <p style="margin: 6px 0 0 0; color: #dbeafe; font-size: 13px;">School Registration Request</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px;">
+              <h2 style="margin: 0 0 16px 0; color: #0f172a; font-size: 20px; font-weight: 600;">Hello, ${escapeHtml(greeting)}!</h2>
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Thank you for submitting a registration request for <strong>${escapeHtml(schoolName)}</strong>.
+              </p>
+              <p style="margin: 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Our administrative team will review your application and send an invitation link to set up your school account once approved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    try {
+      await this.transporter.sendMail({
+        from: env.SMTP_FROM ?? env.SMTP_USER,
+        to: recipient,
+        subject: `AutiCare: Registration request received for ${schoolName}`,
+        text,
+        html,
+      });
+    } catch (error) {
+      logger.warn(
+        { err: error, recipient },
+        'Failed to deliver registration received email via SMTP',
+      );
+    }
+  }
+
+  async sendSchoolRegistrationRejected({
+    recipient,
+    firstName,
+    schoolName,
+    reason,
+  }: {
+    recipient: string;
+    firstName: string;
+    schoolName: string;
+    reason: string;
+  }): Promise<void> {
+    if (!this.transporter) return;
+
+    const greeting = firstName.trim() || 'there';
+    const text = [
+      `Hello ${greeting},`,
+      '',
+      `Thank you for your interest in AutiCare. Regarding the registration request for ${schoolName}:`,
+      '',
+      `Reason: ${reason}`,
+      '',
+      'If you have questions or believe this was an error, please contact our support team.',
+      '',
+      'AutiCare Team',
+    ].join('\n');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>School Registration Update</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f6fa; padding: 36px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(29, 91, 121, 0.08); border: 1px solid #e2e8f0;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #1d5b79 0%, #2e86ab 100%); padding: 32px 36px; text-align: left;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700;">AutiCare</h1>
+              <p style="margin: 6px 0 0 0; color: #dbeafe; font-size: 13px;">School Registration Update</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px;">
+              <h2 style="margin: 0 0 16px 0; color: #0f172a; font-size: 20px; font-weight: 600;">Hello, ${escapeHtml(greeting)}!</h2>
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Thank you for your interest in AutiCare. We are unable to approve the registration request for <strong>${escapeHtml(schoolName)}</strong> at this time.
+              </p>
+              <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 14px 16px; border-radius: 6px; margin: 0 0 24px 0;">
+                <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.5;">
+                  <strong>Reason:</strong> ${escapeHtml(reason)}
+                </p>
+              </div>
+              <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 1.5;">
+                If you have questions or would like to provide additional information, please contact our support team.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    try {
+      await this.transporter.sendMail({
+        from: env.SMTP_FROM ?? env.SMTP_USER,
+        to: recipient,
+        subject: `AutiCare: Registration request update for ${schoolName}`,
+        text,
+        html,
+      });
+    } catch (error) {
+      logger.warn(
+        { err: error, recipient },
+        'Failed to deliver registration rejection email via SMTP',
       );
     }
   }

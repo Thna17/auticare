@@ -14,6 +14,7 @@ import {
   verifyInvitation,
   acceptInvitation,
   resendInvitation,
+  staffSetup,
 } from './auth.controller.js';
 import { optionalAuth, requireAuth } from './auth.middleware.js';
 import {
@@ -24,12 +25,15 @@ import {
   registerRequestSchema,
   resendInvitationRequestSchema,
   resetPasswordRequestSchema,
+  staffSetupRequestSchema,
   updateMyProfileRequestSchema,
 } from './auth.schemas.js';
 
 export const authRoutes = Router();
 authRoutes.post('/register', validateBody(registerRequestSchema), register);
 authRoutes.post('/login', loginRateLimit, validateBody(loginRequestSchema), login);
+// Shares the login limiter: it is a sign-in, and the setup code is short.
+authRoutes.post('/staff-setup', loginRateLimit, validateBody(staffSetupRequestSchema), staffSetup);
 authRoutes.post(
   '/forgot-password',
   passwordResetRateLimit,
@@ -52,6 +56,7 @@ authRoutes.post(
 authRoutes.get('/invitations/verify', verifyInvitation);
 authRoutes.post(
   '/invitations/accept',
+  loginRateLimit,
   validateBody(acceptInvitationRequestSchema),
   acceptInvitation,
 );

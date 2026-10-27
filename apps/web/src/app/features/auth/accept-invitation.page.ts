@@ -1,9 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject, type OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  type OnInit,
+  signal,
+} from '@angular/core';
 import type { AbstractControl, ValidationErrors } from '@angular/forms';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { VerifyInvitationResponse } from '@auticare/contracts';
 import { AuthService } from '../../core/auth/auth.service';
+import { homeRouteFor } from '../../core/auth/home-route';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
@@ -34,7 +42,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="invitation-title">
         <a class="brand" routerLink="/" aria-label="AutiCare home">
-          <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" width="36" height="34" />
+          <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
           <span>AutiCare</span>
         </a>
 
@@ -62,29 +70,10 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
             </header>
             <ac-ui-message tone="error">{{ verificationError() }}</ac-ui-message>
             <div class="actions">
-              <a class="primary-link" routerLink="/login">Return to log in</a>
+              <a class="primary-link" routerLink="/login">{{
+                isVerificationAlreadyAccepted() ? 'Go to sign in' : 'Return to log in'
+              }}</a>
             </div>
-          </div>
-        } @else if (success()) {
-          <div class="success-card" role="status">
-            <div class="success-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" focusable="false">
-                <path
-                  d="m5 12 4.2 4.2L19 6.8"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2.6"
-                />
-              </svg>
-            </div>
-            <h2>Account Activated</h2>
-            <p class="success-message">{{ success() }}</p>
-            <p class="sub-message">
-              Your password has been configured and your institutional account is now active.
-            </p>
-            <a class="primary-link" routerLink="/login">Continue to log in</a>
           </div>
         } @else {
           <!-- Institutional Header & Org Badge -->
@@ -116,19 +105,18 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
                 @if (details.organizationName) {
                   <span> ({{ details.organizationName }})</span>
                 }
-                Choose a secure password for <strong>{{ details.email }}</strong> to activate your
-                access.
+                Set a password to finish setting up your account. You'll be signed in straight away.
               </p>
             } @else {
               <h1 id="invitation-title">Set up your password</h1>
               <p class="invite-description">
-                Set a secure password to activate your AutiCare account.
+                Set a password to finish setting up your account. You'll be signed in straight away.
               </p>
             }
           </header>
 
           <form [formGroup]="form" (ngSubmit)="submit()" acAccessibleForm novalidate>
-            @if (!tokenFromUrl()) {
+            @if (!hasToken()) {
               <ac-ui-field
                 label="Invitation token"
                 hint="Paste the invitation token from your email."
@@ -287,21 +275,30 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
             </div>
 
             @if (error()) {
-              <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
+              <ac-ui-message tone="error">
+                <div class="error-msg-content">
+                  <span>{{ error() }}</span>
+                  @if (isAlreadyAccepted()) {
+                    <a routerLink="/login" class="login-link">Go to sign in</a>
+                  }
+                </div>
+              </ac-ui-message>
             }
 
             <button type="submit" class="submit-btn" [disabled]="submitting()">
-              <span>{{ submitting() ? 'Saving password…' : 'Activate account' }}</span>
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M5 12h13M13 6l6 6-6 6"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2.4"
-                />
-              </svg>
+              <span>{{ submitting() ? 'Setting up your account…' : 'Activate account' }}</span>
+              @if (!submitting()) {
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M5 12h13M13 6l6 6-6 6"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.4"
+                  />
+                </svg>
+              }
             </button>
           </form>
         }
@@ -331,7 +328,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 24px;
         padding: 44px 38px 40px;
-        box-shadow: 0 16px 40px -12px rgb(16 35 48 / 0.12);
+        box-shadow: 0 16px 40px -12px color-mix(in srgb, var(--ac-brand-950) 12%, transparent);
         display: grid;
         gap: 26px;
       }
@@ -493,6 +490,18 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         margin: 0;
       }
 
+      .error-msg-content {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .login-link {
+        color: var(--ac-color-action);
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: underline;
+      }
+
       .submit-btn,
       .primary-link {
         display: inline-flex;
@@ -510,7 +519,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         cursor: pointer;
         text-decoration: none;
         padding: 0 24px;
-        box-shadow: 0 8px 20px rgb(41 74 90 / 0.16);
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--ac-brand-800) 16%, transparent);
         transition:
           background 160ms ease,
           box-shadow 160ms ease;
@@ -524,7 +533,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
       .submit-btn:hover:not(:disabled),
       .primary-link:hover {
         background: var(--ac-color-action-alt);
-        box-shadow: 0 10px 24px rgb(41 74 90 / 0.22);
+        box-shadow: 0 10px 24px color-mix(in srgb, var(--ac-brand-800) 22%, transparent);
       }
 
       .submit-btn:disabled {
@@ -557,54 +566,6 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
       .error-icon svg {
         width: 28px;
         height: 28px;
-      }
-
-      /* Success card */
-      .success-card {
-        border-radius: 16px;
-        background: var(--ac-color-sage-light);
-        border: 1px solid var(--ac-color-green-border-soft);
-        padding: 28px 24px;
-        text-align: center;
-        display: grid;
-        justify-items: center;
-        gap: 14px;
-      }
-
-      .success-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 999px;
-        background: var(--ac-color-green-600);
-        color: var(--ac-color-text-on-action);
-        display: grid;
-        place-items: center;
-      }
-
-      .success-icon svg {
-        width: 28px;
-        height: 28px;
-      }
-
-      .success-card h2 {
-        margin: 0;
-        font-size: 20px;
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-olive-darkest);
-      }
-
-      .success-message {
-        margin: 0;
-        color: var(--ac-color-olive-darkest);
-        font-size: 15px;
-        line-height: 1.5;
-      }
-
-      .sub-message {
-        margin: 0;
-        font-size: 13px;
-        color: var(--ac-color-text-muted);
-        line-height: 1.45;
       }
 
       .verifying-box {
@@ -668,7 +629,6 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
           font-size: 15px;
         }
 
-        .success-card,
         .error-state-card {
           padding: 20px 16px;
           gap: 12px;
@@ -682,20 +642,29 @@ export class AcceptInvitationPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly verifying = signal(false);
   readonly submitting = signal(false);
+  readonly token = signal<string>('');
+
   readonly error = signal<string | null>(null);
   readonly verificationError = signal<string | null>(null);
-  readonly success = signal<string | null>(null);
   readonly showPassword = signal(false);
   readonly showConfirmPassword = signal(false);
-  readonly tokenFromUrl = signal(Boolean(this.route.snapshot.queryParamMap.get('token')));
+  readonly hasToken = computed(() => Boolean(this.token()));
   readonly invitationDetails = signal<VerifyInvitationResponse | null>(null);
+
+  readonly isAlreadyAccepted = computed(() =>
+    Boolean(this.error()?.toLowerCase().includes('already accepted')),
+  );
+  readonly isVerificationAlreadyAccepted = computed(() =>
+    Boolean(this.verificationError()?.toLowerCase().includes('already accepted')),
+  );
 
   readonly form = this.fb.nonNullable.group(
     {
-      token: [this.route.snapshot.queryParamMap.get('token') ?? '', Validators.required],
+      token: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(12)]],
       confirmPassword: ['', Validators.required],
     },
@@ -703,10 +672,18 @@ export class AcceptInvitationPage implements OnInit {
   );
 
   ngOnInit() {
-    const token = this.route.snapshot.queryParamMap.get('token');
-    if (token) {
+    const rawToken = this.route.snapshot.queryParamMap.get('token');
+    if (rawToken) {
+      this.token.set(rawToken);
+      this.form.controls.token.setValue(rawToken);
+      // Immediately remove token from URL address bar to prevent leaking via history or Referer
+      void this.router.navigate([], { queryParams: {}, replaceUrl: true });
+    }
+
+    const tokenToVerify = this.token();
+    if (tokenToVerify) {
       this.verifying.set(true);
-      this.auth.verifyInvitation(token).subscribe({
+      this.auth.verifyInvitation(tokenToVerify).subscribe({
         next: (details) => {
           this.invitationDetails.set(details);
           this.verifying.set(false);
@@ -732,6 +709,11 @@ export class AcceptInvitationPage implements OnInit {
   submit() {
     this.error.set(null);
 
+    // Sync token from signal if form control didn't have it
+    if (!this.form.controls.token.value && this.token()) {
+      this.form.controls.token.setValue(this.token());
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.error.set('Fix the highlighted fields before activating your account.');
@@ -742,9 +724,10 @@ export class AcceptInvitationPage implements OnInit {
     this.submitting.set(true);
 
     this.auth.acceptInvitation({ token, password }).subscribe({
-      next: (response) => {
-        this.success.set(response.message);
+      next: (parent) => {
         this.submitting.set(false);
+        const target = homeRouteFor(parent.role);
+        void this.router.navigateByUrl(target, { replaceUrl: true });
       },
       error: (err) => {
         const msg =

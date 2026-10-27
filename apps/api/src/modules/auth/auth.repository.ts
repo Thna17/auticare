@@ -9,6 +9,41 @@ export class AuthRepository {
     return prisma.parent.findUnique({ where: { email } });
   }
 
+  findParentByUsername(username: string): Promise<Parent | null> {
+    return prisma.parent.findUnique({ where: { username } });
+  }
+
+  /** Deactivation state of every school this account works at. */
+  listSchoolStaffStates(parentId: string): Promise<{ deactivatedAt: Date | null }[]> {
+    return prisma.schoolStaff.findMany({ where: { parentId }, select: { deactivatedAt: true } });
+  }
+
+  /** An open setup invitation that belongs to exactly this account. */
+  findOpenStaffSetup(parentId: string, tokenHash: string) {
+    return prisma.accountInvitation.findFirst({
+      where: { parentId, tokenHash, acceptedAt: null, revokedAt: null },
+    });
+  }
+
+  /** First sign-in: set the password, close the setup code, end old sessions. */
+  completeStaffSetup(input: { parentId: string; invitationId: string; passwordHash: string }) {
+    return prisma.$transaction(async (tx) => {
+      const parent = await tx.parent.update({
+        where: { id: input.parentId },
+        data: { passwordHash: input.passwordHash, mustResetPassword: false },
+      });
+      await tx.accountInvitation.update({
+        where: { id: input.invitationId },
+        data: { acceptedAt: new Date() },
+      });
+      await tx.refreshToken.updateMany({
+        where: { parentId: input.parentId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      return parent;
+    });
+  }
+
   /**
    * Update the account holder's own editable profile fields. The caller is
    * identified from their session, so there is no id in the payload to tamper

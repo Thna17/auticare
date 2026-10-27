@@ -37,6 +37,13 @@ export const login = async (req: Request, res: Response) => {
   return ok(res, { parent: session.parent });
 };
 
+/** POST /auth/staff-setup — first sign-in for a school-managed teacher. */
+export const staffSetup = async (req: Request, res: Response) => {
+  const session = await authService.staffSetup(req.body);
+  setAuthCookies(res, session);
+  return ok(res, { parent: session.parent });
+};
+
 export const requestPasswordReset = async (req: Request, res: Response) =>
   ok(res, await authService.requestPasswordReset(req.body));
 
@@ -72,8 +79,11 @@ export const verifyInvitation = async (req: Request, res: Response) => {
   return ok(res, await invitationService.verifyInvitation(token));
 };
 
-export const acceptInvitation = async (req: Request, res: Response) =>
-  ok(res, await invitationService.acceptInvitation(req.body));
+export const acceptInvitation = async (req: Request, res: Response) => {
+  const session = await invitationService.acceptInvitation(req.body);
+  setAuthCookies(res, session);
+  return ok(res, { parent: session.parent });
+};
 
 export const resendInvitation = async (req: Request, res: Response) =>
   ok(res, await invitationService.resendInvitation(req.body, req.auth));

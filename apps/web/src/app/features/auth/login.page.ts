@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
+import { homeRouteFor } from '../../core/auth/home-route';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
@@ -49,7 +50,7 @@ export const DEMO_CREDENTIALS: Record<
       <section class="form-panel" aria-labelledby="login-title">
         <div class="form-shell">
           <a class="brand" routerLink="/" aria-label="AutiCare home">
-            <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" width="36" height="34" />
+            <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
             <span>AutiCare</span>
           </a>
 
@@ -204,19 +205,23 @@ export const DEMO_CREDENTIALS: Record<
             acAccessibleForm
             novalidate
           >
+            <!-- Teachers a school created sign in with a username instead of an email. -->
             <ac-ui-field
-              label="Email address"
+              label="Email or username"
               [required]="true"
               [error]="
                 form.controls.email.touched && form.controls.email.invalid
-                  ? 'Enter a valid email address.'
+                  ? 'Enter your email address or username.'
                   : null
               "
             >
               <input
-                type="email"
+                type="text"
+                inputmode="email"
                 formControlName="email"
-                autocomplete="email"
+                autocomplete="username"
+                autocapitalize="off"
+                spellcheck="false"
                 placeholder="parent@example.com"
               />
             </ac-ui-field>
@@ -306,6 +311,10 @@ export const DEMO_CREDENTIALS: Record<
           <p class="create-account">
             New to AutiCare?
             <a routerLink="/register">Create account</a>
+          </p>
+          <p class="create-account">
+            Teacher with a setup code from your school?
+            <a routerLink="/staff-setup">Set up your account</a>
           </p>
 
           <div class="trust-note">
@@ -673,7 +682,7 @@ export const DEMO_CREDENTIALS: Record<
         font-size: 17px;
         font-weight: var(--ac-font-weight-semibold);
         line-height: 1;
-        box-shadow: 0 8px 20px rgb(41 74 90 / 0.16);
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--ac-brand-800) 16%, transparent);
         transition:
           background 160ms ease,
           transform 160ms ease,
@@ -688,7 +697,7 @@ export const DEMO_CREDENTIALS: Record<
 
       .submit-button:hover:not(:disabled) {
         background: var(--ac-color-action-alt);
-        box-shadow: 0 10px 24px rgb(41 74 90 / 0.22);
+        box-shadow: 0 10px 24px color-mix(in srgb, var(--ac-brand-800) 22%, transparent);
       }
 
       .submit-button:active:not(:disabled) {
@@ -791,8 +800,16 @@ export const DEMO_CREDENTIALS: Record<
         position: absolute;
         inset: 0;
         background:
-          linear-gradient(180deg, rgb(244 250 255 / 0.1), rgb(219 241 255 / 0.42)),
-          linear-gradient(90deg, rgb(255 255 255 / 0.12), rgb(244 250 255 / 0.22));
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--ac-brand-50) 10%, transparent),
+            color-mix(in srgb, var(--ac-brand-100) 42%, transparent)
+          ),
+          linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--ac-color-white) 12%, transparent),
+            color-mix(in srgb, var(--ac-brand-50) 22%, transparent)
+          );
       }
 
       .support-card {
@@ -801,10 +818,10 @@ export const DEMO_CREDENTIALS: Record<
         bottom: 8%;
         width: min(520px, 75%);
         min-height: 280px;
-        border: 1px solid rgb(255 255 255 / 0.75);
+        border: 1px solid color-mix(in srgb, var(--ac-color-white) 75%, transparent);
         border-radius: 24px;
-        background: rgb(255 255 255 / 0.8);
-        box-shadow: 0 24px 60px rgb(16 52 67 / 0.18);
+        background: color-mix(in srgb, var(--ac-color-white) 80%, transparent);
+        box-shadow: 0 24px 60px color-mix(in srgb, var(--ac-brand-900) 18%, transparent);
         backdrop-filter: blur(14px);
         display: grid;
         justify-items: center;
@@ -1067,7 +1084,8 @@ export class LoginPage {
   readonly demoCredentials = DEMO_CREDENTIALS;
 
   readonly form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    // An email address or a school-issued username; the server decides which.
+    email: ['', [Validators.required, Validators.maxLength(254)]],
     password: ['', Validators.required],
   });
 
@@ -1099,12 +1117,7 @@ export class LoginPage {
     this.auth.login(this.form.getRawValue()).subscribe({
       next: (parent) => {
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-        const roleTarget =
-          parent.role === 'HOSPITAL'
-            ? '/hospital/dashboard'
-            : parent.role === 'SCHOOL'
-              ? '/schools/enrollments'
-              : '/dashboard';
+        const roleTarget = homeRouteFor(parent.role);
         const target =
           returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//')
             ? returnUrl

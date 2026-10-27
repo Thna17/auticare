@@ -1,3 +1,16 @@
+/** A JSON response whose body is `{ data: … }`, for operations without a named schema. */
+const dataResponse = (description: string) => ({
+  description,
+  content: { 'application/json': { schema: { properties: { data: { type: 'object' } } } } },
+});
+
+const pathParam = (name: string) => ({
+  name,
+  in: 'path',
+  required: true,
+  schema: { type: 'string' },
+});
+
 export const openApiDocument: Record<string, unknown> = {
   openapi: '3.1.0',
   info: {
@@ -42,6 +55,10 @@ export const openApiDocument: Record<string, unknown> = {
     { name: 'Parents', description: 'Parent account preferences and family settings' },
     { name: 'Dashboard', description: 'Role-specific operational and analytical dashboards' },
     { name: 'Health', description: 'Production liveness, readiness, startup, and metrics' },
+    {
+      name: 'School Registrations',
+      description: 'Public registration requests and admin review workflow',
+    },
   ],
   components: {
     securitySchemes: {
@@ -192,12 +209,98 @@ export const openApiDocument: Record<string, unknown> = {
 
       AcceptInvitationRequest: {
         type: 'object',
-        required: ['token', 'password', 'firstName', 'lastName'],
+        required: ['token', 'password'],
         properties: {
           token: { type: 'string', example: 'invitation_token_abc' },
           password: { type: 'string', minLength: 12, example: 'StaffPassword123!' },
-          firstName: { type: 'string', minLength: 1, example: 'Michael' },
-          lastName: { type: 'string', minLength: 1, example: 'Chang' },
+        },
+      },
+      SchoolRegistrationRequest: {
+        type: 'object',
+        required: ['schoolName', 'city', 'contactFirstName', 'contactLastName', 'email', 'phone'],
+        properties: {
+          schoolName: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 160,
+            example: 'Phnom Penh Early Learning',
+          },
+          city: { type: 'string', minLength: 1, maxLength: 120, example: 'Phnom Penh' },
+          address: {
+            type: 'string',
+            maxLength: 500,
+            nullable: true,
+            example: 'Street 2004, Sen Sok',
+          },
+          contactFirstName: { type: 'string', minLength: 1, maxLength: 80, example: 'Sokha' },
+          contactLastName: { type: 'string', minLength: 1, maxLength: 80, example: 'Keo' },
+          contactTitle: { type: 'string', maxLength: 120, nullable: true, example: 'Principal' },
+          email: { type: 'string', format: 'email', example: 'sokha.keo@earlylearning.edu.kh' },
+          phone: { type: 'string', minLength: 1, maxLength: 32, example: '+85512345678' },
+          studentCount: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100000,
+            nullable: true,
+            example: 120,
+          },
+          message: {
+            type: 'string',
+            maxLength: 1000,
+            nullable: true,
+            example: 'Looking to integrate AutiCare in our special education classes.',
+          },
+        },
+      },
+      RejectSchoolRegistrationRequest: {
+        type: 'object',
+        required: ['reason'],
+        properties: {
+          reason: {
+            type: 'string',
+            minLength: 3,
+            maxLength: 500,
+            example: 'Unable to verify school licensing with MoEYS.',
+          },
+        },
+      },
+      SchoolRegistration: {
+        type: 'object',
+        required: [
+          'id',
+          'schoolName',
+          'city',
+          'contactFirstName',
+          'contactLastName',
+          'email',
+          'phone',
+          'status',
+          'createdAt',
+          'updatedAt',
+        ],
+        properties: {
+          id: { type: 'string', example: 'cuid_reg_101' },
+          schoolName: { type: 'string', example: 'Phnom Penh Early Learning' },
+          city: { type: 'string', example: 'Phnom Penh' },
+          address: { type: 'string', nullable: true, example: 'Street 2004, Sen Sok' },
+          contactFirstName: { type: 'string', example: 'Sokha' },
+          contactLastName: { type: 'string', example: 'Keo' },
+          contactTitle: { type: 'string', nullable: true, example: 'Principal' },
+          email: { type: 'string', format: 'email', example: 'sokha.keo@earlylearning.edu.kh' },
+          phone: { type: 'string', example: '+85512345678' },
+          studentCount: { type: 'integer', nullable: true, example: 120 },
+          message: {
+            type: 'string',
+            nullable: true,
+            example: 'Looking to integrate AutiCare in our special education classes.',
+          },
+          status: { type: 'string', enum: ['PENDING', 'APPROVED', 'REJECTED'], example: 'PENDING' },
+          rejectionReason: { type: 'string', nullable: true, example: null },
+          reviewedById: { type: 'string', nullable: true, example: null },
+          reviewedAt: { type: 'string', format: 'date-time', nullable: true, example: null },
+          schoolId: { type: 'string', nullable: true, example: null },
+          createdAt: { type: 'string', format: 'date-time', example: '2026-10-27T10:00:00.000Z' },
+          updatedAt: { type: 'string', format: 'date-time', example: '2026-10-27T10:00:00.000Z' },
         },
       },
       ResendInvitationRequest: {
@@ -1060,7 +1163,8 @@ export const openApiDocument: Record<string, unknown> = {
       post: {
         tags: ['Auth'],
         summary: 'Accept staff invitation',
-        description: 'Sets staff password and completes invitation onboarding.',
+        description:
+          'Sets staff password and completes invitation onboarding, signing in immediately.',
         requestBody: {
           required: true,
           content: {
@@ -1073,7 +1177,15 @@ export const openApiDocument: Record<string, unknown> = {
           '200': {
             description: 'Invitation accepted and account activated',
             content: {
-              'application/json': { schema: { properties: { data: { type: 'object' } } } },
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: { parent: { $ref: '#/components/schemas/ParentResponse' } },
+                    },
+                  },
+                },
+              },
             },
           },
           '400': {
@@ -2225,6 +2337,157 @@ export const openApiDocument: Record<string, unknown> = {
         },
       },
     },
+    '/api/v1/schools/staff': {
+      get: {
+        tags: ['Schools'],
+        summary: "List the school's admin and teachers",
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: { '200': dataResponse('Staff members') },
+      },
+      post: {
+        tags: ['Schools'],
+        summary: 'Create a teacher account (username and one-time setup code)',
+        description: 'School admin only. The setup code is returned once and stored hashed.',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: { '201': dataResponse('Teacher credentials'), '403': dataResponse('Not admin') },
+      },
+    },
+    '/api/v1/schools/staff/{staffId}/setup-code': {
+      post: {
+        tags: ['Schools'],
+        summary: "Replace a teacher's setup code",
+        parameters: [pathParam('staffId')],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: { '200': dataResponse('New teacher credentials') },
+      },
+    },
+    '/api/v1/schools/staff/{staffId}/deactivate': {
+      post: {
+        tags: ['Schools'],
+        summary: 'Deactivate a teacher (ends their sessions)',
+        parameters: [pathParam('staffId')],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: { '200': dataResponse('Updated staff member') },
+      },
+    },
+    '/api/v1/schools/staff/{staffId}/reactivate': {
+      post: {
+        tags: ['Schools'],
+        summary: 'Reactivate a teacher',
+        parameters: [pathParam('staffId')],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: { '200': dataResponse('Updated staff member') },
+      },
+    },
+    '/api/v1/schools/enrollments/{childId}/teachers': {
+      put: {
+        tags: ['Schools'],
+        summary: 'Replace the teachers assigned to an enrolled child',
+        parameters: [pathParam('childId')],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: { '200': dataResponse('Assigned teachers') },
+      },
+    },
+    '/api/v1/schools/connection-codes': {
+      get: {
+        tags: ['Schools'],
+        summary: 'List open and recent family connection codes',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: { '200': dataResponse('Connection codes') },
+      },
+      post: {
+        tags: ['Schools'],
+        summary: 'Create a single-use family connection code',
+        description: 'The plain code is returned once; only its HMAC is stored.',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: { '201': dataResponse('New connection code') },
+      },
+    },
+    '/api/v1/schools/connection-codes/{codeId}': {
+      delete: {
+        tags: ['Schools'],
+        summary: 'Revoke an open connection code',
+        parameters: [pathParam('codeId')],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['SCHOOL'],
+        responses: { '200': dataResponse('Revoked') },
+      },
+    },
+    '/api/v1/connections': {
+      get: {
+        tags: ['Connections'],
+        summary: "List the schools each of the parent's children is connected to",
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: { '200': dataResponse('Connections') },
+      },
+      post: {
+        tags: ['Connections'],
+        summary: 'Connect a child to a school with a connection code (requires consent)',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: {
+          '201': dataResponse('New connection'),
+          '400': dataResponse('Code not valid'),
+          '409': dataResponse('Already connected'),
+        },
+      },
+    },
+    '/api/v1/connections/preview': {
+      post: {
+        tags: ['Connections'],
+        summary: 'Show which school a connection code belongs to',
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: { '200': dataResponse('School preview'), '400': dataResponse('Code not valid') },
+      },
+    },
+    '/api/v1/connections/{enrollmentId}': {
+      delete: {
+        tags: ['Connections'],
+        summary: "End a child's connection to a school",
+        parameters: [pathParam('enrollmentId')],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: { '200': dataResponse('Disconnected') },
+      },
+    },
+    '/api/v1/auth/staff-setup': {
+      post: {
+        tags: ['Auth'],
+        summary: 'First sign-in for a school-managed teacher (username, setup code, new password)',
+        responses: {
+          '200': dataResponse('Signed in; session cookies set'),
+          '400': dataResponse('Username and setup code do not match'),
+        },
+      },
+    },
+    '/api/v1/screening/children/{childId}/latest': {
+      get: {
+        tags: ['Screening'],
+        summary: 'Latest screening of a form kind for a child (e.g. the short check-in)',
+        parameters: [
+          pathParam('childId'),
+          {
+            name: 'formKind',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', enum: ['FULL', 'SHORT'] },
+          },
+        ],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: { '200': dataResponse('Latest screening, or null') },
+      },
+    },
     '/api/v1/schools/my-profile': {
       get: {
         tags: ['Schools'],
@@ -3181,6 +3444,258 @@ export const openApiDocument: Record<string, unknown> = {
                   properties: { data: { $ref: '#/components/schemas/AdminDashboardResponse' } },
                 },
               },
+            },
+          },
+        },
+      },
+    },
+
+    // ── School Registrations ──────────────────────────────────────────────────
+    '/api/v1/school-registrations': {
+      post: {
+        tags: ['School Registrations'],
+        summary: 'Submit a school registration request',
+        description:
+          'Public submission for schools requesting an AutiCare account. Responds 202 to prevent email enumeration.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/SchoolRegistrationRequest' },
+            },
+          },
+        },
+        responses: {
+          '202': {
+            description: 'Request received',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        received: { type: 'boolean', example: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Validation error',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '429': {
+            description: 'Rate limit exceeded',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/school-registrations': {
+      get: {
+        tags: ['Admin', 'School Registrations'],
+        summary: 'List school registration requests',
+        description: 'Admin endpoint to view registration requests, newest first.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [
+          {
+            name: 'status',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['PENDING', 'APPROVED', 'REJECTED'],
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'List of school registration requests',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/SchoolRegistration' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - ADMIN role required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/school-registrations/pending-count': {
+      get: {
+        tags: ['Admin', 'School Registrations'],
+        summary: 'Get pending registration count',
+        description:
+          'Returns the number of pending school registration requests for admin navigation badges.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: {
+          '200': {
+            description: 'Pending request count',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        count: { type: 'integer', example: 3 },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - ADMIN role required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/school-registrations/{id}/approve': {
+      post: {
+        tags: ['Admin', 'School Registrations'],
+        summary: 'Approve a school registration request',
+        description:
+          'Atomically claims a pending request, provisions the school organization, staff account and invitation email.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        responses: {
+          '200': {
+            description: 'Registration request approved and school provisioned',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        approved: { type: 'boolean', example: true },
+                        schoolId: { type: 'string', example: 'cuid_school_123' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - ADMIN role required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '404': {
+            description: 'Request not found',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '409': {
+            description: 'Request already reviewed or email conflict',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/school-registrations/{id}/reject': {
+      post: {
+        tags: ['Admin', 'School Registrations'],
+        summary: 'Reject a school registration request',
+        description:
+          'Atomically claims a pending request, records the rejection reason, and notifies the applicant by email.',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        parameters: [pathParam('id')],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RejectSchoolRegistrationRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Registration request rejected',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: {
+                        rejected: { type: 'boolean', example: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Validation error',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '401': {
+            description: 'Unauthenticated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description: 'Forbidden - ADMIN role required',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '409': {
+            description: 'Request already reviewed',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
             },
           },
         },

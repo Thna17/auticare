@@ -16,6 +16,7 @@ import type {
   ResendInvitationResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
+  StaffSetupRequest,
   UpdateMyProfileRequest,
   VerifyInvitationResponse,
 } from '@auticare/contracts';
@@ -49,6 +50,15 @@ export class AuthService {
       map((response) => response.data.parent),
       tap((parent) => this.state.set({ status: 'authenticated', parent })),
     );
+  }
+  /** A school-created teacher's first sign-in: username, setup code, new password. */
+  staffSetup(input: StaffSetupRequest): Observable<ParentResponse> {
+    return this.http
+      .post<{ data: AuthResponse }>(`${this.apiBaseUrl}/auth/staff-setup`, input)
+      .pipe(
+        map((response) => response.data.parent),
+        tap((parent) => this.state.set({ status: 'authenticated', parent })),
+      );
   }
   register(input: RegisterRequest): Observable<ParentResponse> {
     return this.http.post<{ data: AuthResponse }>(`${this.apiBaseUrl}/auth/register`, input).pipe(
@@ -84,10 +94,13 @@ export class AuthService {
       })
       .pipe(map((response) => response.data));
   }
-  acceptInvitation(input: AcceptInvitationRequest): Observable<AcceptInvitationResponse> {
+  acceptInvitation(input: AcceptInvitationRequest): Observable<ParentResponse> {
     return this.http
       .post<{ data: AcceptInvitationResponse }>(`${this.apiBaseUrl}/auth/invitations/accept`, input)
-      .pipe(map((response) => response.data));
+      .pipe(
+        map((response) => response.data.parent),
+        tap((parent) => this.state.set({ status: 'authenticated', parent })),
+      );
   }
   resendInvitation(input: ResendInvitationRequest): Observable<ResendInvitationResponse> {
     return this.http

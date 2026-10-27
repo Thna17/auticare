@@ -29,7 +29,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="reset-title">
         <a class="brand" routerLink="/" aria-label="AutiCare home">
-          <img src="/images/auticare-logo.jpg" alt="" aria-hidden="true" width="36" height="34" />
+          <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
           <span>AutiCare</span>
         </a>
 
@@ -286,7 +286,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         width: min(100%, 540px);
         border-radius: 24px;
         background: var(--ac-color-surface);
-        box-shadow: 0 18px 60px rgb(41 74 90 / 0.1);
+        box-shadow: 0 18px 60px color-mix(in srgb, var(--ac-brand-800) 10%, transparent);
         border: 1px solid var(--ac-color-border-slate);
         padding: 48px 40px 36px;
         display: grid;
@@ -485,7 +485,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         gap: 10px;
         font-size: 16px;
         font-weight: var(--ac-font-weight-semibold);
-        box-shadow: 0 8px 20px rgb(41 74 90 / 0.16);
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--ac-brand-800) 16%, transparent);
         transition:
           background 160ms ease,
           box-shadow 160ms ease;
@@ -498,7 +498,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
       .submit-button:hover:not(:disabled) {
         background: var(--ac-color-action-alt);
-        box-shadow: 0 10px 24px rgb(41 74 90 / 0.22);
+        box-shadow: 0 10px 24px color-mix(in srgb, var(--ac-brand-800) 22%, transparent);
       }
 
       .submit-button:disabled {
