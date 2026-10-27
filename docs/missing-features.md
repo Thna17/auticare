@@ -4,7 +4,7 @@ What the website still needs, compared with the "Whole Website workflow" documen
 (`Whole Website workflow.docx`). Work through it over several days; tick each box
 (`- [x]`) when it is built, tested and merged.
 
-_Last updated: 2026-10-27 (admin portal done on branch `feat/admin-portal`, except deferred items)_
+_Last updated: 2026-10-28 (admin and parent portals merged into `main`)_
 
 ---
 
@@ -51,75 +51,75 @@ Built: header, hero, features, how it works, pricing, final call to action.
 
 ## 2. Sign up & questionnaire
 
-- [ ] Questionnaire shows **one question per full screen**, then goes to the dashboard
+- [x] Questionnaire shows **one question per full screen**, then goes to the dashboard
       (check the current onboarding flow against this)
-- [ ] Questionnaire state per child (not started / in progress / completed) on the children page
+- [x] Questionnaire state per child (not started / in progress / completed) on the children page
 
 ## 3. Parent portal
 
 ### Dashboard
 
-- [ ] Recent behaviour records
-- [ ] Latest educational summary and progress highlights
-- [ ] Recommended activities and recent notifications
-- [ ] Quick actions: Add Behaviour Log, View Reports, Ask AI
+- [x] Recent behaviour records
+- [x] Latest educational summary and progress highlights
+- [x] Recommended activities and recent notifications
+- [x] Quick actions: Add Behaviour Log, View Reports, Ask AI
 
 ### My Children
 
-- [ ] Child detail page shows the AI educational summary with a clear
+- [x] Child detail page shows the AI educational summary with a clear
       "not a medical diagnosis" notice
 
 ### Behaviour Tracking
 
-- [ ] New form fields: **possible trigger, duration, parent response, outcome**
-- [ ] Categories from the workflow: **Communication, Sensory, Social, Emotional**
+- [x] New form fields: **possible trigger, duration, parent response, outcome**
+- [x] Categories from the workflow: **Communication, Sensory, Social, Emotional**
       (today: Crying, Sleep, Eating, Sensory, Social, Routine, Other)
-- [ ] Daily / weekly / monthly history
-- [ ] Calendar view
-- [ ] Trends and charts
-- [ ] Filter by category
+- [x] Daily / weekly / monthly history
+- [x] Calendar view
+- [x] Trends and charts
+- [x] Filter by category
 
 ### AI Parent Assistant
 
-- [ ] Save helpful responses
-- [ ] Feedback on AI responses (helpful / not helpful)
-- [ ] Links to related resources
-- [ ] Child-specific suggestions only when the parent opts in
+- [x] Save helpful responses
+- [x] Feedback on AI responses (helpful / not helpful)
+- [x] Links to related resources
+- [x] Child-specific suggestions only when the parent opts in
 
 ### Resources & Activities
 
-- [ ] Filter by category, age range and learning goal
-- [ ] Articles, videos and downloadable guides
-- [ ] Save favourites
-- [ ] Suggestions based on the child's learning goals
+- [x] Filter by category, age range and learning goal
+- [x] Articles, videos and downloadable guides
+- [x] Save favourites
+- [x] Suggestions based on the child's learning goals
 
 ### Find Support
 
-- [ ] Map view
-- [ ] Organisation detail page (overview, services, age groups, contact, location, partnership)
-- [ ] **Send an inquiry** (one-way, no chat)
-- [ ] Save favourite organisations
-- [ ] Filter by location and service type
+- [x] Map view
+- [x] Organisation detail page (overview, services, age groups, contact, location, partnership)
+- [x] **Send an inquiry** (one-way, no chat)
+- [x] Save favourite organisations
+- [x] Filter by location and service type
 
 ### Reports
 
-- [ ] Filter by date
-- [ ] **Download PDF**
-- [ ] Behaviour tracking reports and progress trends
-- [ ] Manage report-sharing permissions
-- [ ] Clearly separate parent observations, AI suggestions and professional comments
+- [x] Filter by date
+- [x] **Download PDF**
+- [x] Behaviour tracking reports and progress trends
+- [x] Manage report-sharing permissions
+- [x] Clearly separate parent observations, AI suggestions and professional comments
 
 ### Notifications
 
-- [ ] All / Unread filters
-- [ ] Mark all as read
-- [ ] Delete or archive
-- [ ] Notification preferences
-- [ ] Click opens the related page
+- [x] All / Unread filters
+- [x] Mark all as read
+- [x] Delete or archive
+- [x] Notification preferences
+- [x] Click opens the related page
 
 ### Settings & Privacy
 
-- [ ] One place to approve, review and revoke school access per child
+- [x] One place to approve, review and revoke school access per child
 
 ## 4. AutiCare Admin portal
 
@@ -159,7 +159,7 @@ Built: header, hero, features, how it works, pricing, final call to action.
 ### Operations & Growth
 
 - [x] Partnerships tracker (Prospect → Contacted → In Discussion → Active → Ended)
-- [ ] Inquiries & Support inbox: assign, notes, resolve
+- [ ] Inquiries & Support inbox: assign, notes, resolve _(parent inquiries now exist; the admin inbox is not built yet)_
 - [x] Analytics: registrations, school growth, Free→Pro conversion, revenue, churn,
       questionnaire completion, AI usage
 - [x] Announcements: audience, schedule, banner in the app
@@ -210,7 +210,7 @@ Built: header, hero, features, how it works, pricing, final call to action.
 ### Settings
 
 - [ ] Parent Collaboration: list of connected parents, access requests, revoked access
-- [ ] **Parent inquiries (read-only)**
+- [x] **Parent inquiries (read-only)** at `/schools/inquiries`
 - [ ] Subscription & Billing: payment method, invoices, cancel/change plan _(needs gateway)_
 
 ### Help & Support
@@ -232,6 +232,10 @@ Built: header, hero, features, how it works, pricing, final call to action.
 ---
 
 ## Known issues
+
+- [ ] Map view in Find Support is an "Open in Google Maps" link, not an embedded map
+- [ ] Activity images, videos and guides are links; there is no file upload
+- [ ] Notification preferences are stored but most notification senders do not check them yet
 
 - [ ] 4 integration tests fail (booking and admission race tests, and the admin
       appointment list); they fail on their own too, so they predate this work
