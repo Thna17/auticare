@@ -92,6 +92,8 @@ export const parentResponseSchema = z.object({
   lastName: z.string(),
   role: z.enum(userRoles),
   mustResetPassword: z.boolean().optional(),
+  /** Login name for school-managed teacher accounts; null for everyone else. */
+  username: z.string().nullable().optional(),
   /** Optional contact details the account holder can edit themselves. */
   phoneNumber: z.string().nullable(),
   socialMediaAccount: z.string().nullable(),
@@ -132,8 +134,13 @@ export const registerRequestSchema = z.object({
   lastName: z.string().min(1).max(80),
 });
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
+/**
+ * `email` carries the login identifier: an email address, or the username of
+ * a school-managed teacher account (which has no real email). The field keeps
+ * its name so existing clients keep working.
+ */
 export const loginRequestSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().min(1).max(254),
   password: z.string().min(1),
 });
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
@@ -193,7 +200,6 @@ export const acceptInvitationRequestSchema = z.object({
 export type AcceptInvitationRequest = z.infer<typeof acceptInvitationRequestSchema>;
 
 export const acceptInvitationResponseSchema = z.object({
-  message: z.string(),
   parent: parentResponseSchema,
 });
 export type AcceptInvitationResponse = z.infer<typeof acceptInvitationResponseSchema>;
@@ -551,11 +557,16 @@ export const updateSchoolProfileRequestSchema = z
   .refine((value) => Object.keys(value).length > 0, 'At least one school field is required.');
 export type UpdateSchoolProfileRequest = z.infer<typeof updateSchoolProfileRequestSchema>;
 
+/** ADMIN runs the school's account; TEACHER sees only assigned children. */
+export const schoolStaffRoles = ['ADMIN', 'TEACHER'] as const;
+export type SchoolStaffRole = (typeof schoolStaffRoles)[number];
+
 export const schoolStaffResponseSchema = z.object({
   id: z.string(),
   schoolId: z.string(),
   parentId: z.string(),
   title: z.string().nullable(),
+  role: z.enum(schoolStaffRoles),
 });
 export type SchoolStaffResponse = z.infer<typeof schoolStaffResponseSchema>;
 
@@ -1099,6 +1110,17 @@ export const enrolledStudentSchema = z.object({
       title: z.string().nullable(),
     })
     .nullable(),
+  /** Every teacher assigned to this child at this school. */
+  teachers: z
+    .array(
+      z.object({
+        id: z.string(),
+        firstName: z.string(),
+        lastName: z.string(),
+        title: z.string().nullable(),
+      }),
+    )
+    .optional(),
   communicationProgress: z.number().int(),
   age: z.number().optional(),
   dateOfBirth: z.string().optional(),
@@ -1655,3 +1677,205 @@ export const guidanceSearchResponseSchema = z.object({
   corpusSize: z.number().int(),
 });
 export type GuidanceSearchResponse = z.infer<typeof guidanceSearchResponseSchema>;
+
+// ── School connections ────────────────────────────────────────────────────
+//
+// Three pieces that let a school work with families on AutiCare:
+// 1. the school admin creates teacher accounts (username + one-time setup
+//    code, no email needed);
+// 2. the admin assigns one or more teachers to each enrolled child;
+// 3. the admin hands a family a single-use connection code; the parent enters
+//    it, picks their child and consents, which creates the enrollment.
+
+export const schoolStaffStatuses = ['ACTIVE', 'SETUP_PENDING', 'DEACTIVATED'] as const;
+export type SchoolStaffStatus = (typeof schoolStaffStatuses)[number];
+
+export const schoolStaffMemberSchema = z.object({
+  /** SchoolStaff id — the id used for assignment and staff actions. */
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  title: z.string().nullable(),
+  role: z.enum(schoolStaffRoles),
+  username: z.string().nullable(),
+  status: z.enum(schoolStaffStatuses),
+  assignedStudents: z.number().int(),
+});
+export type SchoolStaffMember = z.infer<typeof schoolStaffMemberSchema>;
+
+export const createTeacherRequestSchema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
+  title: z.string().trim().max(80).optional(),
+});
+export type CreateTeacherRequest = z.infer<typeof createTeacherRequestSchema>;
+
+/** Returned once, when a teacher is created or given a new setup code. */
+export const teacherCredentialsResponseSchema = z.object({
+  staff: schoolStaffMemberSchema,
+  username: z.string(),
+  setupCode: z.string(),
+  setupCodeExpiresAt: z.string(),
+});
+export type TeacherCredentialsResponse = z.infer<typeof teacherCredentialsResponseSchema>;
+
+/** POST /auth/staff-setup — a teacher's first sign-in. */
+export const staffSetupRequestSchema = z.object({
+  username: z.string().trim().min(3).max(80),
+  setupCode: z.string().trim().min(8).max(20),
+  password: z.string().min(12),
+});
+export type StaffSetupRequest = z.infer<typeof staffSetupRequestSchema>;
+
+/** PUT /schools/enrollments/:childId/teachers — replaces the assigned set. */
+export const assignTeachersRequestSchema = z.object({
+  staffIds: z.array(z.string().min(1)).max(10),
+});
+export type AssignTeachersRequest = z.infer<typeof assignTeachersRequestSchema>;
+
+export const connectionCodeStatuses = ['ACTIVE', 'USED', 'EXPIRED', 'REVOKED'] as const;
+export type ConnectionCodeStatus = (typeof connectionCodeStatuses)[number];
+
+export const createConnectionCodeRequestSchema = z.object({
+  label: z.string().trim().max(80).optional(),
+  teacherStaffIds: z.array(z.string().min(1)).max(10).optional(),
+});
+export type CreateConnectionCodeRequest = z.infer<typeof createConnectionCodeRequestSchema>;
+
+const codeTeacherSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+});
+
+export const connectionCodeSchema = z.object({
+  id: z.string(),
+  label: z.string().nullable(),
+  status: z.enum(connectionCodeStatuses),
+  expiresAt: z.string(),
+  createdAt: z.string(),
+  usedAt: z.string().nullable(),
+  childFirstName: z.string().nullable(),
+  teachers: z.array(codeTeacherSchema),
+});
+export type ConnectionCode = z.infer<typeof connectionCodeSchema>;
+
+/** The plain code exists only in this response; the server keeps a hash. */
+export const createdConnectionCodeResponseSchema = connectionCodeSchema.extend({
+  code: z.string(),
+});
+export type CreatedConnectionCodeResponse = z.infer<typeof createdConnectionCodeResponseSchema>;
+
+export const connectionCodeInputSchema = z.object({
+  code: z.string().trim().min(8).max(20),
+});
+export type ConnectionCodeInput = z.infer<typeof connectionCodeInputSchema>;
+
+const connectedSchoolSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  city: z.string(),
+  logoUrl: z.string().nullable(),
+});
+
+const connectedTeacherSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  title: z.string().nullable(),
+});
+
+/** POST /connections/preview — what the parent is about to connect to. */
+export const connectionPreviewResponseSchema = z.object({
+  school: connectedSchoolSchema,
+  label: z.string().nullable(),
+  expiresAt: z.string(),
+  teachers: z.array(connectedTeacherSchema),
+});
+export type ConnectionPreviewResponse = z.infer<typeof connectionPreviewResponseSchema>;
+
+/** POST /connections — the parent's explicit consent is part of the request. */
+export const connectSchoolRequestSchema = z.object({
+  code: z.string().trim().min(8).max(20),
+  childId: z.string().min(1),
+  consent: z.literal(true),
+});
+export type ConnectSchoolRequest = z.infer<typeof connectSchoolRequestSchema>;
+
+export const parentSchoolConnectionSchema = z.object({
+  enrollmentId: z.string(),
+  status: z.enum(schoolChildEnrollmentStatuses),
+  startDate: z.string(),
+  child: z.object({ id: z.string(), firstName: z.string() }),
+  school: connectedSchoolSchema,
+  teachers: z.array(connectedTeacherSchema),
+  /** Submitted reports only; drafts are never counted or shown to parents. */
+  reportCount: z.number().int(),
+});
+export type ParentSchoolConnection = z.infer<typeof parentSchoolConnectionSchema>;
+
+// ── School Registration Requests ─────────────────────────────────────────
+
+export const schoolRegistrationStatuses = ['PENDING', 'APPROVED', 'REJECTED'] as const;
+export type SchoolRegistrationStatus = (typeof schoolRegistrationStatuses)[number];
+
+export const schoolRegistrationRequestSchema = z.object({
+  schoolName: z.string().trim().min(1, 'School name is required.').max(160),
+  city: z.string().trim().min(1, 'City is required.').max(120),
+  address: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+  contactFirstName: z.string().trim().min(1, 'First name is required.').max(80),
+  contactLastName: z.string().trim().min(1, 'Last name is required.').max(80),
+  contactTitle: z
+    .string()
+    .trim()
+    .max(120)
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+  email: z.string().trim().toLowerCase().email('Enter a valid email address.'),
+  phone: z.string().trim().min(1, 'Phone number is required.').max(32),
+  studentCount: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? undefined : val),
+    z.coerce.number().int().min(1).max(100000).optional(),
+  ),
+  message: z
+    .string()
+    .trim()
+    .max(1000)
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+});
+export type SchoolRegistrationRequest = z.infer<typeof schoolRegistrationRequestSchema>;
+
+export const schoolRegistrationSchema = z.object({
+  id: z.string(),
+  schoolName: z.string(),
+  city: z.string(),
+  address: z.string().nullable(),
+  contactFirstName: z.string(),
+  contactLastName: z.string(),
+  contactTitle: z.string().nullable(),
+  email: z.string().email(),
+  phone: z.string(),
+  studentCount: z.number().int().nullable(),
+  message: z.string().nullable(),
+  status: z.enum(schoolRegistrationStatuses),
+  rejectionReason: z.string().nullable(),
+  reviewedById: z.string().nullable(),
+  reviewedAt: z.string().nullable(),
+  schoolId: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type SchoolRegistration = z.infer<typeof schoolRegistrationSchema>;
+
+export const rejectSchoolRegistrationRequestSchema = z.object({
+  reason: z.string().trim().min(3, 'Reason must be at least 3 characters.').max(500),
+});
+export type RejectSchoolRegistrationRequest = z.infer<typeof rejectSchoolRegistrationRequestSchema>;
