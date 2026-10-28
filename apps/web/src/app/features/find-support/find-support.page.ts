@@ -13,6 +13,7 @@ import { SchoolsApi } from '../schools/data-access/schools.api';
 import { HospitalsApi } from '../hospitals/data-access/hospitals.api';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 export interface SupportDirectoryItem {
   id: string;
@@ -27,32 +28,95 @@ export interface SupportDirectoryItem {
 
 export type SupportTypeFilter = 'ALL' | 'SCHOOL' | 'HOSPITAL';
 
+const COPY = {
+  en: {
+    eyebrow: 'Directory & Community',
+    title: 'Find Support',
+    subtitle:
+      'Explore verified schools and healthcare facilities supporting autistic children across Cambodia.',
+    searchPlaceholder: 'Search by name, city, or services…',
+    searchLabel: 'Search directory',
+    cityLabel: 'Filter by city',
+    allLocations: 'All Locations',
+    typeFilterLabel: 'Filter by facility type',
+    allSupport: 'All Support',
+    schools: 'Schools',
+    healthcare: 'Healthcare',
+    saved: 'Saved',
+    schoolTag: 'School',
+    healthcareTag: 'Healthcare',
+    verifiedPartner: 'AutiCare Partner',
+    saveBtn: 'Save',
+    savedBtn: 'Saved',
+    addFavorite: 'Save to favorites',
+    removeFavorite: 'Remove from favorites',
+    viewDetails: 'View details & inquiries',
+    emptyTitle: 'No support providers found',
+    emptyMessage:
+      'Try adjusting your search criteria, city filter, or saved filter to see available providers.',
+    loadError: 'Failed to load support directory. Please check your network and try again.',
+    retry: 'Try Again',
+    loading: 'Loading support directory…',
+    directoryLabel: 'Support directory list',
+    showingCount: (shown: number, total: number) =>
+      `Showing ${shown} of ${total} support providers`,
+  },
+  km: {
+    eyebrow: 'សហគមន៍ និងការថែទាំសុខភាព',
+    title: 'ស្វែងរកការគាំទ្រ',
+    subtitle: 'ស្វែងរកសាលារៀន និងមណ្ឌលសុខាភិបាលដែលគាំទ្រកុមារអូទីស្សឹមនៅទូទាំងប្រទេសកម្ពុជា។',
+    searchPlaceholder: 'ស្វែងរកតាមឈ្មោះ ទីក្រុង ឬសេវាកម្ម…',
+    searchLabel: 'ស្វែងរកក្នុងបញ្ជី',
+    cityLabel: 'ត្រងតាមទីក្រុង',
+    allLocations: 'គ្រប់ទីតាំងទាំងអស់',
+    typeFilterLabel: 'ត្រងតាមប្រភេទស្ថាប័ន',
+    allSupport: 'ទាំងអស់',
+    schools: 'សាលារៀន',
+    healthcare: 'មណ្ឌលសុខភាព',
+    saved: 'បានរក្សាទុក',
+    schoolTag: 'សាលារៀន',
+    healthcareTag: 'មណ្ឌលសុខភាព',
+    verifiedPartner: 'ដៃគូ AutiCare',
+    saveBtn: 'រក្សាទុក',
+    savedBtn: 'បានរក្សាទុក',
+    addFavorite: 'រក្សាទុកក្នុងបញ្ជីពេញចិត្ត',
+    removeFavorite: 'ដកចេញពីបញ្ជីពេញចិត្ត',
+    viewDetails: 'មើលព័ត៌មានលម្អិត និងទំនាក់ទំនង',
+    emptyTitle: 'រកមិនឃើញអ្នកផ្តល់ការគាំទ្រទេ',
+    emptyMessage: 'សូមសាកល្បងកែប្រែពាក្យស្វែងរក តម្រងទីក្រុង ឬតម្រងដែលបានរក្សាទុក។',
+    loadError: 'មិនអាចទាញយកបញ្ជីគាំទ្របានទេ។ សូមពិនិត្យបណ្តាញអ៊ីនធឺណិត ហើយព្យាយាមម្តងទៀត។',
+    retry: 'ព្យាយាមម្តងទៀត',
+    loading: 'កំពុងផ្ទុកបញ្ជីគាំទ្រ…',
+    directoryLabel: 'បញ្ជីស្ថាប័នគាំទ្រ',
+    showingCount: (shown: number, total: number) =>
+      `កំពុងបង្ហាញ ${shown} ក្នុងចំណោម ${total} ទីតាំងគាំទ្រ`,
+  },
+};
+
 @Component({
   selector: 'ac-find-support',
   standalone: true,
   imports: [FormsModule, UiSpinnerComponent, UiEmptyStateComponent],
   template: `
     <div class="support-page">
-      <header class="support-header">
+      <header class="page-head">
         <div>
-          <h1 class="page-title">Find Support</h1>
-          <p class="page-subtitle">
-            Explore verified schools and healthcare facilities supporting autistic children.
-          </p>
+          <p class="eyebrow">{{ copy().eyebrow }}</p>
+          <h1>{{ copy().title }}</h1>
+          <p class="subtitle">{{ copy().subtitle }}</p>
         </div>
       </header>
 
-      <section class="filters-panel">
+      <section class="filters-panel" [attr.aria-label]="copy().typeFilterLabel">
         <div class="search-row">
           <div class="search-field">
-            <span class="search-icon" aria-hidden="true">&#x1F50D;</span>
             <input
-              type="text"
+              type="search"
               class="search-input"
-              placeholder="Search by name, city, or services..."
+              [placeholder]="copy().searchPlaceholder"
               [ngModel]="searchTerm()"
               (ngModelChange)="searchTerm.set($event)"
-              aria-label="Search directory"
+              [attr.aria-label]="copy().searchLabel"
             />
           </div>
 
@@ -61,9 +125,9 @@ export type SupportTypeFilter = 'ALL' | 'SCHOOL' | 'HOSPITAL';
               class="city-select"
               [ngModel]="selectedCity()"
               (ngModelChange)="selectedCity.set($event)"
-              aria-label="Filter by city"
+              [attr.aria-label]="copy().cityLabel"
             >
-              <option value="ALL">All Locations</option>
+              <option value="ALL">{{ copy().allLocations }}</option>
               @for (city of cities(); track city) {
                 <option [value]="city">{{ city }}</option>
               }
@@ -72,30 +136,36 @@ export type SupportTypeFilter = 'ALL' | 'SCHOOL' | 'HOSPITAL';
         </div>
 
         <div class="filter-actions-row">
-          <div class="type-chips" role="group" aria-label="Type filter">
+          <div class="type-chips" role="group" [attr.aria-label]="copy().typeFilterLabel">
             <button
               type="button"
               class="chip-btn"
               [class.active]="selectedType() === 'ALL'"
+              [attr.aria-pressed]="selectedType() === 'ALL'"
               (click)="selectedType.set('ALL')"
             >
-              All Support
+              <span>{{ copy().allSupport }}</span>
+              <span class="count-pill">{{ items().length }}</span>
             </button>
             <button
               type="button"
               class="chip-btn"
               [class.active]="selectedType() === 'SCHOOL'"
+              [attr.aria-pressed]="selectedType() === 'SCHOOL'"
               (click)="selectedType.set('SCHOOL')"
             >
-              Schools
+              <span>{{ copy().schools }}</span>
+              <span class="count-pill">{{ schoolCount() }}</span>
             </button>
             <button
               type="button"
               class="chip-btn"
               [class.active]="selectedType() === 'HOSPITAL'"
+              [attr.aria-pressed]="selectedType() === 'HOSPITAL'"
               (click)="selectedType.set('HOSPITAL')"
             >
-              Healthcare
+              <span>{{ copy().healthcare }}</span>
+              <span class="count-pill">{{ hospitalCount() }}</span>
             </button>
           </div>
 
@@ -106,155 +176,173 @@ export type SupportTypeFilter = 'ALL' | 'SCHOOL' | 'HOSPITAL';
             (click)="favoritesOnly.set(!favoritesOnly())"
             [attr.aria-pressed]="favoritesOnly()"
           >
-            <span class="heart-icon">&#x2665;</span>
-            <span>Saved Favorites</span>
+            <span>{{ copy().saved }}</span>
+            @if (favoriteCount() > 0) {
+              <span class="count-pill">{{ favoriteCount() }}</span>
+            }
           </button>
         </div>
       </section>
 
       @if (loading()) {
         <div class="loading-state">
-          <ac-ui-spinner label="Loading support directory..."></ac-ui-spinner>
+          <ac-ui-spinner [label]="copy().loading"></ac-ui-spinner>
         </div>
       } @else if (error()) {
         <div class="error-banner" role="alert">
           <p>{{ error() }}</p>
-          <button type="button" class="btn-retry" (click)="loadDirectory()">Try Again</button>
+          <button type="button" class="btn-retry" (click)="loadDirectory()">
+            {{ copy().retry }}
+          </button>
         </div>
       } @else if (filteredItems().length === 0) {
         <ac-ui-empty-state
-          title="No support providers found"
-          message="Try adjusting your search criteria, city filter, or saved favorites toggle."
+          [title]="copy().emptyTitle"
+          [message]="copy().emptyMessage"
         ></ac-ui-empty-state>
       } @else {
         <div class="results-meta">
-          Showing {{ filteredItems().length }} of {{ items().length }} support providers
+          {{ copy().showingCount(filteredItems().length, items().length) }}
         </div>
 
-        <div class="support-grid">
-          @for (item of filteredItems(); track item.type + '-' + item.id) {
-            <article
-              class="support-card"
-              (click)="openDetail(item)"
-              (keydown.enter)="openDetail(item)"
-              tabindex="0"
-              role="button"
-              [attr.aria-label]="item.name + ', ' + item.city"
-            >
-              <div class="card-top">
-                <div class="type-badges">
-                  <span class="type-badge" [class.hospital-badge]="item.type === 'hospital'">
-                    {{ item.type === 'school' ? 'School' : 'Healthcare' }}
-                  </span>
-                  @if (item.isVerified) {
-                    <span class="verified-badge">&#x2713; AutiCare Partner</span>
-                  }
+        <section class="directory-panel" [attr.aria-label]="copy().directoryLabel">
+          <ul class="support-list">
+            @for (item of filteredItems(); track item.type + '-' + item.id) {
+              <li
+                class="support-card"
+                (click)="openDetail(item)"
+                (keydown.enter)="openDetail(item)"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="item.name + ', ' + item.city"
+              >
+                <div class="card-main">
+                  <div class="card-top">
+                    <div class="type-badges">
+                      <span class="type-badge" [class.hospital-badge]="item.type === 'hospital'">
+                        {{ item.type === 'school' ? copy().schoolTag : copy().healthcareTag }}
+                      </span>
+                      @if (item.isVerified) {
+                        <span class="verified-badge">{{ copy().verifiedPartner }}</span>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="card-body">
+                    <h2 class="item-name">{{ item.name }}</h2>
+                    <div class="item-city">
+                      <span class="city-name">{{ item.city }}</span>
+                      @if (item.address) {
+                        <span class="location-sep" aria-hidden="true">&bull;</span>
+                        <span class="address-text">{{ item.address }}</span>
+                      }
+                    </div>
+                    <p class="services-snippet">{{ item.servicesSnippet }}</p>
+                  </div>
                 </div>
 
-                <button
-                  type="button"
-                  class="heart-toggle-btn"
-                  [class.favorited]="item.isFavorite"
-                  (click)="toggleFavorite(item, $event)"
-                  [attr.aria-label]="item.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
-                >
-                  &#x2665;
-                </button>
-              </div>
-
-              <div class="card-body">
-                <h2 class="item-name">{{ item.name }}</h2>
-                <div class="item-city">
-                  <span aria-hidden="true">&#x1F4CD;</span>
-                  <span>{{ item.city }}</span>
+                <div class="card-actions">
+                  <button
+                    type="button"
+                    class="heart-toggle-btn"
+                    [class.favorited]="item.isFavorite"
+                    (click)="toggleFavorite(item, $event)"
+                    [attr.aria-label]="item.isFavorite ? copy().removeFavorite : copy().addFavorite"
+                  >
+                    {{ item.isFavorite ? copy().savedBtn : copy().saveBtn }}
+                  </button>
+                  <span class="link-label" aria-hidden="true">{{ copy().viewDetails }} &rarr;</span>
                 </div>
-                <p class="services-snippet">{{ item.servicesSnippet }}</p>
-              </div>
-
-              <div class="card-footer">
-                <span class="link-label">View details & inquiries &rarr;</span>
-              </div>
-            </article>
-          }
-        </div>
+              </li>
+            }
+          </ul>
+        </section>
       }
     </div>
   `,
   styles: [
     `
+      /* Full width layout matching the Children and Observations reference pages */
+      :host {
+        display: block;
+        padding-bottom: var(--ac-space-12);
+      }
+
       .support-page {
         display: flex;
         flex-direction: column;
-        gap: var(--ac-spacing-lg);
-        padding: var(--ac-spacing-lg);
-        max-width: 1200px;
-        margin: 0 auto;
+        gap: var(--ac-space-6);
       }
 
-      .support-header {
+      .page-head {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        border-bottom: 1px solid var(--ac-color-border);
-        padding-bottom: var(--ac-spacing-md);
+        gap: var(--ac-space-6);
+        flex-wrap: wrap;
       }
 
-      .page-title {
-        font-size: var(--ac-type-h1);
+      .eyebrow {
+        margin: 0 0 var(--ac-space-2);
+        color: var(--ac-color-action-mid);
+        font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text);
-        margin: 0 0 var(--ac-spacing-xs) 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
 
-      .page-subtitle {
-        font-size: var(--ac-type-body);
-        color: var(--ac-color-text-muted);
+      h1 {
         margin: 0;
+        color: var(--ac-color-text-strong);
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-tight);
+        font-weight: var(--ac-font-weight-bold);
+      }
+
+      .subtitle {
+        margin: var(--ac-space-2) 0 0;
+        color: var(--ac-color-text-body);
+        font-size: var(--ac-type-page-subtitle);
+        line-height: var(--ac-line-body);
+        max-width: 680px;
       }
 
       .filters-panel {
         display: flex;
         flex-direction: column;
-        gap: var(--ac-spacing-md);
+        gap: var(--ac-space-4);
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-md);
-        padding: var(--ac-spacing-md);
+        border-radius: var(--ac-radius-lg);
+        padding: var(--ac-space-4);
       }
 
       .search-row {
         display: flex;
-        gap: var(--ac-spacing-md);
+        gap: var(--ac-space-3);
         flex-wrap: wrap;
       }
 
       .search-field {
         flex: 1;
         min-width: 260px;
-        position: relative;
-        display: flex;
-        align-items: center;
-      }
-
-      .search-icon {
-        position: absolute;
-        left: var(--ac-spacing-sm);
-        color: var(--ac-color-text-muted);
-        pointer-events: none;
       }
 
       .search-input {
         width: 100%;
-        padding: var(--ac-spacing-sm) var(--ac-spacing-sm) var(--ac-spacing-sm) 2.2rem;
+        min-height: 44px;
+        padding: 0 var(--ac-space-4);
         border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-sm);
-        background: var(--ac-color-background);
-        color: var(--ac-color-text);
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font: inherit;
         font-size: var(--ac-type-body);
+        box-sizing: border-box;
       }
 
       .search-input:focus {
-        outline: 2px solid var(--ac-color-primary);
+        outline: 2px solid var(--ac-color-focus);
         border-color: transparent;
       }
 
@@ -264,12 +352,20 @@ export type SupportTypeFilter = 'ALL' | 'SCHOOL' | 'HOSPITAL';
 
       .city-select {
         width: 100%;
-        padding: var(--ac-spacing-sm);
+        min-height: 44px;
+        padding: 0 var(--ac-space-3);
         border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-sm);
-        background: var(--ac-color-background);
-        color: var(--ac-color-text);
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font: inherit;
         font-size: var(--ac-type-body);
+        box-sizing: border-box;
+      }
+
+      .city-select:focus {
+        outline: 2px solid var(--ac-color-focus);
+        border-color: transparent;
       }
 
       .filter-actions-row {
@@ -277,224 +373,302 @@ export type SupportTypeFilter = 'ALL' | 'SCHOOL' | 'HOSPITAL';
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: var(--ac-spacing-sm);
+        gap: var(--ac-space-3);
       }
 
       .type-chips {
         display: flex;
-        gap: var(--ac-spacing-xs);
+        gap: var(--ac-space-2);
+        flex-wrap: wrap;
       }
 
       .chip-btn {
-        padding: var(--ac-spacing-xs) var(--ac-spacing-md);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ac-space-2);
+        min-height: 36px;
+        padding: 0 var(--ac-space-3);
         border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-full, 9999px);
-        background: var(--ac-color-background);
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-muted);
         cursor: pointer;
-        font-size: var(--ac-type-small);
-        font-weight: var(--ac-font-weight-medium);
+        font: inherit;
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-semibold);
         transition:
-          background-color 0.2s,
-          color 0.2s;
+          border-color var(--ac-motion-fast),
+          color var(--ac-motion-fast),
+          background var(--ac-motion-fast);
+      }
+
+      .chip-btn:hover {
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
       }
 
       .chip-btn.active {
-        background: var(--ac-color-primary);
-        color: var(--ac-color-surface);
-        border-color: var(--ac-color-primary);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        border-color: var(--ac-color-action);
       }
 
       .favorite-filter-btn {
         display: inline-flex;
         align-items: center;
-        gap: var(--ac-spacing-xs);
-        padding: var(--ac-spacing-xs) var(--ac-spacing-md);
+        gap: var(--ac-space-2);
+        min-height: 36px;
+        padding: 0 var(--ac-space-3);
         border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-full, 9999px);
-        background: var(--ac-color-background);
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-muted);
         cursor: pointer;
-        font-size: var(--ac-type-small);
-        font-weight: var(--ac-font-weight-medium);
-        transition: all 0.2s;
+        font: inherit;
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-semibold);
+        transition:
+          border-color var(--ac-motion-fast),
+          color var(--ac-motion-fast),
+          background var(--ac-motion-fast);
+      }
+
+      .favorite-filter-btn:hover {
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
       }
 
       .favorite-filter-btn.active {
-        background: color-mix(in srgb, var(--ac-color-danger) 15%, transparent);
-        color: var(--ac-color-danger);
-        border-color: var(--ac-color-danger);
+        background: var(--ac-color-amber-tint-50);
+        color: var(--ac-color-amber-800);
+        border-color: var(--ac-color-amber-tint-sand);
       }
 
-      .favorite-filter-btn .heart-icon {
-        font-size: 1.1rem;
+      .count-pill {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: var(--ac-radius-pill);
+        background: color-mix(in srgb, currentColor 18%, transparent);
+        font-size: 0.75rem;
       }
 
       .results-meta {
-        font-size: var(--ac-type-small);
+        font-size: var(--ac-type-meta);
         color: var(--ac-color-text-muted);
       }
 
-      .support-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: var(--ac-spacing-md);
+      /* Unified list panel with row dividers, avoiding card overload */
+      .directory-panel {
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-lg);
+        background: var(--ac-color-surface);
+        overflow: clip;
+      }
+
+      .support-list {
+        display: flex;
+        flex-direction: column;
+        list-style: none;
+        margin: 0;
+        padding: 0;
       }
 
       .support-card {
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-md);
-        padding: var(--ac-spacing-md);
         display: flex;
-        flex-direction: column;
         justify-content: space-between;
-        gap: var(--ac-spacing-md);
+        align-items: flex-start;
+        gap: var(--ac-space-4);
+        padding: var(--ac-space-4) var(--ac-space-5);
+        border-top: 1px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
         cursor: pointer;
-        transition:
-          transform 0.15s,
-          border-color 0.15s,
-          box-shadow 0.15s;
+        transition: background var(--ac-motion-fast);
+      }
+
+      .support-card:first-child {
+        border-top: none;
       }
 
       .support-card:hover {
-        transform: translateY(-2px);
-        border-color: var(--ac-color-primary);
-        box-shadow: 0 4px 12px color-mix(in srgb, var(--ac-color-primary) 10%, transparent);
+        background: var(--ac-color-surface-info);
+      }
+
+      .support-card:focus-visible {
+        outline: 2px solid var(--ac-color-focus);
+        outline-offset: -2px;
+      }
+
+      .card-main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-space-2);
       }
 
       .card-top {
         display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: var(--ac-spacing-xs);
+        align-items: center;
+        gap: var(--ac-space-2);
       }
 
       .type-badges {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--ac-spacing-xs);
+        gap: var(--ac-space-2);
+        align-items: center;
       }
 
       .type-badge {
         display: inline-block;
-        font-size: var(--ac-type-small);
-        font-weight: var(--ac-font-weight-bold);
-        padding: 0.15rem 0.5rem;
-        border-radius: var(--ac-radius-sm);
-        background: color-mix(in srgb, var(--ac-color-primary) 15%, transparent);
-        color: var(--ac-color-primary);
+        font-size: 0.75rem;
+        font-weight: var(--ac-font-weight-semibold);
+        padding: 2px 8px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-ice-blue-soft);
+        color: var(--ac-brand-800);
+        border: 1px solid var(--ac-color-ice-blue-border);
       }
 
       .type-badge.hospital-badge {
-        background: color-mix(
-          in srgb,
-          var(--ac-color-accent, var(--ac-color-primary)) 15%,
-          transparent
-        );
-        color: var(--ac-color-accent, var(--ac-color-primary));
+        background: var(--ac-color-surface-info);
+        color: var(--ac-brand-900);
+        border-color: var(--ac-brand-300);
       }
 
       .verified-badge {
         display: inline-block;
-        font-size: var(--ac-type-small);
-        font-weight: var(--ac-font-weight-medium);
-        padding: 0.15rem 0.5rem;
-        border-radius: var(--ac-radius-sm);
-        background: color-mix(in srgb, var(--ac-color-success) 15%, transparent);
-        color: var(--ac-color-success);
-      }
-
-      .heart-toggle-btn {
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        font-size: 1.35rem;
-        line-height: 1;
-        padding: var(--ac-spacing-xs);
-        color: var(--ac-color-text-muted);
-        transition:
-          transform 0.15s,
-          color 0.15s;
-      }
-
-      .heart-toggle-btn:hover {
-        transform: scale(1.15);
-        color: var(--ac-color-danger);
-      }
-
-      .heart-toggle-btn.favorited {
-        color: var(--ac-color-danger);
+        font-size: 0.75rem;
+        font-weight: var(--ac-font-weight-semibold);
+        padding: 2px 8px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-green-tint-50);
+        color: var(--ac-color-green-dark);
+        border: 1px solid var(--ac-color-green-border-soft);
       }
 
       .card-body {
         display: flex;
         flex-direction: column;
-        gap: var(--ac-spacing-xs);
+        gap: var(--ac-space-1);
       }
 
       .item-name {
-        font-size: var(--ac-type-h3);
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text);
         margin: 0;
+        font-size: 1.0625rem;
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
         line-height: var(--ac-line-tight);
       }
 
       .item-city {
         display: flex;
         align-items: center;
-        gap: var(--ac-spacing-xs);
-        font-size: var(--ac-type-small);
+        gap: var(--ac-space-2);
+        font-size: var(--ac-type-meta);
         color: var(--ac-color-text-muted);
+        flex-wrap: wrap;
+      }
+
+      .location-sep {
+        color: var(--ac-color-border-grey);
       }
 
       .services-snippet {
         font-size: var(--ac-type-body);
-        color: var(--ac-color-text-muted);
-        margin: var(--ac-spacing-xs) 0 0 0;
+        color: var(--ac-color-text-body);
+        line-height: var(--ac-line-body);
+        margin: var(--ac-space-1) 0 0;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
 
-      .card-footer {
-        border-top: 1px solid var(--ac-color-border);
-        padding-top: var(--ac-spacing-sm);
-        margin-top: auto;
+      .card-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--ac-space-3);
+        flex-shrink: 0;
+      }
+
+      .heart-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 36px;
+        padding: 0 var(--ac-space-3);
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-muted);
+        font: inherit;
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-semibold);
+        cursor: pointer;
+        transition:
+          border-color var(--ac-motion-fast),
+          color var(--ac-motion-fast),
+          background var(--ac-motion-fast);
+      }
+
+      .heart-toggle-btn:hover {
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
+      }
+
+      .heart-toggle-btn.favorited {
+        background: var(--ac-color-amber-tint-50);
+        color: var(--ac-color-amber-800);
+        border-color: var(--ac-color-amber-tint-sand);
       }
 
       .link-label {
-        font-size: var(--ac-type-small);
-        font-weight: var(--ac-font-weight-medium);
-        color: var(--ac-color-primary);
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-action-mid);
+        white-space: nowrap;
+      }
+
+      .support-card:hover .link-label {
+        color: var(--ac-color-action-deep);
       }
 
       .loading-state {
-        padding: var(--ac-spacing-xl);
+        padding: var(--ac-space-8);
         display: flex;
         justify-content: center;
       }
 
       .error-banner {
-        padding: var(--ac-spacing-md);
-        background: color-mix(in srgb, var(--ac-color-danger) 15%, transparent);
-        border: 1px solid var(--ac-color-danger);
+        padding: var(--ac-space-4);
+        background: var(--ac-color-red-tint-50);
+        border: 1px solid var(--ac-color-red-tint-muted);
         border-radius: var(--ac-radius-md);
-        color: var(--ac-color-danger);
+        color: var(--ac-color-alert-text);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: var(--ac-space-4);
       }
 
       .btn-retry {
-        background: var(--ac-color-danger);
-        color: var(--ac-color-surface);
+        min-height: 36px;
+        padding: 0 var(--ac-space-4);
+        background: var(--ac-color-alert-strong);
+        color: var(--ac-color-text-on-action);
         border: none;
-        padding: var(--ac-spacing-xs) var(--ac-spacing-md);
-        border-radius: var(--ac-radius-sm);
+        border-radius: var(--ac-radius-md);
+        font: inherit;
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-semibold);
         cursor: pointer;
+      }
+
+      button:focus-visible {
+        outline: 2px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
     `,
   ],
@@ -504,6 +678,10 @@ export class FindSupportPage implements OnInit {
   private readonly schoolsApi = inject(SchoolsApi);
   private readonly hospitalsApi = inject(HospitalsApi);
   private readonly router = inject(Router);
+  private readonly i18n = inject(I18nService);
+
+  readonly currentLang = this.i18n.currentLang;
+  readonly copy = computed(() => COPY[this.currentLang()] ?? COPY.en);
 
   readonly items = signal<SupportDirectoryItem[]>([]);
   readonly loading = signal(true);
@@ -513,6 +691,10 @@ export class FindSupportPage implements OnInit {
   readonly selectedCity = signal('ALL');
   readonly selectedType = signal<SupportTypeFilter>('ALL');
   readonly favoritesOnly = signal(false);
+
+  readonly schoolCount = computed(() => this.items().filter((i) => i.type === 'school').length);
+  readonly hospitalCount = computed(() => this.items().filter((i) => i.type === 'hospital').length);
+  readonly favoriteCount = computed(() => this.items().filter((i) => i.isFavorite).length);
 
   readonly cities = computed(() => {
     const list = this.items().map((i) => i.city.trim());
@@ -587,7 +769,7 @@ export class FindSupportPage implements OnInit {
           address: h.address,
           servicesSnippet: h.services || 'Pediatric & developmental health services',
           isVerified: false,
-          isFavorite: Boolean((h as { isFavorite?: boolean }).isFavorite),
+          isFavorite: (h as { isFavorite?: boolean }).isFavorite ?? false,
         }));
 
         const combined = [...mappedSchools, ...mappedHospitals].sort((a, b) =>
@@ -597,9 +779,7 @@ export class FindSupportPage implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set(
-          'Failed to load support directory. Please check your network and try again.',
-        );
+        this.error.set(this.copy().loadError);
         this.loading.set(false);
       },
     });

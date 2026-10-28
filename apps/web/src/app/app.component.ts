@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ClientErrorService } from './core/errors/global-error-handler';
 import { I18nService } from './core/i18n/i18n.service';
+import { PreviewBadgeComponent } from './core/preview/preview-badge.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, PreviewBadgeComponent],
   template: `
     @if (errorService.errorMessage(); as errorMsg) {
       <aside class="global-error-toast" role="alert" aria-live="assertive">
@@ -30,6 +31,7 @@ import { I18nService } from './core/i18n/i18n.service';
       </aside>
     }
     <router-outlet />
+    <ac-preview-badge />
   `,
   styles: [
     `

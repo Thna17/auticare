@@ -12,7 +12,10 @@ import { forkJoin, of, switchMap } from 'rxjs';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { ScreeningApi } from '../screening/data-access/screening.api';
-import { ScreeningAnswerScaleComponent } from '../screening/components/screening-answer-scale.component';
+import {
+  defaultAnswerScale,
+  type AnswerScaleOption,
+} from '../screening/components/screening-answer-scale.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
@@ -31,8 +34,6 @@ type Step = 'child' | 'intro' | 'questions' | 'result';
  */
 const COPY = {
   en: {
-    brand: 'AutiCare',
-    privacy: 'Private to your family',
     child: {
       eyebrow: 'Getting started',
       title: 'Who are we supporting?',
@@ -124,8 +125,6 @@ const COPY = {
     },
   },
   km: {
-    brand: 'AutiCare',
-    privacy: 'ឯកជនសម្រាប់គ្រួសារអ្នក',
     child: {
       eyebrow: 'ចាប់ផ្តើម',
       title: 'តើយើងកំពុងជួយកុមារណា?',
@@ -229,7 +228,6 @@ const COPY = {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    ScreeningAnswerScaleComponent,
     UiFieldComponent,
     UiMessageComponent,
     UiSpinnerComponent,
@@ -237,235 +235,252 @@ const COPY = {
   ],
   template: `
     <div class="page">
-      <header class="topbar">
-        <span class="brand">
-          <span class="brand-mark" aria-hidden="true">A</span>
-          {{ copy().brand }}
-        </span>
-        <span class="privacy">
-          <span class="lock" aria-hidden="true"></span>
-          {{ copy().privacy }}
-        </span>
-      </header>
+      <aside class="photo" aria-hidden="true">
+        <img src="/images/onboarding-family.jpg" alt="" width="1600" height="1067" />
+      </aside>
 
-      <main class="stage" [attr.aria-busy]="saving()">
-        @if (error()) {
-          <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
-        }
+      <div class="pane">
+        <main class="stage" [attr.aria-busy]="saving()">
+          @if (error()) {
+            <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
+          }
 
-        <!-- ── Step 1: the child ─────────────────────────────────────────── -->
-        @if (step() === 'child') {
-          <section class="card" aria-labelledby="child-title">
-            <p class="eyebrow">{{ copy().child.eyebrow }}</p>
-            <h1 id="child-title">{{ copy().child.title }}</h1>
-            <p class="lede">{{ copy().child.subtitle }}</p>
+          <!-- ── Step 1: the child ─────────────────────────────────────────── -->
+          @if (step() === 'child') {
+            <section class="card" aria-labelledby="child-title">
+              <p class="eyebrow">{{ copy().child.eyebrow }}</p>
+              <h1 id="child-title">{{ copy().child.title }}</h1>
+              <p class="lede">{{ copy().child.subtitle }}</p>
 
-            <form [formGroup]="childForm" (ngSubmit)="createChild()" acAccessibleForm novalidate>
-              <ac-ui-field
-                [label]="copy().child.firstName"
-                [required]="true"
-                [error]="
-                  childForm.controls.firstName.touched && childForm.controls.firstName.invalid
-                    ? copy().child.nameError
-                    : null
-                "
-              >
-                <input
-                  type="text"
-                  formControlName="firstName"
-                  autocomplete="off"
-                  maxlength="80"
-                  [placeholder]="copy().child.firstNamePlaceholder"
-                />
-              </ac-ui-field>
+              <form [formGroup]="childForm" (ngSubmit)="createChild()" acAccessibleForm novalidate>
+                <ac-ui-field
+                  [label]="copy().child.firstName"
+                  [required]="true"
+                  [error]="
+                    childForm.controls.firstName.touched && childForm.controls.firstName.invalid
+                      ? copy().child.nameError
+                      : null
+                  "
+                >
+                  <input
+                    type="text"
+                    formControlName="firstName"
+                    autocomplete="off"
+                    maxlength="80"
+                    [placeholder]="copy().child.firstNamePlaceholder"
+                  />
+                </ac-ui-field>
 
-              <ac-ui-field
-                [label]="copy().child.dob"
-                [required]="true"
-                [error]="
-                  childForm.controls.dateOfBirth.touched && childForm.controls.dateOfBirth.invalid
-                    ? copy().child.dobError
-                    : null
-                "
-              >
-                <input type="date" formControlName="dateOfBirth" [max]="today" />
-              </ac-ui-field>
+                <ac-ui-field
+                  [label]="copy().child.dob"
+                  [required]="true"
+                  [error]="
+                    childForm.controls.dateOfBirth.touched && childForm.controls.dateOfBirth.invalid
+                      ? copy().child.dobError
+                      : null
+                  "
+                >
+                  <input type="date" formControlName="dateOfBirth" [max]="today" />
+                </ac-ui-field>
 
-              <ac-ui-field [label]="copy().child.notes">
-                <textarea
-                  formControlName="notes"
-                  rows="3"
-                  maxlength="2000"
-                  [placeholder]="copy().child.notesPlaceholder"
-                ></textarea>
-              </ac-ui-field>
+                <ac-ui-field [label]="copy().child.notes">
+                  <textarea
+                    formControlName="notes"
+                    rows="3"
+                    maxlength="2000"
+                    [placeholder]="copy().child.notesPlaceholder"
+                  ></textarea>
+                </ac-ui-field>
 
-              <button type="submit" class="primary" [disabled]="saving()">
-                {{ saving() ? copy().questions.working : copy().child.submit }}
-              </button>
-            </form>
-          </section>
-        }
+                <button type="submit" class="primary" [disabled]="saving()">
+                  {{ saving() ? copy().questions.working : copy().child.submit }}
+                </button>
+              </form>
+            </section>
+          }
 
-        <!-- ── Step 2: what this is ──────────────────────────────────────── -->
-        @if (step() === 'intro') {
-          <section class="card" aria-labelledby="intro-title">
-            <p class="eyebrow">{{ copy().intro.eyebrow(childName()) }}</p>
-            <h1 id="intro-title">{{ copy().intro.title }}</h1>
-            <p class="hint">{{ childAge() }}</p>
-            <p class="lede">{{ copy().intro.body }}</p>
+          <!-- ── Step 2: what this is ──────────────────────────────────────── -->
+          @if (step() === 'intro') {
+            <section class="card" aria-labelledby="intro-title">
+              <p class="eyebrow">{{ copy().intro.eyebrow(childName()) }}</p>
+              <h1 id="intro-title">{{ copy().intro.title }}</h1>
+              <p class="hint">{{ childAge() }}</p>
+              <p class="lede">{{ copy().intro.body }}</p>
 
-            <ul class="points">
-              @for (point of copy().intro.points; track point) {
-                <li>
-                  <span class="tick" aria-hidden="true"></span>
-                  {{ point }}
-                </li>
-              }
-            </ul>
+              <ul class="points">
+                @for (point of copy().intro.points; track point) {
+                  <li>
+                    <span class="tick" aria-hidden="true"></span>
+                    {{ point }}
+                  </li>
+                }
+              </ul>
 
-            <p class="notice">{{ copy().intro.notice }}</p>
+              <p class="notice">{{ copy().intro.notice }}</p>
 
-            <div class="actions">
-              <button
-                type="button"
-                class="primary"
-                (click)="startAssessment()"
-                [disabled]="saving()"
-              >
-                {{ saving() ? copy().questions.working : copy().intro.start }}
-              </button>
-              <button type="button" class="ghost" (click)="skip()">{{ copy().intro.skip }}</button>
-            </div>
-          </section>
-        }
-
-        <!-- ── Step 3: the questions ─────────────────────────────────────── -->
-        @if (step() === 'questions' && currentQuestion(); as question) {
-          <section class="card question-card" aria-labelledby="question-title">
-            <div class="progress-head">
-              <span class="progress-label">
-                {{ copy().questions.progress(index() + 1, questions().length) }}
-              </span>
-              <span
-                class="progress-track"
-                role="progressbar"
-                [attr.aria-valuenow]="index() + 1"
-                [attr.aria-valuemin]="1"
-                [attr.aria-valuemax]="questions().length"
-              >
-                <span class="progress-fill" [style.width.%]="progressPercent()"></span>
-              </span>
-            </div>
-
-            <h1 id="question-title" class="question">{{ question.questionText }}</h1>
-            <p class="hint">{{ copy().questions.hint }}</p>
-
-            <ac-screening-answer-scale
-              [value]="selectedAnswer()"
-              [disabled]="saving()"
-              (valueChange)="answer($event)"
-            />
-
-            <div class="actions row">
-              <button type="button" class="ghost" (click)="previous()" [disabled]="index() === 0">
-                {{ copy().questions.back }}
-              </button>
-              @if (index() === questions().length - 1) {
+              <div class="actions">
                 <button
                   type="button"
                   class="primary"
-                  [disabled]="selectedAnswer() === null || saving()"
-                  (click)="submit()"
+                  (click)="startAssessment()"
+                  [disabled]="saving()"
                 >
-                  {{ saving() ? copy().questions.working : copy().questions.finish }}
+                  {{ saving() ? copy().questions.working : copy().intro.start }}
                 </button>
-              } @else {
-                <button
-                  type="button"
-                  class="primary"
-                  [disabled]="selectedAnswer() === null"
-                  (click)="next()"
-                >
-                  {{ copy().questions.next }}
+                <button type="button" class="ghost" (click)="skip()">
+                  {{ copy().intro.skip }}
                 </button>
-              }
-            </div>
-          </section>
-        }
+              </div>
+            </section>
+          }
 
-        @if (step() === 'questions' && !currentQuestion() && !error()) {
-          <ac-ui-spinner [label]="copy().questions.working" />
-        }
+          <!-- ── Step 3: the questions ─────────────────────────────────────── -->
+          @if (step() === 'questions' && currentQuestion(); as question) {
+            <section class="question-step" aria-labelledby="question-title">
+              <h1 id="question-title" class="question">{{ question.questionText }}</h1>
+              <p class="hint">{{ copy().questions.hint }}</p>
 
-        <!-- ── Step 4: the result ───────────────────────────────────────── -->
-        @if (step() === 'result' && result(); as outcome) {
-          <section
-            class="card result"
-            [class.band-low]="bandKey() === 'low'"
-            [class.band-moderate]="bandKey() === 'moderate'"
-            [class.band-high]="bandKey() === 'high'"
-          >
-            <p class="eyebrow">{{ copy().result.eyebrow }}</p>
-            <div class="band-row">
-              <span class="band-chip"> {{ copy().result.band }} · {{ band().label }} </span>
-            </div>
-            <h1>{{ band().headline }}</h1>
-            <p class="lede">{{ band().meaning }}</p>
+              <div class="options" role="radiogroup" aria-labelledby="question-title">
+                @for (option of scale; track option.value) {
+                  <label class="option" [class.selected]="selectedAnswer() === option.value">
+                    <input
+                      type="radio"
+                      name="answer"
+                      [value]="option.value"
+                      [checked]="selectedAnswer() === option.value"
+                      [disabled]="saving()"
+                      (change)="answer(option.value)"
+                    />
+                    <span class="radio" aria-hidden="true"></span>
+                    <span class="option-label">{{ optionLabel(option) }}</span>
+                  </label>
+                }
+              </div>
 
-            @if (outcome.result?.riskPercentage != null) {
-              <p class="score-caption">
-                {{ copy().result.scoreCaption(outcome.result?.riskPercentage ?? 0) }}
-              </p>
-            }
-
-            <div class="areas">
-              <h2>{{ copy().result.areas }}</h2>
-              @for (area of areas(); track area.category) {
-                <div class="area">
-                  <div class="area-head">
-                    <span class="area-name">{{ area.category }}</span>
-                    <span class="area-level"> {{ area.percent }}% </span>
-                  </div>
-                  <span class="bar">
-                    <span
-                      class="bar-fill"
-                      [class.lv-moderate]="area.riskLevel === 'MODERATE'"
-                      [class.lv-high]="area.riskLevel === 'HIGH'"
-                      [style.width.%]="area.percent"
-                    ></span>
+              <footer class="question-foot">
+                <div class="step-meta">
+                  <span class="step-label">
+                    {{ copy().questions.progress(index() + 1, questions().length) }}
+                  </span>
+                  <span
+                    class="step-track"
+                    role="progressbar"
+                    [attr.aria-valuenow]="index() + 1"
+                    [attr.aria-valuemin]="1"
+                    [attr.aria-valuemax]="questions().length"
+                  >
+                    <span class="step-fill" [style.width.%]="progressPercent()"></span>
                   </span>
                 </div>
+
+                <div class="nav-buttons">
+                  <button
+                    type="button"
+                    class="round back"
+                    [attr.aria-label]="copy().questions.back"
+                    [disabled]="index() === 0"
+                    (click)="previous()"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                  </button>
+                  @if (index() === questions().length - 1) {
+                    <button
+                      type="button"
+                      class="finish"
+                      [disabled]="selectedAnswer() === null || saving()"
+                      (click)="submit()"
+                    >
+                      {{ saving() ? copy().questions.working : copy().questions.finish }}
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="round next"
+                      [attr.aria-label]="copy().questions.next"
+                      [disabled]="selectedAnswer() === null"
+                      (click)="next()"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                    </button>
+                  }
+                </div>
+              </footer>
+            </section>
+          }
+
+          @if (step() === 'questions' && !currentQuestion() && !error()) {
+            <ac-ui-spinner [label]="copy().questions.working" />
+          }
+
+          <!-- ── Step 4: the result ───────────────────────────────────────── -->
+          @if (step() === 'result' && result(); as outcome) {
+            <section
+              class="card result"
+              [class.band-low]="bandKey() === 'low'"
+              [class.band-moderate]="bandKey() === 'moderate'"
+              [class.band-high]="bandKey() === 'high'"
+            >
+              <p class="eyebrow">{{ copy().result.eyebrow }}</p>
+              <div class="band-row">
+                <span class="band-chip"> {{ copy().result.band }} · {{ band().label }} </span>
+              </div>
+              <h1>{{ band().headline }}</h1>
+              <p class="lede">{{ band().meaning }}</p>
+
+              @if (outcome.result?.riskPercentage != null) {
+                <p class="score-caption">
+                  {{ copy().result.scoreCaption(outcome.result?.riskPercentage ?? 0) }}
+                </p>
               }
-            </div>
 
-            <ol class="steps">
-              @for (step of band().steps; track step) {
-                <li>{{ step }}</li>
-              }
-            </ol>
+              <div class="areas">
+                <h2>{{ copy().result.areas }}</h2>
+                @for (area of areas(); track area.category) {
+                  <div class="area">
+                    <div class="area-head">
+                      <span class="area-name">{{ area.category }}</span>
+                      <span class="area-level"> {{ area.percent }}% </span>
+                    </div>
+                    <span class="bar">
+                      <span
+                        class="bar-fill"
+                        [class.lv-moderate]="area.riskLevel === 'MODERATE'"
+                        [class.lv-high]="area.riskLevel === 'HIGH'"
+                        [style.width.%]="area.percent"
+                      ></span>
+                    </span>
+                  </div>
+                }
+              </div>
 
-            <p class="notice">{{ copy().result.disclaimer }}</p>
+              <ol class="steps">
+                @for (step of band().steps; track step) {
+                  <li>{{ step }}</li>
+                }
+              </ol>
 
-            <div class="actions">
-              <button type="button" class="primary" (click)="finish()">
-                {{ copy().result.dashboard }}
-              </button>
-            </div>
-            <div class="actions row secondary-row">
-              <button type="button" class="ghost" (click)="go('/hospitals')">
-                {{ copy().result.specialist }}
-              </button>
-              <button type="button" class="ghost" (click)="go('/activities')">
-                {{ copy().result.activities }}
-              </button>
-              <button type="button" class="ghost" (click)="restart()">
-                {{ copy().result.retake }}
-              </button>
-            </div>
-          </section>
-        }
-      </main>
+              <p class="notice">{{ copy().result.disclaimer }}</p>
+
+              <div class="actions">
+                <button type="button" class="primary" (click)="finish()">
+                  {{ copy().result.dashboard }}
+                </button>
+              </div>
+              <div class="actions row secondary-row">
+                <button type="button" class="ghost" (click)="go('/hospitals')">
+                  {{ copy().result.specialist }}
+                </button>
+                <button type="button" class="ghost" (click)="go('/activities')">
+                  {{ copy().result.activities }}
+                </button>
+                <button type="button" class="ghost" (click)="restart()">
+                  {{ copy().result.retake }}
+                </button>
+              </div>
+            </section>
+          }
+        </main>
+      </div>
     </div>
   `,
   styles: [
@@ -474,73 +489,51 @@ const COPY = {
         display: block;
       }
 
+      /* Split screen: a photo that stays put, and the steps beside it. */
       .page {
         min-height: 100vh;
-        background: var(--ac-color-background);
-        padding: 0 20px 64px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        background: var(--ac-color-surface);
       }
 
-      .topbar {
-        max-width: 760px;
-        margin: 0 auto;
-        padding: 22px 0;
+      .photo {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--ac-brand-50);
+      }
+
+      .photo img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 55% center;
+      }
+
+      .pane {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-      }
-
-      .brand {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 700;
-        font-size: 18px;
-        color: var(--ac-color-text-strong);
-      }
-
-      .brand-mark {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 30px;
-        height: 30px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-        font-size: 15px;
-        font-weight: 800;
-      }
-
-      .privacy {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: var(--ac-type-meta);
-        color: var(--ac-color-text-muted);
-      }
-
-      .lock {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        background: var(--ac-color-green-teal);
+        flex-direction: column;
+        min-width: 0;
+        padding: 0 clamp(24px, 5vw, 80px) 48px;
       }
 
       .stage {
-        max-width: 760px;
+        flex: 1;
+        width: 100%;
+        max-width: 560px;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
+        justify-content: center;
         gap: 16px;
+        padding: 24px 0;
       }
 
+      /* On the white half the steps need no card around them. */
       .card {
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-xl);
-        box-shadow: var(--ac-shadow-sm);
-        padding: 36px 32px;
         display: flex;
         flex-direction: column;
         gap: 14px;
@@ -695,39 +688,189 @@ const COPY = {
         outline-offset: 2px;
       }
 
-      .progress-head {
+      .question-step {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-      }
-
-      .progress-label {
-        font-size: var(--ac-type-label);
-        font-weight: 700;
-        color: var(--ac-color-text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-      }
-
-      .progress-track {
-        display: block;
-        height: 6px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-surface-slate);
-        overflow: hidden;
-      }
-
-      .progress-fill {
-        display: block;
-        height: 100%;
-        background: var(--ac-color-action);
-        transition: width var(--ac-motion-normal);
       }
 
       .question {
-        font-size: clamp(21px, 2.6vw, 27px);
-        line-height: 1.35;
-        margin-top: 6px;
+        font-size: clamp(24px, 2.4vw, 32px);
+        line-height: 1.25;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+
+      .options {
+        display: grid;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .option {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        border: 1px solid var(--ac-color-border);
+        border-radius: 12px;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          border-color var(--ac-motion-fast),
+          background var(--ac-motion-fast),
+          box-shadow var(--ac-motion-fast);
+      }
+
+      .option:hover {
+        border-color: color-mix(in srgb, var(--ac-color-action) 45%, transparent);
+      }
+
+      .option.selected {
+        border-color: var(--ac-color-action);
+        background: var(--ac-brand-50);
+        box-shadow: 0 0 0 1px var(--ac-color-action);
+      }
+
+      /* The real radio stays for keyboards and screen readers, drawn by .radio. */
+      .option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .option:has(input:focus-visible) {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
+      }
+
+      .option:has(input:disabled) {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .radio {
+        flex: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--ac-color-text-muted);
+        display: grid;
+        place-items: center;
+        transition: border-color var(--ac-motion-fast);
+      }
+
+      .option.selected .radio {
+        border-color: var(--ac-color-action);
+      }
+
+      .option.selected .radio::after {
+        content: '';
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--ac-color-action);
+      }
+
+      .question-foot {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-top: 56px;
+      }
+
+      .step-meta {
+        display: grid;
+        gap: 12px;
+        flex: 1;
+        max-width: 280px;
+      }
+
+      .step-label {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ac-color-text-strong);
+      }
+
+      .step-track {
+        display: block;
+        height: 2px;
+        background: var(--ac-color-border);
+      }
+
+      .step-fill {
+        display: block;
+        height: 100%;
+        background: var(--ac-color-text-strong);
+        transition: width var(--ac-motion-normal);
+      }
+
+      .nav-buttons {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .round,
+      .finish {
+        font: inherit;
+        border: 0;
+        cursor: pointer;
+        transition:
+          background var(--ac-motion-fast),
+          transform var(--ac-motion-fast);
+      }
+
+      .round {
+        display: grid;
+        place-items: center;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+      }
+
+      .round svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .round.back {
+        background: var(--ac-color-surface-slate);
+        color: var(--ac-color-text-muted);
+      }
+
+      .round.next,
+      .finish {
+        background: var(--ac-color-text-strong);
+        color: var(--ac-color-surface);
+      }
+
+      .finish {
+        height: 52px;
+        padding: 0 24px;
+        border-radius: 999px;
+        font-weight: 700;
+      }
+
+      .round.next:hover:not(:disabled),
+      .finish:hover:not(:disabled) {
+        background: var(--ac-color-action-deep);
+      }
+
+      .round:active:not(:disabled),
+      .finish:active:not(:disabled) {
+        transform: scale(0.96);
       }
 
       .hint {
@@ -830,14 +973,28 @@ const COPY = {
         font-size: var(--ac-type-body);
       }
 
-      @media (max-width: 640px) {
+      @media (max-width: 900px) {
         .page {
-          padding: 0 14px 48px;
+          grid-template-columns: minmax(0, 1fr);
         }
 
-        .card {
-          padding: 24px 18px;
-          border-radius: var(--ac-radius-lg);
+        .photo {
+          position: relative;
+          height: 220px;
+        }
+
+        .photo img {
+          object-position: 55% 30%;
+        }
+
+        .pane {
+          padding: 0 20px 40px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .question-foot {
+          margin-top: 36px;
         }
 
         .actions.row {
@@ -867,6 +1024,15 @@ export class OnboardingPage implements OnInit {
   private readonly childrenApi = inject(ChildrenApi);
   private readonly screeningApi = inject(ScreeningApi);
   private readonly onboarding = inject(OnboardingState);
+
+  /** Never … Always, the same 0–4 scale as the full screening. */
+  protected readonly scale = defaultAnswerScale;
+
+  protected optionLabel(option: AnswerScaleOption): string {
+    return this.i18n.currentLang() === 'km'
+      ? (option.labelKm ?? option.label)
+      : (option.labelEn ?? option.label);
+  }
 
   protected readonly copy = computed(() => COPY[this.i18n.currentLang()]);
   protected readonly today = new Date().toISOString().slice(0, 10);

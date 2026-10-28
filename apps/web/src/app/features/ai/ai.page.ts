@@ -471,7 +471,7 @@ const COPY = {
         margin-bottom: 16px;
         padding: 10px 14px;
         border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
         font-size: var(--ac-type-meta);
       }
@@ -551,7 +551,7 @@ const COPY = {
         padding: 10px 16px;
         border-radius: var(--ac-radius-md);
         border: 1px solid var(--ac-color-border);
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-strong);
         font: inherit;
         font-size: 14px;
@@ -574,7 +574,7 @@ const COPY = {
       .bubble.user {
         align-self: flex-end;
         background: var(--ac-color-action);
-        color: var(--ac-color-action-contrast);
+        color: var(--ac-color-text-on-action);
         border-bottom-right-radius: 4px;
       }
 
@@ -584,32 +584,28 @@ const COPY = {
 
       .bubble.assistant {
         align-self: flex-start;
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-strong);
         border: 1px solid var(--ac-color-border);
         border-bottom-left-radius: 4px;
       }
 
       .bubble.assistant.crisis {
-        border-color: var(--ac-color-error, var(--ac-color-border));
-        background: color-mix(
-          in srgb,
-          var(--ac-color-error, var(--ac-color-action)) 8%,
-          var(--ac-color-surface-elevated)
-        );
+        border-color: var(--ac-color-alert-strong);
+        background: color-mix(in srgb, var(--ac-color-alert-strong) 8%, var(--ac-color-surface));
       }
 
       .kind-label {
         margin: 0 0 8px;
         font-weight: 700;
-        color: var(--ac-color-error, var(--ac-color-text-strong));
+        color: var(--ac-color-alert-text);
       }
 
       .crisis-link {
         display: inline-block;
         margin-top: 10px;
         font-weight: 700;
-        color: var(--ac-color-error, var(--ac-color-action));
+        color: var(--ac-color-alert-text);
       }
 
       .badge {
@@ -783,7 +779,7 @@ const COPY = {
       .saved-card {
         padding: 16px;
         border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
       }
 
@@ -823,7 +819,7 @@ const COPY = {
         align-items: flex-end;
         padding: 12px;
         border-radius: var(--ac-radius-lg);
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
       }
 
@@ -843,7 +839,7 @@ const COPY = {
         border-radius: var(--ac-radius-pill);
         border: none;
         background: var(--ac-color-action);
-        color: var(--ac-color-action-contrast);
+        color: var(--ac-color-text-on-action);
         font: inherit;
         font-weight: 600;
         cursor: pointer;

@@ -31,11 +31,6 @@ export interface ActivityRow {
 
 export type ActivityStatusFilter = 'ALL' | 'IN_PROGRESS' | 'COMPLETED' | 'NOT_STARTED' | 'SAVED';
 
-interface StatusOption {
-  readonly value: ActivityStatusFilter;
-  readonly label: string;
-}
-
 interface CategoryOption {
   readonly value: string;
   readonly label: string;
@@ -147,11 +142,24 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         }}</a>
       </ac-ui-empty-state>
     } @else {
-      <!-- Filter Toolbar -->
-      <ac-ui-card>
-        <div class="controls">
-          <label class="control">
-            <span>{{ currentLang() === 'km' ? 'កុមារ' : 'Child' }}</span>
+      <!-- Toolbar: search stays visible; category and recommendation filters wait behind "Filters". -->
+      <div class="toolbar">
+        <label class="search-control">
+          <span class="visually-hidden">{{
+            currentLang() === 'km' ? 'ស្វែងរកសកម្មភាព' : 'Search Activities'
+          }}</span>
+          <input
+            type="search"
+            [placeholder]="currentLang() === 'km' ? 'ស្វែងរកសកម្មភាព…' : 'Search activities…'"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            name="search"
+          />
+        </label>
+
+        @if (children().length > 1) {
+          <label class="child-control">
+            <span class="visually-hidden">{{ currentLang() === 'km' ? 'កុមារ' : 'Child' }}</span>
             <select
               [ngModel]="selectedChildId()"
               (ngModelChange)="selectChild($event)"
@@ -162,26 +170,25 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
               }
             </select>
           </label>
+        }
 
-          <label class="control search-control">
-            <span>{{ currentLang() === 'km' ? 'ស្វែងរកសកម្មភាព' : 'Search Activities' }}</span>
-            <div class="search-field-wrapper">
-              <input
-                type="search"
-                [placeholder]="
-                  currentLang() === 'km'
-                    ? 'ស្វែងរកសកម្មភាពតាមពាក្យគន្លឹះ (ឧ. ពពុះ, ដីឥដ្ឋ, បន្ធូរអារម្មណ៍, អង្ករ, ស្លឹកចេក)...'
-                    : 'Search activities by keyword (e.g. bubbles, clay, calming, rice, banana leaf)...'
-                "
-                [ngModel]="searchQuery()"
-                (ngModelChange)="searchQuery.set($event)"
-                name="search"
-              />
-            </div>
-          </label>
-        </div>
+        <button
+          type="button"
+          class="filters-toggle"
+          [class.active]="filtersOpen() || activeFilterCount() > 0"
+          [attr.aria-expanded]="filtersOpen()"
+          aria-controls="activity-filters"
+          (click)="filtersOpen.set(!filtersOpen())"
+        >
+          {{ currentLang() === 'km' ? 'តម្រង' : 'Filters' }}
+          @if (activeFilterCount() > 0) {
+            <span class="filter-count">{{ activeFilterCount() }}</span>
+          }
+        </button>
+      </div>
 
-        <!-- Playful Category Pills Toolbar -->
+      <!-- Kept in the DOM and toggled with [hidden] so the disclosure has a stable target. -->
+      <div id="activity-filters" class="filters-panel" [hidden]="!filtersOpen()">
         <div
           class="category-pills-row"
           role="group"
@@ -189,78 +196,55 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
             currentLang() === 'km' ? 'ត្រងតាមប្រភេទអភិវឌ្ឍន៍' : 'Filter by developmental category'
           "
         >
-          <span class="toolbar-label">{{ currentLang() === 'km' ? 'ប្រភេទ:' : 'Category:' }}</span>
+          <span class="toolbar-label">{{ currentLang() === 'km' ? 'ប្រភេទ' : 'Category' }}</span>
           <div class="category-pills">
             @for (cat of categoryOptions(); track cat.value) {
               <button
                 type="button"
                 class="category-pill-btn"
                 [class.active]="category() === cat.value"
+                [attr.aria-pressed]="category() === cat.value"
                 (click)="selectCategory(cat.value)"
               >
-                <span class="cat-icon" aria-hidden="true">{{ cat.icon }}</span>
-                <span>{{ cat.label }}</span>
+                {{ cat.label }}
               </button>
             }
           </div>
         </div>
 
-        <!-- Status & Screening Priority Filter Pills -->
-        <div class="filter-pills-row">
-          <span class="filter-pills-label">{{
-            currentLang() === 'km' ? 'ស្ថានភាព:' : 'Status:'
-          }}</span>
-          <div
-            class="status-pills"
-            role="group"
-            [attr.aria-label]="
-              currentLang() === 'km' ? 'ត្រងតាមស្ថានភាពសកម្មភាព' : 'Filter by activity status'
-            "
-          >
-            @for (opt of statusOptions(); track opt.value) {
-              <button
-                type="button"
-                class="pill-btn"
-                [class.active]="statusFilter() === opt.value"
-                (click)="statusFilter.set(opt.value)"
-              >
-                {{ opt.label }}
-              </button>
-            }
-          </div>
-
+        <div class="filters-footer">
           <button
             type="button"
             class="pill-btn pill-btn--recommended"
             [class.active]="onlyRecommended()"
+            [attr.aria-pressed]="onlyRecommended()"
             (click)="onlyRecommended.set(!onlyRecommended())"
-            [attr.aria-label]="
-              currentLang() === 'km'
-                ? 'ត្រងសកម្មភាពដែលបានណែនាំសម្រាប់កុមារ'
-                : 'Filter activities recommended for child'
-            "
           >
-            <span class="recommend-star" aria-hidden="true">★</span>
-            <span>
-              @if (currentLang() === 'km') {
-                ណែនាំសម្រាប់ {{ selectedChild()?.firstName || 'កុមារ' }}
-              } @else {
-                Recommended for {{ selectedChild()?.firstName || 'Child' }}
-              }
-            </span>
+            @if (currentLang() === 'km') {
+              ណែនាំសម្រាប់ {{ selectedChild()?.firstName || 'កុមារ' }}
+            } @else {
+              Recommended for {{ selectedChild()?.firstName || 'Child' }}
+            }
           </button>
+          @if (activeFilterCount() > 0) {
+            <button type="button" class="link-btn" (click)="resetFilters()">
+              {{ currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear filters' }}
+            </button>
+          }
         </div>
-      </ac-ui-card>
+      </div>
 
-      <!-- Summary Statistics Bar -->
+      <!-- Status tabs: the counts double as the status filter. -->
       <section
         class="summary-bar"
+        role="group"
         [attr.aria-label]="currentLang() === 'km' ? 'ស្ថិតិសកម្មភាព' : 'Activity statistics'"
       >
         <button
           type="button"
           class="summary-card"
           [class.active]="statusFilter() === 'ALL'"
+          [attr.aria-pressed]="statusFilter() === 'ALL'"
           (click)="statusFilter.set('ALL')"
         >
           <span class="metric-label">{{
@@ -272,21 +256,37 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
           type="button"
           class="summary-card"
           [class.active]="statusFilter() === 'IN_PROGRESS'"
+          [attr.aria-pressed]="statusFilter() === 'IN_PROGRESS'"
           (click)="statusFilter.set('IN_PROGRESS')"
         >
           <span class="metric-label">{{
             currentLang() === 'km' ? 'កំពុងអនុវត្ត' : 'In Progress'
           }}</span>
-          <span class="metric-val going">{{ summaryCounts().inProgress }}</span>
+          <span class="metric-val">{{ summaryCounts().inProgress }}</span>
         </button>
         <button
           type="button"
           class="summary-card"
           [class.active]="statusFilter() === 'COMPLETED'"
+          [attr.aria-pressed]="statusFilter() === 'COMPLETED'"
           (click)="statusFilter.set('COMPLETED')"
         >
           <span class="metric-label">{{ currentLang() === 'km' ? 'បានបញ្ចប់' : 'Completed' }}</span>
-          <span class="metric-val done">{{ summaryCounts().completed }}</span>
+          <span class="metric-val">{{ summaryCounts().completed }}</span>
+        </button>
+        <button
+          type="button"
+          class="summary-card"
+          [class.active]="statusFilter() === 'NOT_STARTED'"
+          [attr.aria-pressed]="statusFilter() === 'NOT_STARTED'"
+          (click)="statusFilter.set('NOT_STARTED')"
+        >
+          <span class="metric-label">{{
+            currentLang() === 'km' ? 'មិនទាន់ចាប់ផ្តើម' : 'Not Started'
+          }}</span>
+          <span class="metric-val">{{
+            summaryCounts().total - summaryCounts().inProgress - summaryCounts().completed
+          }}</span>
         </button>
       </section>
 
@@ -351,6 +351,7 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
           @for (row of rows(); track row.activity.id) {
             <li>
               <ac-ui-card [interactive]="true">
+                <!-- Details, steps and the reflection note live in the guide; the card stays short. -->
                 <article class="activity">
                   <header>
                     <div class="category-badges">
@@ -362,14 +363,6 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                           currentLang() === 'km' ? 'អាទិភាពវាយតម្លៃ' : 'Screening Priority'
                         }}</span>
                       }
-                      <span
-                        class="difficulty-badge"
-                        [attr.data-level]="getDifficulty(row.activity)"
-                      >
-                        <span class="difficulty-dot"></span>
-                        {{ getDifficultyLabel(row.activity) }}
-                      </span>
-                      <span class="duration-badge">⏱ {{ getDurationLabel(row.activity) }}</span>
                     </div>
                     <span class="ages">
                       {{ currentLang() === 'km' ? 'អាយុ៖ ' : 'Ages: '
@@ -378,25 +371,29 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                     </span>
                   </header>
 
-                  <h2 (click)="openActivityDrawer(row)" class="activity-title-link">
-                    {{ getActivityTitle(row.activity) }}
-                  </h2>
-                  <p class="summary">{{ getActivitySummary(row.activity) }}</p>
-
-                  <div class="card-footer-actions">
+                  <h2 class="activity-title">
                     <button
                       type="button"
-                      class="guide-btn"
+                      class="activity-title-link"
                       (click)="openActivityDrawer(row)"
-                      [attr.aria-label]="
-                        currentLang() === 'km'
-                          ? 'បើកការណែនាំសកម្មភាពជាជំហានៗ'
-                          : 'Open step-by-step activity guide'
-                      "
                     >
-                      <span>{{
-                        currentLang() === 'km' ? 'ការណែនាំ និងជំហាន ↗' : 'Activity Guide & Steps ↗'
-                      }}</span>
+                      {{ getActivityTitle(row.activity) }}
+                    </button>
+                  </h2>
+                  <p class="summary">{{ getActivitySummary(row.activity) }}</p>
+                  <p class="activity-meta">
+                    <span
+                      class="difficulty-badge"
+                      [attr.data-level]="getDifficulty(row.activity)"
+                      >{{ getDifficultyLabel(row.activity) }}</span
+                    >
+                    ·
+                    <span class="duration-badge">{{ getDurationLabel(row.activity) }}</span>
+                  </p>
+
+                  <div class="card-footer-actions">
+                    <button type="button" class="guide-btn" (click)="openActivityDrawer(row)">
+                      {{ currentLang() === 'km' ? 'ការណែនាំ និងជំហាន' : 'Activity Guide & Steps' }}
                     </button>
 
                     @if (row.progress === null) {
@@ -412,84 +409,25 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                           {{ currentLang() === 'km' ? 'ចាប់ផ្តើមសកម្មភាព' : 'Start activity' }}
                         }
                       </button>
+                    } @else if (row.progress.completedAt) {
+                      <span class="status done">{{
+                        currentLang() === 'km' ? 'បានបញ្ចប់' : 'Completed'
+                      }}</span>
                     } @else {
-                      <div class="progress-row">
-                        @if (row.progress.completedAt) {
-                          <span class="status done">{{
-                            currentLang() === 'km' ? '✓ បានបញ្ចប់' : '✓ Completed'
-                          }}</span>
-                          <button
-                            type="button"
-                            class="plain"
-                            [disabled]="busyProgressId() === row.progress.id"
-                            (click)="setCompleted(row.progress, false)"
-                          >
-                            {{
-                              currentLang() === 'km' ? 'សម្គាល់ថាមិនទាន់រួច' : 'Mark as not done'
-                            }}
-                          </button>
-                        } @else {
-                          <span class="status going">{{
-                            currentLang() === 'km' ? 'កំពុងអនុវត្ត' : 'In progress'
-                          }}</span>
-                          <button
-                            type="button"
-                            class="primary"
-                            [disabled]="busyProgressId() === row.progress.id"
-                            (click)="setCompleted(row.progress, true)"
-                          >
-                            @if (busyProgressId() === row.progress.id) {
-                              {{ currentLang() === 'km' ? 'កំពុងរក្សាទុក…' : 'Saving…' }}
-                            } @else {
-                              {{
-                                currentLang() === 'km' ? 'សម្គាល់ថាបានបញ្ចប់' : 'Mark as completed'
-                              }}
-                            }
-                          </button>
-                        }
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Quick reflection note preview (collapsible) -->
-                  @if (row.progress) {
-                    <label class="note">
-                      <span>
-                        {{
-                          currentLang() === 'km'
-                            ? 'កំណត់ត្រាសង្កេតរបស់មាតាបិតា'
-                            : 'Parent reflection note'
-                        }}
-                        <em>{{
-                          currentLang() === 'km'
-                            ? '(អាចមើលឃើញតែអ្នកប៉ុណ្ណោះ)'
-                            : '(only visible to you)'
-                        }}</em>
-                      </span>
-                      <textarea
-                        rows="2"
-                        [ngModel]="noteDraft(row.progress)"
-                        (ngModelChange)="setNoteDraft(row.progress.id, $event)"
-                        [name]="'note-' + row.progress.id"
-                        maxlength="2000"
-                        [placeholder]="
-                          currentLang() === 'km'
-                            ? 'កត់ត្រាការសង្កេត៖ ការឆ្លើយតបរបស់កុមារ ការសម្លឹងភ្នែក កាយវិការ ឬចំណុចដែលកុមារចូលចិត្ត…'
-                            : 'Log observations: eye contact, gestures, favourite moments…'
-                        "
-                      ></textarea>
                       <button
                         type="button"
-                        class="plain save-note-btn"
-                        [disabled]="
-                          !noteChanged(row.progress) || busyProgressId() === row.progress.id
-                        "
-                        (click)="saveNote(row.progress)"
+                        class="primary"
+                        [disabled]="busyProgressId() === row.progress.id"
+                        (click)="setCompleted(row.progress, true)"
                       >
-                        {{ currentLang() === 'km' ? 'រក្សាទុកកំណត់ចំណាំ' : 'Save note' }}
+                        @if (busyProgressId() === row.progress.id) {
+                          {{ currentLang() === 'km' ? 'កំពុងរក្សាទុក…' : 'Saving…' }}
+                        } @else {
+                          {{ currentLang() === 'km' ? 'សម្គាល់ថាបានបញ្ចប់' : 'Mark as completed' }}
+                        }
                       </button>
-                    </label>
-                  }
+                    }
+                  </div>
                 </article>
               </ac-ui-card>
             </li>
@@ -524,7 +462,7 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
                 <span class="difficulty-dot"></span>
                 {{ getDifficultyLabel(selected.activity) }}
               </span>
-              <span class="duration-badge">⏱ {{ getDurationLabel(selected.activity) }}</span>
+              <span class="duration-badge">{{ getDurationLabel(selected.activity) }}</span>
               <span class="ages">
                 {{ currentLang() === 'km' ? 'អាយុ៖ ' : 'Ages: ' }}
                 {{ monthsToLabel(selected.activity.minAgeMonths) }} –
@@ -835,22 +773,33 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         line-height: 1.55;
       }
 
-      .controls {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
       }
 
-      .control {
-        display: grid;
-        gap: 6px;
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text-strong);
-        font-size: 13px;
+      /* Toolbar: search, child, and the Filters disclosure on one line. */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
       }
 
       .search-control {
         flex: 1 1 280px;
+        display: flex;
+      }
+
+      .search-control input {
+        width: 100%;
       }
 
       select,
@@ -874,11 +823,57 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         border-color: var(--ac-color-action);
       }
 
-      /* Category Pills Toolbar */
+      .filters-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 0 16px;
+        border: 1px solid var(--ac-color-border-grey);
+        border-radius: var(--ac-radius-md, 12px);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: border-color var(--ac-motion-fast, 150ms);
+      }
+
+      .filters-toggle:hover,
+      .filters-toggle.active {
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
+      }
+
+      .filter-count {
+        display: inline-grid;
+        place-items: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: var(--ac-radius-pill, 999px);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        font-size: 12px;
+      }
+
+      .filters-panel {
+        margin-top: 12px;
+        padding: 16px;
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md, 12px);
+        background: var(--ac-color-surface);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .filters-panel[hidden] {
+        display: none;
+      }
+
       .category-pills-row {
-        margin-top: 14px;
-        padding-top: 14px;
-        border-top: 1px solid var(--ac-color-border-slate);
         display: flex;
         align-items: center;
         gap: 12px;
@@ -888,7 +883,7 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
       .toolbar-label {
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text-strong);
+        color: var(--ac-color-text-muted);
         white-space: nowrap;
       }
 
@@ -898,60 +893,7 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         flex-wrap: wrap;
       }
 
-      .category-pill-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        min-height: 34px;
-        padding: 0 14px;
-        border-radius: var(--ac-radius-pill, 999px);
-        border: 1px solid var(--ac-color-border-grey);
-        background: var(--ac-color-surface);
-        color: var(--ac-color-text-body);
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all var(--ac-motion-fast, 150ms) ease;
-      }
-
-      .category-pill-btn:hover {
-        background: var(--ac-color-tint-blue-wash);
-        border-color: var(--ac-color-action);
-      }
-
-      .category-pill-btn.active {
-        background: var(--ac-color-action);
-        border-color: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-      }
-
-      .cat-icon {
-        font-size: 14px;
-      }
-
-      /* Status Filter Pills Row */
-      .filter-pills-row {
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid var(--ac-color-border-slate);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-
-      .filter-pills-label {
-        font-size: var(--ac-type-meta);
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text-strong);
-      }
-
-      .status-pills {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
+      .category-pill-btn,
       .pill-btn {
         min-height: 34px;
         padding: 0 14px;
@@ -959,100 +901,111 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         border: 1px solid var(--ac-color-border-grey);
         background: var(--ac-color-surface);
         color: var(--ac-color-text-body);
-        font-size: var(--ac-type-meta);
-        font-weight: var(--ac-font-weight-medium);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
         transition: all var(--ac-motion-fast, 150ms) ease;
       }
 
+      .category-pill-btn:hover,
       .pill-btn:hover {
-        background: var(--ac-color-tint-blue-wash);
+        border-color: var(--ac-color-action);
       }
 
+      .category-pill-btn.active,
       .pill-btn.active {
         background: var(--ac-color-action);
         border-color: var(--ac-color-action);
         color: var(--ac-color-text-on-action);
       }
 
-      .pill-btn--recommended {
-        border-color: var(--ac-color-amber-500);
-        color: var(--ac-color-amber-800);
-        background: var(--ac-color-amber-tint-100);
-        margin-left: auto;
-      }
-
-      .pill-btn--recommended:hover {
-        border-color: var(--ac-color-alert-amber);
-        background: var(--ac-color-amber-tint-50);
-      }
-
-      .pill-btn--recommended.active {
-        background: var(--ac-color-amber-500);
-        color: var(--ac-color-text-on-action);
-        border-color: var(--ac-color-amber-600);
-      }
-
-      .recommend-star {
-        margin-right: 4px;
-      }
-
-      /* Summary Metrics Strip */
-      .summary-bar {
-        margin: 16px 0 20px;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      .filters-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         gap: 12px;
+        flex-wrap: wrap;
+        padding-top: 14px;
+        border-top: 1px solid var(--ac-color-border-slate);
+      }
+
+      .link-btn {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--ac-color-action-deep);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .link-btn:hover {
+        text-decoration: underline;
+      }
+
+      /* Status tabs: one quiet row, the counts sit beside each label. */
+      .summary-bar {
+        margin: 20px 0 4px;
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--ac-color-border);
       }
 
       .summary-card {
-        padding: 14px 18px;
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-md, 12px);
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        text-align: left;
-        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: -1px;
+        padding: 10px 14px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: none;
+        color: var(--ac-color-text-muted);
         font: inherit;
-        box-shadow: var(--ac-shadow-xs);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
         transition:
-          border-color var(--ac-motion-fast, 150ms) ease,
-          box-shadow var(--ac-motion-fast, 150ms) ease;
+          color var(--ac-motion-fast, 150ms),
+          border-color var(--ac-motion-fast, 150ms);
       }
 
       .summary-card:hover {
-        background: var(--ac-color-tint-blue-wash);
-        box-shadow: var(--ac-shadow-sm);
-      }
-
-      .summary-card.active {
-        border-color: var(--ac-color-action);
-        outline: 2px solid var(--ac-color-action);
-        outline-offset: -2px;
-      }
-
-      .metric-label {
-        font-size: var(--ac-type-meta);
-        color: var(--ac-color-text-muted);
-        font-weight: var(--ac-font-weight-medium);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      .metric-val {
-        font-size: 1.5rem;
-        font-weight: var(--ac-font-weight-bold);
         color: var(--ac-color-text-strong);
       }
 
-      .metric-val.going {
+      .summary-card.active {
+        color: var(--ac-color-action-deep);
+        border-bottom-color: var(--ac-color-action);
+      }
+
+      .metric-val {
+        min-width: 22px;
+        padding: 1px 7px;
+        border-radius: var(--ac-radius-pill, 999px);
+        background: var(--ac-color-surface-slate);
+        color: var(--ac-color-text-body);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .summary-card.active .metric-val {
+        background: color-mix(in srgb, var(--ac-color-action) 14%, transparent);
         color: var(--ac-color-action-deep);
       }
 
-      .metric-val.done {
-        color: var(--ac-color-success);
+      .filters-toggle:focus-visible,
+      .category-pill-btn:focus-visible,
+      .pill-btn:focus-visible,
+      .link-btn:focus-visible,
+      .summary-card:focus-visible,
+      .activity-title-link:focus-visible,
+      .guide-btn:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
 
       /* Grid of Activity Cards */
@@ -1155,10 +1108,19 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         font-weight: 500;
       }
 
-      .activity-title-link {
+      .activity-title {
         margin: 8px 0 6px;
         font-size: 1.1rem;
+        line-height: var(--ac-line-tight);
+      }
+
+      .activity-title-link {
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
         font-weight: 700;
+        text-align: left;
         color: var(--ac-color-text-strong);
         cursor: pointer;
         transition: color var(--ac-motion-fast, 150ms);
@@ -1169,10 +1131,32 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
       }
 
       .summary {
-        margin: 0 0 14px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin: 0;
         color: var(--ac-color-text);
         line-height: 1.55;
         font-size: 14px;
+      }
+
+      .activity-meta {
+        margin: 8px 0 0;
+        color: var(--ac-color-text-muted);
+        font-size: var(--ac-type-meta);
+      }
+
+      /* On the card these read as plain text; the guide keeps the badge look. */
+      .activity-meta .difficulty-badge,
+      .activity-meta .duration-badge {
+        display: inline;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: inherit;
+        font-size: inherit;
+        font-weight: inherit;
       }
 
       .card-footer-actions {
@@ -1187,20 +1171,18 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
       }
 
       .guide-btn {
-        background: transparent;
-        border: 1px solid var(--ac-color-border-grey);
-        border-radius: var(--ac-radius-md, 10px);
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-size: 13px;
         font-weight: 600;
-        color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
         cursor: pointer;
-        transition: all var(--ac-motion-fast, 150ms);
       }
 
       .guide-btn:hover {
-        background: var(--ac-color-tint-blue-wash);
-        border-color: var(--ac-color-action);
+        text-decoration: underline;
       }
 
       .progress-row {
@@ -1276,31 +1258,6 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
       .plain:disabled {
         opacity: 0.6;
         cursor: not-allowed;
-      }
-
-      .note {
-        display: grid;
-        gap: 6px;
-        margin-top: 12px;
-        font-size: var(--ac-type-meta);
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text-strong);
-        justify-items: start;
-      }
-
-      .note em {
-        font-style: normal;
-        font-weight: var(--ac-font-weight-regular, 400);
-        color: var(--ac-color-grey-b);
-      }
-
-      .note textarea {
-        width: 100%;
-        box-sizing: border-box;
-      }
-
-      .save-note-btn {
-        margin-top: 4px;
       }
 
       /* Activity Guide Modal Styles */
@@ -1677,18 +1634,14 @@ export class ActivitiesPage implements OnInit {
     });
   }
 
-  protected readonly statusOptions = computed<readonly StatusOption[]>(() => {
-    const isKm = this.currentLang() === 'km';
-    return [
-      { value: 'ALL', label: isKm ? 'ទាំងអស់' : 'All' },
-      { value: 'IN_PROGRESS', label: isKm ? 'កំពុងអនុវត្ត' : 'In Progress' },
-      { value: 'COMPLETED', label: isKm ? 'បានបញ្ចប់' : 'Completed' },
-      { value: 'NOT_STARTED', label: isKm ? 'មិនទាន់ចាប់ផ្តើម' : 'Not Started' },
-    ];
-  });
-
   protected readonly latestScreeningSession = signal<ScreeningSessionDetailResponse | null>(null);
   protected readonly onlyRecommended = signal(false);
+
+  /** The category and recommendation filters stay folded away until asked for. */
+  protected readonly filtersOpen = signal(false);
+  protected readonly activeFilterCount = computed(
+    () => (this.category() ? 1 : 0) + (this.onlyRecommended() ? 1 : 0),
+  );
 
   protected readonly activities = signal<readonly ActivityResponse[]>([]);
   protected readonly progress = signal<readonly ActivityProgressResponse[]>([]);
