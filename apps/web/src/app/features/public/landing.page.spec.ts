@@ -99,7 +99,7 @@ describe('LandingPage', () => {
     const kicker = compiled.querySelector('#features .section-kicker');
     expect(kicker?.textContent?.trim()).toBe('What you get');
 
-    const featureTitles = Array.from(compiled.querySelectorAll('#features .tool-card h3')).map(
+    const featureTitles = Array.from(compiled.querySelectorAll('#features .showcase-item h3')).map(
       (node) => node.textContent?.trim(),
     );
     expect(featureTitles).toEqual([

@@ -8,6 +8,8 @@ import {
 import { AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { NavIconComponent } from '../../core/layout/nav-icon.component';
+import { FeatureShowcaseComponent } from './components/feature-showcase.component';
+import { AutismValuesComponent } from './components/autism-values.component';
 
 type LandingFeature = {
   readonly title: string;
@@ -253,39 +255,9 @@ const KM_TRUST_POINTS = [
   'ភាសាខ្មែរ និងអង់គ្លេស',
 ] as const;
 
-const EN_AUTISM_NOTES = [
-  {
-    title: 'Every child is unique',
-    description: 'Observations are organized around your child, not rigid checklists.',
-  },
-  {
-    title: 'Screening is a starting point',
-    description: 'Structured notes prepare families for better conversations with doctors.',
-  },
-  {
-    title: 'Progress works best as a team',
-    description: 'Shared context helps parents, pediatricians, and schools work together.',
-  },
-] as const;
-
-const KM_AUTISM_NOTES = [
-  {
-    title: 'កុមារម្នាក់ៗមានភាពពិសេសរៀងៗខ្លួន',
-    description: 'AutiCare រៀបចំការសង្កេតជុំវិញកុមារផ្ទាល់ មិនមែនជាទម្រង់ទូទៅឡើយ។',
-  },
-  {
-    title: 'ការវាយតម្លៃគឺជាចំណុចចាប់ផ្តើម',
-    description: 'កំណត់ត្រាជួយអ្នករៀបចំការពិភាក្សាកាន់តែប្រសើរជាមួយវេជ្ជបណ្ឌិត។',
-  },
-  {
-    title: 'ការរីកចម្រើនកើតពីកិច្ចសហការ',
-    description: 'ឪពុកម្តាយ វេជ្ជបណ្ឌិត និងគ្រូធ្វើការរួមគ្នាដើម្បីអនាគតកុមារ។',
-  },
-] as const;
-
 @Component({
   standalone: true,
-  imports: [RouterLink, NavIconComponent],
+  imports: [RouterLink, NavIconComponent, FeatureShowcaseComponent, AutismValuesComponent],
   template: `
     <main class="landing-page">
       <header class="site-header">
@@ -864,38 +836,13 @@ const KM_AUTISM_NOTES = [
         </div>
       </section>
 
-      <!-- Features -->
-      <section id="features" class="tools-section" aria-labelledby="tools-title">
-        <div class="section-heading">
-          <p class="section-kicker">
-            {{ currentLang() === 'km' ? 'អ្វីដែលអ្នកទទួលបាន' : 'What you get' }}
-          </p>
-          <h2 id="tools-title">
-            {{
-              currentLang() === 'km'
-                ? 'ជំនួយសម្រាប់ពេលវេលារវាងការកត់សម្គាល់ និងការជួបអ្នកជំនាញ'
-                : 'Help for the weeks between noticing and being seen'
-            }}
-          </h2>
-          <p>
-            {{
-              currentLang() === 'km'
-                ? 'AutiCare មិនជំនួសអ្នកជំនាញទេ។ វាជួយឱ្យពេលរង់ចាំមិនទទេ។'
-                : 'AutiCare does not replace a specialist. It makes the waiting time less empty.'
-            }}
-          </p>
-        </div>
-
-        <div class="tool-grid">
-          @for (tool of features(); track tool.title) {
-            <article class="tool-card">
-              <span class="tool-icon" aria-hidden="true"><ac-nav-icon [name]="tool.icon" /></span>
-              <h3>{{ tool.title }}</h3>
-              <p>{{ tool.description }}</p>
-            </article>
-          }
-        </div>
-      </section>
+      <!-- Features: sticky menu + one animated app window per tool -->
+      <section
+        id="features"
+        acFeatureShowcase
+        [lang]="currentLang() === 'km' ? 'km' : 'en'"
+        [features]="features()"
+      ></section>
 
       <!-- How It Works Section -->
       <section id="how-it-works" class="process-section" aria-labelledby="process-title">
@@ -1051,36 +998,11 @@ const KM_AUTISM_NOTES = [
       </section>
 
       <!-- About Autism Section -->
-      <section id="about-autism" class="autism-section" aria-labelledby="autism-title">
-        <div class="section-heading">
-          <p class="section-kicker">
-            {{ currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism' }}
-          </p>
-          <h2 id="autism-title">
-            {{
-              currentLang() === 'km'
-                ? 'ការយល់ដឹង និងការគាំទ្រប្រកបដោយសេចក្តីថ្លៃថ្នូរ'
-                : 'Understanding and compassionate care'
-            }}
-          </h2>
-          <p>
-            {{
-              currentLang() === 'km'
-                ? 'ការគាំទ្រដ៏ល្អបំផុតកើតចេញពីកិច្ចសហការ និងការយល់ដឹងច្បាស់លាស់។'
-                : 'The best support comes from shared context and mutual understanding.'
-            }}
-          </p>
-        </div>
-
-        <div class="autism-grid">
-          @for (note of autismNotes(); track note.title) {
-            <article>
-              <h3>{{ note.title }}</h3>
-              <p>{{ note.description }}</p>
-            </article>
-          }
-        </div>
-      </section>
+      <section
+        id="about-autism"
+        acAutismValues
+        [lang]="currentLang() === 'km' ? 'km' : 'en'"
+      ></section>
 
       <!-- Pricing -->
       <section id="pricing" class="pricing-section" aria-labelledby="pricing-title">
@@ -1373,6 +1295,10 @@ const KM_AUTISM_NOTES = [
       }
 
       .landing-page {
+        /* One content column for all sections; backgrounds stay full width. */
+        --lp-max: 1440px;
+        --lp-gutter: clamp(16px, 3vw, 40px);
+        --lp-x: max(var(--lp-gutter), calc((100% - var(--lp-max)) / 2));
         min-height: 100svh;
         background: var(--ac-color-background);
       }
@@ -1383,14 +1309,13 @@ const KM_AUTISM_NOTES = [
         top: 18px;
         z-index: 1000;
         width: 100%;
-        padding: 0 clamp(16px, 3.5vw, 40px);
+        padding: 0 var(--lp-x);
         background: transparent;
         pointer-events: none;
       }
 
       .nav-shell {
         pointer-events: auto;
-        max-width: 1240px;
         margin: 0 auto;
         height: 70px;
         background: var(--ac-color-surface);
@@ -1634,7 +1559,7 @@ const KM_AUTISM_NOTES = [
         grid-template-columns: minmax(0, 1fr) minmax(0, 1.16fr);
         align-items: center;
         gap: 44px;
-        padding: 32px clamp(20px, 4.5vw, 64px) 48px;
+        padding: 32px var(--lp-x) 48px;
         background: linear-gradient(
           135deg,
           color-mix(in srgb, var(--ac-brand-50) 95%, transparent) 0%,
@@ -1913,58 +1838,9 @@ const KM_AUTISM_NOTES = [
       }
 
       /* Features section (class names kept from the old "Core tools" grid) */
-      .tools-section {
-        padding: 72px clamp(24px, 5vw, 72px);
-      }
-
-      .tool-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 24px;
-      }
-
-      .tool-card {
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-slate);
-        border-radius: 18px;
-        padding: 28px;
-        display: grid;
-        gap: 12px;
-        transition:
-          transform 160ms ease,
-          box-shadow 160ms ease;
-      }
-
-      .tool-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 28px color-mix(in srgb, var(--ac-brand-800) 8%, transparent);
-      }
-
-      .tool-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 12px;
-        background: var(--ac-color-surface-info);
-        display: grid;
-        place-items: center;
-        color: var(--ac-color-action-deep);
-      }
-
-      .tool-card h3 {
-        font-size: 18px;
-        font-weight: var(--ac-font-weight-bold);
-        color: var(--ac-color-text-strong);
-      }
-
-      .tool-card p {
-        font-size: 14px;
-        line-height: 1.5;
-        color: var(--ac-color-text-body);
-      }
-
       /* Process Section */
       .process-section {
-        padding: 88px clamp(24px, 5vw, 72px);
+        padding: 88px var(--lp-x);
         background: var(--ac-color-surface);
         border-top: 1px solid var(--ac-color-border-slate);
         border-bottom: 1px solid var(--ac-color-border-slate);
@@ -2411,41 +2287,9 @@ const KM_AUTISM_NOTES = [
       }
 
       /* About Autism */
-      .autism-section {
-        padding: 72px clamp(24px, 5vw, 72px);
-        background: var(--ac-color-surface);
-        border-top: 1px solid var(--ac-color-border-slate);
-      }
-
-      .autism-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 24px;
-      }
-
-      .autism-grid article {
-        background: var(--ac-color-surface-slate);
-        border: 1px solid var(--ac-color-border-slate);
-        border-radius: 18px;
-        padding: 28px;
-        display: grid;
-        gap: 10px;
-      }
-
-      .autism-grid h3 {
-        font-size: 18px;
-        font-weight: var(--ac-font-weight-bold);
-      }
-
-      .autism-grid p {
-        font-size: 15px;
-        line-height: 1.55;
-        color: var(--ac-color-text-body);
-      }
-
       /* Pricing */
       .pricing-section {
-        padding: 88px clamp(24px, 5vw, 72px);
+        padding: 88px var(--lp-x);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -2527,7 +2371,6 @@ const KM_AUTISM_NOTES = [
 
       .pricing-grid {
         width: 100%;
-        max-width: 1040px;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 24px;
@@ -2787,13 +2630,13 @@ const KM_AUTISM_NOTES = [
 
       @media (max-width: 768px) {
         .pricing-section {
-          padding: 56px 16px;
+          padding: 56px var(--lp-x);
         }
       }
 
       /* CTA Section */
       .cta-section {
-        padding: 80px 24px;
+        padding: 80px var(--lp-x);
         text-align: center;
         background: var(--ac-color-surface-info);
         border-top: 1px solid var(--ac-color-border-info);
@@ -2841,11 +2684,11 @@ const KM_AUTISM_NOTES = [
         --footer-faint: color-mix(in srgb, var(--ac-color-text-on-action) 14%, transparent);
         background: var(--footer-ink);
         color: var(--footer-text);
-        padding: 64px clamp(24px, 5vw, 72px) 28px;
+        padding: 64px var(--lp-x) 28px;
       }
 
       .footer-main {
-        max-width: 1200px;
+        max-width: var(--lp-max);
         margin: 0 auto;
         display: grid;
         grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
@@ -2936,7 +2779,7 @@ const KM_AUTISM_NOTES = [
       }
 
       .footer-notice {
-        max-width: 1200px;
+        max-width: var(--lp-max);
         margin: 48px auto 0;
         padding: 18px 20px;
         border: 1px solid var(--footer-faint);
@@ -2988,7 +2831,7 @@ const KM_AUTISM_NOTES = [
       }
 
       .footer-bottom {
-        max-width: 1200px;
+        max-width: var(--lp-max);
         margin: 28px auto 0;
         padding-top: 22px;
         border-top: 1px solid var(--footer-faint);
@@ -3309,7 +3152,7 @@ const KM_AUTISM_NOTES = [
           box-sizing: border-box;
           grid-template-columns: 1fr;
           gap: 36px;
-          padding: 48px clamp(20px, 4vw, 40px) 44px;
+          padding: 48px var(--lp-x) 44px;
         }
 
         .hero-copy {
@@ -3330,7 +3173,7 @@ const KM_AUTISM_NOTES = [
         .process-section {
           grid-template-columns: 1fr;
           gap: 40px;
-          padding: 56px clamp(20px, 4vw, 40px);
+          padding: 56px var(--lp-x);
         }
 
         .footer-main {
@@ -3353,7 +3196,6 @@ const KM_AUTISM_NOTES = [
 
         .site-header {
           top: 12px;
-          padding: 0 16px;
         }
 
         .nav-shell {
@@ -3377,9 +3219,12 @@ const KM_AUTISM_NOTES = [
       }
 
       @media (max-width: 768px) {
+        .landing-page {
+          --lp-gutter: 16px;
+        }
+
         .site-header {
           top: 14px;
-          padding: 0 16px;
         }
 
         .nav-shell {
@@ -3458,7 +3303,7 @@ const KM_AUTISM_NOTES = [
         .hero-section {
           min-height: 100svh;
           box-sizing: border-box;
-          padding: 100px 16px 28px;
+          padding: 100px var(--lp-x) 28px;
           gap: 18px;
           display: flex;
           flex-direction: column;
@@ -3608,23 +3453,8 @@ const KM_AUTISM_NOTES = [
           line-height: 1.5;
         }
 
-        .tools-section {
-          padding: 44px 16px;
-        }
-
-        .tool-grid {
-          grid-template-columns: 1fr;
-          gap: 14px;
-        }
-
-        .tool-card {
-          padding: 20px 16px;
-          border-radius: 16px;
-          gap: 10px;
-        }
-
         .process-section {
-          padding: 44px 16px;
+          padding: 44px var(--lp-x);
           gap: 28px;
         }
 
@@ -3678,22 +3508,8 @@ const KM_AUTISM_NOTES = [
           width: min(240px, 80%);
         }
 
-        .autism-section {
-          padding: 44px 16px;
-        }
-
-        .autism-grid {
-          grid-template-columns: 1fr;
-          gap: 14px;
-        }
-
-        .autism-grid article {
-          padding: 20px 16px;
-          border-radius: 16px;
-        }
-
         .cta-section {
-          padding: 48px 16px;
+          padding: 48px var(--lp-x);
           gap: 16px;
         }
 
@@ -3714,7 +3530,7 @@ const KM_AUTISM_NOTES = [
         }
 
         .site-footer {
-          padding: 44px 20px 24px;
+          padding: 44px var(--lp-x) 24px;
         }
 
         .footer-main {
@@ -3773,11 +3589,6 @@ const KM_AUTISM_NOTES = [
         color: var(--ac-color-green-teal);
       }
 
-      .tool-icon ac-nav-icon {
-        width: 22px;
-        height: 22px;
-      }
-
       @media (max-width: 768px) {
         .hero-trust {
           justify-content: center;
@@ -3798,9 +3609,6 @@ export class LandingPage {
     this.currentLang() === 'km' ? KM_TRUST_POINTS : EN_TRUST_POINTS,
   );
   readonly steps = computed(() => (this.currentLang() === 'km' ? KM_STEPS : EN_STEPS));
-  readonly autismNotes = computed(() =>
-    this.currentLang() === 'km' ? KM_AUTISM_NOTES : EN_AUTISM_NOTES,
-  );
   readonly mobileMenuOpen = signal(false);
   readonly currentYear = new Date().getFullYear();
 
