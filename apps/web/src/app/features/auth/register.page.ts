@@ -39,84 +39,8 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
           <header class="intro">
             <h1 id="register-title">Create your account</h1>
-            <p>Join our supportive community and start your child's developmental journey today.</p>
+            <p>Create your AutiCare account to support your child's development.</p>
           </header>
-
-          <div class="role-selector" role="radiogroup" aria-label="Account registration type">
-            <span class="role-selector-label">I am joining as:</span>
-            <div class="role-chips">
-              <button
-                type="button"
-                role="radio"
-                class="role-chip"
-                [class.active]="selectedRole() === 'PARENT'"
-                [attr.aria-checked]="selectedRole() === 'PARENT'"
-                (click)="selectRole('PARENT')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M12 21s-7-4.4-9.1-8.3C.9 8 .7 4.8 3.2 3.2c2.2-1.4 5-.6 6.4 1.5L12 8l2.4-3.3c1.5-2.1 4.2-2.9 6.4-1.5 2.5 1.6 2.3 4.8.3 8.5C19 15.6 12 20 12 20Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                </svg>
-                <span>Parent / Family</span>
-              </button>
-
-              <button
-                type="button"
-                role="radio"
-                class="role-chip"
-                [class.active]="selectedRole() === 'SCHOOL'"
-                [attr.aria-checked]="selectedRole() === 'SCHOOL'"
-                (click)="selectRole('SCHOOL')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M22 10v6M2 10l10-5 10 5-10 5z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                  <path
-                    d="M6 12v5c3 3 9 3 12 0v-5"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                </svg>
-                <span>School Staff</span>
-              </button>
-
-              <button
-                type="button"
-                role="radio"
-                class="role-chip"
-                [class.active]="selectedRole() === 'HOSPITAL'"
-                [attr.aria-checked]="selectedRole() === 'HOSPITAL'"
-                (click)="selectRole('HOSPITAL')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M22 12h-4l-3 9L9 3l-3 9H2"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                </svg>
-                <span>Hospital Coordinator</span>
-              </button>
-            </div>
-          </div>
 
           @if (selectedRole() === 'PARENT') {
             <form
@@ -472,6 +396,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         min-height: 100svh;
         display: grid;
         background: var(--ac-color-surface);
+        overflow-x: clip;
       }
 
       .form-panel {
@@ -533,66 +458,6 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         color: var(--ac-color-text-body);
         font-size: 16px;
         line-height: 1.55;
-      }
-
-      /* Role Selector Chips */
-      .role-selector {
-        display: grid;
-        gap: 8px;
-        margin-bottom: 24px;
-      }
-
-      .role-selector-label {
-        font-size: var(--ac-type-label);
-        font-weight: var(--ac-font-weight-semibold);
-        color: var(--ac-color-text-muted);
-      }
-
-      .role-chips {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-      }
-
-      .role-chip {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 10px 6px;
-        border: 1px solid var(--ac-color-border-grey);
-        border-radius: 12px;
-        background: var(--ac-color-surface);
-        color: var(--ac-color-text-body);
-        font-size: 12px;
-        font-weight: var(--ac-font-weight-semibold);
-        cursor: pointer;
-        text-align: center;
-        line-height: 1.2;
-        transition:
-          background 160ms ease,
-          border-color 160ms ease,
-          color 160ms ease,
-          box-shadow 160ms ease;
-      }
-
-      .role-chip svg {
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-      }
-
-      .role-chip:hover {
-        border-color: var(--ac-color-action);
-        background: var(--ac-color-surface-info);
-      }
-
-      .role-chip.active {
-        border-color: var(--ac-color-action);
-        background: var(--ac-color-surface-info);
-        color: var(--ac-color-action-deep);
-        box-shadow: 0 0 0 2px var(--ac-color-tint-blue);
       }
 
       .register-form {
@@ -961,8 +826,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
         width: 100%;
         height: 100%;
         object-fit: cover;
-        object-position: 47% center;
-        transform: scale(1.05);
+        object-position: center;
       }
 
       .hero-wash {
@@ -983,26 +847,25 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
       .support-card {
         position: absolute;
-        right: 8%;
-        bottom: 8%;
-        width: min(520px, 75%);
-        min-height: 280px;
+        right: 6%;
+        bottom: 6%;
+        width: min(420px, 76%);
         border: 1px solid color-mix(in srgb, var(--ac-color-white) 70%, transparent);
-        border-radius: 24px;
+        border-radius: 20px;
         background: color-mix(in srgb, var(--ac-color-white) 78%, transparent);
         box-shadow: 0 24px 60px color-mix(in srgb, var(--ac-brand-900) 18%, transparent);
         backdrop-filter: blur(14px);
         display: grid;
         justify-items: center;
         align-content: center;
-        gap: 16px;
-        padding: 36px 42px;
+        gap: 12px;
+        padding: 24px 28px;
         text-align: center;
       }
 
       .heart-badge {
-        width: 52px;
-        height: 52px;
+        width: 42px;
+        height: 42px;
         border-radius: 999px;
         background: var(--ac-color-olive-light);
         color: var(--ac-color-olive-mid);
@@ -1011,13 +874,13 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
       }
 
       .heart-badge svg {
-        width: 26px;
-        height: 26px;
+        width: 22px;
+        height: 22px;
       }
 
       .support-card h2 {
         color: var(--ac-color-text-strong);
-        font-size: 26px;
+        font-size: 22px;
         line-height: 1.25;
         font-weight: var(--ac-font-weight-bold);
       }
@@ -1025,8 +888,8 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
       .support-card p {
         max-width: 440px;
         color: var(--ac-color-ink-i);
-        font-size: 15px;
-        line-height: 1.6;
+        font-size: 14px;
+        line-height: 1.45;
       }
 
       .dots {
@@ -1048,17 +911,146 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
       @media (min-width: 1024px) {
         .signup-page {
+          height: 100dvh;
+          min-height: 0;
+          overflow: hidden;
           grid-template-columns: minmax(520px, 1fr) minmax(0, 1fr);
         }
 
         .form-panel {
-          min-height: 100svh;
-          padding: 64px 6vw;
+          height: 100%;
+          min-height: 0;
+          padding: clamp(18px, 3vh, 32px) clamp(28px, 4vw, 64px);
+        }
+
+        .form-shell {
+          width: min(100%, 520px);
+        }
+
+        .brand {
+          gap: 8px;
+          margin-bottom: clamp(12px, 2vh, 20px);
+        }
+
+        .brand img {
+          width: 30px;
+          height: 30px;
+        }
+
+        .brand span {
+          font-size: 24px;
+        }
+
+        .intro {
+          margin-bottom: clamp(12px, 2vh, 18px);
+        }
+
+        .intro h1 {
+          margin-bottom: 4px;
+          font-size: clamp(25px, 2.1vw, 30px);
+        }
+
+        .intro p {
+          font-size: 14px;
+          line-height: 1.4;
+        }
+
+        .register-form {
+          gap: clamp(9px, 1.4vh, 13px);
+        }
+
+        ::ng-deep ac-ui-field .field {
+          gap: 4px;
+        }
+
+        ::ng-deep ac-ui-field .label {
+          font-size: 13px;
+        }
+
+        ac-ui-field input {
+          height: 44px;
+          padding: 0 14px;
+          font-size: 14px;
+        }
+
+        .password-grid {
+          gap: 12px;
+        }
+
+        .visibility-button {
+          width: 38px;
+          height: 38px;
+        }
+
+        .password-field input {
+          padding-right: 44px;
+        }
+
+        .password-note {
+          grid-template-columns: 16px minmax(0, 1fr);
+          gap: 8px;
+          padding: 8px 10px;
+        }
+
+        .password-note svg {
+          width: 16px;
+          height: 16px;
+          margin-top: 1px;
+        }
+
+        .password-note p {
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .terms {
+          grid-template-columns: 20px minmax(0, 1fr);
+          gap: 9px;
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .terms input {
+          width: 20px;
+          height: 20px;
+          margin-top: 0;
+        }
+
+        .submit-button {
+          height: 46px;
+          margin-top: 0;
+          border-radius: 12px;
+          font-size: 15px;
+        }
+
+        .signin-footer {
+          margin-top: clamp(14px, 2vh, 20px);
+          padding-top: clamp(12px, 1.6vh, 16px);
+          gap: 8px;
+          font-size: 13px;
         }
 
         .hero-panel {
           display: block;
-          min-height: 100svh;
+          height: 100%;
+          min-height: 0;
+        }
+      }
+
+      @media (min-width: 1024px) and (max-height: 700px) {
+        .signup-page {
+          height: auto;
+          min-height: 100dvh;
+          overflow: visible;
+        }
+
+        .form-panel {
+          padding-top: 18px;
+          padding-bottom: 18px;
+        }
+
+        .hero-panel {
+          min-height: 100dvh;
         }
       }
 
@@ -1077,21 +1069,6 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
         .intro h1 {
           font-size: 26px;
-        }
-
-        .role-chips {
-          grid-template-columns: 1fr;
-          gap: 8px;
-        }
-
-        .role-chip {
-          flex-direction: row;
-          justify-content: flex-start;
-          align-items: center;
-          padding: 10px 14px;
-          min-height: 48px;
-          gap: 10px;
-          text-align: left;
         }
 
         .password-grid {
@@ -1124,15 +1101,6 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 
         .intro p {
           font-size: 14px;
-        }
-
-        .role-selector {
-          margin-bottom: 18px;
-        }
-
-        .role-chip {
-          padding: 10px 12px;
-          font-size: 11.5px;
         }
 
         .register-form {

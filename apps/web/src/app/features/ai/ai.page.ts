@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
@@ -48,8 +56,9 @@ const COPY = {
     helpful: 'Helpful',
     notHelpful: 'Not helpful',
     feedbackThanks: 'Thank you for your feedback',
-    childContextToggle: 'Include child details',
-    childContextHint: 'Tailors responses using child age and recent observations. Off by default.',
+    childContextToggle: 'Consent to share limited child context',
+    childContextHint:
+      'Opt in to share only approximate age and recent observation count with the AI provider for replies. No name, notes, school records, or questionnaire results are sent.',
     savedEmptyTitle: 'No saved answers yet',
     savedEmptyBody:
       'When the assistant provides a helpful reply, click the Save button to keep it here for quick reference.',
@@ -64,6 +73,11 @@ const COPY = {
       'AutiCare does not diagnose. If you are worried, a qualified clinician should see your child.',
     deleteConversation: 'Delete this conversation',
     retry: 'Try again',
+    copyResponse: 'Copy response',
+    copiedResponse: 'Copied',
+    copyError: 'This response could not be copied. Please select and copy it instead.',
+    privacyNote:
+      'Messages are stored in your AutiCare account until you delete the conversation. The latest 10 messages are sent to the configured AI provider as context. Child context is shared only when you opt in below; only approximate age and recent observation count are sent. Names, notes, school records, and questionnaire results are not sent.',
   },
   km: {
     eyebrow: 'ជំនួយការ AI',
@@ -95,8 +109,9 @@ const COPY = {
     helpful: 'មានប្រយោជន៍',
     notHelpful: 'មិនសូវមានប្រយោជន៍',
     feedbackThanks: 'សូមអរគុណចំពោះមតិកែលម្អរបស់អ្នក',
-    childContextToggle: 'រួមបញ្ចូលព័ត៌មានកូន',
-    childContextHint: 'ផ្តល់ការណែនាំតាមអាយុ និងកំណត់ត្រាសង្កេតថ្មីៗរបស់កូន។ បិទជាលំនាំដើម។',
+    childContextToggle: 'យល់ព្រមចែករំលែកព័ត៌មានកូនដែលមានកំណត់',
+    childContextHint:
+      'បើកការយល់ព្រម ដើម្បីចែករំលែកតែអាយុប្រហាក់ប្រហែល និងចំនួនកំណត់ត្រាសង្កេតថ្មីៗជាមួយអ្នកផ្តល់សេវា AI សម្រាប់ចម្លើយ។ មិនផ្ញើឈ្មោះ កំណត់ចំណាំ កំណត់ត្រាសាលា ឬលទ្ធផលសំណួរវាយតម្លៃទេ។',
     savedEmptyTitle: 'មិនទាន់មានចម្លើយដែលបានរក្សាទុកទេ',
     savedEmptyBody:
       'នៅពេលជំនួយការឆ្លើយតបមានប្រយោជន៍ ចុចប៊ូតុងរក្សាទុក ដើម្បីទុកមើលនៅទីនេះយ៉ាងរហ័ស។',
@@ -111,6 +126,11 @@ const COPY = {
       'AutiCare មិនធ្វើរោគវិនិច្ឆ័យទេ។ ប្រសិនបើអ្នកព្រួយបារម្ភ គ្លីនិកជំនាញគួរតែពិនិត្យកូនរបស់អ្នក។',
     deleteConversation: 'លុបការសន្ទនានេះ',
     retry: 'ព្យាយាមម្តងទៀត',
+    copyResponse: 'ចម្លងចម្លើយ',
+    copiedResponse: 'បានចម្លង',
+    copyError: 'មិនអាចចម្លងចម្លើយនេះបានទេ។ សូមជ្រើសរើស ហើយចម្លងវាដោយខ្លួនឯង។',
+    privacyNote:
+      'សារត្រូវបានរក្សាទុកក្នុងគណនី AutiCare របស់អ្នក រហូតដល់អ្នកលុបការសន្ទនា។ សារចុងក្រោយចំនួន ១០ ត្រូវបានផ្ញើទៅអ្នកផ្តល់សេវា AI ដែលបានកំណត់ ដើម្បីធ្វើជាបរិបទ។ ព័ត៌មានកូនត្រូវបានចែករំលែកតែពេលអ្នកយល់ព្រមខាងក្រោមប៉ុណ្ណោះ ដោយផ្ញើតែអាយុប្រហាក់ប្រហែល និងចំនួនកំណត់ត្រាសង្កេតថ្មីៗ។ មិនផ្ញើឈ្មោះ កំណត់ចំណាំ កំណត់ត្រាសាលា ឬលទ្ធផលសំណួរវាយតម្លៃទេ។',
   },
 };
 
@@ -136,6 +156,9 @@ const COPY = {
         @if (conversation() && activeTab() === 'chat') {
           <button type="button" class="ghost" (click)="startNew()">
             {{ copy().newConversation }}
+          </button>
+          <button type="button" class="ghost" (click)="clearConversation()" [disabled]="sending()">
+            {{ copy().deleteConversation }}
           </button>
         }
       </div>
@@ -207,7 +230,11 @@ const COPY = {
                   [checked]="includeChildContext()"
                   (change)="includeChildContext.set(!includeChildContext())"
                 />
-                <span>{{ copy().childContextToggle }} ({{ childName() }})</span>
+                <span
+                  >{{ copy().childContextToggle }} ({{ childName() }})<small>{{
+                    copy().childContextHint
+                  }}</small></span
+                >
               </label>
             }
           </div>
@@ -230,7 +257,7 @@ const COPY = {
         </details>
       }
 
-      <section class="thread" aria-live="polite">
+      <section #thread class="thread" aria-live="polite">
         @if (loading()) {
           <ac-ui-spinner [label]="copy().sending" />
         } @else if (messages().length === 0) {
@@ -310,6 +337,18 @@ const COPY = {
                   <button
                     type="button"
                     class="save-msg-btn"
+                    (click)="copyResponse(message)"
+                    [attr.aria-label]="
+                      copiedMessageId() === message.id ? copy().copiedResponse : copy().copyResponse
+                    "
+                  >
+                    {{
+                      copiedMessageId() === message.id ? copy().copiedResponse : copy().copyResponse
+                    }}
+                  </button>
+                  <button
+                    type="button"
+                    class="save-msg-btn"
                     [class.saved]="!!message.savedAt"
                     (click)="toggleSave(message)"
                     [attr.aria-label]="message.savedAt ? copy().savedAnswer : copy().saveAnswer"
@@ -352,9 +391,15 @@ const COPY = {
       </section>
 
       @if (error()) {
-        <div class="error" role="alert">{{ error() }}</div>
+        <div class="error" role="alert">
+          {{ error() }}
+          @if (draft().trim()) {
+            <button type="button" class="ghost" (click)="retry()">{{ copy().retry }}</button>
+          }
+        </div>
       }
 
+      <p class="privacy-note">{{ copy().privacyNote }}</p>
       <form class="composer" (submit)="submit($event)">
         <label class="sr" for="ai-input">{{ copy().placeholder }}</label>
         <textarea
@@ -461,10 +506,18 @@ const COPY = {
       .context-toggle {
         display: flex;
         align-items: center;
+        max-width: 430px;
         gap: 8px;
         font-size: var(--ac-type-meta);
         color: var(--ac-color-text-strong);
         cursor: pointer;
+      }
+
+      .context-toggle small {
+        display: block;
+        margin-top: 3px;
+        color: var(--ac-color-text-muted);
+        line-height: 1.35;
       }
 
       .history {
@@ -526,6 +579,25 @@ const COPY = {
         flex-direction: column;
         gap: 16px;
         margin-bottom: 24px;
+        max-height: min(58vh, 680px);
+        overflow-y: auto;
+        scroll-behavior: smooth;
+      }
+
+      .privacy-note {
+        margin: 0 0 10px;
+        color: var(--ac-color-text-muted);
+        font-size: var(--ac-type-meta);
+        line-height: 1.45;
+      }
+
+      .error {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+        color: var(--ac-color-alert-text);
       }
 
       .intro {
@@ -836,6 +908,13 @@ const COPY = {
         color: var(--ac-color-text-strong);
         font: inherit;
         resize: none;
+        min-height: 40px;
+        max-height: 180px;
+      }
+
+      .composer textarea:focus-visible {
+        outline: 2px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
 
       .primary {
@@ -916,6 +995,38 @@ const COPY = {
         white-space: nowrap;
         border: 0;
       }
+
+      @media (max-width: 600px) {
+        :host {
+          padding: 20px 12px 40px;
+        }
+        .page-head {
+          flex-direction: column;
+        }
+        .head-actions {
+          display: flex;
+          width: 100%;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .thread {
+          max-height: 56vh;
+        }
+        .bubble {
+          max-width: 94%;
+        }
+        .composer {
+          align-items: stretch;
+          gap: 8px;
+          padding: 8px;
+        }
+        .composer textarea {
+          min-width: 0;
+        }
+        .composer .primary {
+          padding: 10px 14px;
+        }
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -924,6 +1035,7 @@ export class AiPage implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly childrenApi = inject(ChildrenApi);
   private readonly api = inject(AiApi);
+  @ViewChild('thread') private threadElement?: ElementRef<HTMLElement>;
 
   protected readonly copy = computed(() => COPY[this.i18n.currentLang()]);
   protected readonly activeTab = signal<AssistantTab>('chat');
@@ -944,6 +1056,7 @@ export class AiPage implements OnInit {
   protected readonly sending = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly draft = signal('');
+  protected readonly copiedMessageId = signal<string | null>(null);
 
   ngOnInit(): void {
     this.api.status().subscribe({
@@ -995,11 +1108,13 @@ export class AiPage implements OnInit {
 
   protected open(id: string): void {
     this.loading.set(true);
+    this.includeChildContext.set(false);
     this.api.getConversation(id).subscribe({
       next: (detail) => {
         this.conversation.set(detail);
         this.messages.set(detail.messages);
         this.loading.set(false);
+        this.scrollToLatest();
       },
       error: () => {
         this.loading.set(false);
@@ -1011,7 +1126,25 @@ export class AiPage implements OnInit {
   protected startNew(): void {
     this.conversation.set(null);
     this.messages.set([]);
+    this.draft.set('');
+    this.includeChildContext.set(false);
     this.error.set(null);
+  }
+
+  protected clearConversation(): void {
+    const current = this.conversation();
+    if (!current || this.sending()) return;
+    this.api.deleteConversation(current.id).subscribe({
+      next: () => {
+        this.conversations.update((list) => list.filter((item) => item.id !== current.id));
+        this.conversation.set(null);
+        this.messages.set([]);
+        this.draft.set('');
+        this.includeChildContext.set(false);
+        this.error.set(null);
+      },
+      error: () => this.error.set(this.copy().unavailableError),
+    });
   }
 
   protected ask(prompt: string): void {
@@ -1047,17 +1180,18 @@ export class AiPage implements OnInit {
 
     this.sending.set(true);
     this.error.set(null);
-    this.draft.set('');
 
-    this.api.sendMessage(current.id, content).subscribe({
+    this.api.sendMessage(current.id, content, this.messageOptions()).subscribe({
       next: (turn) => {
         this.messages.update((list) => [...list, turn.userMessage, turn.assistantMessage]);
         this.sending.set(false);
+        this.draft.set('');
         this.refreshStatus();
+        this.scrollToLatest();
       },
       error: (err) => {
         this.sending.set(false);
-        this.error.set(err?.error?.error?.message ?? this.copy().messageSentError);
+        this.error.set(this.sendError(err));
       },
     });
   }
@@ -1065,7 +1199,6 @@ export class AiPage implements OnInit {
   private startConversationAndSend(content: string): void {
     this.sending.set(true);
     this.error.set(null);
-    this.draft.set('');
 
     const child = this.child();
     const childId = this.includeChildContext() && child ? child.id : undefined;
@@ -1079,7 +1212,8 @@ export class AiPage implements OnInit {
       .subscribe({
         next: (summary) => {
           this.conversations.update((list) => [summary, ...list]);
-          this.api.sendMessage(summary.id, content).subscribe({
+          this.conversation.set({ ...summary, messages: [] });
+          this.api.sendMessage(summary.id, content, this.messageOptions()).subscribe({
             next: (turn) => {
               this.conversation.set({
                 ...summary,
@@ -1087,11 +1221,13 @@ export class AiPage implements OnInit {
               });
               this.messages.set([turn.userMessage, turn.assistantMessage]);
               this.sending.set(false);
+              this.draft.set('');
               this.refreshStatus();
+              this.scrollToLatest();
             },
             error: (err) => {
               this.sending.set(false);
-              this.error.set(err?.error?.error?.message ?? this.copy().messageSentError);
+              this.error.set(this.sendError(err));
             },
           });
         },
@@ -1100,6 +1236,50 @@ export class AiPage implements OnInit {
           this.error.set(err?.error?.error?.message ?? this.copy().unavailableError);
         },
       });
+  }
+
+  private messageOptions() {
+    const child = this.child();
+    const includeChildContext = this.includeChildContext() && !!child;
+    return {
+      language: this.i18n.currentLang() === 'km' ? ('km' as const) : ('en' as const),
+      includeChildContext,
+      ...(includeChildContext && child ? { childId: child.id } : {}),
+    };
+  }
+
+  private sendError(error: { status?: number; error?: { error?: { message?: string } } }): string {
+    if (error.status === 429) return this.copy().limitError;
+    if (!error.status || error.status === 502 || error.status === 503 || error.status >= 500) {
+      return this.copy().unavailableError;
+    }
+    return error.error?.error?.message ?? this.copy().messageSentError;
+  }
+
+  protected retry(): void {
+    const content = this.draft().trim();
+    if (!content || this.sending()) return;
+    this.send(content);
+  }
+
+  protected async copyResponse(message: AiMessageResponse): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      this.copiedMessageId.set(message.id);
+      window.setTimeout(() => {
+        if (this.copiedMessageId() === message.id) this.copiedMessageId.set(null);
+      }, 1800);
+    } catch {
+      this.error.set(this.copy().copyError);
+    }
+  }
+
+  private scrollToLatest(): void {
+    if (typeof window === 'undefined') return;
+    window.requestAnimationFrame(() => {
+      const thread = this.threadElement?.nativeElement;
+      if (thread) thread.scrollTop = thread.scrollHeight;
+    });
   }
 
   protected toggleSave(message: AiMessageResponse): void {

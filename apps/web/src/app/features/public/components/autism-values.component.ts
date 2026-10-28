@@ -18,6 +18,7 @@ type AutismValue = {
   readonly details: readonly string[];
   readonly topics: readonly string[];
   readonly icon: string;
+  readonly photoAlt: string;
 };
 
 const COPY = {
@@ -35,6 +36,7 @@ const COPY = {
         ],
         topics: ['Each child', 'Age-matched ideas', 'Family routines'],
         icon: 'children',
+        photoAlt: 'Mother playing with a baby using wooden toys',
       },
       {
         title: 'Screening is a starting point',
@@ -45,6 +47,7 @@ const COPY = {
         ],
         topics: ['Not a diagnosis', 'Dated notes', 'Ready for the doctor'],
         icon: 'checklist',
+        photoAlt: 'Parents speaking with a doctor about their child',
       },
       {
         title: 'Progress works best as a team',
@@ -55,6 +58,7 @@ const COPY = {
         ],
         topics: ['Parent consent', 'Home and school', 'One shared picture'],
         icon: 'family',
+        photoAlt: 'Mother helping a young child draw',
       },
     ] as readonly AutismValue[],
   },
@@ -72,6 +76,7 @@ const COPY = {
         ],
         topics: ['កុមារម្នាក់ៗ', 'សមនឹងអាយុ', 'ទម្លាប់គ្រួសារ'],
         icon: 'children',
+        photoAlt: 'ម្តាយកំពុងលេងប្រដាប់ក្មេងលេងឈើជាមួយទារក',
       },
       {
         title: 'ការវាយតម្លៃគឺជាចំណុចចាប់ផ្តើម',
@@ -82,6 +87,7 @@ const COPY = {
         ],
         topics: ['មិនមែនរោគវិនិច្ឆ័យ', 'កំណត់ត្រាមានកាលបរិច្ឆេទ', 'រួចរាល់សម្រាប់វេជ្ជបណ្ឌិត'],
         icon: 'checklist',
+        photoAlt: 'ឪពុកម្តាយកំពុងពិភាក្សាជាមួយគ្រូពេទ្យអំពីកូន',
       },
       {
         title: 'ការរីកចម្រើនកើតពីកិច្ចសហការ',
@@ -92,6 +98,7 @@ const COPY = {
         ],
         topics: ['ការយល់ព្រមពីឪពុកម្តាយ', 'ផ្ទះ និងសាលា', 'រូបភាពរួមតែមួយ'],
         icon: 'family',
+        photoAlt: 'ម្តាយកំពុងជួយកូនតូចគូររូប',
       },
     ] as readonly AutismValue[],
   },
@@ -143,16 +150,20 @@ const splitHeading = (text: string): string[][] => {
       <div class="values">
         @for (value of copy().values; track value.title; let i = $index) {
           <article class="value" [class.reversed]="i % 2 === 1">
-            <div class="panel" data-reveal="fade" aria-hidden="true">
-              <div class="art" [attr.data-art]="i">
-                <span class="blob one"></span>
-                <span class="blob two"></span>
-                <span class="blob three"></span>
-                <span class="ring"></span>
-                <span class="big-icon"><ac-nav-icon [name]="value.icon" /></span>
+            <div class="panel" data-reveal="fade">
+              <div class="art">
+                <img
+                  class="photo"
+                  [src]="photoUrl(i)"
+                  [alt]="value.photoAlt"
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
               <div class="badge">
-                <span class="badge-icon"><ac-nav-icon [name]="value.icon" /></span>
+                <span class="badge-icon" aria-hidden="true"
+                  ><ac-nav-icon [name]="value.icon"
+                /></span>
                 <span class="num">{{ number(i) }}</span>
               </div>
             </div>
@@ -302,7 +313,7 @@ const splitHeading = (text: string): string[][] => {
         order: 2;
       }
 
-      /* The illustrated panel; zooms slightly when the row is hovered. */
+      /* Photo panel; zooms slightly when the row is hovered. */
       .panel {
         position: relative;
         height: clamp(320px, 36vw, 440px);
@@ -318,86 +329,15 @@ const splitHeading = (text: string): string[][] => {
         transition: transform 700ms ease-out;
       }
 
+      .photo {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
       .value:hover .art {
         transform: scale(1.05);
-      }
-
-      .blob {
-        position: absolute;
-        border-radius: 50%;
-      }
-
-      .blob.one {
-        width: 70%;
-        aspect-ratio: 1;
-        left: -12%;
-        top: -18%;
-        background: var(--ac-brand-100);
-      }
-
-      .blob.two {
-        width: 46%;
-        aspect-ratio: 1;
-        right: -8%;
-        bottom: -14%;
-        background: color-mix(in srgb, var(--ac-brand-mint) 55%, transparent);
-      }
-
-      .blob.three {
-        width: 18%;
-        aspect-ratio: 1;
-        right: 22%;
-        top: 16%;
-        background: var(--ac-color-amber-tint-cream);
-      }
-
-      .art[data-art='1'] .blob.one {
-        left: auto;
-        right: -14%;
-        background: var(--ac-color-amber-tint-cream);
-      }
-
-      .art[data-art='1'] .blob.three {
-        left: 18%;
-        right: auto;
-        background: var(--ac-brand-100);
-      }
-
-      .art[data-art='2'] .blob.two {
-        right: auto;
-        left: -10%;
-      }
-
-      .ring {
-        position: absolute;
-        width: 44%;
-        aspect-ratio: 1;
-        left: 50%;
-        top: 50%;
-        translate: -50% -50%;
-        border-radius: 50%;
-        border: 2px dashed color-mix(in srgb, var(--ac-color-action) 35%, transparent);
-      }
-
-      .big-icon {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        translate: -50% -50%;
-        display: grid;
-        place-items: center;
-        width: 30%;
-        aspect-ratio: 1;
-        border-radius: 28%;
-        background: var(--ac-color-surface);
-        color: var(--ac-color-action-deep);
-        box-shadow: 0 24px 50px -24px
-          color-mix(in srgb, var(--ac-color-action-deep) 45%, transparent);
-      }
-
-      .big-icon ac-nav-icon {
-        width: 46%;
-        height: 46%;
       }
 
       /* A soft fade at the bottom, like light over a photo. */
@@ -563,6 +503,10 @@ export class AutismValuesComponent {
 
   protected number(index: number): string {
     return String(index + 1).padStart(2, '0');
+  }
+
+  protected photoUrl(index: number): string {
+    return `/images/photo${this.number(index)}.webp`;
   }
 
   /** Each [data-reveal] element settles the first time it is on screen. */

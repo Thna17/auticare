@@ -28,6 +28,7 @@ import { activitiesRoutes } from './modules/activities/index.js';
 import { dashboardRoutes } from './modules/dashboard/index.js';
 import { observationsRoutes } from './modules/observations/index.js';
 import { aiRoutes } from './modules/ai/index.js';
+import { publicAiChatRoutes } from './modules/ai/public-chat.routes.js';
 import { insightsRoutes } from './modules/insights/index.js';
 import { guidanceRoutes } from './modules/guidance/index.js';
 import { connectionsRoutes } from './modules/connections/index.js';
@@ -104,6 +105,7 @@ export const createApp = () => {
   app.use('/api/v1/dashboard', dashboardRoutes);
   app.use('/api/v1/observations', observationsRoutes);
   app.use('/api/v1/ai', aiRoutes);
+  app.use('/api/v1/public/ai-chat', publicAiChatRoutes);
   app.use('/api/v1/insights', insightsRoutes);
   app.use('/api/v1/guidance', guidanceRoutes);
   app.use('/api/v1/connections', connectionsRoutes);
