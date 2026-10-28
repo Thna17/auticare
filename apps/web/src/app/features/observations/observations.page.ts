@@ -70,6 +70,13 @@ const COPY = {
     calendar: 'Month calendar',
     clearDateFilter: 'Show all dates',
     showingDate: 'Showing records for',
+    historyView: 'History view',
+    calendarRegion: 'Observation calendar',
+    prevMonth: 'Previous month',
+    nextMonth: 'Next month',
+    filterRegion: 'Filter by category',
+    weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    intensityOf: (level: number) => `Intensity ${level} of 5`,
     categories: {
       COMMUNICATION: 'Communication',
       SENSORY: 'Sensory',
@@ -125,6 +132,13 @@ const COPY = {
     calendar: 'ប្រតិទិនប្រចាំខែ',
     clearDateFilter: 'បង្ហាញកាលបរិច្ឆេទទាំងអស់',
     showingDate: 'បង្ហាញកំណត់ត្រាសម្រាប់ថ្ងៃ',
+    historyView: 'របៀបមើលប្រវត្តិ',
+    calendarRegion: 'ប្រតិទិនការសង្កេត',
+    prevMonth: 'ខែមុន',
+    nextMonth: 'ខែបន្ទាប់',
+    filterRegion: 'ច្រោះតាមប្រភេទ',
+    weekdays: ['អា', 'ច', 'អ', 'ព', 'ព្រ', 'សុ', 'ស'],
+    intensityOf: (level: number) => `កម្រិត ${level} ក្នុងចំណោម ៥`,
     categories: {
       COMMUNICATION: 'ការប្រាស្រ័យទាក់ទង',
       SENSORY: 'អារម្មណ៍វិញ្ញាណ',
@@ -210,7 +224,7 @@ const COPY = {
                 class="level"
                 [class.selected]="draftIntensity() === level"
                 [attr.aria-pressed]="draftIntensity() === level"
-                [attr.aria-label]="level + ' / 5'"
+                [attr.aria-label]="copy().intensityOf(level)"
                 (click)="draftIntensity.set(level)"
               >
                 {{ level }}
@@ -298,7 +312,7 @@ const COPY = {
     <!-- Trends and Analytics Section -->
     @if (observations().length > 0) {
       <div class="views-bar">
-        <div class="view-toggles" role="group" aria-label="History view">
+        <div class="view-toggles" role="group" [attr.aria-label]="copy().historyView">
           <button
             type="button"
             class="view-btn"
@@ -331,13 +345,13 @@ const COPY = {
           [class.active]="showCalendar()"
           (click)="showCalendar.set(!showCalendar())"
         >
-          📅 {{ copy().calendar }}
+          {{ copy().calendar }}
         </button>
       </div>
 
       <!-- Month Calendar View -->
       @if (showCalendar()) {
-        <section class="calendar-card" aria-label="Observation Calendar">
+        <section class="calendar-card" [attr.aria-label]="copy().calendarRegion">
           <div class="calendar-header">
             <h3>{{ calendarTitle() }}</h3>
             <div class="cal-nav">
@@ -345,23 +359,24 @@ const COPY = {
                 type="button"
                 class="icon-btn"
                 (click)="prevMonth()"
-                aria-label="Previous month"
+                [attr.aria-label]="copy().prevMonth"
               >
                 ‹
               </button>
-              <button type="button" class="icon-btn" (click)="nextMonth()" aria-label="Next month">
+              <button
+                type="button"
+                class="icon-btn"
+                (click)="nextMonth()"
+                [attr.aria-label]="copy().nextMonth"
+              >
                 ›
               </button>
             </div>
           </div>
           <div class="calendar-grid">
-            <div class="cal-day-name">Sun</div>
-            <div class="cal-day-name">Mon</div>
-            <div class="cal-day-name">Tue</div>
-            <div class="cal-day-name">Wed</div>
-            <div class="cal-day-name">Thu</div>
-            <div class="cal-day-name">Fri</div>
-            <div class="cal-day-name">Sat</div>
+            @for (day of copy().weekdays; track $index) {
+              <div class="cal-day-name">{{ day }}</div>
+            }
             @for (cell of calendarDays(); track cell.key) {
               <button
                 type="button"
@@ -395,7 +410,7 @@ const COPY = {
       }
 
       <!-- Category Trends Bar Chart -->
-      <section class="trends-card" aria-label="Trends by category">
+      <section class="trends-card" [attr.aria-label]="copy().trends">
         <h3>{{ copy().trends }}</h3>
         @if (trendsData().length === 0) {
           <p class="subtitle">{{ copy().noTrends }}</p>
@@ -421,7 +436,7 @@ const COPY = {
       </section>
 
       <!-- Category Filter Chips -->
-      <div class="filters" role="group" aria-label="Filter by category">
+      <div class="filters" role="group" [attr.aria-label]="copy().filterRegion">
         <button
           type="button"
           class="chip"
@@ -492,7 +507,7 @@ const COPY = {
               <div
                 class="intensity"
                 role="img"
-                [attr.aria-label]="item.intensity + ' of 5 intensity'"
+                [attr.aria-label]="copy().intensityOf(item.intensity)"
               >
                 @for (level of intensityLevels; track level) {
                   <span class="pip" [class.on]="level <= item.intensity"></span>
@@ -515,13 +530,8 @@ const COPY = {
                 </button>
               </div>
             } @else {
-              <button
-                type="button"
-                class="icon-btn"
-                (click)="pendingDelete.set(item.id)"
-                [attr.aria-label]="copy().delete"
-              >
-                🗑
+              <button type="button" class="ghost-sm" (click)="pendingDelete.set(item.id)">
+                {{ copy().delete }}
               </button>
             }
           </li>
@@ -531,26 +541,30 @@ const COPY = {
   `,
   styles: [
     `
+      /* Header, buttons and panels follow the Children page so the portal reads as one. */
       :host {
         display: block;
-        max-width: 820px;
-        margin: 0 auto;
-        padding: 32px 16px 80px;
+        padding-bottom: 48px;
       }
 
       .page-head {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 20px;
-        margin-bottom: 24px;
+        gap: 24px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+      }
+
+      .page-head > div:first-child {
+        max-width: 680px;
       }
 
       .head-actions {
         display: flex;
-        flex-direction: column;
-        align-items: flex-end;
+        align-items: center;
         gap: 12px;
+        flex-wrap: wrap;
       }
 
       .child-picker {
@@ -562,49 +576,64 @@ const COPY = {
       }
 
       .child-picker select {
-        padding: 6px 12px;
-        border-radius: var(--ac-radius-sm);
+        min-height: 44px;
+        padding: 0 12px;
+        border-radius: var(--ac-radius-md);
         border: 1px solid var(--ac-color-border);
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-strong);
         font: inherit;
       }
 
       .eyebrow {
         margin: 0 0 6px;
+        color: var(--ac-color-action-mid);
         font-size: var(--ac-type-meta);
-        letter-spacing: 0.08em;
+        font-weight: 700;
         text-transform: uppercase;
-        color: var(--ac-color-text-muted);
+        letter-spacing: 0.05em;
       }
 
       h1 {
-        margin: 0 0 8px;
-        font-size: clamp(24px, 3.2vw, 32px);
-        font-weight: 700;
+        margin: 0;
         color: var(--ac-color-text-strong);
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-tight);
+        font-weight: 700;
       }
 
       .subtitle {
-        margin: 0;
-        color: var(--ac-color-text-muted);
-        line-height: 1.5;
+        margin: 10px 0 0;
+        color: var(--ac-color-text-body);
+        font-size: var(--ac-type-page-subtitle);
+        line-height: var(--ac-line-body);
+      }
+
+      .primary,
+      .ghost {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 20px;
+        border-radius: var(--ac-radius-md);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background var(--ac-motion-fast),
+          border-color var(--ac-motion-fast);
       }
 
       .primary {
-        padding: 10px 20px;
-        border-radius: var(--ac-radius-pill);
-        border: none;
+        border: 1px solid var(--ac-color-action);
         background: var(--ac-color-action);
-        color: var(--ac-color-action-contrast);
-        font: inherit;
-        font-weight: 600;
-        cursor: pointer;
-        transition: opacity 0.15s ease;
+        color: var(--ac-color-text-on-action);
       }
 
       .primary:hover:not(:disabled) {
-        opacity: 0.9;
+        background: var(--ac-color-action-deep);
       }
 
       .primary:disabled {
@@ -613,31 +642,44 @@ const COPY = {
       }
 
       .ghost {
-        padding: 10px 18px;
-        border-radius: var(--ac-radius-pill);
         border: 1px solid var(--ac-color-border);
-        background: transparent;
-        color: var(--ac-color-text-strong);
-        font: inherit;
-        cursor: pointer;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-slate);
+      }
+
+      .ghost:hover:not(:disabled) {
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
       }
 
       .ghost-sm {
         padding: 4px 10px;
         border-radius: var(--ac-radius-sm);
         border: 1px solid var(--ac-color-border);
-        background: transparent;
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-muted);
+        font: inherit;
         font-size: var(--ac-type-meta);
+        font-weight: 600;
         cursor: pointer;
+      }
+
+      .ghost-sm:hover {
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
+      }
+
+      button:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
 
       .del-btn {
         padding: 4px 10px;
         border-radius: var(--ac-radius-sm);
-        border: 1px solid var(--ac-color-error, var(--ac-color-border));
-        background: var(--ac-color-surface-elevated);
-        color: var(--ac-color-error, var(--ac-color-text-strong));
+        border: 1px solid var(--ac-color-alert-strong);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-alert-text);
         font-size: var(--ac-type-meta);
         font-weight: 600;
         cursor: pointer;
@@ -647,7 +689,7 @@ const COPY = {
         margin: 24px 0;
         padding: 24px;
         border-radius: var(--ac-radius-lg);
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
         box-shadow: var(--ac-shadow-sm);
       }
@@ -693,7 +735,7 @@ const COPY = {
 
       .chip.selected {
         background: var(--ac-color-action);
-        color: var(--ac-color-action-contrast);
+        color: var(--ac-color-text-on-action);
         border-color: var(--ac-color-action);
       }
 
@@ -716,7 +758,7 @@ const COPY = {
 
       .level.selected {
         background: var(--ac-color-action);
-        color: var(--ac-color-action-contrast);
+        color: var(--ac-color-text-on-action);
         border-color: var(--ac-color-action);
       }
 
@@ -788,7 +830,7 @@ const COPY = {
       }
 
       .view-btn.active {
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-strong);
         box-shadow: var(--ac-shadow-sm);
       }
@@ -806,7 +848,7 @@ const COPY = {
 
       .calendar-toggle-btn.active {
         background: var(--ac-color-action);
-        color: var(--ac-color-action-contrast);
+        color: var(--ac-color-text-on-action);
         border-color: var(--ac-color-action);
       }
 
@@ -814,7 +856,7 @@ const COPY = {
         margin-bottom: 24px;
         padding: 20px;
         border-radius: var(--ac-radius-lg);
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
       }
 
@@ -896,7 +938,7 @@ const COPY = {
         margin-bottom: 24px;
         padding: 20px;
         border-radius: var(--ac-radius-lg);
-        background: var(--ac-color-surface-elevated);
+        background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
       }
 
@@ -952,22 +994,28 @@ const COPY = {
         margin-bottom: 20px;
       }
 
+      /* One panel with dividers rather than a separate card per entry. */
       .list {
         list-style: none;
         margin: 0;
-        padding: 0;
+        padding: 0 20px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        border-radius: var(--ac-radius-lg);
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
       }
 
       .entry {
         display: flex;
+        align-items: flex-start;
         gap: 16px;
-        padding: 16px;
-        border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface-elevated);
-        border: 1px solid var(--ac-color-border);
+        padding: 16px 0;
+        border-bottom: 1px solid var(--ac-color-border);
+      }
+
+      .entry:last-child {
+        border-bottom: 0;
       }
 
       .dot {
@@ -1131,6 +1179,10 @@ export class ObservationsPage implements OnInit {
   private readonly api = inject(ObservationsApi);
 
   protected readonly copy = computed(() => COPY[this.i18n.currentLang()]);
+  /** Dates and times follow the page language, not the browser's. */
+  protected readonly locale = computed(() =>
+    this.i18n.currentLang() === 'km' ? 'km-KH' : 'en-GB',
+  );
   protected readonly intensityLevels = [1, 2, 3, 4, 5] as const;
 
   protected readonly children = signal<readonly ChildResponse[]>([]);
@@ -1363,7 +1415,7 @@ export class ObservationsPage implements OnInit {
   // Month Calendar data
   protected readonly calendarTitle = computed(() => {
     const d = this.calendarDate();
-    return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    return d.toLocaleDateString(this.locale(), { month: 'long', year: 'numeric' });
   });
 
   protected readonly calendarDays = computed(() => {
@@ -1420,14 +1472,14 @@ export class ObservationsPage implements OnInit {
   protected whenLabel(iso: string): string {
     const date = new Date(iso);
     const copy = this.copy();
-    const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    const time = date.toLocaleTimeString(this.locale(), { hour: '2-digit', minute: '2-digit' });
     const today = new Date();
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
     const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
     const dayMs = 86_400_000;
     if (day === startOfToday) return `${copy.today} • ${time}`;
     if (day === startOfToday - dayMs) return `${copy.yesterday} • ${time}`;
-    return `${date.toLocaleDateString()} • ${time}`;
+    return `${date.toLocaleDateString(this.locale())} • ${time}`;
   }
 
   private localNow(): string {

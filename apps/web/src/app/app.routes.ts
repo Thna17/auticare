@@ -1,3 +1,4 @@
+import { isDevMode } from '@angular/core';
 import type { Routes } from '@angular/router';
 import { AppShellComponent } from './core/layout/app-shell.component';
 import { authGuard } from './core/guards/auth.guard';
@@ -41,6 +42,24 @@ export const routes: Routes = [
     redirectTo: 'crisis',
     pathMatch: 'full',
   },
+  // Development only: the first-run questionnaire with sample data, no login and
+  // no API needed. Not registered in production builds.
+  ...(isDevMode()
+    ? [
+        {
+          path: 'preview',
+          loadComponent: () =>
+            import('./core/preview/preview-launcher.page').then((m) => m.PreviewLauncherPage),
+        },
+        {
+          path: 'preview/welcome',
+          loadChildren: () =>
+            import('./features/assessment/preview/onboarding-preview.routes').then(
+              (m) => m.ONBOARDING_PREVIEW_ROUTES,
+            ),
+        },
+      ]
+    : []),
   {
     path: '',
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),

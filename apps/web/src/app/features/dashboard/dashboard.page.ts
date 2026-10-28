@@ -50,54 +50,102 @@ import { I18nService } from '../../core/i18n/i18n.service';
           } @else if (dashboardError()) {
             <ac-ui-message tone="error">{{ dashboardError() }}</ac-ui-message>
           } @else {
-            <!-- Greeting Section -->
-            <section class="greeting-section">
-              <div>
-                <h1>Good {{ dayPart() }}, {{ greetingName() }}</h1>
-                <p>Here's a summary of your classroom's progress today.</p>
+            <!-- Teacher Portal Header -->
+            <header class="school-header">
+              <div class="header-intro">
+                <p class="eyebrow">
+                  {{ currentLang() === 'km' ? 'ផ្ទាំងគ្រប់គ្រងគ្រូបង្រៀន' : 'Teacher Portal' }}
+                </p>
+                <h1>
+                  @if (currentLang() === 'km') {
+                    សួស្តី {{ greetingName() }}
+                  } @else {
+                    Good {{ dayPart() }}, {{ greetingName() }}
+                  }
+                </h1>
+                <p class="subtitle">
+                  {{
+                    currentLang() === 'km'
+                      ? 'នេះជាសេចក្តីសង្ខេបនៃការវិវត្ត និងសកម្មភាពក្នុងថ្នាក់រៀនរបស់អ្នកថ្ងៃនេះ។'
+                      : "Here's a summary of your classroom's progress and student activities today."
+                  }}
+                </p>
               </div>
-            </section>
+              <div class="header-actions">
+                <a class="secondary-btn" routerLink="/schools/reports">
+                  {{ currentLang() === 'km' ? 'មើលរបាយការណ៍ទាំងអស់' : 'View all reports' }}
+                </a>
+                <a class="primary-btn" routerLink="/schools/reports/new">
+                  <span aria-hidden="true">+</span>
+                  <span>{{ currentLang() === 'km' ? 'របាយការណ៍ថ្មី' : 'New report' }}</span>
+                </a>
+              </div>
+            </header>
 
             @if (dashboardData(); as data) {
-              <!-- Stats Grid -->
-              <section class="stats-grid">
-                <div class="stat-card">
-                  <div class="stat-icon students-icon">👥</div>
-                  @if (data.stats.studentsDelta) {
-                    <div class="stat-header">
-                      <span class="stat-trend">+{{ data.stats.studentsDelta }} this term</span>
-                    </div>
-                  }
-                  <div class="stat-label">TOTAL STUDENTS</div>
-                  <div class="stat-value">{{ data.stats.totalStudents }}</div>
-                </div>
-
-                <div class="stat-card">
-                  <div class="stat-icon reports-icon">📋</div>
-                  <div class="stat-label">REPORTS SUBMITTED</div>
-                  <div class="stat-value">{{ data.stats.reportsSubmitted }}</div>
-                  <div class="stat-footer">Submitted this month</div>
-                </div>
-
-                <div class="stat-card">
-                  <div class="stat-icon pending-icon">⏳</div>
-                  <div class="stat-label">PENDING REPORTS</div>
-                  <div class="stat-value warning">
-                    {{ formatPending(data.stats.pendingReports) }}
+              <!-- Classroom Summary Strip -->
+              <section
+                class="stats-strip"
+                [attr.aria-label]="
+                  currentLang() === 'km' ? 'ស្ថិតិសង្ខេបថ្នាក់រៀន' : 'Classroom summary'
+                "
+              >
+                <div class="stat-item">
+                  <span class="stat-label">
+                    {{ currentLang() === 'km' ? 'សិស្សសរុប' : 'Total students' }}
+                  </span>
+                  <div class="stat-body">
+                    <span class="stat-value">{{ data.stats.totalStudents }}</span>
+                    @if (data.stats.studentsDelta) {
+                      <span class="stat-meta">
+                        +{{ data.stats.studentsDelta }}
+                        {{ currentLang() === 'km' ? 'ឆមាសនេះ' : 'this term' }}
+                      </span>
+                    }
                   </div>
                 </div>
 
-                <div class="stat-card">
-                  <div class="stat-icon activities-icon">✓</div>
-                  @if (data.stats.weekDelta != null) {
-                    <div class="stat-header">
-                      <span class="stat-trend positive"
-                        >+{{ data.stats.weekDelta }}% from last week</span
-                      >
-                    </div>
-                  }
-                  <div class="stat-label">ACTIVITIES COMPLETED</div>
-                  <div class="stat-value">{{ data.stats.activitiesCompleted }}</div>
+                <div class="stat-item">
+                  <span class="stat-label">
+                    {{ currentLang() === 'km' ? 'របាយការណ៍បានដាក់ស្នើ' : 'Reports submitted' }}
+                  </span>
+                  <div class="stat-body">
+                    <span class="stat-value">{{ data.stats.reportsSubmitted }}</span>
+                    <span class="stat-meta">
+                      {{ currentLang() === 'km' ? 'ខែនេះ' : 'this month' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="stat-item">
+                  <span class="stat-label">
+                    {{ currentLang() === 'km' ? 'របាយការណ៍រង់ចាំ' : 'Pending reports' }}
+                  </span>
+                  <div class="stat-body">
+                    <span class="stat-value" [class.warning]="data.stats.pendingReports > 0">
+                      {{ formatPending(data.stats.pendingReports) }}
+                    </span>
+                    @if (data.stats.pendingReports > 0) {
+                      <span class="stat-meta warning">
+                        {{ currentLang() === 'km' ? 'ត្រូវពិនិត្យ' : 'action needed' }}
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <div class="stat-item">
+                  <span class="stat-label">
+                    {{ currentLang() === 'km' ? 'សកម្មភាពបានបញ្ចប់' : 'Activities completed' }}
+                  </span>
+                  <div class="stat-body">
+                    <span class="stat-value">{{ data.stats.activitiesCompleted }}</span>
+                    @if (data.stats.weekDelta != null) {
+                      <span class="stat-meta positive">
+                        +{{ data.stats.weekDelta }}%
+                        {{ currentLang() === 'km' ? 'ពីសប្តាហ៍មុន' : 'vs last week' }}
+                      </span>
+                    }
+                  </div>
                 </div>
               </section>
 
@@ -108,17 +156,21 @@ import { I18nService } from '../../core/i18n/i18n.service';
                   <!-- Recent Reports -->
                   <div class="content-card">
                     <div class="card-header">
-                      <h2>Recent Reports</h2>
-                      <a routerLink="/schools/reports" class="view-all">View All</a>
+                      <h2>
+                        {{ currentLang() === 'km' ? 'របាយការណ៍ថ្មីៗ' : 'Recent Reports' }}
+                      </h2>
+                      <a routerLink="/schools/reports" class="view-all">
+                        {{ currentLang() === 'km' ? 'មើលទាំងអស់' : 'View all' }}
+                      </a>
                     </div>
                     @if (data.recentReports.length) {
                       <table class="reports-table">
                         <thead>
                           <tr>
-                            <th>Student Name</th>
-                            <th>Activity</th>
-                            <th>Date</th>
-                            <th>Status</th>
+                            <th>{{ currentLang() === 'km' ? 'ឈ្មោះសិស្ស' : 'Student Name' }}</th>
+                            <th>{{ currentLang() === 'km' ? 'សកម្មភាព' : 'Activity' }}</th>
+                            <th>{{ currentLang() === 'km' ? 'កាលបរិច្ឆេទ' : 'Date' }}</th>
+                            <th>{{ currentLang() === 'km' ? 'ស្ថានភាព' : 'Status' }}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -139,7 +191,15 @@ import { I18nService } from '../../core/i18n/i18n.service';
                               <td>{{ formatDate(report.activityDate) }}</td>
                               <td>
                                 <span class="status-badge" [class]="report.status.toLowerCase()">
-                                  {{ report.status }}
+                                  {{
+                                    currentLang() === 'km'
+                                      ? report.status === 'SUBMITTED'
+                                        ? 'បានដាក់ស្នើ'
+                                        : report.status === 'DRAFT'
+                                          ? 'ព្រាង'
+                                          : report.status
+                                      : report.status
+                                  }}
                                 </span>
                               </td>
                             </tr>
@@ -147,14 +207,24 @@ import { I18nService } from '../../core/i18n/i18n.service';
                         </tbody>
                       </table>
                     } @else {
-                      <p class="empty-message">No reports yet.</p>
+                      <p class="empty-message">
+                        {{
+                          currentLang() === 'km' ? 'មិនទាន់មានរបាយការណ៍នៅឡើយទេ។' : 'No reports yet.'
+                        }}
+                      </p>
                     }
                   </div>
 
                   <!-- Recent Student Activities (derived from recent reports) -->
                   <div class="content-card">
                     <div class="card-header">
-                      <h2>Recent Student Activities</h2>
+                      <h2>
+                        {{
+                          currentLang() === 'km'
+                            ? 'សកម្មភាពសិស្សថ្មីៗ'
+                            : 'Recent Student Activities'
+                        }}
+                      </h2>
                     </div>
                     @if (derivedActivities().length) {
                       <div class="activities-timeline">
@@ -174,7 +244,13 @@ import { I18nService } from '../../core/i18n/i18n.service';
                         }
                       </div>
                     } @else {
-                      <p class="empty-message">No recent activities.</p>
+                      <p class="empty-message">
+                        {{
+                          currentLang() === 'km'
+                            ? 'មិនទាន់មានសកម្មភាពថ្មីៗនៅឡើយទេ។'
+                            : 'No recent activities.'
+                        }}
+                      </p>
                     }
                   </div>
                 </div>
@@ -185,8 +261,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
                   <div class="content-card reminders-card">
                     <div class="card-header">
                       <h2>
-                        <span class="calendar-icon">📅</span>
-                        Report Reminders
+                        {{ currentLang() === 'km' ? 'ការរំលឹករបាយការណ៍' : 'Report Reminders' }}
                       </h2>
                     </div>
                     @if (data.reminders.length) {
@@ -206,33 +281,62 @@ import { I18nService } from '../../core/i18n/i18n.service';
                         }
                       </div>
                     } @else {
-                      <p class="empty-message">No reminders right now.</p>
+                      <p class="empty-message">
+                        {{
+                          currentLang() === 'km'
+                            ? 'មិនមានការរំលឹកនៅពេលនេះទេ។'
+                            : 'No reminders right now.'
+                        }}
+                      </p>
                     }
                   </div>
 
                   <!-- Classroom Engagement -->
                   <div class="engagement-card">
                     <div class="engagement-header">
-                      <h2>Classroom Engagement</h2>
+                      <h2>
+                        {{
+                          currentLang() === 'km'
+                            ? 'ការចូលរួមក្នុងថ្នាក់រៀន'
+                            : 'Classroom Engagement'
+                        }}
+                      </h2>
                       @if (data.stats.weekDelta != null) {
                         <p>
-                          Average student engagement is up {{ data.stats.weekDelta }}% compared to
-                          last week.
+                          {{
+                            currentLang() === 'km'
+                              ? 'ការចូលរួមជាមធ្យមរបស់សិស្សកើនឡើង ' +
+                                data.stats.weekDelta +
+                                '% បើធៀបនឹងសប្តាហ៍មុន។'
+                              : 'Average student engagement is up ' +
+                                data.stats.weekDelta +
+                                '% compared to last week.'
+                          }}
                         </p>
                       } @else {
-                        <p>Track your classroom engagement over the week.</p>
+                        <p>
+                          {{
+                            currentLang() === 'km'
+                              ? 'តាមដានការចូលរួមរបស់សិស្សក្នុងថ្នាក់រៀនរបស់អ្នកពេញមួយសប្តាហ៍។'
+                              : 'Track your classroom engagement over the week.'
+                          }}
+                        </p>
                       }
                     </div>
                     <div class="engagement-chart">
                       <div class="chart-bars">
                         @for (day of engagementData(); track $index) {
                           <div class="chart-column">
-                            <div
-                              class="bar"
-                              [style.height.%]="day.value"
-                              [class.today]="day.isToday"
-                            ></div>
-                            <span class="day-label">{{ day.label }}</span>
+                            <div class="bar-track">
+                              <div
+                                class="bar"
+                                [style.height.%]="day.value"
+                                [class.today]="day.isToday"
+                              ></div>
+                            </div>
+                            <span class="day-label" [class.today]="day.isToday">
+                              {{ formatDayLabel(day) }}
+                            </span>
                           </div>
                         }
                       </div>
@@ -408,11 +512,9 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 >
               </section>
             } @else {
-              <ac-parent-analysis [childId]="child.id" [childName]="child.firstName" />
-
-              <!-- Quick Actions -->
-              <section class="quick-actions-section" aria-label="Quick Actions">
-                <h2 class="section-title">
+              <!-- Quick Actions: a slim toolbar under the greeting, not another row of cards. -->
+              <section class="quick-actions-section" aria-labelledby="quick-actions-title">
+                <h2 id="quick-actions-title" class="visually-hidden">
                   {{ currentLang() === 'km' ? 'សកម្មភាពរហ័ស' : 'Quick Actions' }}
                 </h2>
                 <div class="quick-actions-grid">
@@ -421,7 +523,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
                     routerLink="/observations"
                     [queryParams]="{ childId: child.id, action: 'new' }"
                   >
-                    <span class="action-icon" aria-hidden="true">📝</span>
                     <span class="action-text">{{
                       currentLang() === 'km' ? 'កត់ត្រាការសង្កេត' : 'Add Behaviour Log'
                     }}</span>
@@ -431,7 +532,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
                     routerLink="/reports"
                     [queryParams]="{ childId: child.id }"
                   >
-                    <span class="action-icon" aria-hidden="true">📊</span>
                     <span class="action-text">{{
                       currentLang() === 'km' ? 'មើលរបាយការណ៍' : 'View Reports'
                     }}</span>
@@ -441,7 +541,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
                     routerLink="/ai"
                     [queryParams]="{ childId: child.id }"
                   >
-                    <span class="action-icon" aria-hidden="true">💡</span>
                     <span class="action-text">{{
                       currentLang() === 'km' ? 'សួរ AI' : 'Ask AI'
                     }}</span>
@@ -449,7 +548,9 @@ import { I18nService } from '../../core/i18n/i18n.service';
                 </div>
               </section>
 
-              <!-- Widgets Grid -->
+              <ac-parent-analysis [childId]="child.id" [childName]="child.firstName" />
+
+              <!-- Widgets Grid: three plain columns separated by space, no boxes. -->
               <div class="parent-cards-grid">
                 <!-- Recent Behaviour Records -->
                 <section class="dashboard-widget-card" aria-label="Recent Behaviour Records">
@@ -915,10 +1016,8 @@ import { I18nService } from '../../core/i18n/i18n.service';
       /* ========== SCHOOL DASHBOARD STYLES ========== */
       .page-layout {
         display: flex;
-        gap: 24px;
-        padding: 24px 0;
-        background: var(--ac-color-surface-slate);
-        min-height: 100vh;
+        gap: var(--ac-space-6);
+        padding: var(--ac-space-6) 0;
         width: 100%;
         max-width: 100%;
       }
@@ -930,168 +1029,200 @@ import { I18nService } from '../../core/i18n/i18n.service';
         max-width: 100%;
       }
 
-      .empty-message {
-        background: var(--ac-color-surface);
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
-        margin-bottom: 24px;
-        color: var(--ac-color-text-slate);
-        font-size: 14px;
-        padding: 24px;
+      .school-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--ac-space-6);
+        margin-bottom: var(--ac-space-6);
+        flex-wrap: wrap;
       }
 
-      .greeting-section {
-        margin-bottom: 28px;
+      .school-header .header-intro {
+        flex: 1;
+        min-width: 280px;
       }
 
-      .greeting-section h1 {
-        margin: 0 0 8px 0;
+      .school-header .eyebrow {
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-bold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ac-color-action-mid);
+        margin: 0 0 var(--ac-space-1) 0;
+      }
+
+      .school-header h1 {
         font-size: var(--ac-type-page-title);
-        line-height: var(--ac-line-title);
+        line-height: var(--ac-line-tight);
         font-weight: var(--ac-font-weight-bold);
         color: var(--ac-color-text-strong);
+        margin: 0 0 var(--ac-space-2) 0;
       }
 
-      .greeting-section p {
+      .school-header .subtitle {
+        font-size: var(--ac-type-page-subtitle);
+        line-height: var(--ac-line-body);
+        color: var(--ac-color-text-body);
+        max-width: 680px;
         margin: 0;
-        color: var(--ac-color-text-slate);
-        font-size: 15px;
       }
 
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin-bottom: 28px;
-      }
-
-      .stat-card {
-        background: var(--ac-color-surface);
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
-        position: relative;
-      }
-
-      .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+      .school-header .header-actions {
         display: flex;
         align-items: center;
+        gap: var(--ac-space-3);
+        flex-wrap: wrap;
+      }
+
+      .school-header .primary-btn {
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
-        font-size: 24px;
-        margin-bottom: 12px;
+        gap: var(--ac-space-2);
+        min-height: 44px;
+        padding: 0 var(--ac-space-4);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        border: 1px solid transparent;
+        border-radius: var(--ac-radius-md);
+        font-size: 14px;
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+        transition: background var(--ac-motion-fast);
       }
 
-      .students-icon {
-        background: var(--ac-color-blue-100);
+      .school-header .primary-btn:hover {
+        background: var(--ac-color-action-deep);
       }
 
-      .reports-icon {
-        background: var(--ac-color-green-100);
+      .school-header .secondary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 var(--ac-space-4);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-md);
+        font-size: 14px;
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+        transition:
+          border-color var(--ac-motion-fast),
+          color var(--ac-motion-fast);
       }
 
-      .pending-icon {
-        background: var(--ac-color-amber-tint-100);
+      .school-header .secondary-btn:hover {
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
       }
 
-      .activities-icon {
-        background: var(--ac-color-blue-100);
+      /* Unified flat stats strip replacing big cards */
+      .stats-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-lg);
+        margin-bottom: var(--ac-space-6);
       }
 
-      .stat-header {
-        position: absolute;
-        top: 20px;
-        right: 20px;
+      .stat-item {
+        padding: var(--ac-space-4) var(--ac-space-5);
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-space-1);
       }
 
-      .stat-trend {
-        font-size: 12px;
-        color: var(--ac-color-green-500);
-        font-weight: 600;
-      }
-
-      .stat-trend.positive {
-        color: var(--ac-color-green-500);
+      .stat-item + .stat-item {
+        border-left: 1px solid var(--ac-color-border-slate);
       }
 
       .stat-label {
-        font-size: 12px;
-        font-weight: 600;
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-semibold);
         color: var(--ac-color-text-slate);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
+        letter-spacing: 0.04em;
+      }
+
+      .stat-body {
+        display: flex;
+        align-items: baseline;
+        gap: var(--ac-space-2);
+        flex-wrap: wrap;
       }
 
       .stat-value {
-        font-size: 36px;
-        font-weight: 700;
-        color: var(--ac-color-text-slate-strong);
+        font-size: 28px;
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
         line-height: 1;
       }
 
       .stat-value.warning {
-        color: var(--ac-color-amber-500);
+        color: var(--ac-color-alert-strong);
       }
 
-      .stat-footer {
+      .stat-meta {
         font-size: 12px;
-        color: var(--ac-color-text-slate);
-        margin-top: 8px;
+        color: var(--ac-color-text-muted);
+        font-weight: var(--ac-font-weight-medium);
+      }
+
+      .stat-meta.positive {
+        color: var(--ac-color-green-600);
+      }
+
+      .stat-meta.warning {
+        color: var(--ac-color-alert-strong);
       }
 
       .dashboard-grid {
         display: grid;
         grid-template-columns: 1fr 360px;
-        gap: 24px;
+        gap: var(--ac-space-6);
       }
 
       .left-column,
       .right-column {
         display: flex;
         flex-direction: column;
-        gap: 24px;
+        gap: var(--ac-space-6);
       }
 
       .content-card {
         background: var(--ac-color-surface);
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-lg);
+        padding: var(--ac-space-6);
       }
 
       .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: var(--ac-space-4);
       }
 
       .card-header h2 {
         margin: 0;
         font-size: 18px;
-        font-weight: 600;
-        color: var(--ac-color-text-slate-strong);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .calendar-icon {
-        font-size: 20px;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-strong);
       }
 
       .view-all {
         font-size: 13px;
-        color: var(--ac-color-action-alt);
+        color: var(--ac-color-action-mid);
         text-decoration: none;
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
       }
 
       .view-all:hover {
+        color: var(--ac-color-action-deep);
         text-decoration: underline;
       }
 
@@ -1102,19 +1233,20 @@ import { I18nService } from '../../core/i18n/i18n.service';
 
       .reports-table th {
         text-align: left;
-        padding: 12px 16px;
-        font-size: 11px;
-        font-weight: 600;
+        padding: var(--ac-space-3) var(--ac-space-4);
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-bold);
         color: var(--ac-color-text-slate);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.05em;
         border-bottom: 1px solid var(--ac-color-border-slate);
       }
 
       .reports-table td {
-        padding: 16px;
+        padding: var(--ac-space-3) var(--ac-space-4);
         border-bottom: 1px solid var(--ac-color-slate-100);
         font-size: 14px;
+        color: var(--ac-color-text-strong);
       }
 
       .reports-table tr:last-child td {
@@ -1124,64 +1256,78 @@ import { I18nService } from '../../core/i18n/i18n.service';
       .student-cell {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: var(--ac-space-3);
       }
 
       .student-avatar {
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 600;
-        font-size: 12px;
+        font-weight: var(--ac-font-weight-semibold);
+        font-size: 11px;
         color: var(--ac-color-text-on-action);
+        flex-shrink: 0;
       }
 
       .student-name {
-        font-weight: 500;
-        color: var(--ac-color-text-slate-strong);
+        font-weight: var(--ac-font-weight-medium);
+        color: var(--ac-color-text-strong);
       }
 
       .status-badge {
-        padding: 4px 12px;
-        border-radius: 6px;
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: var(--ac-radius-pill);
         font-size: 12px;
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
       }
 
       .status-badge.submitted {
-        background: var(--ac-color-green-100);
-        color: var(--ac-color-emerald-600);
+        background: var(--ac-color-green-50);
+        color: var(--ac-color-green-700);
+        border: 1px solid var(--ac-color-green-100);
       }
 
       .status-badge.draft {
         background: var(--ac-color-slate-100);
         color: var(--ac-color-text-slate);
+        border: 1px solid var(--ac-color-border-slate);
       }
 
       .activities-timeline {
         display: flex;
         flex-direction: column;
-        gap: 16px;
       }
 
       .activity-item {
         display: flex;
-        gap: 14px;
+        gap: var(--ac-space-3);
+        padding: var(--ac-space-3) 0;
+        border-bottom: 1px solid var(--ac-color-slate-100);
+      }
+
+      .activity-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      .activity-item:first-child {
+        padding-top: 0;
       }
 
       .activity-icon {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
+        font-size: 12px;
         color: var(--ac-color-text-on-action);
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
         flex-shrink: 0;
       }
 
@@ -1190,19 +1336,19 @@ import { I18nService } from '../../core/i18n/i18n.service';
       }
 
       .activity-content p {
-        margin: 0 0 4px 0;
+        margin: 0 0 2px 0;
         font-size: 14px;
-        color: var(--ac-color-text-slate-strong);
-        line-height: 1.5;
+        color: var(--ac-color-text-strong);
+        line-height: var(--ac-line-body);
       }
 
       .activity-content strong {
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
       }
 
       .activity-time {
         font-size: 12px;
-        color: var(--ac-color-text-slate);
+        color: var(--ac-color-text-muted);
       }
 
       .reminders-card {
@@ -1212,98 +1358,97 @@ import { I18nService } from '../../core/i18n/i18n.service';
       .reminders-list {
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        margin-bottom: 20px;
+        gap: var(--ac-space-3);
       }
 
       .reminder-item {
-        padding: 16px;
-        border-radius: 10px;
-        background: var(--ac-color-surface-slate);
-        border-left: 4px solid var(--ac-color-border-slate);
+        padding: var(--ac-space-3) var(--ac-space-4);
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
+        border-left: 3px solid var(--ac-color-border-slate);
       }
 
       .reminder-item.today {
         background: var(--ac-color-red-50);
-        border-left-color: var(--ac-color-red-500);
+        border-left-color: var(--ac-color-alert-strong);
       }
 
       .reminder-item.tomorrow {
-        background: var(--ac-color-blue-tint-subtle);
+        background: var(--ac-color-blue-100);
         border-left-color: var(--ac-color-blue-500);
       }
 
       .reminder-item.upcoming {
-        background: var(--ac-color-surface-slate);
+        background: var(--ac-color-surface);
         border-left-color: var(--ac-color-text-slate);
       }
 
       .reminder-header {
-        margin-bottom: 8px;
+        margin-bottom: var(--ac-space-1);
       }
 
       .reminder-when {
         font-size: 11px;
-        font-weight: 700;
+        font-weight: var(--ac-font-weight-bold);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.04em;
         color: var(--ac-color-text-slate);
       }
 
       .reminder-when.today {
-        color: var(--ac-color-red-500);
+        color: var(--ac-color-alert-strong);
       }
 
       .reminder-when.tomorrow {
-        color: var(--ac-color-blue-500);
+        color: var(--ac-color-blue-600);
       }
 
       .reminder-title {
         font-size: 14px;
-        font-weight: 600;
-        color: var(--ac-color-text-slate-strong);
-        margin-bottom: 4px;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-strong);
+        margin-bottom: 2px;
       }
 
       .reminder-time {
         font-size: 12px;
-        color: var(--ac-color-text-slate);
+        color: var(--ac-color-text-muted);
       }
 
+      /* Classroom Engagement: calmed from harsh dark gradient to flat clean panel */
       .engagement-card {
-        background: linear-gradient(
-          135deg,
-          var(--ac-color-action-alt) 0%,
-          var(--ac-color-ink-deep-teal) 100%
-        );
-        border-radius: 12px;
-        padding: 24px;
-        color: var(--ac-color-text-on-action);
-        box-shadow: 0 4px 12px color-mix(in srgb, var(--ac-brand-500) 30%, transparent);
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-lg);
+        padding: var(--ac-space-6);
+        color: var(--ac-color-text-strong);
       }
 
       .engagement-header h2 {
-        margin: 0 0 8px 0;
+        margin: 0 0 var(--ac-space-2) 0;
         font-size: 18px;
-        font-weight: 600;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-strong);
       }
 
       .engagement-header p {
-        margin: 0 0 20px 0;
+        margin: 0 0 var(--ac-space-4) 0;
         font-size: 13px;
-        opacity: 0.9;
+        color: var(--ac-color-text-body);
+        line-height: var(--ac-line-body);
       }
 
       .engagement-chart {
-        margin-top: 20px;
+        margin-top: var(--ac-space-3);
       }
 
       .chart-bars {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
-        height: 160px;
-        gap: 12px;
+        height: 140px;
+        gap: var(--ac-space-2);
       }
 
       .chart-column {
@@ -1311,24 +1456,81 @@ import { I18nService } from '../../core/i18n/i18n.service';
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: var(--ac-space-2);
+        height: 100%;
+      }
+
+      .bar-track {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        align-items: flex-end;
+        background: var(--ac-color-slate-100);
+        border-radius: var(--ac-radius-sm);
+        padding: 0;
       }
 
       .bar {
         width: 100%;
-        background: color-mix(in srgb, var(--ac-color-white) 30%, transparent);
-        border-radius: 6px 6px 0 0;
-        min-height: 20px;
-        transition: all 0.3s;
+        background: var(--ac-brand-300);
+        border-radius: var(--ac-radius-sm);
+        min-height: 8px;
+        transition: height 0.3s ease;
       }
 
       .bar.today {
-        background: color-mix(in srgb, var(--ac-color-white) 90%, transparent);
+        background: var(--ac-color-action);
       }
 
       .day-label {
         font-size: 11px;
-        opacity: 0.9;
+        font-weight: var(--ac-font-weight-medium);
+        color: var(--ac-color-text-muted);
+      }
+
+      .day-label.today {
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-action-deep);
+      }
+
+      .empty-message {
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-md);
+        text-align: center;
+        color: var(--ac-color-text-muted);
+        font-size: 14px;
+        padding: var(--ac-space-6);
+      }
+
+      @media (max-width: 900px) {
+        .stats-strip {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stat-item:nth-child(3) {
+          border-left: none;
+          border-top: 1px solid var(--ac-color-border-slate);
+        }
+
+        .stat-item:nth-child(4) {
+          border-top: 1px solid var(--ac-color-border-slate);
+        }
+
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .stats-strip {
+          grid-template-columns: 1fr;
+        }
+
+        .stat-item + .stat-item {
+          border-left: none;
+          border-top: 1px solid var(--ac-color-border-slate);
+        }
       }
 
       /* ========== PARENT DASHBOARD STYLES (Unchanged) ========== */
@@ -1525,7 +1727,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
         width: 28px;
         height: 28px;
         border-radius: 50%;
-        background: var(--ac-color-action-soft);
+        background: var(--ac-color-action);
         color: var(--ac-color-text-on-action);
         font-size: 11px;
         font-weight: 700;
@@ -2144,6 +2346,184 @@ import { I18nService } from '../../core/i18n/i18n.service';
           grid-template-columns: 1fr;
         }
       }
+
+      /* ========== PARENT DASHBOARD: QUICK ACTIONS & RECENT LISTS ========== */
+      /* Kept flat on purpose: the next-step panel is the only highlighted block. */
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .quick-actions-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--ac-space-2);
+      }
+
+      /* Same size and shape as the next-step button in ac-parent-analysis. */
+      .quick-action-card {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 0 var(--ac-space-4);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font-size: 14px;
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+        transition:
+          border-color var(--ac-motion-fast) var(--ac-ease-standard),
+          color var(--ac-motion-fast) var(--ac-ease-standard);
+      }
+
+      .quick-action-card:hover {
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action-deep);
+      }
+
+      .quick-action-card:focus-visible,
+      .widget-link:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
+      }
+
+      .parent-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--ac-space-8);
+        margin-top: var(--ac-space-4);
+      }
+
+      .dashboard-widget-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-space-3);
+        min-width: 0;
+        padding-top: var(--ac-space-4);
+        border-top: 2px solid var(--ac-color-border-slate);
+      }
+
+      .widget-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--ac-space-3);
+      }
+
+      .widget-header h2 {
+        margin: 0;
+        font-size: 16px;
+        line-height: var(--ac-line-tight);
+        font-weight: var(--ac-font-weight-bold);
+        color: var(--ac-color-text-strong);
+      }
+
+      .widget-link {
+        flex-shrink: 0;
+        border-radius: var(--ac-radius-xs);
+        color: var(--ac-color-action-deep);
+        font-size: 13px;
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+      }
+
+      .widget-link:hover {
+        text-decoration: underline;
+      }
+
+      .widget-list {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .widget-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-space-1);
+        padding: var(--ac-space-3) 0;
+        border-bottom: 1px solid var(--ac-color-slate-line-faint);
+      }
+
+      .widget-item:first-child {
+        padding-top: 0;
+      }
+
+      .widget-item:last-child {
+        border-bottom: 0;
+      }
+
+      .item-meta {
+        display: flex;
+        align-items: center;
+        gap: var(--ac-space-2);
+        flex-wrap: wrap;
+      }
+
+      .category-pill,
+      .age-pill {
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-semibold);
+      }
+
+      .category-pill {
+        color: var(--ac-color-action-deep);
+      }
+
+      .age-pill,
+      .item-date {
+        font-size: 12px;
+        color: var(--ac-color-text-muted);
+      }
+
+      .item-title {
+        font-size: 14px;
+        font-weight: var(--ac-font-weight-semibold);
+        color: var(--ac-color-text-strong);
+      }
+
+      .item-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        margin: 0;
+        overflow: hidden;
+        font-size: 14px;
+        line-height: var(--ac-line-body);
+        color: var(--ac-color-text-body);
+        overflow-wrap: anywhere;
+      }
+
+      .widget-empty {
+        margin: 0;
+        font-size: 14px;
+        line-height: var(--ac-line-body);
+        color: var(--ac-color-text-muted);
+      }
+
+      @media (max-width: 900px) {
+        .parent-cards-grid {
+          grid-template-columns: 1fr;
+          gap: var(--ac-space-6);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .quick-action-card {
+          transition: none;
+        }
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -2254,6 +2634,7 @@ export class DashboardPage implements OnInit {
   protected readonly derivedActivities = computed(() => {
     const reports = this.dashboardData()?.recentReports;
     if (!reports?.length) return [];
+    const isKm = this.currentLang() === 'km';
     const colors = [
       'var(--ac-color-blue-500)',
       'var(--ac-color-green-500)',
@@ -2265,7 +2646,9 @@ export class DashboardPage implements OnInit {
       id: r.id,
       studentName: r.childFirstName,
       initials: r.childFirstName.slice(0, 2).toUpperCase(),
-      description: `completed "${r.title}" in ${r.activityCategory}.`,
+      description: isKm
+        ? `បានបញ្ចប់ «${r.title}» ក្នុង ${r.activityCategory}។`
+        : `completed "${r.title}" in ${r.activityCategory}.`,
       timeAgo: this.formatDate(r.activityDate),
       color: colors[i % colors.length],
     }));
@@ -2280,6 +2663,23 @@ export class DashboardPage implements OnInit {
     { label: 'Today', value: 78, isToday: true },
     { label: 'Sun', value: 30, isToday: false },
   ]);
+
+  protected formatDayLabel(day: { label: string; isToday: boolean }): string {
+    if (this.currentLang() !== 'km') {
+      return day.isToday ? 'Today' : day.label;
+    }
+    if (day.isToday) return 'ថ្ងៃនេះ';
+    const kmDays: Record<string, string> = {
+      Mon: 'ច័ន្ទ',
+      Tue: 'អង្គារ',
+      Wed: 'ពុធ',
+      Thu: 'ព្រហ',
+      Fri: 'សុក្រ',
+      Sat: 'សៅរ៍',
+      Sun: 'អាទិត្យ',
+    };
+    return kmDays[day.label] ?? day.label;
+  }
 
   ngOnInit() {
     if (!this.parent()) {

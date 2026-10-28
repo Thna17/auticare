@@ -215,7 +215,7 @@ const INSIGHT_DAYS = 28;
             </a>
             @if (step.kind !== 'ask') {
               <a class="ask-link" routerLink="/ai">
-                <span class="ai-dot" aria-hidden="true"></span>{{ copy().orAsk }}
+                {{ copy().orAsk }}
               </a>
             }
           </div>
@@ -315,7 +315,7 @@ const INSIGHT_DAYS = 28;
         justify-content: space-between;
         gap: 20px 32px;
         flex-wrap: wrap;
-        padding: 26px 28px;
+        padding: 22px 24px;
         border-radius: var(--ac-radius-lg);
         background: var(--ac-color-surface-info);
         border: 1px solid var(--ac-color-border-info);
@@ -338,7 +338,7 @@ const INSIGHT_DAYS = 28;
 
       .next-card h2 {
         margin: 0;
-        font-size: clamp(19px, 2.2vw, 23px);
+        font-size: clamp(18px, 2vw, 20px);
         line-height: 1.3;
         color: var(--a-ink);
       }
@@ -360,26 +360,25 @@ const INSIGHT_DAYS = 28;
         z-index: 1;
       }
 
+      /* Same size and shape as the dashboard's quick-action buttons. */
       .next-cta {
         display: inline-flex;
         align-items: center;
-        gap: 10px;
-        padding: 13px 22px;
-        border-radius: 999px;
+        gap: 8px;
+        min-height: 36px;
+        padding: 0 16px;
+        border: 1px solid var(--a-primary);
+        border-radius: var(--ac-radius-md);
         background: var(--a-primary);
         color: var(--ac-color-text-on-action);
-        font-weight: 700;
-        font-size: 15px;
+        font-weight: 600;
+        font-size: 14px;
         text-decoration: none;
-        box-shadow: var(--ac-shadow-sm);
-        transition:
-          transform 0.18s ease,
-          box-shadow 0.18s ease;
+        transition: background 0.18s ease;
       }
 
       .next-cta:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--ac-shadow-hover);
+        background: var(--ac-color-action-deep);
       }
 
       .next-cta:hover .arrow {
@@ -397,11 +396,8 @@ const INSIGHT_DAYS = 28;
       }
 
       .ask-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
         color: var(--a-primary);
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
         text-decoration: none;
       }
@@ -410,43 +406,27 @@ const INSIGHT_DAYS = 28;
         text-decoration: underline;
       }
 
-      .ai-dot {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        background: var(--a-primary);
-      }
-
       /* ---- Cards ---- */
+      /* One quiet panel split in two, rather than two floating cards. */
       .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 18px;
-      }
-
-      .card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         background: var(--ac-color-surface);
         border: 1px solid var(--a-line);
         border-radius: var(--ac-radius-lg);
-        box-shadow: var(--ac-shadow-xs);
+        animation: rise 0.45s ease both;
+      }
+
+      .card {
+        min-width: 0;
         padding: 22px 24px;
         display: flex;
         flex-direction: column;
         gap: 10px;
-        animation: rise 0.45s ease both;
-        transition:
-          transform 0.2s ease,
-          box-shadow 0.2s ease,
-          border-color 0.2s ease;
       }
 
-      .card:nth-child(2) {
-        animation-delay: 0.08s;
-      }
-
-      .card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--ac-shadow-hover);
+      .card + .card {
+        border-left: 1px solid var(--a-line);
       }
 
       .card-eyebrow {
@@ -594,43 +574,47 @@ const INSIGHT_DAYS = 28;
         }
       }
 
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .card + .card {
+          border-left: 0;
+          border-top: 1px solid var(--a-line);
+        }
+      }
+
       @media (max-width: 640px) {
         .next-card {
           padding: 22px 20px;
         }
 
-        .next-actions,
-        .next-cta {
+        .next-actions {
           width: 100%;
-        }
-
-        .next-cta {
-          justify-content: center;
         }
       }
 
       /* Honour both the OS setting and AutiCare's own reduced-motion preference. */
       @media (prefers-reduced-motion: reduce) {
         .next-card,
-        .card,
+        .grid,
         .bar-fill {
           animation: none;
         }
 
-        .card:hover,
-        .next-cta:hover {
+        .next-cta:hover .arrow {
           transform: none;
         }
       }
 
       :host-context(.reduced-motion) .next-card,
-      :host-context(.reduced-motion) .card,
+      :host-context(.reduced-motion) .grid,
       :host-context(.reduced-motion) .bar-fill {
         animation: none;
       }
 
-      :host-context(.reduced-motion) .card:hover,
-      :host-context(.reduced-motion) .next-cta:hover {
+      :host-context(.reduced-motion) .next-cta:hover .arrow {
         transform: none;
       }
     `,

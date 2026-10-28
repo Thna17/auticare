@@ -185,7 +185,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
                   [queryParams]="{ childId: child.id }"
                   [title]="currentLang() === 'km' ? 'ការវាយតម្លៃស្គ្រីនីង' : 'Screening assessment'"
                 >
-                  <span class="shortcut-icon" aria-hidden="true">📋</span>
                   <span>{{ currentLang() === 'km' ? 'ការវាយតម្លៃ' : 'Screening' }}</span>
                 </a>
                 <a
@@ -196,7 +195,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
                     currentLang() === 'km' ? 'ការវិវត្តនៃការលូតលាស់' : 'Developmental progress'
                   "
                 >
-                  <span class="shortcut-icon" aria-hidden="true">📈</span>
                   <span>{{ currentLang() === 'km' ? 'ការវិវត្ត' : 'Progress' }}</span>
                 </a>
                 <a
@@ -207,7 +205,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
                     currentLang() === 'km' ? 'សកម្មភាពអភិវឌ្ឍន៍' : 'Developmental activities'
                   "
                 >
-                  <span class="shortcut-icon" aria-hidden="true">🎯</span>
                   <span>{{ currentLang() === 'km' ? 'សកម្មភាព' : 'Activities' }}</span>
                 </a>
               </div>
@@ -686,8 +683,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
       .shortcut-chip {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        padding: 5px 10px;
+        padding: 5px 12px;
         border-radius: var(--ac-radius-sm);
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
@@ -702,10 +698,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
         border-color: var(--ac-color-action);
         color: var(--ac-color-action-deep);
         background: var(--ac-color-tint-blue-wash);
-      }
-
-      .shortcut-icon {
-        font-size: 12px;
       }
 
       .card-actions {

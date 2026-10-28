@@ -37,16 +37,16 @@ const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i;
 export interface DomainFilterOption {
   id: string;
   label: string;
-  icon: string;
+  icon?: string;
 }
 
 const DOMAIN_OPTIONS: DomainFilterOption[] = [
-  { id: 'ALL', label: 'All Domains', icon: '🌟' },
-  { id: 'Sensory', label: 'Sensory & Motor', icon: '🌈' },
-  { id: 'Social', label: 'Social & Emotional', icon: '🤝' },
-  { id: 'Communication', label: 'Language & Speech', icon: '💬' },
-  { id: 'Cognitive', label: 'Cognitive & Focus', icon: '🧩' },
-  { id: 'Adaptive', label: 'Adaptive & Routine', icon: '🌱' },
+  { id: 'ALL', label: 'All Domains' },
+  { id: 'Sensory', label: 'Sensory & Motor' },
+  { id: 'Social', label: 'Social & Emotional' },
+  { id: 'Communication', label: 'Language & Speech' },
+  { id: 'Cognitive', label: 'Cognitive & Focus' },
+  { id: 'Adaptive', label: 'Adaptive & Routine' },
 ];
 
 @Component({
@@ -68,14 +68,13 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
     <!-- Page Header -->
     <header class="reports-header" [class.admin-header]="isAdmin()">
       <div class="header-titles">
-        <div class="header-badge-row">
-          <span class="header-badge">{{
-            currentLang() === 'km' ? 'បណ្តាញសង្កេតការវិវត្តគ្លីនិក' : 'Clinical Observation Feed'
-          }}</span>
-          <span class="header-badge-sub">{{
-            currentLang() === 'km' ? 'ការតាមដានការវិវត្ត' : 'Progress Monitoring'
-          }}</span>
-        </div>
+        <p class="eyebrow">
+          {{
+            currentLang() === 'km'
+              ? 'បណ្តាញសង្កេតការវិវត្ត · ការតាមដានការវិវត្ត'
+              : 'Clinical Observation Feed · Progress Monitoring'
+          }}
+        </p>
         <h1>
           {{
             isAdmin()
@@ -105,7 +104,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
       </div>
       @if (isSchoolStaff()) {
         <a class="btn-new-report" routerLink="/schools/reports/new">{{
-          currentLang() === 'km' ? '＋ របាយការណ៍ថ្មី' : '＋ New Report'
+          currentLang() === 'km' ? '+ របាយការណ៍ថ្មី' : '+ New Report'
         }}</a>
       }
     </header>
@@ -123,8 +122,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
             [class.active]="selectedDomain() === opt.id"
             (click)="selectDomain(opt.id)"
           >
-            <span class="pill-icon">{{ opt.icon }}</span>
-            <span>{{ getDomainLabel(opt.id) }}</span>
+            {{ getDomainLabel(opt.id) }}
           </button>
         }
       </div>
@@ -192,7 +190,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
             (click)="clearSearch()"
             aria-label="Clear search"
           >
-            {{ currentLang() === 'km' ? '✕ សម្អាតការស្វែងរក' : '✕ Clear search' }}
+            {{ currentLang() === 'km' ? 'សម្អាតការស្វែងរក' : 'Clear search' }}
           </button>
         </span>
       </div>
@@ -286,7 +284,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
                 <span class="report-date">{{ report.activityDate | date: 'MMM d, y' }}</span>
                 @if (report.duration) {
                   <span class="report-duration"
-                    >⏱️ {{ report.duration }} {{ currentLang() === 'km' ? 'នាទី' : 'min' }}</span
+                    >{{ report.duration }} {{ currentLang() === 'km' ? 'នាទី' : 'min' }}</span
                   >
                 }
               </div>
@@ -302,7 +300,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
                   [routerLink]="['/schools/reports', report.id, 'edit']"
                   [title]="currentLang() === 'km' ? 'កែប្រែរបាយការណ៍' : 'Edit Report'"
                   [attr.aria-label]="currentLang() === 'km' ? 'កែប្រែរបាយការណ៍' : 'Edit Report'"
-                  >✏️</a
+                  >{{ currentLang() === 'km' ? 'កែប្រែ' : 'Edit' }}</a
                 >
                 <button
                   type="button"
@@ -312,7 +310,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
                   [disabled]="deletingId() === report.id"
                   (click)="deleteReport(report.id)"
                 >
-                  {{ deletingId() === report.id ? '…' : '🗑️' }}
+                  {{ deletingId() === report.id ? '…' : currentLang() === 'km' ? 'លុប' : 'Delete' }}
                 </button>
               </div>
             }
@@ -380,7 +378,6 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
                         }}
                       </h3>
                       <div class="recommendations-box">
-                        <span class="rec-icon">💡</span>
                         <p class="detail-text">{{ report.recommendations }}</p>
                       </div>
                     </section>
@@ -406,7 +403,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
                         @for (url of documentsOf(report); track url) {
                           <li>
                             <a class="inline-link" [href]="url" target="_blank" rel="noopener">
-                              📄 {{ fileNameOf(url) }}
+                              {{ fileNameOf(url) }}
                             </a>
                           </li>
                         }
@@ -453,7 +450,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
       .reports-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 16px;
         margin-bottom: 20px;
         flex-wrap: wrap;
@@ -463,26 +460,12 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         flex-direction: column;
         gap: 4px;
       }
-      .header-badge-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 2px;
-      }
-      .header-badge {
-        font-size: 11px;
+      .eyebrow {
+        margin: 0;
+        font-size: var(--ac-type-meta);
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        background: var(--ac-color-tint-blue-wash);
-        color: var(--ac-color-action-alt);
-        padding: 2px 8px;
-        border-radius: 6px;
-        border: 1px solid var(--ac-color-border-info);
-      }
-      .header-badge-sub {
-        font-size: 11px;
-        font-weight: 600;
         color: var(--ac-color-text-slate);
       }
       .reports-header h1 {
@@ -491,30 +474,32 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         font-weight: 800;
         color: var(--ac-color-action-darkest);
         letter-spacing: -0.02em;
+        line-height: var(--ac-line-tight);
       }
       .reports-subtitle {
         margin: 2px 0 0;
-        color: var(--ac-color-grey-a);
+        color: var(--ac-color-text-slate);
         font-size: 14px;
+        line-height: var(--ac-line-body);
+        max-width: 680px;
       }
       .btn-new-report {
         display: inline-flex;
         align-items: center;
-        padding: 10px 20px;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 20px;
         background: var(--ac-color-action-alt);
         color: var(--ac-color-text-on-action);
-        border-radius: 10px;
+        border-radius: var(--ac-radius-md);
         font-weight: 700;
         font-size: 13.5px;
         text-decoration: none;
         white-space: nowrap;
-        transition:
-          background 0.15s ease,
-          transform 0.1s ease;
+        transition: background 0.15s ease;
       }
       .btn-new-report:hover {
         background: var(--ac-color-ink-a);
-        transform: translateY(-1px);
       }
 
       /* Domain Filter Pills Bar */
@@ -525,7 +510,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         padding: 12px 16px;
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: 12px;
+        border-radius: var(--ac-radius-md);
         margin-bottom: 16px;
         flex-wrap: wrap;
       }
@@ -545,9 +530,8 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
       .domain-pill-btn {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 999px;
+        padding: 6px 14px;
+        border-radius: var(--ac-radius-pill);
         border: 1px solid var(--ac-color-border-slate);
         background: var(--ac-color-surface);
         color: var(--ac-color-text-slate-strong);
@@ -564,9 +548,6 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         background: var(--ac-color-action-alt);
         color: var(--ac-color-text-on-action);
         border-color: var(--ac-color-action-alt);
-      }
-      .pill-icon {
-        font-size: 13px;
       }
 
       /* Filters Row */
@@ -688,18 +669,15 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         position: relative;
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: 14px;
-        box-shadow: 0 2px 4px color-mix(in srgb, var(--ac-color-black) 4%, transparent);
+        border-radius: var(--ac-radius-md);
         overflow: hidden;
-        transition:
-          box-shadow 0.15s ease,
-          border-color 0.15s ease;
+        transition: border-color 0.15s ease;
       }
       .report-list > .report-card {
         margin-bottom: 16px;
       }
       .report-card:hover {
-        box-shadow: 0 6px 18px color-mix(in srgb, var(--ac-brand-900) 8%, transparent);
+        border-color: var(--ac-brand-300);
       }
       .report-card-main {
         display: grid;
@@ -707,7 +685,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         align-items: center;
         gap: 16px;
         width: 100%;
-        padding: 18px 112px 18px 22px;
+        padding: 18px 152px 18px 22px;
         background: none;
         border: 0;
         text-align: left;
@@ -716,7 +694,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
       }
       .report-card-actions {
         position: absolute;
-        top: 20px;
+        top: 18px;
         right: 18px;
         z-index: 1;
         display: flex;
@@ -725,26 +703,35 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
       }
       .report-action {
         display: inline-flex;
-        width: 36px;
-        height: 36px;
+        min-height: 32px;
+        padding: 4px 12px;
         align-items: center;
         justify-content: center;
         border: 1px solid var(--ac-color-border-slate);
-        border-radius: 9px;
+        border-radius: var(--ac-radius-sm);
         background: var(--ac-color-surface);
-        font-size: 16px;
+        font-size: 12.5px;
+        font-weight: 600;
         text-decoration: none;
         cursor: pointer;
-        transition: all 0.15s;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
       }
       .report-action--edit {
-        color: var(--ac-color-green-teal);
+        color: var(--ac-color-action-alt);
+      }
+      .report-action--edit:hover {
+        background: var(--ac-brand-50);
+        border-color: var(--ac-color-action-alt);
       }
       .report-action--delete {
         color: var(--ac-color-alert-slate);
       }
-      .report-action:hover {
-        background: var(--ac-color-surface-slate);
+      .report-action--delete:hover {
+        background: var(--ac-color-red-50);
+        border-color: var(--ac-color-alert-slate);
       }
       .report-action:disabled {
         cursor: wait;
@@ -803,8 +790,8 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
         width: fit-content;
       }
       .domain-tag.sensory {
-        background: var(--ac-color-purple-tint);
-        color: var(--ac-color-purple-700);
+        background: color-mix(in srgb, var(--ac-color-status-purple) 12%, transparent);
+        color: var(--ac-color-status-purple);
       }
       .domain-tag.social {
         background: var(--ac-color-amber-tint-cream);
@@ -912,26 +899,25 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
       .detail-quote {
         margin: 0;
         padding: 12px 16px;
+        border: 1px solid var(--ac-color-border-slate);
         border-left: 3px solid var(--ac-color-action-alt);
         background: var(--ac-color-surface);
-        border-radius: 0 10px 10px 0;
+        border-radius: 0 var(--ac-radius-sm) var(--ac-radius-sm) 0;
         color: var(--ac-color-ink-h);
         font-size: 13.5px;
         line-height: 1.55;
         white-space: pre-wrap;
-        box-shadow: 0 1px 3px color-mix(in srgb, var(--ac-color-black) 3%, transparent);
       }
 
       .recommendations-box {
         display: flex;
-        gap: 10px;
+        flex-direction: column;
+        gap: 6px;
         background: var(--ac-color-surface);
         padding: 12px 16px;
-        border-radius: 10px;
+        border-radius: var(--ac-radius-sm);
         border: 1px solid var(--ac-color-border-slate);
-      }
-      .rec-icon {
-        font-size: 18px;
+        border-left: 3px solid var(--ac-color-amber-500);
       }
 
       .metric-rows {
@@ -997,7 +983,7 @@ const DOMAIN_OPTIONS: DomainFilterOption[] = [
             'child side'
             'title side'
             'chev chev';
-          padding-right: 90px;
+          padding-right: 140px;
         }
         .report-child-block {
           grid-area: child;
@@ -1260,12 +1246,19 @@ export class SchoolReportsPage implements OnInit {
       next: () => {
         this.reports.update((reports) => reports.filter((item) => item.id !== reportId));
         this.deletingId.set(null);
-        this.actionMessage.set('Activity report deleted successfully.');
+        this.actionMessage.set(
+          this.currentLang() === 'km'
+            ? 'របាយការណ៍សកម្មភាពត្រូវបានលុបដោយជោគជ័យ។'
+            : 'Activity report deleted successfully.',
+        );
       },
       error: (err) => {
         this.deletingId.set(null);
         this.actionMessage.set(
-          err?.error?.error?.message ?? 'Could not delete this report. Please try again.',
+          err?.error?.error?.message ??
+            (this.currentLang() === 'km'
+              ? 'មិនអាចលុបរបាយការណ៍នេះបានទេ។ សូមព្យាយាមម្តងទៀត។'
+              : 'Could not delete this report. Please try again.'),
         );
       },
     });

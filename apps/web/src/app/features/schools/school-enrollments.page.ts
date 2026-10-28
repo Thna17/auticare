@@ -1,6 +1,6 @@
 // school-enrollments.page.ts
 import type { OnInit, OnDestroy } from '@angular/core';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -20,6 +20,7 @@ import { UiDialogComponent } from '../../design-system/components/ui-dialog.comp
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { UiPaginationComponent } from '../../design-system/components/ui-pagination.component';
+import { I18nService } from '../../core/i18n/i18n.service';
 
 export interface ParentContactInfo {
   name: string;
@@ -63,74 +64,92 @@ export interface EnrollmentViewModel {
 
     <!-- Page Header -->
     <section class="page-header">
-      <div class="header-text">
-        <div class="header-badge-row">
-          <span class="header-badge">School Staff Portal</span>
-          <span class="header-badge-sub">Enrollment & Roster</span>
-        </div>
-        <h1>Student Enrollment & Admissions</h1>
-        <p>
-          Manage enrolled students, review admissions applications, and monitor therapeutic
-          progress.
+      <div class="header-intro">
+        <p class="eyebrow">
+          {{ currentLang() === 'km' ? 'ច្រកចូលបុគ្គលិកសាលា' : 'School Staff Portal' }}
+        </p>
+        <h1>
+          {{
+            currentLang() === 'km'
+              ? 'ការចុះឈ្មោះ និងការទទួលសិស្ស'
+              : 'Student Enrollment & Admissions'
+          }}
+        </h1>
+        <p class="subtitle">
+          {{
+            currentLang() === 'km'
+              ? 'គ្រប់គ្រងសិស្សដែលបានចុះឈ្មោះ ពិនិត្យពាក្យសុំចូលរៀន និងតាមដានវឌ្ឍនភាពព្យាបាល។'
+              : 'Manage enrolled students, review admissions applications, and monitor therapeutic progress.'
+          }}
         </p>
       </div>
       <div class="header-actions">
         <!-- Changing who is enrolled is the school admin's job. -->
         @if (isSchoolAdmin()) {
-          <a class="btn-secondary-link" routerLink="/schools/connect">Family codes</a>
+          <a class="btn-secondary-link" routerLink="/schools/connect">
+            {{ currentLang() === 'km' ? 'លេខកូដគ្រួសារ' : 'Family codes' }}
+          </a>
           <a class="btn-primary" routerLink="/schools/students/add">
-            <span class="btn-icon">👤+</span>
-            <span>Add New Student</span>
+            + {{ currentLang() === 'km' ? 'បន្ថែមសិស្សថ្មី' : 'Add New Student' }}
           </a>
         }
       </div>
     </section>
 
-    <!-- Stats Bento Cards -->
-    <section class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-top">
-          <span class="stat-icon-pill blue">👥</span>
-          <span class="stat-label">Total Enrolled</span>
-        </div>
-        <div class="stat-value">
-          <span class="stat-number">{{ stats()?.totalStudents ?? 0 }}</span>
-          <span class="stat-trend">+{{ stats()?.newStudentsThisMonth ?? 0 }} this month</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-top">
-          <span class="stat-icon-pill green">🎯</span>
-          <span class="stat-label">Active Programs</span>
-        </div>
-        <div class="stat-value">
-          <span class="stat-number">{{ stats()?.activePrograms ?? 0 }}</span>
-          <span class="stat-trend">{{ stats()?.participationRate ?? 0 }}% Participation</span>
+    <!-- Stats Summary Strip -->
+    <section
+      class="stats-strip"
+      [attr.aria-label]="currentLang() === 'km' ? 'ស្ថិតិសង្ខេបការចុះឈ្មោះ' : 'Enrollment summary'"
+    >
+      <div class="stat-item">
+        <span class="stat-label">
+          {{ currentLang() === 'km' ? 'សិស្សចុះឈ្មោះសរុប' : 'Total Enrolled' }}
+        </span>
+        <div class="stat-body">
+          <span class="stat-value stat-number">{{ stats()?.totalStudents ?? 0 }}</span>
+          <span class="stat-meta stat-trend">
+            +{{ stats()?.newStudentsThisMonth ?? 0 }}
+            {{ currentLang() === 'km' ? 'ខែនេះ' : 'this month' }}
+          </span>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-top">
-          <span class="stat-icon-pill teal">📈</span>
-          <span class="stat-label">Therapy Progress</span>
-        </div>
-        <div class="stat-value">
-          <span class="stat-number">{{ stats()?.averageProgress ?? 0 }}%</span>
-          <div class="progress-bar-container">
-            <div class="progress-bar" [style.width.%]="stats()?.averageProgress ?? 0"></div>
-          </div>
+      <div class="stat-item">
+        <span class="stat-label">
+          {{ currentLang() === 'km' ? 'កម្មវិធីសកម្ម' : 'Active Programs' }}
+        </span>
+        <div class="stat-body">
+          <span class="stat-value stat-number">{{ stats()?.activePrograms ?? 0 }}</span>
+          <span class="stat-meta stat-trend">
+            {{ stats()?.participationRate ?? 0 }}%
+            {{ currentLang() === 'km' ? 'ការចូលរួម' : 'participation' }}
+          </span>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-top">
-          <span class="stat-icon-pill amber">⏳</span>
-          <span class="stat-label">Needs Attention</span>
+      <div class="stat-item">
+        <span class="stat-label">
+          {{ currentLang() === 'km' ? 'វឌ្ឍនភាពព្យាបាល' : 'Therapy Progress' }}
+        </span>
+        <div class="stat-body">
+          <span class="stat-value stat-number">{{ stats()?.averageProgress ?? 0 }}%</span>
+          <span class="stat-meta stat-trend">
+            {{ currentLang() === 'km' ? 'វឌ្ឍនភាពជាមធ្យម' : 'average progress' }}
+          </span>
         </div>
-        <div class="stat-value">
-          <span class="stat-number warning">{{ stats()?.needsAttention ?? 0 }}</span>
-          <span class="stat-trend">Review Required</span>
+      </div>
+
+      <div class="stat-item">
+        <span class="stat-label">
+          {{ currentLang() === 'km' ? 'ត្រូវការការយកចិត្តទុកដាក់' : 'Needs Attention' }}
+        </span>
+        <div class="stat-body">
+          <span class="stat-value stat-number" [class.warning]="(stats()?.needsAttention ?? 0) > 0">
+            {{ stats()?.needsAttention ?? 0 }}
+          </span>
+          <span class="stat-meta stat-trend">
+            {{ currentLang() === 'km' ? 'ត្រូវពិនិត្យឡើងវិញ' : 'review required' }}
+          </span>
         </div>
       </div>
     </section>
@@ -139,12 +158,15 @@ export interface EnrollmentViewModel {
     <section class="filters-bar">
       <div class="filters-left">
         <div class="search-input-wrapper">
-          <span class="search-icon" aria-hidden="true">🔍</span>
           <input
             type="search"
             class="filter-search-input"
-            placeholder="Search student roster…"
-            aria-label="Search student roster"
+            [placeholder]="
+              currentLang() === 'km' ? 'ស្វែងរកបញ្ជីឈ្មោះសិស្ស…' : 'Search student roster…'
+            "
+            [attr.aria-label]="
+              currentLang() === 'km' ? 'ស្វែងរកបញ្ជីឈ្មោះសិស្ស' : 'Search student roster'
+            "
             [value]="searchQuery()"
             (input)="onSearchInput($event)"
           />
@@ -155,11 +177,25 @@ export interface EnrollmentViewModel {
           [value]="selectedStatus()"
           (change)="onStatusFilterChange($event)"
         >
-          <option value="ALL">Status: All Statuses</option>
-          <option value="ACTIVE">Active (Enrolled)</option>
-          <option value="PENDING">Pending (Admissions Review)</option>
-          <option value="GRADUATED">Graduated</option>
-          <option value="REJECTED">Declined / Withdrawn</option>
+          <option value="ALL">
+            {{ currentLang() === 'km' ? 'ស្ថានភាព៖ ទាំងអស់' : 'Status: All Statuses' }}
+          </option>
+          <option value="ACTIVE">
+            {{ currentLang() === 'km' ? 'សកម្ម (បានចុះឈ្មោះ)' : 'Active (Enrolled)' }}
+          </option>
+          <option value="PENDING">
+            {{
+              currentLang() === 'km'
+                ? 'កំពុងរង់ចាំ (ពិនិត្យពាក្យសុំ)'
+                : 'Pending (Admissions Review)'
+            }}
+          </option>
+          <option value="GRADUATED">
+            {{ currentLang() === 'km' ? 'បានបញ្ចប់' : 'Graduated' }}
+          </option>
+          <option value="REJECTED">
+            {{ currentLang() === 'km' ? 'បដិសេធ / ដកខ្លួន' : 'Declined / Withdrawn' }}
+          </option>
         </select>
         <select
           class="filter-select"
@@ -167,7 +203,9 @@ export interface EnrollmentViewModel {
           [value]="selectedSpecialistId() ?? ''"
           (change)="onSpecialistFilterChange($event)"
         >
-          <option value="">Lead Specialist: All</option>
+          <option value="">
+            {{ currentLang() === 'km' ? 'អ្នកឯកទេសដឹកនាំ៖ ទាំងអស់' : 'Lead Specialist: All' }}
+          </option>
           @for (spec of specialists(); track spec.id) {
             <option [value]="spec.id">{{ spec.firstName }} {{ spec.lastName }}</option>
           }
@@ -179,8 +217,7 @@ export interface EnrollmentViewModel {
           (click)="resetFilters()"
           aria-label="Reset enrollment filters"
         >
-          <span>↺</span>
-          <span>Reset</span>
+          <span>{{ currentLang() === 'km' ? 'កំណត់ឡើងវិញ' : 'Reset' }}</span>
         </button>
       </div>
 
@@ -195,7 +232,7 @@ export interface EnrollmentViewModel {
             title="Table View"
             aria-label="Table View"
           >
-            📋 Table
+            {{ currentLang() === 'km' ? 'តារាង' : 'Table' }}
           </button>
           <button
             type="button"
@@ -205,27 +242,27 @@ export interface EnrollmentViewModel {
             title="Cards View"
             aria-label="Cards View"
           >
-            🗂️ Cards
+            {{ currentLang() === 'km' ? 'កាត' : 'Cards' }}
           </button>
         </div>
 
         <button
           type="button"
-          class="icon-action-btn"
+          class="action-text-btn"
           aria-label="Export enrollments to CSV"
           title="Export CSV"
           (click)="downloadEnrollmentsCsv()"
         >
-          ⬇
+          {{ currentLang() === 'km' ? 'នាំចេញ CSV' : 'Export CSV' }}
         </button>
         <button
           type="button"
-          class="icon-action-btn"
+          class="action-text-btn"
           aria-label="Print enrollment list"
           title="Print list"
           (click)="printEnrollments()"
         >
-          🖨
+          {{ currentLang() === 'km' ? 'បោះពុម្ព' : 'Print' }}
         </button>
       </div>
     </section>
@@ -241,8 +278,7 @@ export interface EnrollmentViewModel {
         message="No students match the current filters. Add a new student or adjust your filter selection."
       >
         <a class="btn-primary" routerLink="/schools/students/add">
-          <span>👤+</span>
-          <span>Add New Student</span>
+          + {{ currentLang() === 'km' ? 'បន្ថែមសិស្សថ្មី' : 'Add New Student' }}
         </a>
       </ac-ui-empty-state>
     } @else {
@@ -252,12 +288,20 @@ export interface EnrollmentViewModel {
           <table class="data-table">
             <thead>
               <tr>
-                <th>STUDENT & AGE</th>
-                <th>PARENT / GUARDIAN CONTACT</th>
-                <th>STATUS</th>
-                <th>LEAD SPECIALIST</th>
-                <th>COMMUNICATION PROGRESS</th>
-                <th>ADMISSIONS & ACTIONS</th>
+                <th>{{ currentLang() === 'km' ? 'សិស្ស និងអាយុ' : 'STUDENT & AGE' }}</th>
+                <th>
+                  {{
+                    currentLang() === 'km' ? 'ទំនាក់ទំនងអាណាព្យាបាល' : 'PARENT / GUARDIAN CONTACT'
+                  }}
+                </th>
+                <th>{{ currentLang() === 'km' ? 'ស្ថានភាព' : 'STATUS' }}</th>
+                <th>{{ currentLang() === 'km' ? 'អ្នកឯកទេសដឹកនាំ' : 'LEAD SPECIALIST' }}</th>
+                <th>
+                  {{ currentLang() === 'km' ? 'វឌ្ឍនភាពទំនាក់ទំនង' : 'COMMUNICATION PROGRESS' }}
+                </th>
+                <th>
+                  {{ currentLang() === 'km' ? 'ការទទួល និងសកម្មភាព' : 'ADMISSIONS & ACTIONS' }}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -278,7 +322,6 @@ export interface EnrollmentViewModel {
                   <td>
                     <div class="parent-contact-cell">
                       <div class="parent-name">
-                        <span class="parent-icon">👨‍👩‍👧</span>
                         <span>{{ enrollment.parentContact.name }}</span>
                       </div>
                       <div class="parent-meta">
@@ -299,7 +342,6 @@ export interface EnrollmentViewModel {
                   </td>
                   <td>
                     <div class="specialist-cell">
-                      <span class="specialist-icon">🩺</span>
                       <span>{{ enrollment.teacherNames || enrollment.leadSpecialist }}</span>
                     </div>
                   </td>
@@ -318,9 +360,6 @@ export interface EnrollmentViewModel {
                           [style.width.%]="enrollment.communicationProgress"
                         ></div>
                       </div>
-                      @if (enrollment.communicationProgress < 30) {
-                        <span class="warning-icon" title="Needs developmental review">⚠</span>
-                      }
                     </div>
                   </td>
                   <td>
@@ -335,7 +374,7 @@ export interface EnrollmentViewModel {
                             title="Review student application"
                             aria-label="Review student application"
                           >
-                            📋 Review
+                            {{ currentLang() === 'km' ? 'ពិនិត្យ' : 'Review' }}
                           </button>
                           <button
                             type="button"
@@ -344,7 +383,7 @@ export interface EnrollmentViewModel {
                             title="Accept student application"
                             aria-label="Accept student application"
                           >
-                            ✓ Accept
+                            {{ currentLang() === 'km' ? 'យល់ព្រម' : 'Accept' }}
                           </button>
                           <button
                             type="button"
@@ -353,7 +392,7 @@ export interface EnrollmentViewModel {
                             title="Decline student application"
                             aria-label="Decline student application"
                           >
-                            ✕ Decline
+                            {{ currentLang() === 'km' ? 'បដិសេធ' : 'Decline' }}
                           </button>
                         }
 
@@ -364,7 +403,7 @@ export interface EnrollmentViewModel {
                           aria-label="Edit student"
                           title="Edit profile & assignment"
                         >
-                          ✏️
+                          {{ currentLang() === 'km' ? 'កែសម្រួល' : 'Edit' }}
                         </button>
                         <button
                           class="action-btn delete"
@@ -374,10 +413,12 @@ export interface EnrollmentViewModel {
                           title="End enrollment"
                           [disabled]="deleting()"
                         >
-                          🗑️
+                          {{ currentLang() === 'km' ? 'លុប' : 'Remove' }}
                         </button>
                       } @else {
-                        <span class="view-only">View only</span>
+                        <span class="view-only">
+                          {{ currentLang() === 'km' ? 'មើលតែប៉ុណ្ណោះ' : 'View only' }}
+                        </span>
                       }
                     </div>
                   </td>
@@ -423,10 +464,10 @@ export interface EnrollmentViewModel {
                 <span class="parent-box-label">Family / Guardian Contact</span>
                 <div class="parent-box-name">{{ enrollment.parentContact.name }}</div>
                 <div class="parent-box-details">
-                  <a class="parent-link" [href]="'mailto:' + enrollment.parentContact.email"
-                    >✉️ {{ enrollment.parentContact.email }}</a
-                  >
-                  <span class="parent-phone">📞 {{ enrollment.parentContact.phone }}</span>
+                  <a class="parent-link" [href]="'mailto:' + enrollment.parentContact.email">
+                    {{ enrollment.parentContact.email }}
+                  </a>
+                  <span class="parent-phone">{{ enrollment.parentContact.phone }}</span>
                 </div>
               </div>
 
@@ -434,13 +475,13 @@ export interface EnrollmentViewModel {
               <div class="card-meta-grid">
                 <div class="card-meta-item">
                   <span class="meta-label">Lead Specialist</span>
-                  <span class="meta-val"
-                    >🩺 {{ enrollment.teacherNames || enrollment.leadSpecialist }}</span
-                  >
+                  <span class="meta-val">
+                    {{ enrollment.teacherNames || enrollment.leadSpecialist }}
+                  </span>
                 </div>
                 <div class="card-meta-item">
                   <span class="meta-label">Enrolled Since</span>
-                  <span class="meta-val">📅 {{ enrollment.startDate }}</span>
+                  <span class="meta-val">{{ enrollment.startDate }}</span>
                 </div>
               </div>
 
@@ -468,21 +509,21 @@ export interface EnrollmentViewModel {
                         class="btn-admission-review-full"
                         (click)="openAdmissionReview(enrollment)"
                       >
-                        📋 Review Application
+                        {{ currentLang() === 'km' ? 'ពិនិត្យពាក្យសុំ' : 'Review Application' }}
                       </button>
                       <button
                         type="button"
                         class="btn-admission-accept-full"
                         (click)="acceptEnrollment(enrollment)"
                       >
-                        ✓ Accept Admission
+                        {{ currentLang() === 'km' ? 'យល់ព្រមទទួល' : 'Accept Admission' }}
                       </button>
                       <button
                         type="button"
                         class="btn-admission-decline-full"
                         (click)="declineEnrollment(enrollment)"
                       >
-                        ✕ Decline
+                        {{ currentLang() === 'km' ? 'បដិសេធ' : 'Decline' }}
                       </button>
                     </div>
                   }
@@ -492,7 +533,7 @@ export interface EnrollmentViewModel {
                       type="button"
                       (click)="openEditDialog(enrollment)"
                     >
-                      ✏️ Edit Details
+                      {{ currentLang() === 'km' ? 'កែសម្រួលព័ត៌មាន' : 'Edit Details' }}
                     </button>
                     <button
                       class="btn-card-delete"
@@ -500,7 +541,7 @@ export interface EnrollmentViewModel {
                       (click)="openDeleteDialog(enrollment)"
                       [disabled]="deleting()"
                     >
-                      🗑️ Remove
+                      {{ currentLang() === 'km' ? 'លុបចេញ' : 'Remove' }}
                     </button>
                   </div>
                 }
@@ -732,7 +773,6 @@ export interface EnrollmentViewModel {
           <!-- Parent Application Note Excerpt -->
           <div class="admission-note-card">
             <div class="note-card-header">
-              <span class="note-icon">📝</span>
               <h4>Parent Intake Note Excerpt</h4>
             </div>
             <p class="parent-note-text">
@@ -762,7 +802,7 @@ export interface EnrollmentViewModel {
 
         <div dialogFooter class="dialog-actions">
           <button type="button" class="btn-secondary" (click)="closeAdmissionReview()">
-            Cancel
+            {{ currentLang() === 'km' ? 'បោះបង់' : 'Cancel' }}
           </button>
           <button
             type="button"
@@ -770,7 +810,7 @@ export interface EnrollmentViewModel {
             (click)="declineFromReviewDrawer()"
             [disabled]="savingAdmissionDecision()"
           >
-            ✕ Decline Application
+            {{ currentLang() === 'km' ? 'បដិសេធពាក្យសុំ' : 'Decline Application' }}
           </button>
           <button
             type="button"
@@ -778,7 +818,15 @@ export interface EnrollmentViewModel {
             (click)="acceptFromReviewDrawer()"
             [disabled]="savingAdmissionDecision()"
           >
-            {{ savingAdmissionDecision() ? 'Processing…' : '✓ Accept Application' }}
+            {{
+              savingAdmissionDecision()
+                ? currentLang() === 'km'
+                  ? 'កំពុងដំណើរការ…'
+                  : 'Processing…'
+                : currentLang() === 'km'
+                  ? 'យល់ព្រមទទួលពាក្យ'
+                  : 'Accept Application'
+            }}
           </button>
         </div>
       </ac-ui-dialog>
@@ -794,173 +842,142 @@ export interface EnrollmentViewModel {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 24px;
+        margin-bottom: var(--ac-space-6);
         gap: 16px;
         flex-wrap: wrap;
       }
 
-      .header-badge-row {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin-bottom: 6px;
+      .header-intro {
+        max-width: 680px;
       }
 
-      .header-badge {
-        font-size: 11px;
+      .eyebrow {
+        margin: 0 0 6px;
+        color: var(--ac-color-action-mid);
+        font-size: var(--ac-type-meta);
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        background: var(--ac-color-tint-blue-wash);
-        color: var(--ac-color-action-alt);
-        padding: 2px 8px;
-        border-radius: 6px;
-        border: 1px solid var(--ac-color-border-info);
       }
 
-      .header-badge-sub {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--ac-color-text-slate);
-      }
-
-      .header-text h1 {
-        margin: 0 0 6px 0;
-        font-size: var(--ac-type-page-title);
-        font-weight: 800;
-        color: var(--ac-color-text-slate-strong);
-        letter-spacing: -0.02em;
-      }
-
-      .header-text p {
+      .page-header h1 {
         margin: 0;
-        color: var(--ac-color-text-slate);
-        font-size: 14px;
+        color: var(--ac-color-text-strong);
+        font-size: var(--ac-type-page-title);
+        line-height: var(--ac-line-tight);
+        font-weight: 700;
+      }
+
+      .subtitle {
+        margin: 10px 0 0;
+        color: var(--ac-color-text-body);
+        font-size: var(--ac-type-page-subtitle);
+        line-height: var(--ac-line-body);
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
       }
 
       .btn-primary {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
-        padding: 10px 18px;
-        background: var(--ac-color-action-alt);
+        min-height: 44px;
+        padding: 0 20px;
+        background: var(--ac-color-action);
         color: var(--ac-color-text-on-action);
         border: none;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 13.5px;
+        border-radius: var(--ac-radius-md);
+        font-weight: 600;
+        font-size: 14px;
         cursor: pointer;
         text-decoration: none;
-        transition:
-          background 0.15s ease,
-          transform 0.1s ease;
+        transition: background var(--ac-motion-fast);
       }
 
       .btn-primary:hover {
-        background: var(--ac-color-ink-a);
-        transform: translateY(-1px);
+        background: var(--ac-color-action-deep);
       }
 
-      .btn-icon {
-        font-size: 15px;
-      }
-
-      /* Bento Stats Grid */
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 24px;
-      }
-
-      .stat-card {
-        background: var(--ac-color-surface);
-        padding: 18px 20px;
-        border-radius: 14px;
-        border: 1px solid var(--ac-color-border-slate);
-        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-
-      .stat-top {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 12px;
-      }
-
-      .stat-icon-pill {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: flex;
+      .btn-secondary-link {
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        min-height: 44px;
+        padding: 0 18px;
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-deep);
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        transition:
+          border-color var(--ac-motion-fast),
+          background var(--ac-motion-fast);
       }
 
-      .stat-icon-pill.blue {
-        background: var(--ac-color-blue-tint-pure);
+      .btn-secondary-link:hover {
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-surface-slate);
       }
-      .stat-icon-pill.green {
-        background: var(--ac-color-green-50);
+
+      /* Unified flat stats strip replacing big bento cards */
+      .stats-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: var(--ac-radius-lg);
+        margin-bottom: var(--ac-space-6);
       }
-      .stat-icon-pill.teal {
-        background: var(--ac-color-tint-blue-mist);
+
+      .stat-item {
+        padding: var(--ac-space-4) var(--ac-space-5);
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-space-1);
       }
-      .stat-icon-pill.amber {
-        background: var(--ac-color-amber-tint-cream);
+
+      .stat-item + .stat-item {
+        border-left: 1px solid var(--ac-color-border-slate);
       }
 
       .stat-label {
-        font-size: 12.5px;
+        font-size: var(--ac-type-meta);
         font-weight: 600;
         color: var(--ac-color-text-slate);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .stat-body {
+        display: flex;
+        align-items: baseline;
+        gap: var(--ac-space-2);
+        flex-wrap: wrap;
       }
 
       .stat-value {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-      }
-
-      .stat-number {
         font-size: 26px;
         font-weight: 800;
         color: var(--ac-color-text-slate-strong);
         line-height: 1.1;
       }
 
-      .stat-number.warning {
+      .stat-value.warning {
         color: var(--ac-color-alert-strong);
       }
 
-      .stat-trend {
+      .stat-meta {
         font-size: 12px;
         font-weight: 600;
         color: var(--ac-color-text-slate);
-      }
-
-      .progress-bar-container {
-        width: 100%;
-        height: 7px;
-        background: var(--ac-color-border-slate);
-        border-radius: 999px;
-        overflow: hidden;
-        margin-top: 6px;
-      }
-
-      .progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, var(--ac-color-teal-accent), var(--ac-color-action-alt));
-        border-radius: 999px;
-        transition: width 0.3s;
-      }
-
-      .progress-bar.warning {
-        background: var(--ac-color-alert-strong);
       }
 
       /* Filters & View Toolbar */
@@ -972,7 +989,6 @@ export interface EnrollmentViewModel {
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
-        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         margin-bottom: 24px;
         gap: 16px;
         flex-wrap: wrap;
@@ -992,17 +1008,9 @@ export interface EnrollmentViewModel {
         min-width: 220px;
       }
 
-      .search-input-wrapper .search-icon {
-        position: absolute;
-        left: 12px;
-        font-size: 13px;
-        color: var(--ac-color-text-slate);
-        pointer-events: none;
-      }
-
       .filter-search-input {
         width: 100%;
-        padding: 8px 12px 8px 34px;
+        padding: 8px 12px;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 8px;
         font-size: 13.5px;
@@ -1089,18 +1097,17 @@ export interface EnrollmentViewModel {
       .view-toggle-btn.active {
         background: var(--ac-color-surface);
         color: var(--ac-color-action-alt);
-        box-shadow: 0 1px 3px color-mix(in srgb, var(--ac-color-shadow) 8%, transparent);
       }
 
-      .icon-action-btn {
+      .action-text-btn {
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
-        font-size: 16px;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
-        padding: 8px;
+        padding: 8px 14px;
         border-radius: 8px;
         transition: all 0.15s;
-        min-width: 40px;
         min-height: 40px;
         display: inline-flex;
         align-items: center;
@@ -1108,8 +1115,9 @@ export interface EnrollmentViewModel {
         color: var(--ac-color-text-slate-strong);
       }
 
-      .icon-action-btn:hover {
+      .action-text-btn:hover {
         background: var(--ac-color-slate-100);
+        border-color: var(--ac-color-action-alt);
       }
 
       /* Table Container */
@@ -1117,7 +1125,6 @@ export interface EnrollmentViewModel {
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 14px;
-        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         overflow: hidden;
       }
 
@@ -1223,10 +1230,6 @@ export interface EnrollmentViewModel {
         color: var(--ac-color-text-slate-strong);
       }
 
-      .parent-icon {
-        font-size: 13px;
-      }
-
       .parent-meta {
         display: flex;
         flex-direction: column;
@@ -1294,10 +1297,6 @@ export interface EnrollmentViewModel {
         font-weight: 500;
       }
 
-      .specialist-icon {
-        font-size: 14px;
-      }
-
       .progress-cell {
         display: flex;
         align-items: center;
@@ -1321,9 +1320,24 @@ export interface EnrollmentViewModel {
         min-width: 60px;
       }
 
-      .warning-icon {
-        color: var(--ac-color-alert-strong);
-        font-size: 14px;
+      .progress-bar-container {
+        width: 100%;
+        height: 7px;
+        background: var(--ac-color-border-slate);
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 6px;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--ac-color-teal-accent), var(--ac-color-action-alt));
+        border-radius: 999px;
+        transition: width 0.3s;
+      }
+
+      .progress-bar.warning {
+        background: var(--ac-color-alert-strong);
       }
 
       /* Actions Cell & Admission Buttons */
@@ -1389,23 +1403,29 @@ export interface EnrollmentViewModel {
       }
 
       .action-btn {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        min-height: 36px;
-        border-radius: 8px;
+        padding: 6px 12px;
+        height: 32px;
+        min-height: 32px;
+        border-radius: 6px;
         border: 1px solid var(--ac-color-border-slate);
         background: var(--ac-color-surface);
         cursor: pointer;
-        font-size: 15px;
-        display: grid;
-        place-items: center;
+        font-size: 12.5px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         transition: all 0.15s;
+        color: var(--ac-color-text-slate-strong);
       }
 
       .action-btn.edit:hover {
         border-color: var(--ac-color-action-alt);
         background: var(--ac-color-tint-blue-wash);
+      }
+
+      .action-btn.delete {
+        color: var(--ac-color-alert-strong);
       }
 
       .action-btn.delete:hover {
@@ -1431,24 +1451,14 @@ export interface EnrollmentViewModel {
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 14px;
         padding: 18px 20px;
-        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         display: flex;
         flex-direction: column;
         gap: 14px;
-        transition: box-shadow 0.15s ease;
-      }
-
-      .roster-card:hover {
-        box-shadow: 0 6px 16px color-mix(in srgb, var(--ac-color-shadow) 7%, transparent);
       }
 
       .roster-card.pending-card {
         border-color: var(--ac-color-amber-600);
-        background: linear-gradient(
-          180deg,
-          var(--ac-color-surface) 0%,
-          var(--ac-color-amber-tint-cream) 100%
-        );
+        background: var(--ac-color-surface);
       }
 
       .card-header {
@@ -1874,7 +1884,7 @@ export interface EnrollmentViewModel {
       .admission-note-card {
         padding: 14px 16px;
         background: var(--ac-color-amber-tint-cream);
-        border: 1px solid var(--ac-color-amber-border-soft);
+        border: 1px solid var(--ac-color-amber-tint-sand);
         border-radius: 12px;
       }
 
@@ -1917,14 +1927,25 @@ export interface EnrollmentViewModel {
       }
 
       @media (max-width: 960px) {
-        .stats-grid {
+        .stats-strip {
           grid-template-columns: repeat(2, 1fr);
+        }
+        .stat-item:nth-child(3) {
+          border-left: none;
+          border-top: 1px solid var(--ac-color-border-slate);
+        }
+        .stat-item:nth-child(4) {
+          border-top: 1px solid var(--ac-color-border-slate);
         }
       }
 
       @media (max-width: 640px) {
-        .stats-grid {
+        .stats-strip {
           grid-template-columns: 1fr;
+        }
+        .stat-item + .stat-item {
+          border-left: none;
+          border-top: 1px solid var(--ac-color-border-slate);
         }
         .filters-bar {
           flex-direction: column;
@@ -1935,25 +1956,6 @@ export interface EnrollmentViewModel {
           width: 100%;
           justify-content: space-between;
         }
-      }
-
-      .btn-secondary-link {
-        display: inline-flex;
-        align-items: center;
-        height: 44px;
-        padding: 0 18px;
-        border: 1px solid var(--ac-color-border-slate);
-        border-radius: 12px;
-        background: var(--ac-color-surface);
-        color: var(--ac-color-action-deep);
-        font-weight: 700;
-        font-size: 14px;
-        text-decoration: none;
-      }
-
-      .btn-secondary-link:hover {
-        border-color: var(--ac-color-action-mid);
-        background: var(--ac-color-surface-slate);
       }
 
       .view-only {
@@ -1999,6 +2001,8 @@ export interface EnrollmentViewModel {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SchoolEnrollmentsPage implements OnInit, OnDestroy {
+  private readonly i18n = inject(I18nService, { optional: true });
+  readonly currentLang = computed(() => this.i18n?.currentLang() ?? 'en');
   private readonly api = inject(SchoolsApi);
   private readonly teamApi = inject(SchoolTeamApi);
   private readonly destroy$ = new Subject<void>();

@@ -3,15 +3,15 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationsStateService } from '../../core/notifications/notifications-state.service';
+import { NavIconComponent } from '../../core/layout/nav-icon.component';
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NavIconComponent],
   selector: 'ac-school-topbar',
   template: `
     <header class="topbar">
       <div class="search-box">
-        <span class="search-icon" aria-hidden="true">🔍</span>
         <input
           aria-label="Search students, therapists or records"
           type="text"
@@ -25,7 +25,7 @@ import { NotificationsStateService } from '../../core/notifications/notification
 
       <div class="topbar-actions">
         <a class="icon-btn" aria-label="Notifications" routerLink="/notifications">
-          <span class="icon" aria-hidden="true">🔔</span>
+          <ac-nav-icon name="bell" />
           @if (unreadCount() > 0) {
             <span class="badge" [attr.aria-label]="unreadCount() + ' unread notifications'"></span>
           }
@@ -51,8 +51,8 @@ import { NotificationsStateService } from '../../core/notifications/notification
         align-items: center;
         padding: 16px 24px;
         background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border-slate);
         border-radius: 16px;
-        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-shadow) 4%, transparent);
         margin-bottom: 24px;
       }
 
@@ -62,21 +62,15 @@ import { NotificationsStateService } from '../../core/notifications/notification
         position: relative;
       }
 
-      .search-icon {
-        position: absolute;
-        left: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 16px;
-      }
-
       .search-input {
         width: 100%;
-        padding: 12px 16px 12px 44px;
+        padding: 12px 16px;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 12px;
         font-size: 14px;
         outline: none;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
         transition: border-color 0.2s;
       }
 
@@ -105,6 +99,15 @@ import { NotificationsStateService } from '../../core/notifications/notification
         justify-content: center;
         text-decoration: none;
         color: inherit;
+      }
+
+      .icon-btn ac-nav-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        color: var(--ac-color-text-strong);
       }
 
       .icon-btn:hover {
