@@ -191,7 +191,10 @@ export class AiService {
       );
     }
 
-    const language: AiLanguage = conversation.language === 'km' ? 'km' : 'en';
+    const language: AiLanguage = input.language ?? (conversation.language === 'km' ? 'km' : 'en');
+    if (conversation.language !== language) {
+      await this.repository.setLanguage(conversationId, language);
+    }
     const classification = classifyParentMessage(content);
 
     // Calls that the safety layer answers itself need no provider, so they work
@@ -226,6 +229,17 @@ export class AiService {
       );
     }
 
+    // Child context is opt-in per message. Never infer consent from the childId
+    // already attached to a conversation, since a parent can turn sharing off.
+    let contextChildId: string | null = null;
+    if (input.includeChildContext && input.childId) {
+      const child = await this.repository.findChild(input.childId);
+      if (!child || child.parentId !== actor.parentId) {
+        throw notFound('Child profile was not found.');
+      }
+      contextChildId = child.id;
+    }
+
     const userMessage = await this.repository.createMessage({
       conversationId,
       role: 'USER',
@@ -234,7 +248,7 @@ export class AiService {
     await this.renameFromFirstMessage(conversation.title, conversationId, language, content);
 
     const [context, passages] = await Promise.all([
-      this.buildChildContext(conversation.childId),
+      this.buildChildContext(contextChildId),
       this.grounding.retrieve({ query: content, language }),
     ]);
 
@@ -301,14 +315,13 @@ export class AiService {
     const child = await this.repository.findChild(childId);
     if (!child) return null;
 
-    const [band, observationCount] = await Promise.all([
-      this.repository.findLatestConcernBand(childId),
-      this.repository.countObservationsSince(childId, new Date(Date.now() - 14 * DAY_MS)),
-    ]);
+    const observationCount = await this.repository.countObservationsSince(
+      childId,
+      new Date(Date.now() - 14 * DAY_MS),
+    );
 
     return {
       ageMonths: ageInMonths(child.dateOfBirth),
-      concernBand: band,
       observationsLast14Days: observationCount,
     };
   }

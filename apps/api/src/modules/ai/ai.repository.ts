@@ -40,6 +40,10 @@ export class AiRepository {
     return prisma.aiConversation.update({ where: { id }, data: { updatedAt: new Date() } });
   }
 
+  setLanguage(id: string, language: 'en' | 'km'): Promise<AiConversation> {
+    return prisma.aiConversation.update({ where: { id }, data: { language } });
+  }
+
   setTitle(id: string, title: string): Promise<AiConversation> {
     return prisma.aiConversation.update({ where: { id }, data: { title } });
   }
@@ -49,19 +53,6 @@ export class AiRepository {
       where: { id: childId },
       select: { id: true, parentId: true, dateOfBirth: true },
     });
-  }
-
-  /**
-   * The band from the child's most recent short assessment, as context for the
-   * model. Read-only and never surfaced as a fact in an answer.
-   */
-  async findLatestConcernBand(childId: string): Promise<'LOW' | 'MODERATE' | 'HIGH' | null> {
-    const screening = await prisma.screening.findFirst({
-      where: { childId, formKind: 'SHORT', status: 'ANALYZED' },
-      orderBy: { submittedAt: 'desc' },
-      select: { result: { select: { riskLevel: true } } },
-    });
-    return screening?.result?.riskLevel ?? null;
   }
 
   countObservationsSince(childId: string, since: Date): Promise<number> {

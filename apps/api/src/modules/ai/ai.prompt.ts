@@ -13,13 +13,13 @@ export type GroundingPassage = {
  * What the model is told about the child.
  *
  * Data minimisation is structural, not a matter of discipline: there is no field
- * here for a name, a date of birth, an address or a photo, so nothing like that
- * can be sent even by mistake. Age in months and the concern band are what an
- * assistant actually needs to be useful.
+ * here for a name, a date of birth, an address, a questionnaire result, school
+ * record or a photo, so none of those can be sent even by mistake. Only an
+ * approximate age and a count of recent observations are available when a
+ * parent explicitly opts in.
  */
 export type ChildContext = {
   ageMonths: number | null;
-  concernBand: 'LOW' | 'MODERATE' | 'HIGH' | null;
   observationsLast14Days: number;
 };
 
@@ -38,6 +38,7 @@ How to answer:
 
 What you must never do:
 - Never say or imply that the child has autism, does not have autism, or has any specific level of autism. Describe behaviour; never name a diagnosis.
+- Never estimate autism probability or severity, assign a risk percentage, or derive such a score from chat messages or questionnaire results.
 - Never name a medication, dose, supplement, or treatment protocol, and never advise starting or stopping one.
 - Never predict what will happen to the child's future.
 - Never invent a source, organisation, statistic or study. If reference material is provided, use only that, and cite it as (1), (2) and so on.
@@ -50,13 +51,6 @@ const formatContext = (context: ChildContext | null): string => {
   const parts: string[] = [];
   if (context.ageMonths !== null) {
     parts.push(`The child is about ${context.ageMonths} months old.`);
-  }
-  if (context.concernBand) {
-    // The band is passed as context, not as a fact to repeat: the parent has
-    // already been told what it means.
-    parts.push(
-      `A short screening indicator came out as ${context.concernBand.toLowerCase()} concern. Treat this as background only; do not repeat the band or interpret it as a diagnosis.`,
-    );
   }
   if (context.observationsLast14Days > 0) {
     parts.push(

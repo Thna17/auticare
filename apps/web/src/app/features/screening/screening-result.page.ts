@@ -1,195 +1,29 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import type { ChildResponse, RiskLevel, ScreeningSessionResultResponse } from '@auticare/contracts';
-import { UiCardComponent } from '../../design-system/components/ui-card.component';
+import type { ChildResponse, ScreeningSessionResultResponse } from '@auticare/contracts';
 import { ChildrenApi } from '../children/data-access/children.api';
+import { I18nService } from '../../core/i18n/i18n.service';
 import { ScreeningApi } from './data-access/screening.api';
-import { ScreeningBadgeComponent } from './components/screening-badge.component';
-import type { BadgeTone } from './components/screening-badge.component';
-import { observationFor } from './screening-observations';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
-import { I18nService } from '../../core/i18n/i18n.service';
 
-const MAX_ANSWER_VALUE = 4;
+export type ResponseScoreBand = 'none' | 'low' | 'medium' | 'elevated';
 
-const riskTones: Record<RiskLevel, BadgeTone> = {
-  LOW: 'positive',
-  MODERATE: 'caution',
-  HIGH: 'alert',
-};
-const riskLabels: Record<RiskLevel, string> = {
-  LOW: 'Low Risk',
-  MODERATE: 'Moderate Risk',
-  HIGH: 'High Risk',
-};
-const riskLabelsKm: Record<RiskLevel, string> = {
-  LOW: 'ហានិភ័យទាប',
-  MODERATE: 'ហានិភ័យមធ្យម',
-  HIGH: 'ហានិភ័យខ្ពស់',
-};
-const concernLabels: Record<RiskLevel, string> = {
-  LOW: 'Low Concern',
-  MODERATE: 'Moderate Concern',
-  HIGH: 'Elevated Concern',
-};
-const concernLabelsKm: Record<RiskLevel, string> = {
-  LOW: 'ការបារម្ភកម្រិតទាប',
-  MODERATE: 'ការបារម្ភកម្រិតមធ្យម',
-  HIGH: 'ការបារម្ភកម្រិតខ្ពស់',
-};
-const riskShort: Record<RiskLevel, string> = { LOW: 'Low', MODERATE: 'Moderate', HIGH: 'High' };
-const riskShortKm: Record<RiskLevel, string> = { LOW: 'ទាប', MODERATE: 'មធ្យម', HIGH: 'ខ្ពស់' };
-
-type ActionCard = {
-  readonly title: string;
-  readonly subtitle: string;
-  readonly path: string;
-  readonly icon: 'calendar' | 'hospital' | 'activities';
-  readonly queryParams?: Record<string, string> | null;
-};
-
-// Next-step copy varies by overall risk. HIGH lists "Book an appointment" first.
-const EN_NEXT_STEPS_BY_RISK: Record<RiskLevel, { lead: string; cards: readonly ActionCard[] }> = {
-  LOW: {
-    lead: "Your child's responses look broadly on track for their age. There's no urgency — keep supporting their development.",
-    cards: [
-      {
-        title: 'View activities',
-        subtitle: 'Play ideas that support development',
-        path: '/activities',
-        icon: 'activities',
-      },
-      {
-        title: 'Browse hospitals',
-        subtitle: 'Good to know your options, just in case',
-        path: '/hospitals',
-        icon: 'hospital',
-      },
-    ],
-  },
-  MODERATE: {
-    lead: "A few areas stood out. There's no need to worry, but it's worth raising these results at your child's next pediatrician visit.",
-    cards: [
-      {
-        title: 'Discuss at next visit',
-        subtitle: 'Share these results with your pediatrician',
-        path: '/appointments',
-        icon: 'calendar',
-      },
-      {
-        title: 'Browse hospitals',
-        subtitle: 'Find specialist clinics near you',
-        path: '/hospitals',
-        icon: 'hospital',
-      },
-      {
-        title: 'View activities',
-        subtitle: 'Supportive activities for your child',
-        path: '/activities',
-        icon: 'activities',
-      },
-    ],
-  },
-  HIGH: {
-    lead: 'Several areas suggest it would help to seek a professional evaluation soon. A specialist can give you a clearer picture.',
-    cards: [
-      {
-        title: 'Book a Pediatrician Consultation',
-        subtitle: 'We recommend a professional evaluation soon',
-        path: '/appointments',
-        icon: 'calendar',
-      },
-      {
-        title: 'Browse hospitals',
-        subtitle: 'Find specialist clinics near you',
-        path: '/hospitals',
-        icon: 'hospital',
-      },
-      {
-        title: 'View activities',
-        subtitle: 'Supportive activities in the meantime',
-        path: '/activities',
-        icon: 'activities',
-      },
-    ],
-  },
-};
-
-const KM_NEXT_STEPS_BY_RISK: Record<RiskLevel, { lead: string; cards: readonly ActionCard[] }> = {
-  LOW: {
-    lead: 'ចម្លើយរបស់កូនអ្នកស្ថិតនៅលើគន្លងល្អសម្រាប់អាយុរបស់ពួកគេ។ មិនមានការប្រញាប់ប្រញាល់ទេ — សូមបន្តគាំទ្រការលូតលាស់របស់ពួកគេ។',
-    cards: [
-      {
-        title: 'មើលសកម្មភាពលេង',
-        subtitle: 'គំនិតលេងដែលជួយគាំទ្រដល់ការលូតលាស់',
-        path: '/activities',
-        icon: 'activities',
-      },
-      {
-        title: 'ស្វែងរកមន្ទីរពេទ្យ',
-        subtitle: 'ស្វែងយល់ពីជម្រើសសម្រាប់ពេលអនាគត',
-        path: '/hospitals',
-        icon: 'hospital',
-      },
-    ],
-  },
-  MODERATE: {
-    lead: 'ផ្នែកមួយចំនួនបង្ហាញពីតម្រូវការគាំទ្រ។ មិនចាំបាច់មានការព្រួយបារម្ភទេ ប៉ុន្តែគួរតែលើកយកលទ្ធផលទាំងនេះទៅពិគ្រោះជាមួយវេជ្ជបណ្ឌិតកុមារនៅពេលពិនិត្យបន្ទាប់។',
-    cards: [
-      {
-        title: 'ពិភាក្សានៅពេលពិនិត្យបន្ទាប់',
-        subtitle: 'ចែករំលែកលទ្ធផលនេះជាមួយវេជ្ជបណ្ឌិតកុមារ',
-        path: '/appointments',
-        icon: 'calendar',
-      },
-      {
-        title: 'ស្វែងរកមន្ទីរពេទ្យ',
-        subtitle: 'ស្វែងរកគ្លីនិកឯកទេសនៅជិតអ្នក',
-        path: '/hospitals',
-        icon: 'hospital',
-      },
-      {
-        title: 'មើលសកម្មភាពលេង',
-        subtitle: 'សកម្មភាពគាំទ្រជាក់ស្តែងសម្រាប់កូនរបស់អ្នក',
-        path: '/activities',
-        icon: 'activities',
-      },
-    ],
-  },
-  HIGH: {
-    lead: 'ផ្នែកជាច្រើនបង្ហាញថាគួរស្វែងរកការវាយតម្លៃពីអ្នកជំនាញក្នុងពេលឆាប់ៗ។ វេជ្ជបណ្ឌិតឯកទេសអាចផ្តល់ការវាយតម្លៃលម្អិត និងច្បាស់លាស់។',
-    cards: [
-      {
-        title: 'កក់ការពិគ្រោះយោបល់ជាមួយវេជ្ជបណ្ឌិតកុមារ',
-        subtitle: 'យើងណែនាំឱ្យមានការវាយតម្លៃវិជ្ជាជីវៈក្នុងពេលឆាប់ៗ',
-        path: '/appointments',
-        icon: 'calendar',
-      },
-      {
-        title: 'ស្វែងរកមន្ទីរពេទ្យ',
-        subtitle: 'ស្វែងរកគ្លីនិកឯកទេសនៅជិតអ្នក',
-        path: '/hospitals',
-        icon: 'hospital',
-      },
-      {
-        title: 'មើលសកម្មភាពលេង',
-        subtitle: 'សកម្មភាពគាំទ្រជាក់ស្តែងក្នុងពេលរង់ចាំ',
-        path: '/activities',
-        icon: 'activities',
-      },
-    ],
-  },
-};
+/** Bands describe only this questionnaire's response score, never clinical risk. */
+export function responseScoreBand(score: number): ResponseScoreBand {
+  if (score === 0) return 'none';
+  if (score <= 30) return 'low';
+  if (score <= 66) return 'medium';
+  return 'elevated';
+}
 
 const formatAge = (dateOfBirth: string, isKm = false): string => {
   const birth = new Date(`${dateOfBirth}T00:00:00Z`);
   if (Number.isNaN(birth.getTime())) return '';
   const now = new Date();
   let months =
-    (now.getUTCFullYear() - birth.getUTCFullYear()) * 12 +
-    (now.getUTCMonth() - birth.getUTCMonth());
+    (now.getUTCFullYear() - birth.getUTCFullYear()) * 12 + now.getUTCMonth() - birth.getUTCMonth();
   if (now.getUTCDate() < birth.getUTCDate()) months -= 1;
   months = Math.max(months, 0);
   const years = Math.floor(months / 12);
@@ -199,1304 +33,440 @@ const formatAge = (dateOfBirth: string, isKm = false): string => {
 
 @Component({
   standalone: true,
-  imports: [
-    RouterLink,
-    UiCardComponent,
-    ScreeningBadgeComponent,
-    UiMessageComponent,
-    UiSpinnerComponent,
-  ],
+  imports: [RouterLink, UiMessageComponent, UiSpinnerComponent],
   template: `
-    <section class="result">
+    <section class="result-page">
       @if (loading()) {
-        <div class="state-center">
-          <ac-ui-spinner
-            [label]="isKm() ? 'កំពុងផ្ទុកលទ្ធផលនៃការវាយតម្លៃ…' : 'Loading screening result…'"
-          />
-        </div>
+        <div class="state"><ac-ui-spinner label="Loading result…" /></div>
       } @else if (fatalError()) {
-        <div class="state-center fatal">
-          <ac-ui-message tone="error">{{ fatalError() }}</ac-ui-message>
-          <button type="button" class="link" (click)="goToScreeningHome()">
-            {{ isKm() ? 'ត្រឡប់ទៅទំព័រវាយតម្លៃ' : 'Back to Screening' }}
+        <div class="state error">
+          <ac-ui-message tone="error">{{ fatalError() }}</ac-ui-message
+          ><button class="button secondary" type="button" (click)="goToScreeningHome()">
+            {{ isKm() ? 'ត្រឡប់ទៅការវាយតម្លៃ' : 'Back to questionnaires' }}
           </button>
         </div>
-      } @else if (result(); as res) {
-        <div class="result-actions-bar no-print">
-          <button
-            type="button"
-            class="btn-lang-toggle"
-            (click)="toggleLanguage()"
-            [attr.aria-label]="isKm() ? 'Switch to English' : 'ប្តូរទៅភាសាខ្មែរ'"
-          >
-            <span class="lang-flag" aria-hidden="true">{{ isKm() ? '🇬🇧' : '🇰🇭' }}</span>
-            <span class="lang-text">{{ isKm() ? 'English' : 'ភាសាខ្មែរ' }}</span>
-          </button>
-          <button
-            type="button"
-            class="btn-print"
-            (click)="printResult()"
-            [attr.aria-label]="
-              isKm() ? 'បោះពុម្ព ឬរក្សាទុករបាយការណ៍ជា PDF' : 'Print or save screening report as PDF'
-            "
-          >
-            <svg
-              class="print-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <polyline points="6 9 6 2 18 2 18 9" />
-              <path
-                d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
-              />
-              <rect x="6" y="14" width="12" height="8" />
-            </svg>
-            {{ isKm() ? 'បោះពុម្ព / រក្សាទុកជា PDF' : 'Print / Save PDF' }}
-          </button>
-        </div>
-
-        <div class="print-only-header">
-          <h1 class="print-title">
-            {{
-              isKm()
-                ? 'សេចក្តីសង្ខេបនៃការវាយតម្លៃការលូតលាស់ AutiCare'
-                : 'AutiCare Clinical Developmental Screening Summary'
-            }}
-          </h1>
-          <p class="print-meta">
-            {{
-              isKm()
-                ? 'សេចក្តីសង្ខេបសម្ងាត់ · បង្កើតឡើងសម្រាប់ពិគ្រោះជាមួយវេជ្ជបណ្ឌិតកុមារ និងអ្នកឯកទេស'
-                : 'Confidential Clinical Summary · Generated for Pediatrician & Specialist Consultation'
-            }}
-          </p>
-        </div>
-
-        <!-- 1. HEADER CARD WITH VISUAL RISK METER -->
-        <article class="header-card">
-          <div class="header-top">
-            <div class="who">
-              <p class="child-name">{{ childName() ?? (isKm() ? 'កូនរបស់អ្នក' : 'Your child') }}</p>
-              <p class="child-meta">
-                @if (childAge()) {
-                  <span>{{ childAge() }}</span> ·
-                }
-                {{ isKm() ? 'បញ្ចប់នៅ ' + completedDate() : 'Completed ' + completedDate() }}
-              </p>
-            </div>
-            <div class="risk-badge-group">
-              <ac-screening-badge [tone]="overallTone()">{{ overallLabel() }}</ac-screening-badge>
-              <span class="concern-pill" [class]="res.riskLevel.toLowerCase()">{{
-                concernLabel()
-              }}</span>
-            </div>
-          </div>
-
-          <!-- Empathetic, Reassuring Summary Explanation -->
-          <div class="empathetic-summary-card" [class]="res.riskLevel.toLowerCase()">
-            <span class="summary-card-icon" aria-hidden="true">
-              @if (res.riskLevel === 'LOW') {
-                🌿
-              } @else if (res.riskLevel === 'MODERATE') {
-                🌤️
-              } @else {
-                💙
-              }
-            </span>
-            <div class="summary-card-content">
-              <div class="empathetic-khmer-guidance" role="note">
-                <span class="khmer-guidance-badge">
-                  {{ isKm() ? '🇰🇭 សារណែនាំលើកទឹកចិត្ត' : '💙 Empathetic Guidance' }}
-                </span>
-                <p class="khmer-guidance-quote">
-                  {{
-                    isKm()
-                      ? '“លទ្ធផលនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រទេ ប៉ុន្តែជាការណែនាំដើម្បីជួយគាំទ្រដល់ការលូតលាស់របស់កុមារ”'
-                      : '“This result is not a medical diagnosis, but a compassionate guide to support your child’s development.”'
-                  }}
-                </p>
+      } @else if (session(); as current) {
+        @if (current.result) {
+          <header class="topbar">
+            <a routerLink="/screening" class="back-link">{{
+              isKm() ? '← ការវាយតម្លៃ' : '← Questionnaires'
+            }}</a>
+            <button class="language" type="button" (click)="toggleLanguage()">
+              {{ isKm() ? 'English' : 'ខ្មែរ' }}
+            </button>
+          </header>
+          <main class="dashboard">
+            <section class="score-card" aria-labelledby="result-title">
+              <div class="identity">
+                <div>
+                  <p class="eyebrow">
+                    {{ isKm() ? 'សេចក្តីសង្ខេបការឆ្លើយតប' : 'QUESTIONNAIRE RESPONSE SUMMARY' }}
+                  </p>
+                  <h1 id="result-title">{{ isKm() ? 'លទ្ធផលរបស់អ្នក' : 'Your results' }}</h1>
+                  <p class="meta">
+                    {{ childName() || (isKm() ? 'កូនរបស់អ្នក' : 'Your child') }}
+                    @if (childAge()) {
+                      · {{ childAge() }}
+                    }
+                    · {{ completedDate() }}
+                  </p>
+                </div>
               </div>
-              <strong>{{ summaryTitle() }}</strong>
-              <p>{{ reassuringExplanation() }}</p>
-            </div>
-          </div>
-
-          <!-- Calming Semicircular Visual Risk Meter -->
-          <div class="visual-meter-container" aria-label="Visual developmental risk gauge">
-            <div class="gauge-box">
-              <svg class="gauge-svg" viewBox="0 0 220 125" aria-hidden="true">
-                <!-- Background Meter Track -->
-                <path
-                  d="M 25 105 A 85 85 0 0 1 195 105"
-                  fill="none"
-                  stroke="var(--ac-color-slate-line-mist)"
-                  stroke-width="18"
-                  stroke-linecap="round"
-                />
-                <!-- Filled Score Arc with Dynamic Color -->
-                <path
-                  d="M 25 105 A 85 85 0 0 1 195 105"
-                  fill="none"
-                  [attr.stroke]="meterColor(res.riskLevel)"
-                  stroke-width="18"
-                  stroke-linecap="round"
-                  stroke-dasharray="267"
-                  [attr.stroke-dashoffset]="267 - (267 * (res.riskPercentage ?? 0)) / 100"
-                  class="gauge-active-fill"
-                />
-              </svg>
-
-              <div class="gauge-overlay-text">
-                <span class="gauge-score-num">
-                  {{ res.riskPercentage !== null ? res.riskPercentage : res.score
-                  }}<span class="gauge-unit">{{ res.riskPercentage !== null ? '%' : '' }}</span>
-                </span>
-                <span class="gauge-status-tag" [class]="res.riskLevel.toLowerCase()">
-                  {{ overallLabel() }}
-                </span>
-              </div>
-            </div>
-
-            <div class="spectrum-tiers" aria-label="Risk level guide">
-              <span class="tier-pill" [class.active-tier]="res.riskLevel === 'LOW'">
-                <span class="tier-dot low-dot"></span>
-                {{ isKm() ? 'ហានិភ័យទាប (០–៣៣%)' : 'Low Risk (0–33%)' }}
-              </span>
-              <span class="tier-pill" [class.active-tier]="res.riskLevel === 'MODERATE'">
-                <span class="tier-dot moderate-dot"></span>
-                {{ isKm() ? 'ហានិភ័យមធ្យម (៣៤–៦៦%)' : 'Moderate Risk (34–66%)' }}
-              </span>
-              <span class="tier-pill" [class.active-tier]="res.riskLevel === 'HIGH'">
-                <span class="tier-dot high-dot"></span>
-                {{ isKm() ? 'ហានិភ័យខ្ពស់ (៦៧–១០០%)' : 'Elevated Risk (67–100%)' }}
-              </span>
-            </div>
-          </div>
-
-          @if (trend(); as t) {
-            @if (t.comparable) {
-              <p class="trend" [class]="t.direction">
-                <span class="trend-arrow" aria-hidden="true">{{ t.arrow }}</span>
-                {{ t.text }}
-              </p>
-            } @else {
-              <p class="trend-note">
-                {{
-                  isKm()
-                    ? 'កូនរបស់អ្នកបានផ្លាស់ប្តូរទៅកាន់ក្រុមអាយុថ្មីចាប់តាំងពីការវាយតម្លៃចុងក្រោយ ដូច្នេះលទ្ធផលមិនអាចប្រៀបធៀបដោយផ្ទាល់បានទេ។'
-                    : "Your child moved to a new age group since their last screening, so results aren't directly comparable."
-                }}
-              </p>
-            }
-          }
-        </article>
-
-        <!-- 2. PROMINENT CLINICAL NEXT STEPS ACTION TOOLBAR -->
-        <section class="prominent-action-toolbar no-print" aria-label="Quick clinical actions">
-          <a
-            class="toolbar-card primary-card"
-            [routerLink]="'/appointments'"
-            [queryParams]="child() ? { childId: child()!.id } : null"
-            [title]="
-              isKm()
-                ? 'កក់ការពិគ្រោះយោបល់ជាមួយវេជ្ជបណ្ឌិតកុមារ'
-                : 'Book a Pediatrician Consultation'
-            "
-          >
-            <span class="toolbar-icon" aria-hidden="true">🩺</span>
-            <div class="toolbar-details">
-              <strong class="action-title-primary">
-                {{
-                  isKm()
-                    ? 'កក់ការពិគ្រោះយោបល់ជាមួយវេជ្ជបណ្ឌិតកុមារ'
-                    : 'Book a Pediatrician Consultation'
-                }}
-              </strong>
-              <span class="action-desc">
-                {{ isKm() ? 'ពិគ្រោះជាមួយវេជ្ជបណ្ឌិតឯកទេសកុមារ' : 'Schedule pediatric evaluation' }}
-              </span>
-            </div>
-          </a>
-
-          <a
-            class="toolbar-card"
-            [routerLink]="'/activities'"
-            [queryParams]="child() ? { childId: child()!.id } : null"
-            [title]="
-              isKm() ? 'ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់' : 'Explore Recommended Activities'
-            "
-          >
-            <span class="toolbar-icon" aria-hidden="true">🎯</span>
-            <div class="toolbar-details">
-              <strong class="action-title-primary">
-                {{
-                  isKm() ? 'ស្វែងរកសកម្មភាពលេងជំរុញការលូតលាស់' : 'Explore Recommended Activities'
-                }}
-              </strong>
-              <span class="action-desc">
-                {{ isKm() ? 'គំនិតលេងសម្របតាមការលូតលាស់' : 'Play ideas tailored to results' }}
-              </span>
-            </div>
-          </a>
-
-          <button
-            type="button"
-            class="toolbar-card btn-summary-report"
-            (click)="printResult()"
-            [title]="isKm() ? 'បោះពុម្ព ឬរក្សាទុកជារបាយការណ៍ PDF' : 'Print / Save PDF'"
-            [attr.aria-label]="isKm() ? 'បោះពុម្ព ឬរក្សាទុកជារបាយការណ៍ PDF' : 'Print / Save PDF'"
-          >
-            <span class="toolbar-icon" aria-hidden="true">📄</span>
-            <div class="toolbar-details">
-              <strong class="action-title-primary">
-                {{ isKm() ? 'បោះពុម្ព ឬរក្សាទុកជារបាយការណ៍ PDF' : 'Print / Save PDF' }}
-              </strong>
-              <span class="action-desc">
-                {{ isKm() ? 'នាំចេញឯកសារ PDF សម្រាប់ពិគ្រោះយោបល់' : 'Export Clinical PDF Summary' }}
-              </span>
-            </div>
-          </button>
-        </section>
-
-        <!-- 3. TRANSPARENT MEDICAL DISCLAIMER CALLOUT -->
-        <aside
-          class="prominent-disclaimer-callout"
-          role="note"
-          aria-label="Non-diagnostic medical reassurance"
-        >
-          <div class="disclaimer-icon-wrap" aria-hidden="true">
-            <span class="disclaimer-shield">🛡️</span>
-          </div>
-          <div class="disclaimer-body">
-            <h3 class="disclaimer-heading">
-              {{
-                isKm()
-                  ? 'ការបញ្ជាក់មិនមែនរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រ'
-                  : 'Clinical Non-Diagnostic Reassurance'
-              }}
-            </h3>
-            <p class="khmer-guidance-quote disclaimer-khmer-highlight">
-              {{
-                isKm()
-                  ? '“លទ្ធផលនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រទេ ប៉ុន្តែជាការណែនាំដើម្បីជួយគាំទ្រដល់ការលូតលាស់របស់កុមារ”'
-                  : '“This screening result is designed as a compassionate guide, not a medical diagnosis.”'
-              }}
-            </p>
-            <p class="disclaimer-text">
-              {{
-                isKm()
-                  ? 'ឧបករណ៍វាយតម្លៃនេះមិនមែនជាការធ្វើរោគវិនិច្ឆ័យវេជ្ជសាស្ត្រឡើយ។'
-                  : res.disclaimer
-              }}
-            </p>
-            <p class="heuristic-note">
-              {{
-                isKm()
-                  ? 'សូចនាករនៃការវាយតម្លៃ និងកម្រិតហានិភ័យទាំងនេះ ត្រូវបានរៀបចំឡើងជាការណែនាំដ៏កក់ក្តៅ ដើម្បីផ្តល់អំណាចដល់ការពិភាក្សាជាមួយវេជ្ជបណ្ឌិតកុមារ ឬក្រុមគ្លីនិករបស់អ្នក។'
-                  : 'These assessment indicators and risk bands are designed solely as a compassionate, supportive guide to empower collaborative discussions with your pediatrician or clinical team. They do not constitute a medical diagnosis.'
-              }}
-            </p>
-          </div>
-        </aside>
-
-        <!-- 4. BREAKDOWN BY CATEGORY WITH CLINICAL EXPLANATIONS -->
-        @if (res.categoryBreakdown.length) {
-          <section class="breakdown" aria-label="Breakdown by category">
-            <h2 class="section-label">
-              {{ isKm() ? 'ការវិភាគតាមផ្នែកលូតលាស់' : 'Developmental Domain Breakdown' }}
-            </h2>
-            <div class="cat-list">
-              @for (cat of res.categoryBreakdown; track cat.category) {
-                <article class="cat-card">
-                  <div class="cat-head">
-                    <div class="cat-title-group">
-                      <span class="domain-icon" aria-hidden="true">{{
-                        categoryIcon(cat.category)
-                      }}</span>
-                      <span class="cat-name">
-                        {{ isKm() ? formatDomainKm(cat.category) : formatDomainEn(cat.category) }}
-                      </span>
-                    </div>
-                    <span class="cat-level" [class]="cat.riskLevel.toLowerCase()">
-                      {{ shortLabel(cat.riskLevel) }}
-                    </span>
-                  </div>
-
+              @if (responseScore() !== null) {
+                <div class="score-layout">
                   <div
-                    class="bar-track"
-                    role="progressbar"
-                    [attr.aria-valuenow]="cat.riskPercentage"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
+                    class="gauge"
+                    role="img"
                     [attr.aria-label]="
-                      (isKm() ? formatDomainKm(cat.category) : formatDomainEn(cat.category)) +
-                      (isKm() ? ' ហានិភ័យ' : ' risk')
+                      (isKm() ? 'ពិន្ទុចម្លើយសំណួរ ' : 'Questionnaire response score ') +
+                      responseScore() +
+                      '%'
                     "
                   >
-                    <span
-                      class="bar-fill"
-                      [class]="cat.riskLevel.toLowerCase()"
-                      [style.width.%]="cat.riskPercentage"
-                    ></span>
+                    <svg viewBox="0 0 220 130" aria-hidden="true">
+                      <path class="gauge-track" d="M 24 112 A 86 86 0 0 1 196 112" />
+                      <path
+                        class="gauge-value"
+                        d="M 24 112 A 86 86 0 0 1 196 112"
+                        [attr.stroke-dasharray]="270"
+                        [attr.stroke-dashoffset]="270 - (270 * responseScore()!) / 100"
+                      />
+                    </svg>
+                    <div class="gauge-copy">
+                      <strong>{{ responseScore() }}<span>%</span></strong
+                      ><span>{{ scoreBandLabel() }}</span>
+                    </div>
                   </div>
-
-                  <p class="domain-clinical-explanation">
-                    {{ domainExplanation(cat.category) }}
+                  <div class="score-copy">
+                    <h2>{{ scoreBandLabel() }}</h2>
+                    <p>{{ scoreSentence() }}</p>
+                    <p class="band-caption">
+                      {{
+                        isKm()
+                          ? 'ជាក្រុមពិន្ទុចម្លើយសំណួរប៉ុណ្ណោះ មិនមែនជាក្រុមហានិភ័យគ្លីនិកទេ។'
+                          : 'Questionnaire response-score bands only · not clinical categories.'
+                      }}
+                    </p>
+                    <p class="band-legend">
+                      {{
+                        isKm()
+                          ? '០%៖ គ្មានកង្វល់តាមចម្លើយ · ទាប ១–៣០% · មធ្យម ៣១–៦៦% · កើនឡើង ៦៧–១០០%'
+                          : '0%: No concerns indicated by scored responses · Low 1–30% · Medium 31–66% · Elevated 67–100%'
+                      }}
+                    </p>
+                  </div>
+                </div>
+              } @else {
+                <div class="no-score">
+                  <h2>
+                    {{ isKm() ? 'មិនមានពិន្ទុសម្រាប់បង្ហាញទេ' : 'A response score is unavailable' }}
+                  </h2>
+                  <p>
+                    {{
+                      isKm()
+                        ? 'មិនមានចម្លើយដែលអាចដាក់ពិន្ទុបានក្នុងសម័យនេះទេ។ ចម្លើយដែលខកខានមិនត្រូវបានរាប់ជាការព្រួយបារម្ភឡើយ។'
+                        : 'There are no scored responses in this session. Missing answers are not counted as concerns.'
+                    }}
                   </p>
-                </article>
+                </div>
               }
-            </div>
-          </section>
+              <p class="answer-count">
+                {{
+                  isKm()
+                    ? 'ចម្លើយដែលបានដាក់ពិន្ទុ៖ ' + current.answers.length
+                    : 'Scored responses: ' + current.answers.length
+                }}
+              </p>
+            </section>
+            <section class="next-card" aria-label="Parent recommendation">
+              <span class="recommendation-icon" aria-hidden="true">♡</span>
+              <p>
+                {{
+                  isKm()
+                    ? 'ប្រសិនបើអ្នកមានកង្វល់ សូមចែករំលែកឧទាហរណ៍ដែលអ្នកបានសង្កេតជាមួយគ្រូពេទ្យកុមារ ឬអ្នកជំនាញការលូតលាស់។'
+                    : "If you have concerns, discuss your observations with your child's pediatrician or a qualified developmental professional."
+                }}
+              </p>
+            </section>
+            <nav class="actions" aria-label="Result actions">
+              <button type="button" class="button primary" (click)="printResult()">
+                {{ isKm() ? 'ទាញយក PDF' : 'Download PDF' }}
+              </button>
+              <button type="button" class="button secondary" (click)="retake()">
+                {{ isKm() ? 'ធ្វើសំណួរម្តងទៀត' : 'Retake Questionnaire' }}
+              </button>
+              <a class="button secondary" routerLink="/find-support">{{
+                isKm() ? 'ស្វែងរកជំនួយ' : 'Find Support'
+              }}</a>
+            </nav>
+            <aside class="disclaimer" role="note">
+              <strong>{{ isKm() ? 'ចំណាំ' : 'Please note' }}</strong
+              ><span>{{
+                isKm()
+                  ? 'សំណួរនេះមិនមែនជាឧបករណ៍ពិនិត្យដែលបានផ្ទៀងផ្ទាត់ទេ។ លទ្ធផលមិនមែនជារោគវិនិច្ឆ័យ ប្រូបាប៊ីលីតេ ឬកម្រិតធ្ងន់ធ្ងរនៃអូទីស្សឹមទេ។'
+                  : 'This questionnaire is not a validated autism screening tool. Its response score is not an autism diagnosis, probability, or severity level. The score bands are illustrative only and are not clinically validated.'
+              }}</span>
+            </aside>
+            <details class="method">
+              <summary>
+                {{ isKm() ? 'របៀបគណនាពិន្ទុ' : 'How this response score is calculated' }}
+              </summary>
+              <p>
+                {{
+                  isKm()
+                    ? 'ពិន្ទុគឺជាចំនួនពិន្ទុដែលបានកែតម្រូវតាមទិសសំណួរ ចែកនឹងពិន្ទុអតិបរមាសម្រាប់ចម្លើយដែលបានដាក់ពិន្ទុ ហើយគុណនឹង ១០០ បង្គត់ទៅចំនួនគត់។ ពិន្ទុមិនមានការបកស្រាយផ្នែកវេជ្ជសាស្ត្រទេ។'
+                    : 'The displayed percentage follows the deterministic questionnaire formula: sum polarity-adjusted response points, divide by the maximum points for scored responses (4 per response), multiply by 100, and round to a whole number. It describes this questionnaire’s response pattern only.'
+                }}
+              </p>
+              <p>
+                {{
+                  isKm()
+                    ? 'សំណួរទាំងអស់ត្រូវឆ្លើយមុនបញ្ជូន ហើយទម្រង់នេះមិនមានជម្រើស “មិនប្រាកដ” ទេ។ ចម្លើយដែលខកខានក្នុងទិន្នន័យចាស់មិនត្រូវបានបកស្រាយជាកង្វល់ទេ។'
+                    : 'This questionnaire requires answers before submission and does not offer a “Not sure” option. If a legacy session has no scored answers, no percentage is shown; unanswered items are not treated as concerns.'
+                }}
+              </p>
+            </details>
+          </main>
         }
-
-        <!-- 5. WHAT WE NOTICED -->
-        @if (observations().length) {
-          <section class="noticed" aria-label="What we noticed">
-            <h2 class="section-label">
-              {{ isKm() ? 'ការសង្កេត និងលំនាំគ្លីនិក' : 'Clinical Observations & Patterns' }}
-            </h2>
-            <ul class="obs-list">
-              @for (obs of observations(); track obs.category) {
-                <li>{{ obs.sentence }}</li>
-              }
-            </ul>
-          </section>
-        }
-
-        <!-- 6. RECOMMENDED NEXT STEPS CARDS -->
-        <section class="next-steps" aria-label="Recommended next steps">
-          <h2 class="section-label">
-            {{ isKm() ? 'ជំហានបន្ទាប់ដែលបានណែនាំ' : 'Recommended next steps' }}
-          </h2>
-          <p class="next-lead">{{ nextSteps().lead }}</p>
-          <div class="cards">
-            @for (card of nextSteps().cards; track card.path) {
-              <a class="action" [routerLink]="card.path" [queryParams]="card.queryParams">
-                <ac-ui-card>
-                  <span class="action-icon" aria-hidden="true">
-                    @switch (card.icon) {
-                      @case ('calendar') {
-                        <svg viewBox="0 0 24 24">
-                          <rect
-                            x="4"
-                            y="5"
-                            width="16"
-                            height="16"
-                            rx="2"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                          />
-                          <line
-                            x1="4"
-                            y1="9"
-                            x2="20"
-                            y2="9"
-                            stroke="currentColor"
-                            stroke-width="2"
-                          />
-                          <line
-                            x1="8"
-                            y1="3"
-                            x2="8"
-                            y2="7"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                          />
-                          <line
-                            x1="16"
-                            y1="3"
-                            x2="16"
-                            y2="7"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                          />
-                        </svg>
-                      }
-                      @case ('hospital') {
-                        <svg viewBox="0 0 24 24">
-                          <rect
-                            x="4"
-                            y="4"
-                            width="16"
-                            height="16"
-                            rx="2"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                          />
-                          <line
-                            x1="12"
-                            y1="8"
-                            x2="12"
-                            y2="16"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                          />
-                          <line
-                            x1="8"
-                            y1="12"
-                            x2="16"
-                            y2="12"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                          />
-                        </svg>
-                      }
-                      @case ('activities') {
-                        <svg viewBox="0 0 24 24">
-                          <path
-                            d="M12 4l2.2 4.9L19.5 9.5l-3.8 3.6 1 5.3L12 15.9 7.3 18.4l1-5.3L4.5 9.5l5.3-.6z"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linejoin="round"
-                          />
-                        </svg>
-                      }
-                    }
-                  </span>
-                  <span class="action-title">{{ card.title }}</span>
-                  <span class="action-subtitle">{{ card.subtitle }}</span>
-                </ac-ui-card>
-              </a>
-            }
-          </div>
-        </section>
-
-        <div class="print-only-footer">
-          <p>
-            {{
-              isKm()
-                ? 'សេចក្តីសង្ខេបនៃការវាយតម្លៃគ្លីនិកនេះត្រូវបានបង្កើតឡើងដោយ AutiCare។ វាមានបំណងជួយសម្រួលដល់ការពិភាក្សាសហការជាមួយវេជ្ជបណ្ឌិតកុមារ និងអ្នកឯកទេសខាងការលូតលាស់។'
-                : 'This clinical screening summary was generated by AutiCare. It is intended to facilitate collaborative discussion with pediatricians and developmental specialists.'
-            }}
-          </p>
-        </div>
-
-        <button type="button" class="link center" (click)="goToScreeningHome()">
-          {{ isKm() ? 'ត្រឡប់ទៅទំព័រវាយតម្លៃ' : 'Back to Screening' }}
-        </button>
       }
     </section>
   `,
   styles: [
     `
       :host {
-        --scr-teal: var(--ac-color-action);
-        --scr-teal-ink: var(--ac-color-ink-f);
-        --scr-text: var(--ac-color-text);
-        --scr-text-muted: var(--ac-color-text-muted);
-        --scr-surface: var(--ac-color-surface);
-        --scr-banner-bg: var(--ac-color-surface-info);
-        --scr-banner-border: var(--ac-color-border-info);
-        --scr-avatar-bg: var(--ac-color-primary);
-        --scr-divider: var(--ac-color-grey-pale);
-        --scr-radius: 12px;
-        --scr-shadow-card: var(--ac-shadow-sm);
-        --scr-error: var(--ac-color-alert-text);
-        --scr-low: var(--ac-color-success);
-        --scr-moderate: var(--ac-color-warning);
-        --scr-high: var(--ac-color-attention);
         display: block;
+        --teal: var(--ac-color-action);
+        --ink: var(--ac-color-text-strong);
+        --muted: var(--ac-color-text-muted);
+        --line: var(--ac-color-border-slate);
+        --surface: var(--ac-color-surface);
       }
-
-      .result {
-        display: flex;
-        flex-direction: column;
-        gap: 22px;
+      .result-page {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: clamp(16px, 3vw, 32px);
+        color: var(--ink);
       }
-
-      .state-center {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        text-align: center;
-      }
-
-      .fatal {
-        gap: 16px;
-      }
-
-      /* Header card */
-      .header-card {
-        background: var(--scr-surface);
-        border: 1px solid var(--scr-banner-border);
-        border-radius: var(--ac-radius-xl);
-        box-shadow: var(--ac-shadow-sm);
-        padding: 28px 32px;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-      }
-
-      .header-top {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 16px;
-      }
-
-      .risk-badge-group {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 6px;
-      }
-
-      .concern-pill {
-        font-size: 12px;
-        font-weight: 700;
-        padding: 3px 10px;
-        border-radius: var(--ac-radius-pill);
-        letter-spacing: 0.02em;
-      }
-
-      .concern-pill.low {
-        background: var(--ac-color-green-tint-soft);
-        color: var(--ac-color-success);
-        border: 1px solid var(--ac-color-green-border-soft);
-      }
-
-      .concern-pill.moderate {
-        background: var(--ac-color-amber-tint-50);
-        color: var(--ac-color-warning);
-        border: 1px solid var(--ac-color-amber-tint-sand);
-      }
-
-      .concern-pill.high {
-        background: var(--ac-color-alert-surface);
-        color: var(--ac-color-alert-strong);
-        border: 1px solid var(--ac-color-alert-surface);
-      }
-
-      .empathetic-summary-card {
-        border-radius: var(--ac-radius-lg);
-        padding: 16px 18px;
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        border: 1px solid var(--ac-color-border);
-        background: var(--ac-color-surface-slate);
-      }
-
-      .empathetic-summary-card.low {
-        background: var(--ac-color-green-tint-soft);
-        border-color: var(--ac-color-green-border-soft);
-      }
-
-      .empathetic-summary-card.moderate {
-        background: var(--ac-color-surface-info);
-        border-color: var(--ac-color-border-info);
-      }
-
-      .empathetic-summary-card.high {
-        background: var(--ac-color-tint-blue-mist);
-        border-color: var(--ac-color-border-info);
-      }
-
-      .empathetic-khmer-guidance {
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-info);
-        border-radius: var(--ac-radius-md);
-        padding: 10px 14px;
-        margin-bottom: 6px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .khmer-guidance-badge {
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--ac-color-action-deep);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      .khmer-guidance-quote {
-        margin: 0;
-        font-size: 13px;
-        font-weight: 700;
-        line-height: 1.5;
-        color: var(--ac-color-action-deep);
-        font-style: italic;
-      }
-
-      .summary-card-icon {
-        font-size: 22px;
-        line-height: 1.2;
-        flex: 0 0 auto;
-      }
-
-      .summary-card-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .summary-card-content strong {
-        color: var(--ac-color-text-strong);
-        font-size: 14px;
-      }
-
-      .summary-card-content p {
-        margin: 0;
-        color: var(--ac-color-text-body);
-        font-size: 13px;
-        line-height: 1.5;
-      }
-
-      .child-name {
-        margin: 0;
-        color: var(--ac-color-text-strong);
-        font-size: 26px;
-        font-weight: 800;
-      }
-
-      .child-meta {
-        margin: 4px 0 0;
-        color: var(--scr-text-muted);
-        font-size: 14px;
-        font-weight: 600;
-      }
-
-      /* Calming Visual Risk Meter */
-      .visual-meter-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 12px 0;
-        background: var(--ac-color-surface-slate);
-        border: 1px solid var(--ac-color-border-subtle);
-        border-radius: var(--ac-radius-lg);
-      }
-
-      .gauge-box {
-        position: relative;
-        width: 220px;
-        height: 125px;
-        display: flex;
-        justify-content: center;
-      }
-
-      .gauge-svg {
-        width: 100%;
-        height: 100%;
-      }
-
-      .gauge-active-fill {
-        transition: stroke-dashoffset 800ms var(--ac-ease-standard);
-      }
-
-      .gauge-overlay-text {
-        position: absolute;
-        bottom: 4px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-
-      .gauge-score-num {
-        font-size: 38px;
-        font-weight: 800;
-        line-height: 1;
-        color: var(--ac-color-text-strong);
-      }
-
-      .gauge-unit {
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--scr-text-muted);
-      }
-
-      .gauge-status-tag {
-        font-size: 13px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-top: 2px;
-      }
-
-      .gauge-status-tag.low {
-        color: var(--scr-low);
-      }
-
-      .gauge-status-tag.moderate {
-        color: var(--scr-moderate);
-      }
-
-      .gauge-status-tag.high {
-        color: var(--scr-high);
-      }
-
-      .spectrum-tiers {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        margin-top: 10px;
-        flex-wrap: wrap;
-      }
-
-      .tier-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--scr-text-muted);
-        padding: 4px 10px;
-        border-radius: var(--ac-radius-pill);
-        border: 1px solid transparent;
-        transition: all var(--ac-motion-fast);
-      }
-
-      .tier-pill.active-tier {
-        background: var(--ac-color-surface);
-        border-color: var(--ac-color-border);
-        color: var(--ac-color-text-strong);
-        font-weight: 700;
-        box-shadow: var(--ac-shadow-xs);
-      }
-
-      .tier-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: var(--ac-radius-pill);
-      }
-
-      .low-dot {
-        background: var(--scr-low);
-      }
-
-      .moderate-dot {
-        background: var(--scr-moderate);
-      }
-
-      .high-dot {
-        background: var(--scr-high);
-      }
-
-      /* Prominent Clinical Action Toolbar */
-      .prominent-action-toolbar {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .toolbar-card {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 16px 18px;
-        border-radius: var(--ac-radius-lg);
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border);
-        box-shadow: var(--ac-shadow-xs);
-        text-decoration: none;
-        color: var(--ac-color-text-strong);
-        cursor: pointer;
-        transition:
-          transform var(--ac-motion-fast),
-          box-shadow var(--ac-motion-fast),
-          border-color var(--ac-motion-fast);
-        text-align: left;
-      }
-
-      .toolbar-card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--ac-shadow-hover);
-        border-color: var(--ac-color-action);
-      }
-
-      .toolbar-card.primary-card {
-        background: var(--ac-color-surface-info);
-        border-color: var(--ac-color-border-info);
-      }
-
-      .toolbar-icon {
-        font-size: 24px;
-        line-height: 1;
-        flex: 0 0 auto;
-      }
-
-      .toolbar-details {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        min-width: 0;
-      }
-
-      .toolbar-details strong {
-        font-size: 14px;
-        color: var(--ac-color-text-strong);
-      }
-
-      .action-title-primary {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-
-      .title-km {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--ac-color-text-strong);
-        line-height: 1.35;
-      }
-
-      .title-en-sub {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--scr-text-muted);
-      }
-
-      .action-desc {
-        font-size: 12px;
-        color: var(--scr-text-muted);
-        line-height: 1.4;
-      }
-
-      .toolbar-details span,
-      .toolbar-details small {
-        font-size: 12px;
-        color: var(--scr-text-muted);
-      }
-
-      .btn-summary-report {
-        font-family: inherit;
-        border: 1px solid var(--ac-color-border);
-      }
-
-      .trend {
-        margin: 0;
-        font-size: 14px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .trend-arrow {
-        font-size: 15px;
-      }
-
-      .trend.up {
-        color: var(--scr-high);
-      }
-
-      .trend.down {
-        color: var(--scr-low);
-      }
-
-      .trend.flat {
-        color: var(--scr-text-muted);
-      }
-
-      .trend-note {
-        margin: 0;
-        color: var(--scr-text-muted);
-        font-size: 13px;
-        font-style: italic;
-      }
-
-      .heuristic-note {
-        margin: -6px 4px 0;
-        color: var(--scr-text-muted);
-        font-size: 12px;
-        line-height: 1.5;
-        text-align: center;
-      }
-
-      .prominent-disclaimer-callout {
-        border-radius: var(--ac-radius-lg);
-        background: var(--ac-color-surface-info);
-        border: 1px solid var(--ac-color-border-info);
-        padding: 18px 22px;
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        margin: 6px 0 12px;
-      }
-
-      .disclaimer-icon-wrap {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border-info);
+      .state {
+        min-height: 40vh;
         display: grid;
         place-items: center;
-        flex: 0 0 auto;
-      }
-
-      .disclaimer-shield {
-        font-size: 18px;
-        line-height: 1;
-      }
-
-      .disclaimer-body {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .disclaimer-heading {
-        margin: 0;
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--ac-color-action-deep);
-      }
-
-      .disclaimer-text {
-        margin: 0;
-        font-size: 13px;
-        line-height: 1.5;
-        color: var(--ac-color-text-body);
-        font-weight: 600;
-      }
-
-      .prominent-disclaimer-callout .heuristic-note {
-        margin: 4px 0 0;
-        text-align: left;
-        color: var(--ac-color-text-muted);
-        font-size: 12px;
-        line-height: 1.5;
-      }
-
-      .disclaimer-khmer-highlight {
-        padding: 8px 12px;
-        background: var(--ac-color-surface);
-        border-radius: var(--ac-radius-sm);
-        border-left: 3px solid var(--ac-color-action);
-      }
-
-      .section-label {
-        margin: 0 0 12px;
-        color: var(--ac-color-text-strong);
-        font-size: 18px;
-        font-weight: 700;
-      }
-
-      /* Category breakdown */
-      .cat-list {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      .cat-card {
-        background: var(--scr-surface);
-        border: 1px solid var(--scr-banner-border);
-        border-radius: var(--ac-radius-lg);
-        box-shadow: var(--ac-shadow-xs);
-        padding: 18px 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .cat-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .cat-title-group {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .domain-icon {
-        font-size: 18px;
-      }
-
-      .cat-name {
-        color: var(--scr-text);
-        font-weight: 700;
-        font-size: 16px;
-      }
-
-      .cat-name-km {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--scr-text);
-      }
-
-      .cat-name-en {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--scr-text-muted);
-      }
-
-      .cat-level {
-        font-size: 12px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        padding: 2px 8px;
-        border-radius: var(--ac-radius-pill);
-      }
-
-      .cat-level.low {
-        color: var(--scr-low);
-        background: var(--ac-color-tint-green-soft);
-      }
-
-      .cat-level.moderate {
-        color: var(--scr-moderate);
-        background: var(--ac-color-tint-amber-wash);
-      }
-
-      .cat-level.high {
-        color: var(--scr-high);
-        background: var(--ac-color-alert-surface);
-      }
-
-      .bar-track {
-        height: 10px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--scr-banner-bg);
-        overflow: hidden;
-      }
-
-      .bar-fill {
-        display: block;
-        height: 100%;
-        border-radius: var(--ac-radius-pill);
-        transition: width 400ms var(--ac-ease-standard);
-      }
-
-      .bar-fill.low {
-        background: var(--scr-low);
-      }
-
-      .bar-fill.moderate {
-        background: var(--scr-moderate);
-      }
-
-      .bar-fill.high {
-        background: var(--scr-high);
-      }
-
-      .domain-clinical-explanation {
-        margin: 2px 0 0;
-        font-size: 12px;
-        line-height: 1.5;
-        color: var(--scr-text-muted);
-      }
-
-      /* What we noticed */
-      .obs-list {
-        margin: 0;
-        padding-left: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        color: var(--scr-text);
-        font-size: 15px;
-        line-height: 1.5;
-      }
-
-      /* Next steps */
-      .next-lead {
-        margin: 0 0 14px;
-        color: var(--scr-text);
-        font-size: 15px;
-        line-height: 1.5;
-      }
-
-      .cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        text-align: center;
         gap: 16px;
       }
-
-      .action {
-        text-decoration: none;
-        color: inherit;
-        display: block;
+      .error {
+        align-content: center;
       }
-
-      .action-icon {
+      .topbar {
         display: flex;
-        width: 44px;
-        height: 44px;
-        border-radius: var(--ac-radius-pill);
-        background: var(--scr-banner-bg);
-        color: var(--scr-teal);
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      .back-link,
+      .language {
+        color: var(--ac-color-action-deep);
+        font: inherit;
+        font-weight: 650;
+        text-decoration: none;
+        background: none;
+        border: 0;
+        cursor: pointer;
+      }
+      .dashboard {
+        display: grid;
+        gap: 14px;
+      }
+      .score-card,
+      .next-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: var(--ac-shadow-sm);
+      }
+      .score-card {
+        padding: clamp(20px, 4vw, 36px);
+      }
+      .eyebrow {
+        margin: 0 0 6px;
+        color: var(--ac-color-action-deep);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 38px);
+        line-height: 1.12;
+      }
+      .meta {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .score-layout {
+        display: grid;
+        grid-template-columns: minmax(210px, 300px) 1fr;
+        gap: clamp(16px, 4vw, 46px);
+        align-items: center;
+        margin: 24px auto 8px;
+        max-width: 720px;
+      }
+      .gauge {
+        position: relative;
+        width: min(100%, 300px);
+        justify-self: center;
+      }
+      .gauge svg {
+        width: 100%;
+        display: block;
+        overflow: visible;
+      }
+      .gauge-track,
+      .gauge-value {
+        fill: none;
+        stroke-width: 17;
+        stroke-linecap: round;
+      }
+      .gauge-track {
+        stroke: var(--ac-color-surface-info);
+      }
+      .gauge-value {
+        stroke: var(--teal);
+        transition: stroke-dashoffset 0.5s ease;
+      }
+      .gauge-copy {
+        position: absolute;
+        inset: 27% 0 0;
+        display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin-bottom: 12px;
+        text-align: center;
       }
-
-      .action-icon svg {
-        width: 22px;
-        height: 22px;
+      .gauge-copy strong {
+        font-size: clamp(36px, 6vw, 52px);
+        line-height: 1;
+        color: var(--ac-color-action-deep);
       }
-
-      .action-title {
-        display: block;
-        color: var(--scr-text);
-        font-weight: 700;
-        font-size: 16px;
+      .gauge-copy strong span {
+        font-size: 0.55em;
       }
-
-      .action-subtitle {
-        display: block;
-        margin-top: 4px;
-        color: var(--scr-text-muted);
+      .gauge-copy > span {
+        margin-top: 8px;
+        font-weight: 750;
+        color: var(--ac-color-action-deep);
+      }
+      .score-copy h2,
+      .no-score h2 {
+        margin: 0 0 8px;
+        font-size: clamp(22px, 3vw, 28px);
+      }
+      .score-copy p,
+      .no-score p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+      .score-copy .band-caption {
+        margin-top: 12px;
         font-size: 13px;
       }
-
-      .link {
-        border: 0;
-        background: none;
-        color: var(--scr-teal);
-        font-weight: 700;
-        cursor: pointer;
-        text-decoration: underline;
+      .score-copy .band-legend {
+        margin-top: 8px;
+        font-size: 12px;
       }
-
-      .result-actions-bar {
+      .no-score {
+        max-width: 680px;
+        margin: 28px auto 20px;
+        padding: 20px;
+        background: var(--ac-color-surface-info);
+        border-radius: 14px;
+      }
+      .answer-count {
+        border-top: 1px solid var(--line);
+        margin: 10px 0 0;
+        padding-top: 12px;
+        color: var(--muted);
+        font-size: 13px;
+        text-align: center;
+      }
+      .next-card {
         display: flex;
-        justify-content: flex-end;
         align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        background: var(--ac-color-surface-info);
+      }
+      .recommendation-icon {
+        color: var(--teal);
+        font-size: 28px;
+      }
+      .next-card p {
+        margin: 0;
+        line-height: 1.5;
+      }
+      .actions {
+        display: flex;
         gap: 10px;
-        margin-bottom: 4px;
+        flex-wrap: wrap;
       }
-
-      .btn-lang-toggle {
+      .button {
         display: inline-flex;
+        justify-content: center;
         align-items: center;
-        gap: 6px;
-        padding: 8px 14px;
-        border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-md);
+        min-height: 44px;
+        border-radius: 999px;
+        padding: 10px 18px;
+        border: 1px solid transparent;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .primary {
+        background: var(--teal);
+        color: var(--ac-color-text-on-action);
+      }
+      .secondary {
+        color: var(--ac-color-action-deep);
+        border-color: var(--line);
+        background: var(--surface);
+      }
+      .button:focus-visible,
+      .back-link:focus-visible,
+      .language:focus-visible,
+      summary:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 3px;
+      }
+      .disclaimer {
+        display: flex;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        color: var(--muted);
         background: var(--ac-color-surface-slate);
-        color: var(--ac-color-text-strong);
         font-size: 13px;
-        font-weight: 700;
+        line-height: 1.5;
+      }
+      .disclaimer strong {
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .method {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .method summary {
+        color: var(--ac-color-action-deep);
         cursor: pointer;
-        transition: all 160ms ease;
+        font-weight: 650;
       }
-
-      .btn-lang-toggle:hover {
-        background: var(--ac-color-surface-hover);
-        border-color: var(--ac-color-action);
+      .method p {
+        max-width: 760px;
+        line-height: 1.55;
       }
-
-      .btn-print {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface);
-        color: var(--scr-teal);
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 160ms ease;
-      }
-
-      .btn-print:hover {
-        background: var(--ac-color-surface-hover);
-        border-color: var(--scr-teal);
-      }
-
-      .print-icon {
-        width: 18px;
-        height: 18px;
-      }
-
-      .print-only-header,
-      .print-only-footer {
-        display: none;
-      }
-
-      @media (max-width: 640px) {
-        .prominent-action-toolbar {
+      @media (max-width: 620px) {
+        .result-page {
+          padding: 14px;
+        }
+        .score-layout {
           grid-template-columns: 1fr;
+          gap: 10px;
+          margin-top: 12px;
         }
-
-        .header-top {
-          flex-direction: column;
+        .gauge {
+          width: min(75vw, 260px);
+        }
+        .score-copy {
+          text-align: center;
+        }
+        .actions .button {
+          flex: 1 1 100%;
         }
       }
-
       @media print {
-        :host {
-          color: var(--ac-color-black);
-          background: var(--ac-color-surface);
+        .result-page {
+          max-width: none;
+          padding: 0;
         }
-        .no-print,
-        .link,
-        .next-steps,
-        .prominent-action-toolbar {
+        .topbar,
+        .actions,
+        .method {
           display: none !important;
         }
-        .print-only-header {
-          display: block;
-          margin-bottom: 20px;
-          border-bottom: 2px solid var(--ac-color-tint-steel);
-          padding-bottom: 12px;
-        }
-        .print-title {
-          font-size: 22px;
-          font-weight: 800;
-          margin: 0 0 6px;
-          color: var(--ac-color-black);
-        }
-        .print-meta {
-          font-size: 13px;
-          color: var(--ac-color-text-slate);
-          margin: 0;
-        }
-        .print-only-footer {
-          display: block;
-          margin-top: 28px;
-          padding-top: 12px;
-          border-top: 1px solid var(--ac-color-tint-steel);
-          font-size: 12px;
-          color: var(--ac-color-text-slate);
-        }
-        .result {
-          max-width: 100% !important;
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-        .header-card,
-        .cat-card,
-        .breakdown,
-        .noticed {
-          page-break-inside: avoid;
+        .score-card,
+        .next-card {
+          box-shadow: none;
           break-inside: avoid;
-          box-shadow: none !important;
-          border: 1px solid var(--ac-color-tint-steel) !important;
         }
-        .bar-track {
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
+        .dashboard {
+          gap: 10px;
         }
-        .bar-fill {
-          -webkit-print-color-adjust: exact;
+        .disclaimer {
           print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
         }
       }
     `,
@@ -1509,32 +479,54 @@ export class ScreeningResultPage implements OnInit {
   private readonly api = inject(ScreeningApi);
   private readonly childrenApi = inject(ChildrenApi);
   private readonly i18n = inject(I18nService);
-
   readonly currentLang = this.i18n.currentLang;
   readonly isKm = computed(() => this.currentLang() === 'km');
-
   private sessionId = '';
-
   readonly session = signal<ScreeningSessionResultResponse | null>(null);
   readonly child = signal<ChildResponse | null>(null);
   readonly loading = signal(true);
   readonly fatalError = signal<string | null>(null);
-
-  readonly result = computed(() => this.session()?.result ?? null);
   readonly childName = computed(() => this.child()?.firstName ?? null);
   readonly childAge = computed(() => {
     const child = this.child();
     return child ? formatAge(child.dateOfBirth, this.isKm()) : '';
   });
-  readonly maxScore = computed(() => (this.session()?.answers.length ?? 0) * MAX_ANSWER_VALUE);
-  readonly overallTone = computed<BadgeTone>(() => {
-    const res = this.result();
-    return res ? riskTones[res.riskLevel] : 'neutral';
+  readonly responseScore = computed(() => {
+    const session = this.session();
+    const percentage = session?.result?.riskPercentage;
+    return session && session.answers.length > 0 && percentage !== null && percentage !== undefined
+      ? Math.max(0, Math.min(100, Math.round(percentage)))
+      : null;
   });
-  readonly overallLabel = computed(() => {
-    const res = this.result();
-    if (!res) return '';
-    return this.isKm() ? riskLabelsKm[res.riskLevel] : riskLabels[res.riskLevel];
+  readonly scoreBandLabel = computed(() => {
+    const score = this.responseScore();
+    if (score === null) return '';
+    const band = responseScoreBand(score);
+    if (this.isKm())
+      return (
+        {
+          none: 'គ្មានកង្វល់តាមចម្លើយដែលបានដាក់ពិន្ទុ',
+          low: 'ទាប',
+          medium: 'មធ្យម',
+          elevated: 'កើនឡើង',
+        } as const
+      )[band];
+    return (
+      {
+        none: 'No concerns indicated by scored responses',
+        low: 'Low',
+        medium: 'Medium',
+        elevated: 'Elevated',
+      } as const
+    )[band];
+  });
+  readonly scoreSentence = computed(() => {
+    const score = this.responseScore();
+    if (score === null) return '';
+    if (this.isKm()) return `ពិន្ទុចម្លើយរបស់អ្នកគឺ ${score}% នៅក្នុងក្រុមពិន្ទុសំណួរបែបពិពណ៌នា។`;
+    if (score === 0)
+      return 'None of the scored responses contributed points to this questionnaire response score.';
+    return `Your scored responses fall in the ${this.scoreBandLabel().toLowerCase()} questionnaire response-score band.`;
   });
   readonly completedDate = computed(() => {
     const session = this.session();
@@ -1542,268 +534,6 @@ export class ScreeningResultPage implements OnInit {
     const iso = session.submittedAt ?? session.result?.analyzedAt ?? session.createdAt;
     return new Date(iso).toLocaleDateString();
   });
-  readonly nextSteps = computed(() => {
-    const res = this.result();
-    const pool = this.isKm() ? KM_NEXT_STEPS_BY_RISK : EN_NEXT_STEPS_BY_RISK;
-    const config = pool[res ? res.riskLevel : 'LOW'];
-    const currentChild = this.child();
-    return {
-      lead: config.lead,
-      cards: config.cards.map((card) => ({
-        ...card,
-        queryParams:
-          currentChild && (card.path === '/activities' || card.path === '/appointments')
-            ? { childId: currentChild.id }
-            : null,
-      })),
-    };
-  });
-  readonly observations = computed(() => {
-    const session = this.session();
-    const res = this.result();
-    if (!session || !res) return [];
-    const lang = this.currentLang();
-    return res.categoryBreakdown
-      .filter((cat) => cat.riskLevel === 'MODERATE' || cat.riskLevel === 'HIGH')
-      .map((cat) => ({
-        category: cat.category,
-        sentence: observationFor(session.ageBand, cat.category, cat.riskLevel, lang),
-      }))
-      .filter((entry): entry is { category: string; sentence: string } => entry.sentence !== null);
-  });
-  readonly trend = computed(() => {
-    const comparison = this.session()?.previousComparison;
-    if (!comparison) return null;
-    if (!comparison.comparable) return { comparable: false as const };
-    const delta = comparison.delta ?? 0;
-    const previousDate = comparison.previousCompletedAt
-      ? new Date(comparison.previousCompletedAt).toLocaleDateString()
-      : '';
-    const magnitude = Math.abs(delta);
-    const isKm = this.isKm();
-    let text = '';
-    if (delta === 0) {
-      text = isKm
-        ? `គ្មានការផ្លាស់ប្តូរធៀបនឹងការវាយតម្លៃមុន (${previousDate})`
-        : `No change from your last screening (${previousDate})`;
-    } else {
-      text = isKm
-        ? `${magnitude}% ${delta > 0 ? 'ខ្ពស់ជាង' : 'ទាបជាង'} ការវាយតម្លៃមុន (${previousDate})`
-        : `${magnitude}% ${delta > 0 ? 'higher' : 'lower'} than your last screening (${previousDate})`;
-    }
-    return {
-      comparable: true as const,
-      direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
-      arrow: delta > 0 ? '▲' : delta < 0 ? '▼' : '■',
-      text,
-    };
-  });
-
-  readonly concernLabel = computed(() => {
-    const res = this.result();
-    if (!res) return '';
-    return this.isKm() ? concernLabelsKm[res.riskLevel] : concernLabels[res.riskLevel];
-  });
-  readonly summaryTitle = computed(() => {
-    const res = this.result();
-    if (!res) return '';
-    if (this.isKm()) {
-      if (res.riskLevel === 'LOW') return 'ដំណើរការលូតលាស់ស្ថិតក្នុងកម្រិតល្អប្រសើរ';
-      if (res.riskLevel === 'MODERATE')
-        return 'សង្កេតឃើញចំណុចលូតលាស់ដែលគួរយកចិត្តទុកដាក់កម្រិតស្រាល';
-      return 'ណែនាំឱ្យមានការពិគ្រោះយោបល់ និងវាយតម្លៃឯកទេសបន្ថែម';
-    }
-    if (res.riskLevel === 'LOW') return 'Reassuring Milestone Trajectory';
-    if (res.riskLevel === 'MODERATE') return 'Mild Developmental Nuances Observed';
-    return 'Specialized Developmental Attention Recommended';
-  });
-  readonly reassuringExplanation = computed(() => {
-    const res = this.result();
-    if (!res) return '';
-    if (this.isKm()) {
-      if (res.riskLevel === 'LOW') {
-        return 'ចម្លើយរបស់កូនអ្នកបង្ហាញពីការរីកចម្រើនជាប្រចាំឆ្លងកាត់គ្រប់ផ្នែកដែលបានវាយតម្លៃ។ សូមបន្តការរុករកញាណដឹង ការប្រាស្រ័យទាក់ទងឆ្លើយតប និងទម្លាប់លេងប្រកបដោយភាពរីករាយ។';
-      }
-      if (res.riskLevel === 'MODERATE') {
-        return 'ចម្លើយមួយចំនួនបង្ហាញពីភាពខុសប្លែកបន្តិចបន្តួចដែលអាចត្រូវការការសង្កេត និងការគាំទ្រយ៉ាងទន់ភ្លន់។ ការលើកយកលំនាំទាំងនេះទៅពិគ្រោះនៅពេលពិនិត្យបន្ទាប់ អាចផ្តល់នូវភាពកក់ក្តៅ និងគំនិតលេងសមស្រប។';
-      }
-      return 'ចម្លើយមួយចំនួនបង្ហាញពីលំនាំលូតលាស់ដែលសមស្របនឹងការវាយតម្លៃលម្អិតជាមួយវេជ្ជបណ្ឌិតឯកទេសកុមារ។ ការណែនាំសហការគ្នាតាំងពីដំបូង ផ្តល់នូវការគាំទ្រដ៏ល្អបំផុតសម្រាប់កូនរបស់អ្នក។';
-    }
-    if (res.riskLevel === 'LOW') {
-      return "Your child's responses indicate consistent milestone progression across the assessed domains. Continued sensory exploration, responsive interaction, and positive play routines are recommended.";
-    }
-    if (res.riskLevel === 'MODERATE') {
-      return "A few developmental responses suggest subtle variations that may benefit from gentle observation and support. Discussing these patterns at your child's next pediatric checkup can offer comforting reassurance and tailored play ideas.";
-    }
-    return "Several responses suggest developmental patterns that warrant a thorough evaluation with a developmental pediatrician or specialist. Early collaborative guidance provides the most supportive continuum for your child's growth.";
-  });
-
-  shortLabel(riskLevel: RiskLevel): string {
-    return this.isKm() ? riskShortKm[riskLevel] : riskShort[riskLevel];
-  }
-
-  meterColor(riskLevel: RiskLevel): string {
-    if (riskLevel === 'LOW') return 'var(--scr-low)';
-    if (riskLevel === 'MODERATE') return 'var(--scr-moderate)';
-    return 'var(--scr-high)';
-  }
-
-  categoryIcon(category?: string | null): string {
-    if (!category) return '🧩';
-    const lower = category.toLowerCase();
-    if (lower.includes('communicat') || lower.includes('speech')) return '💬';
-    if (lower.includes('social') || lower.includes('interact')) return '🤝';
-    if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) return '🎨';
-    if (
-      lower.includes('routine') ||
-      lower.includes('repetit') ||
-      lower.includes('behavior') ||
-      lower.includes('play')
-    ) {
-      return '🔄';
-    }
-    if (lower.includes('motor') || lower.includes('physic')) return '🏃';
-    return '🧩';
-  }
-
-  domainExplanation(category: string): string {
-    const lower = category.toLowerCase();
-    if (this.isKm()) {
-      if (lower.includes('social communication')) {
-        return 'សង្កេតមើលការចូលរួមរួមគ្នា ការឆ្លើយតបដោយពាក្យសម្តី និងកាយវិការ ការសម្លឹងភ្នែក និងការប្រាស្រ័យទាក់ទងគ្នា។';
-      }
-      if (lower.includes('social') || lower.includes('interact')) {
-        return 'សង្កេតមើលការសម្លឹងភ្នែក ការយកចិត្តទុកដាក់រួម ការញញឹមដោយឯកឯង និងការឆ្លើយតបជាមួយអ្នកមើលថែ។';
-      }
-      if (lower.includes('communicat') || lower.includes('speech')) {
-        return 'សង្កេតមើលការបញ្ចេញសំឡេង ការប្រើប្រាស់ពាក្យ ការប្រាស្រ័យទាក់ទងដោយកាយវិការ និងការយល់ដឹងភាសា។';
-      }
-      if (lower.includes('sensor') && lower.includes('flexib')) {
-        return 'វាយតម្លៃការឆ្លើយតបញាណដឹង ភាពបត់បែនក្នុងការសម្របខ្លួន និងការសម្របសម្រួលជាមួយបរិស្ថាន។';
-      }
-      if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
-        return 'តាមដានប្រតិកម្មប៉ះពាល់ ការប្រកាន់ចំពោះសំឡេង និងការសម្របសម្រួលញាណដឹងជាមួយបរិស្ថាន។';
-      }
-      if (lower.includes('play') || lower.includes('imagin')) {
-        return 'សង្កេតមើលការលេងបែបស្រមើស្រមៃ ការប្រើប្រាស់ប្រដាប់ក្មេងលេងប្រកបដោយភាពច្នៃប្រឌិត និងការធ្វើត្រាប់តាម។';
-      }
-      if (
-        lower.includes('routine') ||
-        lower.includes('flexib') ||
-        lower.includes('repetit') ||
-        lower.includes('behavior')
-      ) {
-        return 'វាយតម្លៃភាពងាយស្រួលជាមួយកាលវិភាគប្រចាំថ្ងៃ ការផ្លាស់ប្តូរសកម្មភាព និងទម្លាប់លេងដដែលៗ។';
-      }
-      if (lower.includes('motor') || lower.includes('physic')) {
-        return 'វាយតម្លៃការសម្របសម្រួលចលនាសាច់ដុំតូចនិងធំ ការធ្វើត្រាប់តាមកាយវិការ និងលំនាំចលនា។';
-      }
-      return 'តាមដានការវិវត្តជាមូលដ្ឋាន និងលំនាំអាកប្បកិរិយាសមស្របតាមអាយុ។';
-    }
-    if (lower.includes('social communication')) {
-      return 'Observes shared engagement, verbal and non-verbal reciprocity, eye contact, and interactive communication.';
-    }
-    if (lower.includes('social') || lower.includes('interact')) {
-      return 'Observes eye contact, shared attention, spontaneous smiling, and interactive reciprocity with caregivers.';
-    }
-    if (lower.includes('communicat') || lower.includes('speech')) {
-      return 'Observes vocalization, word usage, gesture communication, and receptive language understanding.';
-    }
-    if (lower.includes('sensor') && lower.includes('flexib')) {
-      return 'Evaluates sensory responsiveness, adaptive flexibility, and sensory integration across environments.';
-    }
-    if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
-      return 'Monitors tactile textures, acoustic sound sensitivities, and environmental sensory integration.';
-    }
-    if (lower.includes('play') || lower.includes('imagin')) {
-      return 'Observes pretend play, creative toy usage, and spontaneous social imitation.';
-    }
-    if (
-      lower.includes('routine') ||
-      lower.includes('flexib') ||
-      lower.includes('repetit') ||
-      lower.includes('behavior')
-    ) {
-      return 'Evaluates comfort with daily schedules, transitions, predictability, and repetitive play patterns.';
-    }
-    if (lower.includes('motor') || lower.includes('physic')) {
-      return 'Assesses coordination, fine and gross motor integration, physical imitation, and movement patterns.';
-    }
-    return 'Tracks foundational developmental milestones and age-normed behavioral patterns.';
-  }
-
-  toggleLanguage(): void {
-    this.i18n.toggleLanguage();
-  }
-
-  formatDomainKm(category: string): string {
-    const lower = category.toLowerCase();
-    if (lower.includes('social') && lower.includes('communicat')) {
-      return 'ទំនាក់ទំនងសង្គម និងការប្រាស្រ័យទាក់ទង';
-    }
-    if (lower.includes('social') || lower.includes('interact')) {
-      return 'ទំនាក់ទំនងសង្គម';
-    }
-    if (lower.includes('communicat') || lower.includes('speech')) {
-      return 'ការប្រាស្រ័យទាក់ទង';
-    }
-    if (lower.includes('sensor') && lower.includes('flexib')) {
-      return 'ភាពបត់បែននៃញាណដឹង';
-    }
-    if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
-      return 'ការឆ្លើយតបញាណដឹង';
-    }
-    if (lower.includes('play') || lower.includes('imagin')) {
-      return 'ការលេង និងការស្រមើស្រមៃ';
-    }
-    if (
-      lower.includes('routine') ||
-      lower.includes('flexib') ||
-      lower.includes('repetit') ||
-      lower.includes('behavior')
-    ) {
-      return 'ភាពបត់បែន និងទម្លាប់ប្រចាំថ្ងៃ';
-    }
-    if (lower.includes('motor') || lower.includes('physic')) {
-      return 'ចលនាសាច់ដុំ';
-    }
-    return 'ការលូតលាស់';
-  }
-
-  formatDomainEn(category: string): string {
-    const lower = category.toLowerCase();
-    if (lower.includes('social') && lower.includes('communicat')) {
-      return 'Social Communication';
-    }
-    if (lower.includes('social') || lower.includes('interact')) {
-      return 'Social Interaction';
-    }
-    if (lower.includes('communicat') || lower.includes('speech')) {
-      return 'Communication';
-    }
-    if (lower.includes('sensor') && lower.includes('flexib')) {
-      return 'Sensory Flexibility';
-    }
-    if (lower.includes('sensor') || lower.includes('sound') || lower.includes('touch')) {
-      return 'Sensory Response';
-    }
-    if (lower.includes('play') || lower.includes('imagin')) {
-      return 'Play & Imagination';
-    }
-    if (
-      lower.includes('routine') ||
-      lower.includes('flexib') ||
-      lower.includes('repetit') ||
-      lower.includes('behavior')
-    ) {
-      return 'Flexibility & Routine';
-    }
-    if (lower.includes('motor') || lower.includes('physic')) {
-      return 'Motor & Repetitive Behaviors';
-    }
-    return category;
-  }
-
   ngOnInit() {
     this.sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';
     if (!this.sessionId) {
@@ -1811,7 +541,6 @@ export class ScreeningResultPage implements OnInit {
       this.fatalError.set('This screening result could not be found.');
       return;
     }
-
     this.api.getSession(this.sessionId).subscribe({
       next: (session) => {
         if (!session.result) {
@@ -1820,10 +549,9 @@ export class ScreeningResultPage implements OnInit {
         }
         this.session.set(session);
         this.loading.set(false);
-        this.childrenApi.getChild(session.childId).subscribe({
-          next: (child) => this.child.set(child),
-          error: () => this.child.set(null),
-        });
+        this.childrenApi
+          .getChild(session.childId)
+          .subscribe({ next: (child) => this.child.set(child), error: () => this.child.set(null) });
       },
       error: () => {
         this.loading.set(false);
@@ -1831,14 +559,17 @@ export class ScreeningResultPage implements OnInit {
       },
     });
   }
-
   goToScreeningHome() {
     this.router.navigate(['/screening']);
   }
-
-  printResult(): void {
-    if (typeof window !== 'undefined') {
-      window.print();
-    }
+  retake() {
+    const childId = this.session()?.childId;
+    this.router.navigate(['/screening/new'], { queryParams: childId ? { childId } : undefined });
+  }
+  toggleLanguage() {
+    this.i18n.toggleLanguage();
+  }
+  printResult() {
+    if (typeof window !== 'undefined') window.print();
   }
 }

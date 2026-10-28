@@ -1,9 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// @vitest-environment jsdom
+import '@angular/compiler';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AiPage } from './ai.page';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { AiApi } from './data-access/ai.api';
@@ -14,6 +19,8 @@ import type {
   AiStatusResponse,
   ChildResponse,
 } from '@auticare/contracts';
+
+TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
 
 describe('AiPage', () => {
   let fixture: ComponentFixture<AiPage>;
@@ -57,6 +64,19 @@ describe('AiPage', () => {
     createdAt: new Date().toISOString(),
   };
 
+  const mockUserMessage: AiMessageResponse = {
+    id: 'msg-user-new',
+    conversationId: 'conv-1',
+    role: 'USER',
+    kind: 'ANSWER',
+    content: 'What can I try next?',
+    model: null,
+    sources: [],
+    savedAt: null,
+    feedback: null,
+    createdAt: new Date().toISOString(),
+  };
+
   const mockConversation: AiConversationDetailResponse = {
     id: 'conv-1',
     childId: 'child-1',
@@ -93,14 +113,20 @@ describe('AiPage', () => {
       .fn()
       .mockReturnValue(of({ ...mockAssistantMessage, savedAt: new Date().toISOString() })),
     sendFeedback: vi.fn().mockReturnValue(of({ ...mockAssistantMessage, feedback: 'HELPFUL' })),
-    sendMessage: vi.fn(),
+    sendMessage: vi
+      .fn()
+      .mockReturnValue(
+        of({ userMessage: mockUserMessage, assistantMessage: mockAssistantMessage }),
+      ),
     createConversation: vi.fn(),
+    deleteConversation: vi.fn().mockReturnValue(of({ id: 'conv-1' })),
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AiPage],
       providers: [
+        provideZonelessChangeDetection(),
         provideHttpClient(),
         provideRouter([]),
         { provide: ChildrenApi, useValue: mockChildrenApi },
@@ -116,6 +142,8 @@ describe('AiPage', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
+
+  afterEach(() => TestBed.resetTestingModule());
 
   it('renders conversation and assistant response with related activities', () => {
     expect(mockAiApi.listConversations).toHaveBeenCalled();
@@ -149,5 +177,72 @@ describe('AiPage', () => {
     expect((component as any).includeChildContext()).toBe(false);
     (component as any).includeChildContext.set(true);
     expect((component as any).includeChildContext()).toBe(true);
+  });
+
+  it('sends the selected response language and keeps follow-up context in the same conversation', () => {
+    (component as any).send('What can I try next?');
+    expect(mockAiApi.sendMessage).toHaveBeenLastCalledWith('conv-1', 'What can I try next?', {
+      language: 'en',
+      includeChildContext: false,
+    });
+
+    TestBed.inject(I18nService).setLanguage('km');
+    (component as any).send('តើខ្ញុំអាចសាកល្បងអ្វីទៀត?');
+    expect(mockAiApi.sendMessage).toHaveBeenLastCalledWith('conv-1', 'តើខ្ញុំអាចសាកល្បងអ្វីទៀត?', {
+      language: 'km',
+      includeChildContext: false,
+    });
+  });
+
+  it('sends child context only after the parent opts in', () => {
+    (component as any).includeChildContext.set(true);
+    (component as any).send('What can I try next?');
+    expect(mockAiApi.sendMessage).toHaveBeenLastCalledWith('conv-1', 'What can I try next?', {
+      language: 'en',
+      includeChildContext: true,
+      childId: 'child-1',
+    });
+  });
+
+  it('retains a failed draft and retries it', () => {
+    const failedRequest = new Subject<any>();
+    mockAiApi.sendMessage.mockReturnValueOnce(failedRequest);
+    (component as any).draft.set('What can I try next?');
+    (component as any).send('What can I try next?');
+    failedRequest.error({ status: 503 });
+    expect((component as any).draft()).toBe('What can I try next?');
+    expect((component as any).error()).toBe(
+      'The assistant is not available right now. Please try again in a moment.',
+    );
+
+    (component as any).retry();
+    expect(mockAiApi.sendMessage).toHaveBeenLastCalledWith('conv-1', 'What can I try next?', {
+      language: 'en',
+      includeChildContext: false,
+    });
+    expect((component as any).draft()).toBe('');
+  });
+
+  it('deletes the persisted conversation when clearing it', () => {
+    (component as any).clearConversation();
+    expect(mockAiApi.deleteConversation).toHaveBeenCalledWith('conv-1');
+    expect((component as any).conversation()).toBeNull();
+    expect((component as any).messages()).toEqual([]);
+  });
+
+  it('starts a clean local conversation and resets child-context consent', () => {
+    (component as any).includeChildContext.set(true);
+    (component as any).draft.set('unfinished prompt');
+    (component as any).startNew();
+    expect((component as any).conversation()).toBeNull();
+    expect((component as any).messages()).toEqual([]);
+    expect((component as any).draft()).toBe('');
+    expect((component as any).includeChildContext()).toBe(false);
+  });
+
+  it('shows the AI provider and account-storage privacy disclosure', () => {
+    expect(fixture.nativeElement.textContent).toContain('stored in your AutiCare account');
+    expect(fixture.nativeElement.textContent).toContain('sent to the configured AI provider');
+    expect(fixture.nativeElement.textContent).toContain('questionnaire results are not sent');
   });
 });

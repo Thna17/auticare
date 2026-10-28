@@ -1697,10 +1697,38 @@ export const createAiConversationRequestSchema = z.object({
 });
 export type CreateAiConversationRequest = z.infer<typeof createAiConversationRequestSchema>;
 
-export const sendAiMessageRequestSchema = z.object({
-  content: z.string().min(1).max(2000),
-});
+export const sendAiMessageRequestSchema = z
+  .object({
+    content: z.string().min(1).max(2000),
+    language: z.enum(aiLanguages).optional(),
+    includeChildContext: z.boolean().optional(),
+    childId: z.string().min(1).optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.includeChildContext && !value.childId) {
+      context.addIssue({
+        code: 'custom',
+        path: ['childId'],
+        message: 'A child must be selected to share child context.',
+      });
+    }
+  });
 export type SendAiMessageRequest = z.infer<typeof sendAiMessageRequestSchema>;
+
+export const publicAiChatRequestSchema = z.object({
+  content: z.string().trim().min(1).max(2000),
+  language: z.enum(aiLanguages),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['USER', 'ASSISTANT']),
+        content: z.string().min(1).max(2000),
+      }),
+    )
+    .max(10)
+    .default([]),
+});
+export type PublicAiChatRequest = z.infer<typeof publicAiChatRequestSchema>;
 
 export const aiStatusResponseSchema = z.object({
   /** False until a model provider is configured — the rest of the app still works. */
