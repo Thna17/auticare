@@ -17,6 +17,16 @@ type LandingFeature = {
   readonly icon: string;
 };
 
+type SocialPlatform = 'facebook' | 'telegram' | 'youtube' | 'tiktok';
+type AutiCareSocialLinks = Partial<Record<SocialPlatform, string>>;
+
+declare global {
+  interface Window {
+    /** Set by deployment before the app loads; leave unset until official URLs are confirmed. */
+    AUTICARE_SOCIAL_LINKS?: AutiCareSocialLinks;
+  }
+}
+
 /** The four things the app does for a family, as the planner describes them. */
 const EN_FEATURES: readonly LandingFeature[] = [
   {
@@ -1216,10 +1226,83 @@ const KM_TRUST_POINTS = [
             <a routerLink="/crisis">{{
               currentLang() === 'km' ? 'ជំនួយបន្ទាន់' : 'Crisis support'
             }}</a>
-            <a href="mailto:support&#64;auticare.local">{{
-              currentLang() === 'km' ? 'ទំនាក់ទំនងយើង' : 'Contact us'
-            }}</a>
+            <a href="#footer-contact" (click)="scrollToSection('footer-contact', $event)">
+              {{ currentLang() === 'km' ? 'ទំនាក់ទំនងយើង' : 'Contact us' }}
+            </a>
           </nav>
+
+          <section
+            class="footer-col footer-contact"
+            id="footer-contact"
+            aria-labelledby="footer-contact-title"
+          >
+            <h2 id="footer-contact-title">
+              {{ currentLang() === 'km' ? 'ទំនាក់ទំនង' : 'Contact' }}
+            </h2>
+            <a href="mailto:auticare&#64;gmail.com">auticare&#64;gmail.com</a>
+            <a href="tel:098264555">098 264555</a>
+            <div
+              class="footer-socials"
+              role="group"
+              [attr.aria-label]="
+                currentLang() === 'km' ? 'បណ្តាញសង្គម AutiCare' : 'AutiCare social media'
+              "
+            >
+              @for (social of socialNetworks(); track social.platform) {
+                <button
+                  type="button"
+                  class="footer-social"
+                  [disabled]="!social.url"
+                  [attr.aria-label]="
+                    social.url
+                      ? social.label
+                      : currentLang() === 'km'
+                        ? social.label + ' (មិនទាន់មានតំណ)'
+                        : social.label + ' (link not configured)'
+                  "
+                  [title]="
+                    social.url
+                      ? social.label
+                      : currentLang() === 'km'
+                        ? 'មិនទាន់កំណត់តំណផ្លូវការ'
+                        : 'Official link not configured'
+                  "
+                  (click)="openSocial(social.url)"
+                >
+                  @switch (social.platform) {
+                    @case ('facebook') {
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          d="M13.5 21v-7h2.4l.36-2.8H13.5V9.4c0-.81.23-1.37 1.4-1.37h1.49V5.52c-.26-.03-1.16-.11-2.21-.11-2.19 0-3.69 1.34-3.69 3.8v2.12H8v2.8h2.49v7h3z"
+                        />
+                      </svg>
+                    }
+                    @case ('telegram') {
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          d="M21.4 3.6 18.3 20c-.2 1.2-.9 1.5-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L5.8 13.5.9 12c-1.1-.4-1.1-1.1.2-1.6l19-7.3c.9-.3 1.7.2 1.3 1.5z"
+                        />
+                      </svg>
+                    }
+                    @case ('youtube') {
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z"
+                        />
+                      </svg>
+                    }
+                    @case ('tiktok') {
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          d="M19.6 7.1a6.7 6.7 0 0 1-4.1-1.4v8.1a6 6 0 1 1-5.2-5.9v3.1a2.9 2.9 0 1 0 2.1 2.8V1h3.1c.2 2.4 1.8 4.5 4.1 5.2v.9Z"
+                        />
+                      </svg>
+                    }
+                  }
+                </button>
+              }
+            </div>
+          </section>
 
           <nav class="footer-col" aria-labelledby="footer-legal">
             <h2 id="footer-legal">{{ currentLang() === 'km' ? 'ច្បាប់' : 'Legal' }}</h2>
@@ -2691,8 +2774,8 @@ const KM_TRUST_POINTS = [
         max-width: var(--lp-max);
         margin: 0 auto;
         display: grid;
-        grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
-        gap: 40px;
+        grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(0, 1fr));
+        gap: 28px;
       }
 
       .footer-about p {
@@ -2769,6 +2852,54 @@ const KM_TRUST_POINTS = [
         opacity: 1;
         text-decoration: underline;
         text-underline-offset: 4px;
+      }
+
+      .footer-contact > a {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .footer-socials {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 2px;
+      }
+
+      .footer-social {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 1px solid var(--footer-faint);
+        border-radius: 50%;
+        background: transparent;
+        color: var(--footer-text);
+        cursor: pointer;
+        transition:
+          color 160ms ease,
+          border-color 160ms ease,
+          transform 160ms ease;
+      }
+
+      .footer-social svg {
+        display: block;
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+      }
+
+      .footer-social:hover:not(:disabled) {
+        color: var(--ac-color-action);
+        border-color: var(--ac-color-action);
+        transform: translateY(-1px);
+      }
+
+      .footer-social:disabled {
+        opacity: 0.78;
+        cursor: not-allowed;
       }
 
       .site-footer a:focus-visible,
@@ -3177,11 +3308,12 @@ const KM_TRUST_POINTS = [
         }
 
         .footer-main {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: minmax(0, 1fr);
+          gap: 28px;
         }
 
         .footer-about {
-          grid-column: 1 / -1;
+          grid-column: auto;
         }
       }
 
@@ -3221,6 +3353,15 @@ const KM_TRUST_POINTS = [
       @media (max-width: 768px) {
         .landing-page {
           --lp-gutter: 16px;
+        }
+
+        .footer-main {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 28px;
+        }
+
+        .footer-about {
+          grid-column: auto;
         }
 
         .site-header {
@@ -3603,6 +3744,14 @@ export class LandingPage {
   private readonly i18n = inject(I18nService);
 
   readonly currentLang = computed(() => this.i18n.currentLang());
+  protected readonly socialNetworks = computed(() => {
+    const configured = typeof window === 'undefined' ? {} : (window.AUTICARE_SOCIAL_LINKS ?? {});
+    return (['facebook', 'telegram', 'youtube', 'tiktok'] as const).map((platform) => ({
+      platform,
+      label: platform[0]!.toUpperCase() + platform.slice(1),
+      url: this.safeSocialUrl(configured[platform]),
+    }));
+  });
 
   readonly features = computed(() => (this.currentLang() === 'km' ? KM_FEATURES : EN_FEATURES));
   readonly trustPoints = computed(() =>
@@ -3611,6 +3760,22 @@ export class LandingPage {
   readonly steps = computed(() => (this.currentLang() === 'km' ? KM_STEPS : EN_STEPS));
   readonly mobileMenuOpen = signal(false);
   readonly currentYear = new Date().getFullYear();
+
+  protected openSocial(url: string | null): void {
+    if (url && typeof window !== 'undefined') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  private safeSocialUrl(value: string | undefined): string | null {
+    if (!value?.trim()) return null;
+    try {
+      const url = new URL(value.trim());
+      return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+    } catch {
+      return null;
+    }
+  }
 
   readonly plans = computed(() => (this.currentLang() === 'km' ? KM_PLANS : EN_PLANS));
   readonly billing = signal<BillingPeriod>('monthly');

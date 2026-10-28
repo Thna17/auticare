@@ -21,8 +21,19 @@ export type AiCompletionRequest = {
   maxTokens?: number;
 };
 
-/** Raised when the provider is unreachable, slow, or answers with something unusable. */
-export class AiProviderError extends Error {}
+export type AiProviderFailureKind =
+  'credentials' | 'model_or_endpoint' | 'quota' | 'request' | 'unavailable' | 'network';
+
+/** Safe, actionable provider failure category; never includes provider response bodies. */
+export class AiProviderError extends Error {
+  constructor(
+    message: string,
+    readonly kind: AiProviderFailureKind = 'unavailable',
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+  }
+}
 
 export interface AiClient {
   /** False when no provider is configured. Callers must check before calling. */
@@ -89,8 +100,30 @@ export class OpenAiCompatibleClient implements AiClient {
       if (!response.ok) {
         // Status only. A provider error body can echo request content, which here
         // is a description of a child.
-        logger.warn({ status: response.status }, 'AI provider returned an error');
-        throw new AiProviderError('The assistant could not answer just now.');
+        const kind: AiProviderFailureKind =
+          response.status === 401 || response.status === 403
+            ? 'credentials'
+            : response.status === 404
+              ? 'model_or_endpoint'
+              : response.status === 429
+                ? 'quota'
+                : response.status === 400
+                  ? 'request'
+                  : 'unavailable';
+        logger.warn({ status: response.status, kind }, 'AI provider returned an error');
+        const messages: Record<AiProviderFailureKind, string> = {
+          credentials: 'The AI provider rejected its credentials. Check server-side AI_API_KEY.',
+          model_or_endpoint:
+            'The AI model or endpoint was not found. Check AI_BASE_URL and AI_MODEL.',
+          quota:
+            'The AI provider rate limit or usage quota was reached. Check provider usage and billing.',
+          request:
+            'The AI provider rejected the request. Check AI_MODEL compatibility with chat completions.',
+          unavailable: `The AI provider returned HTTP ${response.status}. Check provider status and server configuration.`,
+          network:
+            'The AI provider could not be reached. Check AI_BASE_URL and server network access.',
+        };
+        throw new AiProviderError(messages[kind], kind);
       }
 
       const body = (await response.json()) as {
@@ -113,9 +146,11 @@ export class OpenAiCompatibleClient implements AiClient {
       if (error instanceof AiProviderError) throw error;
       // Aborts and network failures are reported as one neutral message so the
       // parent is not shown a stack trace or an internal hostname.
-      throw new AiProviderError('The assistant could not be reached just now.', {
-        cause: error,
-      });
+      throw new AiProviderError(
+        'The AI provider could not be reached. Check AI_BASE_URL and server network access.',
+        'network',
+        { cause: error },
+      );
     } finally {
       clearTimeout(timeout);
     }

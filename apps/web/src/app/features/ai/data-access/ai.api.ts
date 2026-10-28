@@ -58,10 +58,15 @@ export class AiApi {
       .pipe(map((response) => response.data));
   }
 
-  sendMessage(id: string, content: string) {
+  sendMessage(
+    id: string,
+    content: string,
+    options: { language: AiLanguage; childId?: string; includeChildContext: boolean },
+  ) {
     return this.http
       .post<{ data: SendAiMessageResponse }>(`${this.apiBaseUrl}/ai/conversations/${id}/messages`, {
         content,
+        ...options,
       })
       .pipe(map((response) => response.data));
   }

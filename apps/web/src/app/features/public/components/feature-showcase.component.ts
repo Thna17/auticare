@@ -10,6 +10,8 @@ import {
   signal,
 } from '@angular/core';
 import { NavIconComponent } from '../../../core/layout/nav-icon.component';
+import { FreeCheckinComponent } from './free-checkin.component';
+import { PublicAiChatComponent } from './public-ai-chat.component';
 
 export type ShowcaseFeature = {
   readonly title: string;
@@ -107,7 +109,7 @@ const BARS = [30, 45, 25, 60, 35, 40, 80, 30, 50, 28, 70, 38, 44, 85] as const;
   selector: 'section[acFeatureShowcase]',
   host: { class: 'showcase', 'aria-labelledby': 'tools-title' },
   standalone: true,
-  imports: [NavIconComponent],
+  imports: [NavIconComponent, FreeCheckinComponent, PublicAiChatComponent],
   template: `
     <div class="grid-bg" aria-hidden="true"></div>
 
@@ -148,102 +150,110 @@ const BARS = [30, 45, 25, 60, 35, 40, 80, 30, 50, 28, 70, 38, 44, 85] as const;
               <p>{{ feature.description }}</p>
             </div>
 
-            <div class="window" aria-hidden="true">
-              <header class="window-bar">
-                <span class="light red"></span>
-                <span class="light amber"></span>
-                <span class="light green"></span>
-                <span class="window-title">{{ copy().windows[i] }}</span>
-              </header>
-              <div class="window-body">
-                @switch (i) {
-                  @case (0) {
-                    <div class="check">
-                      <div class="progress">
-                        <span class="progress-fill"></span>
-                      </div>
-                      <small class="muted">{{ copy().progress }}</small>
-                      @for (question of copy().questions; track question; let q = $index) {
-                        <div class="question" [style.--s]="q">
-                          <p>{{ question }}</p>
-                          <div class="chips">
-                            @for (answer of copy().answers; track answer; let a = $index) {
-                              <span class="chip" [class.on]="a === (q + 1) % 3">{{ answer }}</span>
-                            }
-                          </div>
+            @if (i === 0) {
+              <ac-free-checkin />
+            } @else if (i === 1) {
+              <ac-public-ai-chat />
+            } @else {
+              <div class="window" aria-hidden="true">
+                <header class="window-bar">
+                  <span class="light red"></span>
+                  <span class="light amber"></span>
+                  <span class="light green"></span>
+                  <span class="window-title">{{ copy().windows[i] }}</span>
+                </header>
+                <div class="window-body">
+                  @switch (i) {
+                    @case (0) {
+                      <div class="check">
+                        <div class="progress">
+                          <span class="progress-fill"></span>
                         </div>
-                      }
-                      <div class="band" [style.--s]="3">
-                        <span>{{ copy().band }}</span>
-                        <small>{{ copy().notDiagnosis }}</small>
-                      </div>
-                    </div>
-                  }
-                  @case (1) {
-                    <div class="chat">
-                      <div class="langs">
-                        @for (language of copy().languages; track language; let l = $index) {
-                          <span class="chip" [class.on]="l === 0">{{ language }}</span>
+                        <small class="muted">{{ copy().progress }}</small>
+                        @for (question of copy().questions; track question; let q = $index) {
+                          <div class="question" [style.--s]="q">
+                            <p>{{ question }}</p>
+                            <div class="chips">
+                              @for (answer of copy().answers; track answer; let a = $index) {
+                                <span class="chip" [class.on]="a === (q + 1) % 3">{{
+                                  answer
+                                }}</span>
+                              }
+                            </div>
+                          </div>
                         }
+                        <div class="band" [style.--s]="3">
+                          <span>{{ copy().band }}</span>
+                          <small>{{ copy().notDiagnosis }}</small>
+                        </div>
                       </div>
-                      <p class="bubble you" [style.--s]="0">{{ copy().ask }}</p>
-                      <p class="bubble bot" [style.--s]="1">
-                        {{ copy().reply }}<span class="cursor"></span>
-                      </p>
-                    </div>
-                  }
-                  @case (2) {
-                    <div class="notes">
-                      <div class="bars">
-                        @for (bar of bars; track $index) {
-                          <span
-                            class="bar"
-                            [class.hard]="bar >= 70"
-                            [style.--h]="bar"
-                            [style.--s]="$index"
-                          ></span>
-                        }
+                    }
+                    @case (1) {
+                      <div class="chat">
+                        <div class="langs">
+                          @for (language of copy().languages; track language; let l = $index) {
+                            <span class="chip" [class.on]="l === 0">{{ language }}</span>
+                          }
+                        </div>
+                        <p class="bubble you" [style.--s]="0">{{ copy().ask }}</p>
+                        <p class="bubble bot" [style.--s]="1">
+                          {{ copy().reply }}<span class="cursor"></span>
+                        </p>
                       </div>
-                      <ul class="note-list">
-                        @for (note of copy().notes; track note[0]; let n = $index) {
-                          <li [style.--s]="n">
-                            <strong>{{ note[0] }}</strong
-                            ><span>{{ note[1] }}</span>
-                          </li>
-                        }
-                      </ul>
-                      <p class="pattern" [style.--s]="3">{{ copy().pattern }}</p>
-                    </div>
-                  }
-                  @case (3) {
-                    <div class="stack">
-                      <svg viewBox="-200 -260 400 470" class="stack-art">
-                        @for (layer of [0, 1, 2, 3]; track layer) {
-                          <g class="layer" [style.--s]="layer">
-                            <g [attr.transform]="'translate(0,' + (150 - layer * 100) + ')'">
-                              <path class="side-r" d="M 0 100 L 160 20 L 160 44 L 0 124 Z" />
-                              <path class="side-l" d="M 0 100 L -160 20 L -160 44 L 0 124 Z" />
-                              <path class="top" d="M 0 100 L 160 20 L 0 -60 L -160 20 Z" />
-                              <path class="inset" d="M 0 78 L 116 20 L 0 -38 L -116 20 Z" />
+                    }
+                    @case (2) {
+                      <div class="notes">
+                        <div class="bars">
+                          @for (bar of bars; track $index) {
+                            <span
+                              class="bar"
+                              [class.hard]="bar >= 70"
+                              [style.--h]="bar"
+                              [style.--s]="$index"
+                            ></span>
+                          }
+                        </div>
+                        <ul class="note-list">
+                          @for (note of copy().notes; track note[0]; let n = $index) {
+                            <li [style.--s]="n">
+                              <strong>{{ note[0] }}</strong
+                              ><span>{{ note[1] }}</span>
+                            </li>
+                          }
+                        </ul>
+                        <p class="pattern" [style.--s]="3">{{ copy().pattern }}</p>
+                      </div>
+                    }
+                    @case (3) {
+                      <div class="stack">
+                        <svg viewBox="-200 -260 400 470" class="stack-art">
+                          @for (layer of [0, 1, 2, 3]; track layer) {
+                            <g class="layer" [style.--s]="layer">
+                              <g [attr.transform]="'translate(0,' + (150 - layer * 100) + ')'">
+                                <path class="side-r" d="M 0 100 L 160 20 L 160 44 L 0 124 Z" />
+                                <path class="side-l" d="M 0 100 L -160 20 L -160 44 L 0 124 Z" />
+                                <path class="top" d="M 0 100 L 160 20 L 0 -60 L -160 20 Z" />
+                                <path class="inset" d="M 0 78 L 116 20 L 0 -38 L -116 20 Z" />
+                              </g>
                             </g>
-                          </g>
-                        }
-                        <line class="guide" x1="-160" y1="-170" x2="-160" y2="190" />
-                        <line class="guide" x1="160" y1="-170" x2="160" y2="190" />
-                      </svg>
-                      <ul class="stack-labels">
-                        @for (label of copy().layers; track label; let l = $index) {
-                          <li [class]="'label-' + l" [style.--s]="l">
-                            <strong>{{ label }}</strong>
-                            <span>{{ copy().layerNotes[l] }}</span>
-                          </li>
-                        }
-                      </ul>
-                    </div>
+                          }
+                          <line class="guide" x1="-160" y1="-170" x2="-160" y2="190" />
+                          <line class="guide" x1="160" y1="-170" x2="160" y2="190" />
+                        </svg>
+                        <ul class="stack-labels">
+                          @for (label of copy().layers; track label; let l = $index) {
+                            <li [class]="'label-' + l" [style.--s]="l">
+                              <strong>{{ label }}</strong>
+                              <span>{{ copy().layerNotes[l] }}</span>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    }
                   }
-                }
+                </div>
               </div>
-            </div>
+            }
           </article>
         }
       </div>

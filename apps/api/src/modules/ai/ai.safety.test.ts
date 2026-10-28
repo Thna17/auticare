@@ -7,6 +7,7 @@ import {
   medicationReply,
   softenDiagnosisClaims,
 } from './ai.safety.js';
+import { RULES } from './ai.prompt.js';
 
 describe('classifyParentMessage', () => {
   it('flags an explicit statement of self-harm risk', () => {
@@ -73,5 +74,12 @@ describe('softenDiagnosisClaims', () => {
   it('leaves ordinary descriptive language alone', () => {
     const answer = 'Many three-year-olds line up their toys. It is worth mentioning at your visit.';
     expect(softenDiagnosisClaims(answer)).toBe(answer);
+  });
+});
+
+describe('assistant system prompt safety', () => {
+  it('prohibits autism probability and severity estimates from chat or questionnaire answers', () => {
+    expect(RULES).toMatch(/Never estimate autism probability or severity/i);
+    expect(RULES).toMatch(/questionnaire results/i);
   });
 });

@@ -26,7 +26,8 @@ describe('FeatureShowcaseComponent', () => {
     const words = Array.from(el.querySelectorAll('h2 .word')).map((w) => w.textContent);
     expect(words.join(' ')).toBe('Help for the weeks between noticing and being seen');
     expect(el.querySelectorAll('.showcase-item')).toHaveLength(4);
-    expect(el.querySelectorAll('.window')).toHaveLength(4);
+    expect(el.querySelectorAll('.window')).toHaveLength(3);
+    expect(el.querySelector('.chat-card')).not.toBeNull();
     expect(el.querySelectorAll('.bars .bar')).toHaveLength(14);
     expect(el.querySelectorAll('.stack-art .layer')).toHaveLength(4);
     expect(el.textContent).toContain('Not a diagnosis');
@@ -51,12 +52,13 @@ describe('FeatureShowcaseComponent', () => {
     expect(el.textContent).toContain('មិនមែនការធ្វើរោគវិនិច្ឆ័យ');
   });
 
-  it('keeps the app windows away from screen readers; the text says it all', () => {
+  it('keeps decorative windows hidden and exposes the interactive chat', () => {
     const { el } = render();
     expect(
       Array.from(el.querySelectorAll('.window')).every(
         (w) => w.getAttribute('aria-hidden') === 'true',
       ),
     ).toBe(true);
+    expect(el.querySelector('.chat-card')?.getAttribute('aria-label')).toBe('Ask AutiCare');
   });
 });
