@@ -10,6 +10,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { NavIconComponent } from '../../core/layout/nav-icon.component';
 import { FeatureShowcaseComponent } from './components/feature-showcase.component';
 import { AutismValuesComponent } from './components/autism-values.component';
+import { AboutUsComponent } from './components/about-us.component';
 
 type LandingFeature = {
   readonly title: string;
@@ -267,7 +268,13 @@ const KM_TRUST_POINTS = [
 
 @Component({
   standalone: true,
-  imports: [RouterLink, NavIconComponent, FeatureShowcaseComponent, AutismValuesComponent],
+  imports: [
+    RouterLink,
+    NavIconComponent,
+    FeatureShowcaseComponent,
+    AutismValuesComponent,
+    AboutUsComponent,
+  ],
   template: `
     <main class="landing-page">
       <header class="site-header">
@@ -294,6 +301,9 @@ const KM_TRUST_POINTS = [
             }}</a>
             <a href="#how-it-works" (click)="scrollToSection('how-it-works', $event)">{{
               currentLang() === 'km' ? 'ដំណើរការ' : 'How it works'
+            }}</a>
+            <a href="#about-us" (click)="scrollToSection('about-us', $event)">{{
+              currentLang() === 'km' ? 'អំពីយើង' : 'About us'
             }}</a>
             <a href="#about-autism" (click)="scrollToSection('about-autism', $event)">{{
               currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism'
@@ -559,6 +569,41 @@ const KM_TRUST_POINTS = [
               </span>
               <span class="drawer-label">{{
                 currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism'
+              }}</span>
+              <span class="drawer-arrow" aria-hidden="true">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
+            </a>
+            <a href="#about-us" (click)="scrollToSection('about-us', $event)">
+              <span class="drawer-icon" aria-hidden="true">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"
+                  />
+                </svg>
+              </span>
+              <span class="drawer-label">{{
+                currentLang() === 'km' ? 'អំពីយើង' : 'About us'
               }}</span>
               <span class="drawer-arrow" aria-hidden="true">
                 <svg
@@ -1007,6 +1052,9 @@ const KM_TRUST_POINTS = [
         </div>
       </section>
 
+      <!-- About Us Section -->
+      <section id="about-us" acAboutUs [lang]="currentLang() === 'km' ? 'km' : 'en'"></section>
+
       <!-- About Autism Section -->
       <section
         id="about-autism"
@@ -1209,6 +1257,9 @@ const KM_TRUST_POINTS = [
             }}</a>
             <a href="#how-it-works" (click)="scrollToSection('how-it-works', $event)">{{
               currentLang() === 'km' ? 'ដំណើរការ' : 'How it works'
+            }}</a>
+            <a href="#about-us" (click)="scrollToSection('about-us', $event)">{{
+              currentLang() === 'km' ? 'អំពីយើង' : 'About us'
             }}</a>
             <a href="#about-autism" (click)="scrollToSection('about-autism', $event)">{{
               currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism'

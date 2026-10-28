@@ -242,10 +242,34 @@ const COPY = {
           <span class="brand-mark" aria-hidden="true">A</span>
           {{ copy().brand }}
         </span>
-        <span class="privacy">
-          <span class="lock" aria-hidden="true"></span>
-          {{ copy().privacy }}
-        </span>
+        <div class="topbar-actions">
+          <div
+            class="language-switch"
+            role="group"
+            [attr.aria-label]="currentLang() === 'km' ? 'ជ្រើសរើសភាសា' : 'Choose language'"
+          >
+            <button
+              type="button"
+              [class.active]="currentLang() === 'en'"
+              [attr.aria-pressed]="currentLang() === 'en'"
+              (click)="setLanguage('en')"
+            >
+              English
+            </button>
+            <button
+              type="button"
+              [class.active]="currentLang() === 'km'"
+              [attr.aria-pressed]="currentLang() === 'km'"
+              (click)="setLanguage('km')"
+            >
+              ខ្មែរ
+            </button>
+          </div>
+          <span class="privacy">
+            <span class="lock" aria-hidden="true"></span>
+            {{ copy().privacy }}
+          </span>
+        </div>
       </header>
 
       <main class="stage" [attr.aria-busy]="saving()">
@@ -518,6 +542,46 @@ const COPY = {
         gap: 8px;
         font-size: var(--ac-type-meta);
         color: var(--ac-color-text-muted);
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+      }
+
+      .language-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 3px;
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface);
+      }
+
+      .language-switch button {
+        min-height: 32px;
+        padding: 5px 11px;
+        border: 0;
+        border-radius: var(--ac-radius-pill);
+        background: transparent;
+        color: var(--ac-color-text-muted);
+        font: inherit;
+        font-size: var(--ac-type-meta);
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .language-switch button.active {
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+      }
+
+      .language-switch button:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
       }
 
       .lock {
@@ -831,6 +895,16 @@ const COPY = {
       }
 
       @media (max-width: 640px) {
+        .topbar {
+          align-items: flex-start;
+        }
+
+        .topbar-actions {
+          flex-direction: column-reverse;
+          align-items: flex-end;
+          gap: 8px;
+        }
+
         .page {
           padding: 0 14px 48px;
         }
@@ -869,6 +943,7 @@ export class OnboardingPage implements OnInit {
   private readonly onboarding = inject(OnboardingState);
 
   protected readonly copy = computed(() => COPY[this.i18n.currentLang()]);
+  protected readonly currentLang = this.i18n.currentLang;
   protected readonly today = new Date().toISOString().slice(0, 10);
 
   protected readonly step = signal<Step>('child');
@@ -933,6 +1008,10 @@ export class OnboardingPage implements OnInit {
         // Stay on the child step; creating one will surface a real error.
       },
     });
+  }
+
+  protected setLanguage(language: 'en' | 'km'): void {
+    this.i18n.setLanguage(language);
   }
 
   protected childAge(): string {
