@@ -14,6 +14,8 @@ export type AiCompletion = {
   tokensIn: number | null;
   tokensOut: number | null;
   latencyMs: number;
+  /** "length" means the provider ran out of room and the text is cut off. */
+  finishReason: string | null;
 };
 
 export type AiCompletionRequest = {
@@ -49,6 +51,8 @@ type ProviderConfig = {
   model?: string;
   timeoutMs: number;
   temperature: number;
+  /** "disabled" keeps reasoning (and its cost) out of the answer path. */
+  thinking: 'disabled' | 'low' | 'high';
 };
 
 /**
@@ -91,7 +95,20 @@ export class OpenAiCompatibleClient implements AiClient {
         body: JSON.stringify({
           model,
           messages: request.messages,
-          temperature: this.config.temperature,
+          // Some vendors reason before answering unless told not to, and that
+          // reasoning is billed as output. The parameter is sent explicitly so
+          // the cost does not depend on a vendor default changing.
+          ...(this.config.thinking === 'disabled'
+            ? {
+                thinking: { type: 'disabled' },
+                // Ignored, and silently so, while reasoning is on — hence the
+                // split. Sending it there would only look like it had an effect.
+                temperature: this.config.temperature,
+              }
+            : {
+                thinking: { type: 'enabled' },
+                reasoning_effort: this.config.thinking,
+              }),
           ...(request.maxTokens ? { max_tokens: request.maxTokens } : {}),
         }),
         signal: controller.signal,
@@ -127,7 +144,7 @@ export class OpenAiCompatibleClient implements AiClient {
       }
 
       const body = (await response.json()) as {
-        choices?: { message?: { content?: unknown } }[];
+        choices?: { message?: { content?: unknown }; finish_reason?: unknown }[];
         usage?: { prompt_tokens?: number; completion_tokens?: number };
       };
       const content = body.choices?.[0]?.message?.content;
@@ -141,6 +158,10 @@ export class OpenAiCompatibleClient implements AiClient {
         tokensIn: body.usage?.prompt_tokens ?? null,
         tokensOut: body.usage?.completion_tokens ?? null,
         latencyMs: Date.now() - startedAt,
+        finishReason:
+          typeof body.choices?.[0]?.finish_reason === 'string'
+            ? body.choices[0].finish_reason
+            : null,
       };
     } catch (error) {
       if (error instanceof AiProviderError) throw error;
@@ -167,4 +188,5 @@ export const aiClient: AiClient = new OpenAiCompatibleClient({
   ...(env.AI_MODEL ? { model: env.AI_MODEL } : {}),
   timeoutMs: env.AI_TIMEOUT_MS,
   temperature: env.AI_TEMPERATURE,
+  thinking: env.AI_THINKING,
 });

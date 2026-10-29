@@ -83,6 +83,10 @@ describe('ChildProfilePage', () => {
     const childReq = httpTesting.expectOne('/api/v1/children/child_1');
     expect(childReq.request.method).toBe('GET');
     childReq.flush({ data: mockChild });
+    fixture.detectChanges();
+    httpTesting
+      .expectOne('/api/v1/children/child_1/summary?language=en')
+      .flush({ data: { summary: null } });
 
     const sessionReq = httpTesting.expectOne('/api/v1/screening/children/child_1/sessions');
     expect(sessionReq.request.method).toBe('GET');
@@ -121,6 +125,10 @@ describe('ChildProfilePage', () => {
     fixture.detectChanges();
 
     httpTesting.expectOne('/api/v1/children/child_1').flush({ data: mockChild });
+    fixture.detectChanges();
+    httpTesting
+      .expectOne('/api/v1/children/child_1/summary?language=en')
+      .flush({ data: { summary: null } });
     httpTesting
       .expectOne('/api/v1/screening/children/child_1/sessions')
       .flush({ data: mockSessions });
@@ -143,6 +151,10 @@ describe('ChildProfilePage', () => {
     fixture.detectChanges();
 
     httpTesting.expectOne('/api/v1/children/child_1').flush({ data: mockChild });
+    fixture.detectChanges();
+    httpTesting
+      .expectOne('/api/v1/children/child_1/summary?language=en')
+      .flush({ data: { summary: null } });
     httpTesting
       .expectOne('/api/v1/screening/children/child_1/sessions')
       .flush({ data: mockSessions });
@@ -161,6 +173,10 @@ describe('ChildProfilePage', () => {
     fixture.detectChanges();
 
     httpTesting.expectOne('/api/v1/children/child_1').flush({ data: mockChild });
+    fixture.detectChanges();
+    httpTesting
+      .expectOne('/api/v1/children/child_1/summary?language=en')
+      .flush({ data: { summary: null } });
     httpTesting
       .expectOne('/api/v1/screening/children/child_1/sessions')
       .flush({ data: mockSessions });
@@ -177,6 +193,35 @@ describe('ChildProfilePage', () => {
 
     const items = element.querySelectorAll('.milestone-item');
     expect(items.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('shows the stored educational summary with a not-a-diagnosis notice', () => {
+    const fixture = TestBed.createComponent(ChildProfilePage);
+    fixture.detectChanges();
+
+    httpTesting.expectOne('/api/v1/children/child_1').flush({ data: mockChild });
+    fixture.detectChanges();
+    httpTesting.expectOne('/api/v1/children/child_1/summary?language=en').flush({
+      data: {
+        summary: {
+          childId: 'child_1',
+          content: 'You recorded nine observations on nine days.',
+          language: 'en',
+          model: 'deepseek-flash',
+          promptVersion: 'summary-v1',
+          windowDays: 28,
+          generatedAt: '2026-10-28T00:00:00.000Z',
+          cached: true,
+        },
+      },
+    });
+    httpTesting.expectOne('/api/v1/screening/children/child_1/sessions').flush({ data: [] });
+    fixture.detectChanges();
+
+    const card = (fixture.nativeElement as HTMLElement).querySelector('.edu-summary');
+    expect(card?.textContent).toContain('Educational guidance — not a diagnosis');
+    expect(card?.textContent).toContain('You recorded nine observations on nine days.');
+    expect(card?.textContent).toContain('Based on your current records');
   });
 
   it('formats chronological age accurately in years and months', () => {

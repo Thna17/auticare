@@ -382,11 +382,18 @@ describe('admin portal pages', () => {
             reviewedSources: 4,
           },
           daily: [{ date: '2026-10-27', questions: 9, avgLatencyMs: 2300 }],
+          estimatedCostUsd: 0.0042,
+          todayCostUsd: 0.0004,
+          dailyBudgetUsd: 2,
+          thinkingMode: 'disabled',
           rules: 'You do not diagnose.',
         }),
     });
     expect(el.textContent).toContain('test-model');
     expect(el.textContent).toContain('2.3 s');
+    // Spend is shown as money, with the daily ceiling beside it.
+    expect(el.textContent).toContain('$0.0004');
+    expect(el.textContent).toContain('$2.00');
     expect(el.querySelector('.rules')?.textContent).toContain('You do not diagnose.');
   });
 

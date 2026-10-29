@@ -1,5 +1,6 @@
 import type { AiConversation, AiMessage, AiMessageKind, Prisma } from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
+import type { UsageRow } from './ai.pricing.js';
 
 export type ConversationWithCount = AiConversation & { _count: { messages: number } };
 export type ConversationWithMessages = AiConversation & { messages: AiMessage[] };
@@ -95,6 +96,17 @@ export class AiRepository {
   countUserMessagesSince(parentId: string, since: Date): Promise<number> {
     return prisma.aiMessage.count({
       where: { role: 'USER', createdAt: { gte: since }, conversation: { parentId } },
+    });
+  }
+
+  /**
+   * Answers that actually reached a provider, for the installation's spend.
+   * Safety replies carry no tokens and are excluded: they never cost anything.
+   */
+  providerUsageSince(since: Date): Promise<UsageRow[]> {
+    return prisma.aiMessage.findMany({
+      where: { role: 'ASSISTANT', createdAt: { gte: since }, tokensIn: { not: null } },
+      select: { model: true, tokensIn: true, tokensOut: true },
     });
   }
 

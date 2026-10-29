@@ -50,6 +50,13 @@ import { AdminPortalApi } from './data-access/admin-portal.api';
           <span>{{ d.model ?? 'No model set' }}</span>
         </div>
         <div class="stat">
+          <strong>{{ money(d.todayCostUsd) }}</strong>
+          <span
+            >Estimated spend today, of {{ money(d.dailyBudgetUsd) }} allowed per day. Estimates use
+            peak provider prices, so the real figure is lower.</span
+          >
+        </div>
+        <div class="stat">
           <strong>{{ d.totals.questions }}</strong
           ><span>Questions asked</span>
         </div>
@@ -184,6 +191,12 @@ export class AdminAiPage implements OnInit {
 
   protected seconds(ms: number | null): string {
     return ms === null ? '—' : `${(ms / 1000).toFixed(1)} s`;
+  }
+
+  /** Money stays readable at both ends: cents of spend and a multi-dollar budget. */
+  protected money(amount: number | null): string {
+    if (amount === null) return '—';
+    return amount >= 1 ? `$${amount.toFixed(2)}` : `$${amount.toFixed(4)}`;
   }
 
   protected height(value: number): number {

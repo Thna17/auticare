@@ -1787,6 +1787,40 @@ export const childInsightSchema = z.object({
 });
 export type ChildInsightResponse = z.infer<typeof childInsightSchema>;
 
+// ── Educational summary ───────────────────────────────────────────────────────
+//
+// The summary a parent reads is written from facts the insights engine computed,
+// never from their raw notes. `cached` is exposed so the UI can say that the
+// stored text already describes the current records, instead of implying fresh
+// wording was written.
+
+export const childSummarySchema = z.object({
+  childId: z.string(),
+  content: z.string(),
+  language: z.enum(aiLanguages),
+  model: z.string(),
+  promptVersion: z.string(),
+  windowDays: z.number().int(),
+  generatedAt: z.string(),
+  /** True when the stored text already described the current records. */
+  cached: z.boolean(),
+});
+export type ChildSummaryResponse = z.infer<typeof childSummarySchema>;
+
+export const childSummaryQuerySchema = z.object({
+  language: z.enum(aiLanguages).default('en'),
+});
+export type ChildSummaryQuery = z.infer<typeof childSummaryQuerySchema>;
+
+export const generateChildSummaryRequestSchema = z.object({
+  language: z.enum(aiLanguages).optional(),
+  /** Window the summary describes. Clamped server-side to the insights range. */
+  days: z.coerce.number().int().min(7).max(120).optional(),
+  /** Browser's minutes east of UTC, so weekday clustering is right. */
+  tzOffset: z.coerce.number().int().min(-720).max(840).optional(),
+});
+export type GenerateChildSummaryRequest = z.infer<typeof generateChildSummaryRequestSchema>;
+
 // ── Reviewed guidance ─────────────────────────────────────────────────────
 //
 // Answers to "what can I do about this?" drawn only from a curated corpus the

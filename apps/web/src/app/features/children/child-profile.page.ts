@@ -1,8 +1,21 @@
 import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import type { ChildResponse, RiskLevel, ScreeningSessionDetailResponse } from '@auticare/contracts';
+import type {
+  AiLanguage,
+  ChildResponse,
+  ChildSummaryResponse,
+  RiskLevel,
+  ScreeningSessionDetailResponse,
+} from '@auticare/contracts';
 import { ChildrenApi } from './data-access/children.api';
 import { ScreeningApi } from '../screening/data-access/screening.api';
 import { ScreeningBadgeComponent } from '../screening/components/screening-badge.component';
@@ -241,6 +254,102 @@ export type MilestoneFeedItem = {
             }}
           </strong>
         </article>
+      </section>
+
+      <!-- Educational summary: facts from the records, wording from the assistant -->
+      <section class="edu-summary" aria-labelledby="edu-summary-title">
+        <div class="edu-summary-head">
+          <div>
+            <p class="edu-summary-eyebrow">
+              {{ currentLang() === 'km' ? 'សង្ខេបអប់រំ' : 'Educational summary' }}
+            </p>
+            <h2 id="edu-summary-title">
+              {{
+                currentLang() === 'km'
+                  ? 'អ្វីដែលកំណត់ត្រារបស់ ' + profile.firstName + ' បង្ហាញ'
+                  : 'What ' + profile.firstName + "'s records show"
+              }}
+            </h2>
+          </div>
+          <span class="edu-summary-notice">
+            {{
+              currentLang() === 'km'
+                ? 'ជំនួយអប់រំ — មិនមែនជាការធ្វើរោគវិនិច្ឆ័យទេ'
+                : 'Educational guidance — not a diagnosis'
+            }}
+          </span>
+        </div>
+
+        @if (summaryLoading()) {
+          <p class="edu-summary-state">
+            {{ currentLang() === 'km' ? 'កំពុងផ្ទុក…' : 'Loading…' }}
+          </p>
+        } @else if (summary(); as written) {
+          <p class="edu-summary-text">{{ written.content }}</p>
+          <div class="edu-summary-foot">
+            <p class="edu-summary-meta">
+              {{
+                currentLang() === 'km'
+                  ? 'បានសរសេរថ្ងៃទី ' + formatGenerated(written.generatedAt)
+                  : 'Written ' + formatGenerated(written.generatedAt)
+              }}
+              @if (written.cached) {
+                <span class="dot-sep">&bull;</span>
+                <span>{{
+                  currentLang() === 'km'
+                    ? 'ទិន្នន័យមិនផ្លាស់ប្តូរ'
+                    : 'Based on your current records'
+                }}</span>
+              }
+            </p>
+            <button
+              type="button"
+              class="edu-summary-action"
+              [disabled]="summaryGenerating()"
+              (click)="generateSummary()"
+            >
+              {{
+                summaryGenerating()
+                  ? currentLang() === 'km'
+                    ? 'កំពុងសរសេរ…'
+                    : 'Writing…'
+                  : currentLang() === 'km'
+                    ? 'សរសេរឡើងវិញ'
+                    : 'Write it again'
+              }}
+            </button>
+          </div>
+        } @else {
+          <p class="edu-summary-text">
+            {{
+              currentLang() === 'km'
+                ? 'សង្ខេបខ្លីៗពីកំណត់ត្រាដែលអ្នកបានកត់ត្រា និងរឿងតូចៗដែលអ្នកអាចសាកល្បងនៅសប្តាហ៍នេះ។'
+                : 'A short summary of what you have recorded, and a few things you could try this week.'
+            }}
+          </p>
+          <div class="edu-summary-foot">
+            <button
+              type="button"
+              class="edu-summary-action primary"
+              [disabled]="summaryGenerating()"
+              (click)="generateSummary()"
+            >
+              {{
+                summaryGenerating()
+                  ? currentLang() === 'km'
+                    ? 'កំពុងសរសេរ…'
+                    : 'Writing…'
+                  : currentLang() === 'km'
+                    ? 'សរសេរសង្ខេប'
+                    : 'Write my summary'
+              }}
+            </button>
+          </div>
+        }
+
+        @if (summaryError(); as message) {
+          <ac-ui-message tone="error">{{ message }}</ac-ui-message>
+        }
       </section>
 
       <!-- Dynamic Support Snapshot Section -->
@@ -764,6 +873,102 @@ export type MilestoneFeedItem = {
   `,
   styles: [
     `
+      .edu-summary {
+        margin: 0 0 22px;
+        padding: 22px;
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 18px;
+        background: var(--ac-color-surface);
+      }
+
+      .edu-summary-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .edu-summary-eyebrow {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ac-color-text-muted);
+      }
+
+      .edu-summary h2 {
+        margin: 0;
+        font-size: 19px;
+        color: var(--ac-color-text-body);
+      }
+
+      .edu-summary-notice {
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--ac-color-surface-slate);
+        color: var(--ac-color-text-muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .edu-summary-text {
+        margin: 16px 0 0;
+        font-size: 15px;
+        line-height: 1.75;
+        color: var(--ac-color-text-body);
+        white-space: pre-line;
+      }
+
+      .edu-summary-state {
+        margin: 16px 0 0;
+        font-size: 14px;
+        color: var(--ac-color-text-muted);
+      }
+
+      .edu-summary-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+
+      .edu-summary-meta {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--ac-color-text-muted);
+      }
+
+      .edu-summary-action {
+        border: 1px solid var(--ac-color-border-slate);
+        border-radius: 10px;
+        padding: 9px 16px;
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action-deep);
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .edu-summary-action.primary {
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+      }
+
+      .edu-summary-action:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+
+      .edu-summary-action:focus-visible {
+        outline: 2px solid var(--ac-color-action);
+        outline-offset: 2px;
+      }
+
       :host {
         display: block;
       }
@@ -1630,6 +1835,25 @@ export class ChildProfilePage implements OnInit {
   readonly archiving = signal(false);
   readonly restoring = signal(false);
   readonly today = new Date().toISOString().slice(0, 10);
+
+  // The educational summary: written from the records the family entered, in the
+  // language they are reading. Loaded once per child per language; writing one is
+  // a deliberate click, because it costs a provider call.
+  readonly summary = signal<ChildSummaryResponse | null>(null);
+  readonly summaryLoading = signal(false);
+  readonly summaryGenerating = signal(false);
+  readonly summaryError = signal<string | null>(null);
+  private summaryKey = '';
+
+  private readonly summarySync = effect(() => {
+    const child = this.child();
+    const language = this.currentLang();
+    if (!child) return;
+    const key = `${child.id}:${language}`;
+    if (key === this.summaryKey) return;
+    this.summaryKey = key;
+    this.loadSummary(child.id, language);
+  });
   readonly form = this.fb.nonNullable.group({
     firstName: ['', [Validators.required, Validators.maxLength(80)]],
     lastName: ['', Validators.maxLength(80)],
@@ -1916,6 +2140,84 @@ export class ChildProfilePage implements OnInit {
     if (risk === 'MODERATE') return 'Moderate Risk';
     if (risk === 'HIGH') return 'High Risk';
     return 'Not Screened';
+  }
+
+  loadSummary(childId: string, language: AiLanguage) {
+    this.summaryLoading.set(true);
+    this.summaryError.set(null);
+    this.api.getSummary(childId, language).subscribe({
+      next: (summary) => {
+        this.summary.set(summary);
+        this.summaryLoading.set(false);
+      },
+      error: () => {
+        // Nothing stored yet is not a failure the parent has to fix; the card
+        // simply offers to write one.
+        this.summary.set(null);
+        this.summaryLoading.set(false);
+      },
+    });
+  }
+
+  generateSummary() {
+    const child = this.child();
+    if (!child || this.summaryGenerating()) return;
+
+    this.summaryGenerating.set(true);
+    this.summaryError.set(null);
+    this.api
+      .generateSummary(child.id, {
+        language: this.currentLang(),
+        days: 28,
+        // Minutes east of UTC, so weekday clustering matches the family's day.
+        tzOffset: -new Date().getTimezoneOffset(),
+      })
+      .subscribe({
+        next: (summary) => {
+          this.summary.set(summary);
+          this.summaryGenerating.set(false);
+        },
+        error: (err: { error?: { error?: { message?: string } } }) => {
+          this.summaryGenerating.set(false);
+          this.summaryError.set(
+            err?.error?.error?.message ??
+              (this.currentLang() === 'km'
+                ? 'សង្ខេបមិនអាចបង្កើតបានទេ។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។'
+                : 'The summary could not be written. Please try again later.'),
+          );
+        },
+      });
+  }
+
+  /**
+   * Khmer month names are written out rather than taken from Intl: a build whose
+   * ICU data lacks the km locale resolves `km-KH` to en-US and silently renders
+   * the date in English, which looks broken next to Khmer copy.
+   */
+  formatGenerated(iso: string): string {
+    const date = new Date(iso);
+    if (this.currentLang() === 'km') {
+      const months = [
+        'មករា',
+        'កុម្ភៈ',
+        'មីនា',
+        'មេសា',
+        'ឧសភា',
+        'មិថុនា',
+        'កក្កដា',
+        'សីហា',
+        'កញ្ញា',
+        'តុលា',
+        'វិច្ឆិកា',
+        'ធ្នូ',
+      ];
+      return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+    return new Intl.DateTimeFormat('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
   }
 
   private patchForm(child: ChildResponse) {

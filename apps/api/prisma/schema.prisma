@@ -241,6 +241,7 @@ model Child {
   observations      BehaviorObservation[]
   aiConversations   AiConversation[]
   aiInsights        AiInsight[]
+  aiSummaries       AiSummary[]
 
   @@index([parentId, archivedAt])
 }
@@ -960,6 +961,34 @@ model AiInsight {
 
   @@unique([childId, windowStart, windowEnd])
   @@index([childId, windowEnd])
+}
+
+// The educational summary a parent reads, written from facts the insights engine
+// computed rather than from their raw notes. Kept apart from AiInsight on purpose:
+// AiInsight is the deterministic audit snapshot taken on every read, this is the
+// generated text a parent sees, cached so unchanged data is never paid for twice.
+model AiSummary {
+  id            String   @id @default(cuid())
+  childId       String
+  // Generated per language rather than translated, so the Khmer reads as Khmer.
+  language      String
+  windowDays    Int
+  windowStart   DateTime
+  windowEnd     DateTime
+  // Hash of the facts the text was written from. Same hash and language means the
+  // stored wording still describes the current records, so it is served again.
+  factsHash     String
+  content       String   @db.Text
+  model         String
+  promptVersion String
+  // What the call cost, so the installation's daily budget covers summaries too
+  // and not just chat. Null when a stored summary was served instead of a call.
+  tokensIn      Int?
+  tokensOut     Int?
+  createdAt     DateTime @default(now())
+  child         Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId, language, windowEnd])
 }
 
 // Reviewed source material. Nothing is generated into these tables: they are

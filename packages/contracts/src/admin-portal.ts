@@ -435,6 +435,15 @@ export const adminAiMonitoringSchema = z.object({
     reviewedSources: z.number().int(),
   }),
   daily: z.array(aiDaySchema),
+  /**
+   * Spend at the provider's peak rates, so what the admin sees is an upper bound
+   * rather than a hope. Null when the configured model has no price card.
+   */
+  estimatedCostUsd: z.number().nullable(),
+  todayCostUsd: z.number().nullable(),
+  dailyBudgetUsd: z.number(),
+  /** Whether answers are allowed to reason first, which is billed as output. */
+  thinkingMode: z.enum(['disabled', 'low', 'high']),
   /** The safety rules every answer is generated under, read-only. */
   rules: z.string(),
 });

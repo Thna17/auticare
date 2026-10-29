@@ -18,6 +18,7 @@ import type { ConversationSummaryResponse } from './ai.mapper.js';
 import { toAiMessageResponse, toConversationSummary } from './ai.mapper.js';
 import type { ChildContext, GroundingPassage } from './ai.prompt.js';
 import { buildConversationMessages, buildSystemPrompt, titleFromMessage } from './ai.prompt.js';
+import { assertWithinDailyBudget, startOfUtcDay } from './ai.budget.js';
 import { prisma } from '../../database/prisma.js';
 import type { FeedbackAiMessageRequest, AiMessageResponse } from '@auticare/contracts';
 import { AiRepository } from './ai.repository.js';
@@ -32,11 +33,6 @@ import {
 type Actor = { parentId: string; role: UserRole };
 
 const DAY_MS = 86_400_000;
-
-const startOfUtcDay = (): Date => {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-};
 
 /** Whole months lived, so the model is told an age rather than a birth date. */
 const ageInMonths = (dateOfBirth: Date, at: Date = new Date()): number => {
@@ -228,6 +224,11 @@ export class AiService {
         503,
       );
     }
+
+    // Checked after the safety layer on purpose: a crisis or medication question
+    // is answered without a provider, so it must keep working even on a day the
+    // installation has run out of budget.
+    await assertWithinDailyBudget(this.repository, this.client.model);
 
     // Child context is opt-in per message. Never infer consent from the childId
     // already attached to a conversation, since a parent can turn sharing off.

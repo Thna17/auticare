@@ -66,9 +66,22 @@ const envSchema = z
     AI_BASE_URL: optionalTrimmedString,
     AI_API_KEY: optionalTrimmedString,
     AI_MODEL: optionalTrimmedString,
-    AI_TIMEOUT_MS: z.coerce.number().int().positive().max(120000).default(20000),
+    AI_TIMEOUT_MS: z.coerce.number().int().positive().max(120000).default(30000),
     AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.3),
     AI_MAX_DAILY_MESSAGES: z.coerce.number().int().positive().max(500).default(40),
+    /**
+     * Reasoning pass, off by default. Several vendors (DeepSeek among them) turn
+     * it on unless told otherwise, which bills reasoning tokens as output, drops
+     * the configured temperature, and pushes replies past the request timeout.
+     * "low" and "high" are opt-in effort levels for jobs that need deliberation.
+     */
+    AI_THINKING: z.enum(['disabled', 'low', 'high']).default('disabled'),
+    /**
+     * Upper bound on estimated AI spend for one UTC day, across the whole
+     * installation. Reaching it stops new model calls rather than overspending
+     * silently. 0 disables the guard.
+     */
+    AI_DAILY_BUDGET_USD: z.coerce.number().min(0).default(2),
   })
   .superRefine((value, context) => {
     const hasAnySmtpCredential = Boolean(value.SMTP_HOST || value.SMTP_USER || value.SMTP_PASS);

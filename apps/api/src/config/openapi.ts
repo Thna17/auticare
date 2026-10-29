@@ -458,6 +458,36 @@ export const openApiDocument: Record<string, unknown> = {
           email: { type: 'string', format: 'email', example: 'invited.staff@school.org' },
         },
       },
+      ChildSummary: {
+        type: 'object',
+        required: [
+          'childId',
+          'content',
+          'language',
+          'model',
+          'promptVersion',
+          'windowDays',
+          'generatedAt',
+          'cached',
+        ],
+        properties: {
+          childId: { type: 'string', example: 'cuid_child_101' },
+          content: {
+            type: 'string',
+            example:
+              'Over the last four weeks you recorded eleven observations, on nine different days.',
+          },
+          language: { type: 'string', enum: ['en', 'km'], example: 'en' },
+          model: { type: 'string', example: 'deepseek-flash' },
+          promptVersion: { type: 'string', example: 'summary-v1' },
+          windowDays: { type: 'integer', example: 28 },
+          generatedAt: { type: 'string', format: 'date-time' },
+          cached: {
+            type: 'boolean',
+            description: 'True when the stored text already described the current records.',
+          },
+        },
+      },
       ChildResponse: {
         type: 'object',
         required: [
@@ -1539,6 +1569,114 @@ export const openApiDocument: Record<string, unknown> = {
     },
 
     // ── Screening ────────────────────────────────────────────────────────────
+    // ── Educational summary ─────────────────────────────────────────────────
+    '/api/v1/children/{childId}/summary': {
+      get: {
+        tags: ['Children'],
+        summary: 'Get the stored educational summary for a child',
+        description:
+          'Returns the most recently stored summary in the requested language, or null when none exists. Never calls the model, so it is safe to read on every page load.',
+        parameters: [
+          { name: 'childId', in: 'path', required: true, schema: { type: 'string' } },
+          {
+            name: 'language',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', enum: ['en', 'km'], default: 'en' },
+          },
+        ],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        responses: {
+          '200': {
+            description: 'The stored summary, or null',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        summary: {
+                          allOf: [{ $ref: '#/components/schemas/ChildSummary' }],
+                          nullable: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Child not found',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Children'],
+        summary: 'Write the educational summary for a child',
+        description:
+          'Writes a short educational summary in the requested language from facts the insights engine computed. Only the phrasing goes to the model: the facts are not model output, and no diagnosis is produced. When the records have not changed since the stored text was written, the stored text is returned with cached=true instead of generating again.',
+        parameters: [{ name: 'childId', in: 'path', required: true, schema: { type: 'string' } }],
+        security: [{ cookieAuth: [] }],
+        'x-roles': ['PARENT'],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  language: { type: 'string', enum: ['en', 'km'] },
+                  days: { type: 'integer', minimum: 7, maximum: 120, example: 28 },
+                  tzOffset: {
+                    type: 'integer',
+                    minimum: -720,
+                    maximum: 840,
+                    description: "Browser's minutes east of UTC, for weekday clustering.",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'The summary, generated or already stored',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: { data: { $ref: '#/components/schemas/ChildSummary' } },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'The child has no records to summarise',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '404': {
+            description: 'Child not found',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '429': {
+            description: 'Daily allowance or installation budget reached',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+
     '/api/v1/screening/questions': {
       get: {
         tags: ['Screening'],

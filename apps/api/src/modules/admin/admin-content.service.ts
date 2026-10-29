@@ -10,8 +10,10 @@ import type {
 } from '@auticare/contracts';
 import type { Activity, ScreeningQuestion } from '@prisma/client';
 import { AppError, forbidden, notFound } from '../../common/errors/app-error.js';
+import { env } from '../../config/env.js';
 import { prisma } from '../../database/prisma.js';
 import { aiClient } from '../ai/ai.client.js';
+import { estimateSpendUsd } from '../ai/ai.pricing.js';
 import { RULES } from '../ai/ai.prompt.js';
 import { auditService } from '../audit/audit.service.js';
 
@@ -253,6 +255,7 @@ export class AdminContentService {
         select: {
           role: true,
           kind: true,
+          model: true,
           latencyMs: true,
           tokensIn: true,
           tokensOut: true,
@@ -263,6 +266,9 @@ export class AdminContentService {
       prisma.knowledgeDocument.count(),
     ]);
     const answers = messages.filter((m) => m.role === 'ASSISTANT');
+    const startOfToday = new Date();
+    startOfToday.setUTCHours(0, 0, 0, 0);
+    const todayAnswers = answers.filter((m) => m.createdAt >= startOfToday);
     const latencies = answers.map((m) => m.latencyMs).filter((n): n is number => n !== null);
     const average = (values: number[]) =>
       values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : null;
@@ -301,6 +307,10 @@ export class AdminContentService {
         questions: value.questions,
         avgLatencyMs: average(value.latencies),
       })),
+      estimatedCostUsd: estimateSpendUsd(answers),
+      todayCostUsd: estimateSpendUsd(todayAnswers),
+      dailyBudgetUsd: env.AI_DAILY_BUDGET_USD,
+      thinkingMode: env.AI_THINKING,
       rules: RULES,
     };
   }

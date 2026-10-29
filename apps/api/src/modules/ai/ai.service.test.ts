@@ -7,6 +7,11 @@ vi.mock('../../database/prisma.js', () => ({
   prisma: { activity: { findMany: activityFindMany } },
 }));
 
+// The spend estimate is stubbed so the budget guard can be tested without a
+// provider price table or a database.
+const { estimateSpendUsd } = vi.hoisted(() => ({ estimateSpendUsd: vi.fn(() => 0) }));
+vi.mock('./ai.pricing.js', () => ({ estimateSpendUsd, warnOnceForUnpricedModel: vi.fn() }));
+
 import type { AiClient } from './ai.client.js';
 import type { GroundingProvider } from './ai.grounding.js';
 import { AiService } from './ai.service.js';
@@ -36,6 +41,7 @@ describe('AiService parent assistant', () => {
 
   beforeEach(() => {
     activityFindMany.mockClear();
+    estimateSpendUsd.mockReturnValue(0);
     providerMessages = [];
     let messageIndex = 0;
     repository = {
@@ -57,14 +63,13 @@ describe('AiService parent assistant', () => {
       setLanguage: vi.fn().mockResolvedValue({}),
       setTitle: vi.fn().mockResolvedValue({}),
       touchConversation: vi.fn().mockResolvedValue({}),
-      findChild: vi
-        .fn()
-        .mockResolvedValue({
-          id: 'child-1',
-          parentId: parent.parentId,
-          dateOfBirth: new Date('2022-01-01T00:00:00Z'),
-        }),
+      findChild: vi.fn().mockResolvedValue({
+        id: 'child-1',
+        parentId: parent.parentId,
+        dateOfBirth: new Date('2022-01-01T00:00:00Z'),
+      }),
       countObservationsSince: vi.fn().mockResolvedValue(4),
+      providerUsageSince: vi.fn().mockResolvedValue([]),
     };
     client = {
       configured: true,
@@ -137,5 +142,30 @@ describe('AiService parent assistant', () => {
     expect(childBackground).not.toContain('questionnaire');
     expect(childBackground).not.toContain('Sophea');
     expect(repository.findChild).toHaveBeenCalledWith('child-1');
+  });
+
+  it('stops new model calls once the day’s estimated spend reaches the budget', async () => {
+    estimateSpendUsd.mockReturnValue(999);
+
+    await expect(
+      service.sendMessage(parent, 'conversation-1', { content: 'What can I try?', language: 'en' }),
+    ).rejects.toMatchObject({ code: 'RATE_LIMITED', statusCode: 429 });
+
+    // Nothing reached the provider, and the parent's words were not stored for
+    // an answer that will never come.
+    expect(client.complete).not.toHaveBeenCalled();
+    expect(repository.createMessage).not.toHaveBeenCalled();
+  });
+
+  it('still answers a crisis message on a day the budget is spent', async () => {
+    estimateSpendUsd.mockReturnValue(999);
+
+    const result = await service.sendMessage(parent, 'conversation-1', {
+      content: 'I want to die',
+      language: 'en',
+    });
+
+    expect(result.assistantMessage.kind).toBe('CRISIS');
+    expect(client.complete).not.toHaveBeenCalled();
   });
 });
