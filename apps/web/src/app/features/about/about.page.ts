@@ -390,27 +390,17 @@ const TEAM = [
         font-weight: 700;
         cursor: pointer;
       }
-      /* Hero: a full-width tinted band, like the landing page hero. */
+      /* Hero: a full-width tinted band. It starts in the header's colour so
+         there is no seam under the nav, and fades to the white page below. */
       .hero {
         position: relative;
         overflow: clip;
         background: linear-gradient(
-          135deg,
-          var(--ac-brand-50) 0%,
-          color-mix(in srgb, var(--ac-brand-50) 55%, var(--ac-color-surface)) 100%
+          180deg,
+          var(--ac-color-background) 0%,
+          var(--ac-color-background) 35%,
+          var(--ac-color-surface) 100%
         );
-      }
-      .hero::before {
-        content: '';
-        position: absolute;
-        top: -140px;
-        left: -120px;
-        width: 380px;
-        height: 380px;
-        border-radius: 50%;
-        background: color-mix(in srgb, var(--ac-brand-mint) 28%, transparent);
-        filter: blur(40px);
-        pointer-events: none;
       }
       .hero-inner {
         position: relative;
