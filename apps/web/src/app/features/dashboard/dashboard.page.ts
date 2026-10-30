@@ -484,7 +484,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
                       : 'Test ' + child.firstName + ' (M-CHAT-R)'
                   "
                 >
-                  <span class="hero-btn-icon" aria-hidden="true">📋</span>
                   <span>{{
                     currentLang() === 'km' ? 'វាយតម្លៃកុមារ (M-CHAT-R)' : 'Test Child (M-CHAT-R)'
                   }}</span>
@@ -542,7 +541,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
                     routerLink="/welcome"
                     [queryParams]="{ childId: child.id, retake: 'true' }"
                   >
-                    <span class="action-icon" aria-hidden="true">📋</span>
                     <span class="action-text">{{
                       currentLang() === 'km' ? 'វាយតម្លៃ M-CHAT-R' : 'M-CHAT-R Screening'
                     }}</span>
@@ -1665,11 +1663,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
         background: var(--ac-brand-700);
         transform: translateY(-1px);
         color: var(--ac-color-white);
-      }
-
-      .hero-btn-icon {
-        font-size: 15px;
-        line-height: 1;
       }
 
       .screening-action-card {
