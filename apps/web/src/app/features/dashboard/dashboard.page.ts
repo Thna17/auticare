@@ -414,62 +414,81 @@ import { I18nService } from '../../core/i18n/i18n.service';
             </div>
 
             @if (selectedChild(); as child) {
-              <div class="care-context-pill-wrapper">
-                <button
-                  type="button"
-                  class="care-context-pill"
-                  (click)="toggleChildDropdown()"
-                  [attr.aria-expanded]="childDropdownOpen()"
+              <div class="care-context-group">
+                <div class="care-context-pill-wrapper">
+                  <button
+                    type="button"
+                    class="care-context-pill"
+                    (click)="toggleChildDropdown()"
+                    [attr.aria-expanded]="childDropdownOpen()"
+                    [attr.aria-label]="
+                      currentLang() === 'km' ? 'កំពុងមើលការថែទាំកុមារ' : 'Viewing care for child'
+                    "
+                  >
+                    <span class="dropdown-item-avatar" aria-hidden="true">{{
+                      childInitials(child)
+                    }}</span>
+                    <span class="care-label">
+                      {{
+                        currentLang() === 'km' ? 'កំពុងមើលការថែទាំសម្រាប់៖ ' : 'Viewing care for: '
+                      }}<strong>{{ child.firstName }}</strong>
+                    </span>
+                    <span class="care-chevron" aria-hidden="true">▼</span>
+                  </button>
+                  @if (childDropdownOpen() && activeChildren().length > 0) {
+                    <div class="care-dropdown-menu" role="menu">
+                      @for (c of activeChildren(); track c.id) {
+                        <button
+                          type="button"
+                          class="care-dropdown-item"
+                          [class.active]="selectedChild()?.id === c.id"
+                          (click)="onSelectChild(c.id); closeChildDropdown()"
+                        >
+                          <span class="dropdown-item-avatar">{{ childInitials(c) }}</span>
+                          <div class="dropdown-item-info">
+                            <strong>{{ childFullName(c) }}</strong>
+                            <small>{{ ageLabel(c.dateOfBirth) }}</small>
+                          </div>
+                          @if (selectedChild()?.id === c.id) {
+                            <span class="dropdown-item-check" aria-hidden="true">✓</span>
+                          }
+                        </button>
+                      }
+                      <div class="dropdown-separator"></div>
+                      <a
+                        [routerLink]="['/children', child.id]"
+                        class="dropdown-add-link"
+                        (click)="closeChildDropdown()"
+                      >
+                        {{ currentLang() === 'km' ? 'បើកប្រវត្តិរូប' : 'Open profile' }}
+                      </a>
+                      <a
+                        routerLink="/children/new"
+                        class="dropdown-add-link"
+                        (click)="closeChildDropdown()"
+                      >
+                        +
+                        {{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add another child' }}
+                      </a>
+                    </div>
+                  }
+                </div>
+
+                <a
+                  class="test-child-hero-btn"
+                  routerLink="/welcome"
+                  [queryParams]="{ childId: child.id, retake: 'true' }"
                   [attr.aria-label]="
-                    currentLang() === 'km' ? 'កំពុងមើលការថែទាំកុមារ' : 'Viewing care for child'
+                    currentLang() === 'km'
+                      ? 'ធ្វើតេស្តវាយតម្លៃ M-CHAT-R សម្រាប់ ' + child.firstName
+                      : 'Test ' + child.firstName + ' (M-CHAT-R)'
                   "
                 >
-                  <span class="dropdown-item-avatar" aria-hidden="true">{{
-                    childInitials(child)
+                  <span class="hero-btn-icon" aria-hidden="true">📋</span>
+                  <span>{{
+                    currentLang() === 'km' ? 'វាយតម្លៃកុមារ (M-CHAT-R)' : 'Test Child (M-CHAT-R)'
                   }}</span>
-                  <span class="care-label">
-                    {{ currentLang() === 'km' ? 'កំពុងមើលការថែទាំសម្រាប់៖ ' : 'Viewing care for: '
-                    }}<strong>{{ child.firstName }}</strong>
-                  </span>
-                  <span class="care-chevron" aria-hidden="true">▼</span>
-                </button>
-                @if (childDropdownOpen() && activeChildren().length > 0) {
-                  <div class="care-dropdown-menu" role="menu">
-                    @for (c of activeChildren(); track c.id) {
-                      <button
-                        type="button"
-                        class="care-dropdown-item"
-                        [class.active]="selectedChild()?.id === c.id"
-                        (click)="onSelectChild(c.id); closeChildDropdown()"
-                      >
-                        <span class="dropdown-item-avatar">{{ childInitials(c) }}</span>
-                        <div class="dropdown-item-info">
-                          <strong>{{ childFullName(c) }}</strong>
-                          <small>{{ ageLabel(c.dateOfBirth) }}</small>
-                        </div>
-                        @if (selectedChild()?.id === c.id) {
-                          <span class="dropdown-item-check" aria-hidden="true">✓</span>
-                        }
-                      </button>
-                    }
-                    <div class="dropdown-separator"></div>
-                    <a
-                      [routerLink]="['/children', child.id]"
-                      class="dropdown-add-link"
-                      (click)="closeChildDropdown()"
-                    >
-                      {{ currentLang() === 'km' ? 'បើកប្រវត្តិរូប' : 'Open profile' }}
-                    </a>
-                    <a
-                      routerLink="/children/new"
-                      class="dropdown-add-link"
-                      (click)="closeChildDropdown()"
-                    >
-                      +
-                      {{ currentLang() === 'km' ? 'បន្ថែមទិន្នន័យកុមារ' : 'Add another child' }}
-                    </a>
-                  </div>
-                }
+                </a>
               </div>
             }
           </header>
@@ -518,6 +537,16 @@ import { I18nService } from '../../core/i18n/i18n.service';
                   {{ currentLang() === 'km' ? 'សកម្មភាពរហ័ស' : 'Quick Actions' }}
                 </h2>
                 <div class="quick-actions-grid">
+                  <a
+                    class="quick-action-card screening-action-card"
+                    routerLink="/welcome"
+                    [queryParams]="{ childId: child.id, retake: 'true' }"
+                  >
+                    <span class="action-icon" aria-hidden="true">📋</span>
+                    <span class="action-text">{{
+                      currentLang() === 'km' ? 'វាយតម្លៃ M-CHAT-R' : 'M-CHAT-R Screening'
+                    }}</span>
+                  </a>
                   <a
                     class="quick-action-card"
                     routerLink="/observations"
@@ -1606,6 +1635,52 @@ import { I18nService } from '../../core/i18n/i18n.service';
         gap: var(--ac-space-3);
         flex-wrap: wrap;
         margin-bottom: var(--ac-space-2);
+      }
+
+      .care-context-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ac-space-3);
+      }
+
+      .test-child-hero-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ac-space-2);
+        padding: 8px 16px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-brand-600);
+        color: var(--ac-color-white);
+        font-size: var(--ac-type-body-sm);
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: none;
+        box-shadow: var(--ac-shadow-xs);
+        transition:
+          background var(--ac-motion-fast),
+          transform var(--ac-motion-fast);
+      }
+
+      .test-child-hero-btn:hover {
+        background: var(--ac-brand-700);
+        transform: translateY(-1px);
+        color: var(--ac-color-white);
+      }
+
+      .hero-btn-icon {
+        font-size: 15px;
+        line-height: 1;
+      }
+
+      .screening-action-card {
+        border-color: var(--ac-brand-200);
+        background: var(--ac-brand-50);
+        color: var(--ac-brand-800);
+      }
+
+      .screening-action-card:hover {
+        background: var(--ac-brand-100);
+        border-color: var(--ac-brand-400);
       }
 
       .care-context-pill-wrapper {

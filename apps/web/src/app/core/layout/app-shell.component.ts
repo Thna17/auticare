@@ -2067,6 +2067,14 @@ export class AppShellComponent {
         title: s.myChildren,
         items: [
           { label: s.myChildren, path: '/children', icon: 'children' },
+          {
+            label:
+              this.currentLang() === 'km'
+                ? 'ការវាយតម្លៃអូទីសឹម (M-CHAT-R)'
+                : 'Autism Screening (M-CHAT-R)',
+            path: '/screening',
+            icon: 'checklist',
+          },
           { label: s.behaviorTracking, path: '/observations', icon: 'report' },
           // Not in the design, but the only way in to enter a school's family code.
           { label: s.mySchools, path: '/connections', icon: 'school' },
@@ -2126,6 +2134,11 @@ export class AppShellComponent {
     }
     return [
       { label: s.overview, path: '/dashboard', icon: 'grid' },
+      {
+        label: this.currentLang() === 'km' ? 'ការវាយតម្លៃ' : 'Screening',
+        path: '/screening',
+        icon: 'checklist',
+      },
       { label: s.aiAssistant, path: '/ai', icon: 'ai' },
       { label: s.documents, path: '/documents', icon: 'checklist' },
       { label: s.profile, path: '/profile', icon: 'person' },

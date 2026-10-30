@@ -18,6 +18,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { findMchatQuestion } from './mchat-questions.data';
 
 @Component({
   standalone: true,
@@ -134,9 +135,10 @@ import { I18nService } from '../../core/i18n/i18n.service';
               <p>
                 <strong>{{ isKm() ? 'ការណែនាំសង្កេត៖' : 'Observational guidance:' }}</strong>
                 {{
-                  isKm()
-                    ? 'សូមពិចារណាលើអាកប្បកិរិយាធម្មជាតិក្នុងប៉ុន្មានសប្តាហ៍ថ្មីៗនេះនៅក្នុងបរិយាកាសផ្ទះដ៏ស្រណុកសុខស្រួល។ គ្មានចម្លើយណាត្រូវឬខុសឡើយ។'
-                    : 'Consider spontaneous behaviors across recent weeks in relaxed home environments. There are no right or wrong answers.'
+                  getMchatExample(question.questionText) ||
+                    (isKm()
+                      ? 'សូមពិចារណាលើអាកប្បកិរិយាធម្មជាតិក្នុងប៉ុន្មានសប្តាហ៍ថ្មីៗនេះនៅក្នុងបរិយាកាសផ្ទះដ៏ស្រណុកសុខស្រួល។ គ្មានចម្លើយណាត្រូវឬខុសឡើយ។'
+                      : 'Consider spontaneous behaviors across recent weeks in relaxed home environments. There are no right or wrong answers.')
                 }}
               </p>
             </div>
@@ -819,8 +821,19 @@ export class ScreeningSessionPage implements OnInit, OnDestroy {
     this.i18n.toggleLanguage();
   }
 
+  getMchatExample(text?: string | null): string | null {
+    if (!text) return null;
+    const def = findMchatQuestion(text);
+    if (!def) return null;
+    return this.isKm() ? def.exampleKm : def.exampleEn;
+  }
+
   getKhmerQuestion(text?: string | null): string {
     if (!text) return '';
+    const mchatDef = findMchatQuestion(text);
+    if (mchatDef?.questionKm) {
+      return mchatDef.questionKm;
+    }
     const map: Record<string, string> = {
       // Toddler & Common Screening Questions
       'Does your child make eye contact when you speak to them?':

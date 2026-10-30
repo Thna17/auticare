@@ -12,7 +12,11 @@ import { API_BASE_URL } from '../../core/config/api.config';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { responseScoreBand, ScreeningResultPage } from './screening-result.page';
 
-TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
+try {
+  TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
+} catch {
+  // Already initialized by test runner
+}
 
 describe('ScreeningResultPage', () => {
   let httpTesting: HttpTestingController;
@@ -79,11 +83,9 @@ describe('ScreeningResultPage', () => {
     httpTesting
       .expectOne('/api/v1/screening/sessions/session_123')
       .flush({ data: makeSession(answerCount) });
-    httpTesting
-      .expectOne('/api/v1/children/child_456')
-      .flush({
-        data: { id: 'child_456', firstName: 'Dara', lastName: 'Sok', dateOfBirth: '2024-01-01' },
-      });
+    httpTesting.expectOne('/api/v1/children/child_456').flush({
+      data: { id: 'child_456', firstName: 'Dara', lastName: 'Sok', dateOfBirth: '2024-01-01' },
+    });
     fixture.detectChanges();
     return fixture;
   };

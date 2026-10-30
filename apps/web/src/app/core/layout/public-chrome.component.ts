@@ -41,13 +41,15 @@ const PUBLIC_CHROME_STYLES = `
         top: 18px;
         z-index: 1000;
         width: 100%;
-        padding: 0 var(--lp-x);
+        /* Keep clear space between the pill and the screen edges. */
+        padding: 0 max(var(--lp-x), clamp(16px, 3vw, 64px));
         background: transparent;
         pointer-events: none;
       }
 
       .nav-shell {
         pointer-events: auto;
+        max-width: 1280px;
         margin: 0 auto;
         height: 70px;
         background: var(--ac-color-surface);

@@ -401,6 +401,149 @@ async function main() {
   // per band — the minimum needed to say something useful without asking an
   // anxious parent to commit to 46 items. Same categories, same polarity rules
   // and the same scoring engine as the long form, so the two stay comparable.
+  // The official 20 questions of the Modified Checklist for Autism in Toddlers,
+  // Revised with Follow-Up (M-CHAT-R/F) — used for the first-run assessment when
+  // a new parent registers, as well as parent dashboard developmental screening.
+  const mchatQuestions = [
+    {
+      questionText:
+        'If you point at something across the room, does your child look at it? (FOR EXAMPLE, if you point at a toy or an animal, does your child look at the toy or animal?)',
+      category: 'Nonverbal Communication',
+      polarity: 'REVERSE' as const,
+      displayOrder: 1,
+    },
+    {
+      questionText: 'Have you ever wondered if your child might be deaf?',
+      category: 'Sensory Response',
+      polarity: 'DIRECT' as const,
+      displayOrder: 2,
+    },
+    {
+      questionText:
+        'Does your child play pretend or make-believe? (FOR EXAMPLE, pretend to drink from an empty cup, pretend to talk on a phone, or pretend to feed a doll or stuffed animal?)',
+      category: 'Play & Imagination',
+      polarity: 'REVERSE' as const,
+      displayOrder: 3,
+    },
+    {
+      questionText:
+        'Does your child like climbing on things? (FOR EXAMPLE, furniture, playground equipment, or stairs)',
+      category: 'Motor & Exploration',
+      polarity: 'REVERSE' as const,
+      displayOrder: 4,
+    },
+    {
+      questionText:
+        'Does your child make unusual finger movements near his or her eyes? (FOR EXAMPLE, does your child wiggle his or her fingers close to his or her eyes?)',
+      category: 'Repetitive Behaviors',
+      polarity: 'DIRECT' as const,
+      displayOrder: 5,
+    },
+    {
+      questionText:
+        'Does your child point with one finger to ask for something or to get help? (FOR EXAMPLE, pointing to a snack or toy that is out of reach)',
+      category: 'Communication',
+      polarity: 'REVERSE' as const,
+      displayOrder: 6,
+    },
+    {
+      questionText:
+        'Does your child point with one finger to show you something interesting? (FOR EXAMPLE, pointing to an airplane in the sky or a big truck in the road)',
+      category: 'Social Interaction',
+      polarity: 'REVERSE' as const,
+      displayOrder: 7,
+    },
+    {
+      questionText:
+        'Is your child interested in other children? (FOR EXAMPLE, does your child watch other children, smile at them, or go to them?)',
+      category: 'Social Interaction',
+      polarity: 'REVERSE' as const,
+      displayOrder: 8,
+    },
+    {
+      questionText:
+        'Does your child show you things by bringing them to you or holding them up for you to see – not to get help, but just to share? (FOR EXAMPLE, showing you a flower, a stuffed animal, or a toy truck)',
+      category: 'Social Interaction',
+      polarity: 'REVERSE' as const,
+      displayOrder: 9,
+    },
+    {
+      questionText:
+        'Does your child respond when you call his or her name? (FOR EXAMPLE, does he or she look up, talk or babble, or stop what he or she is doing when you call his or her name?)',
+      category: 'Social Interaction',
+      polarity: 'REVERSE' as const,
+      displayOrder: 10,
+    },
+    {
+      questionText: 'When you smile at your child, does he or she smile back at you?',
+      category: 'Social Interaction',
+      polarity: 'REVERSE' as const,
+      displayOrder: 11,
+    },
+    {
+      questionText:
+        'Does your child get upset by everyday noises? (FOR EXAMPLE, does your child scream or cry to noise such as a vacuum cleaner or loud music?)',
+      category: 'Sensory Response',
+      polarity: 'DIRECT' as const,
+      displayOrder: 12,
+    },
+    {
+      questionText: 'Does your child walk?',
+      category: 'Motor & Exploration',
+      polarity: 'REVERSE' as const,
+      displayOrder: 13,
+    },
+    {
+      questionText:
+        'Does your child look you in the eye when you are talking to him or her, playing with him or her, or dressing him or her?',
+      category: 'Nonverbal Communication',
+      polarity: 'REVERSE' as const,
+      displayOrder: 14,
+    },
+    {
+      questionText:
+        'Does your child try to copy what you do? (FOR EXAMPLE, wave bye-bye, clap, make a funny noise when you do)',
+      category: 'Communication',
+      polarity: 'REVERSE' as const,
+      displayOrder: 15,
+    },
+    {
+      questionText:
+        'If you turn your head to look at something, does your child look around to see what you are looking at?',
+      category: 'Nonverbal Communication',
+      polarity: 'REVERSE' as const,
+      displayOrder: 16,
+    },
+    {
+      questionText:
+        'Does your child try to get you to watch him or her? (FOR EXAMPLE, does your child look at you for praise, or say “look” or “watch me”?)',
+      category: 'Social Interaction',
+      polarity: 'REVERSE' as const,
+      displayOrder: 17,
+    },
+    {
+      questionText:
+        'Does your child understand when you tell him or her to do something? (FOR EXAMPLE, if you don’t point, can your child understand “put the book on the chair” or “bring me the blanket”?)',
+      category: 'Communication',
+      polarity: 'REVERSE' as const,
+      displayOrder: 18,
+    },
+    {
+      questionText:
+        'If something new happens, does your child look at your face to see how you feel about it? (FOR EXAMPLE, if he or she hears a strange or funny noise, or sees a new toy, will he or she look at your face?)',
+      category: 'Nonverbal Communication',
+      polarity: 'REVERSE' as const,
+      displayOrder: 19,
+    },
+    {
+      questionText:
+        'Does your child like movement activities? (FOR EXAMPLE, being swung or bounced on your knee).',
+      category: 'Motor & Exploration',
+      polarity: 'REVERSE' as const,
+      displayOrder: 20,
+    },
+  ];
+
   const shortAssessmentQuestions: {
     questionText: string;
     category: string;
@@ -409,171 +552,16 @@ async function main() {
     displayOrder: number;
     formKind: 'SHORT';
   }[] = [
-    // ===== TODDLER BAND (10) =====
-    {
-      questionText: 'When you say their name, does your child look at you?',
-      category: 'Social Interaction',
-      ageBand: 'TODDLER',
-      polarity: 'REVERSE',
-      displayOrder: 1,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child point at things they want you to look at?',
-      category: 'Social Interaction',
-      ageBand: 'TODDLER',
-      polarity: 'REVERSE',
-      displayOrder: 2,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child bring things to show you, like a toy or a picture?',
-      category: 'Social Interaction',
-      ageBand: 'TODDLER',
-      polarity: 'REVERSE',
-      displayOrder: 3,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child smile or show pleasure when you play together?',
-      category: 'Social Interaction',
-      ageBand: 'TODDLER',
-      polarity: 'REVERSE',
-      displayOrder: 4,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child use words, sounds or gestures to tell you what they want?',
-      category: 'Communication',
-      ageBand: 'TODDLER',
-      polarity: 'REVERSE',
-      displayOrder: 5,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child copy things you do, like waving or clapping?',
-      category: 'Play & Imagination',
-      ageBand: 'TODDLER',
-      polarity: 'REVERSE',
-      displayOrder: 6,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child play with toys in the way they are meant to be used?',
-      category: 'Play & Imagination',
-      ageBand: 'TODDLER',
-      polarity: 'REVERSE',
-      displayOrder: 7,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child get very upset when a familiar routine changes?',
-      category: 'Flexibility & Routine',
-      ageBand: 'TODDLER',
-      polarity: 'DIRECT',
-      displayOrder: 8,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child cover their ears, or react strongly to everyday sounds?',
-      category: 'Sensory Processing',
-      ageBand: 'TODDLER',
-      polarity: 'DIRECT',
-      displayOrder: 9,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child rock, spin or flap their hands over and over?',
-      category: 'Behaviour Patterns',
-      ageBand: 'TODDLER',
-      polarity: 'DIRECT',
-      displayOrder: 10,
-      formKind: 'SHORT',
-    },
-
-    // ===== PRESCHOOL BAND (10) =====
-    {
-      questionText: 'Does your child hold a back-and-forth conversation with you?',
-      category: 'Communication',
-      ageBand: 'PRESCHOOL',
-      polarity: 'REVERSE',
-      displayOrder: 1,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child understand simple instructions without being shown?',
-      category: 'Communication',
-      ageBand: 'PRESCHOOL',
-      polarity: 'REVERSE',
-      displayOrder: 2,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child play pretend, for example pretending a box is a car?',
-      category: 'Play & Imagination',
-      ageBand: 'PRESCHOOL',
-      polarity: 'REVERSE',
-      displayOrder: 3,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child join other children in play?',
-      category: 'Social Interaction',
-      ageBand: 'PRESCHOOL',
-      polarity: 'REVERSE',
-      displayOrder: 4,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child share things they are excited about with you?',
-      category: 'Social Interaction',
-      ageBand: 'PRESCHOOL',
-      polarity: 'REVERSE',
-      displayOrder: 5,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child look at you to check how you feel in a new situation?',
-      category: 'Social Interaction',
-      ageBand: 'PRESCHOOL',
-      polarity: 'REVERSE',
-      displayOrder: 6,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child become very distressed when plans change unexpectedly?',
-      category: 'Flexibility & Routine',
-      ageBand: 'PRESCHOOL',
-      polarity: 'DIRECT',
-      displayOrder: 7,
-      formKind: 'SHORT',
-    },
-    {
-      questionText:
-        'Does your child insist that things be done in exactly the same way every time?',
-      category: 'Flexibility & Routine',
-      ageBand: 'PRESCHOOL',
-      polarity: 'DIRECT',
-      displayOrder: 8,
-      formKind: 'SHORT',
-    },
-    {
-      questionText:
-        'Does your child react strongly to textures, lights or sounds that other people ignore?',
-      category: 'Sensory Processing',
-      ageBand: 'PRESCHOOL',
-      polarity: 'DIRECT',
-      displayOrder: 9,
-      formKind: 'SHORT',
-    },
-    {
-      questionText: 'Does your child repeat the same phrase or action many times in a row?',
-      category: 'Behaviour Patterns',
-      ageBand: 'PRESCHOOL',
-      polarity: 'DIRECT',
-      displayOrder: 10,
-      formKind: 'SHORT',
-    },
+    ...mchatQuestions.map((q) => ({
+      ...q,
+      ageBand: 'TODDLER' as const,
+      formKind: 'SHORT' as const,
+    })),
+    ...mchatQuestions.map((q) => ({
+      ...q,
+      ageBand: 'PRESCHOOL' as const,
+      formKind: 'SHORT' as const,
+    })),
   ];
 
   // Idempotent "replace": retire any previously seeded questions, delete the ones

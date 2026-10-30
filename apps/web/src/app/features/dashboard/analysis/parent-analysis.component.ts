@@ -30,10 +30,10 @@ const COPY = {
     },
     areas: 'Areas we asked about',
     fullResult: 'See the full result',
-    retake: 'Take the short check-in',
+    retake: 'Retake M-CHAT-R Screening',
     notAssessedTitle: 'You have not done the short check-in yet',
     notAssessedBody:
-      'Ten questions, about three minutes. It gives you a starting point and something to compare against later.',
+      '20 questions, about five minutes. Evaluates Social Communication and Repetitive Behavior markers aligned with DSM-5.',
     patternsTitle: 'What your records add up to',
     patternsEmptyTitle: 'Nothing recorded yet',
     patternsEmptyBody:
@@ -107,10 +107,10 @@ const COPY = {
     },
     areas: 'ផ្នែកដែលយើងបានសួរ',
     fullResult: 'មើលលទ្ធផលពេញលេញ',
-    retake: 'ធ្វើការពិនិត្យខ្លី',
+    retake: 'វាយតម្លៃ M-CHAT-R ម្តងទៀត',
     notAssessedTitle: 'អ្នកមិនទាន់បានធ្វើការពិនិត្យខ្លីទេ',
     notAssessedBody:
-      'សំណួរដប់ ប្រហែលបីនាទី។ វាផ្តល់ឱ្យអ្នកនូវចំណុចចាប់ផ្តើម និងអ្វីដែលអាចប្រៀបធៀបនៅពេលក្រោយ។',
+      'សំណួរចំនួន ២០ ប្រហែល ៥ នាទី។ វាយតម្លៃលើផ្នែកទំនាក់ទំនងសង្គម និងគំរូអាកប្បកិរិយាដដែលៗ ស្របតាមលក្ខណៈវិនិច្ឆ័យ DSM-5។',
     patternsTitle: 'អ្វីដែលកំណត់ត្រារបស់អ្នកបង្ហាញ',
     patternsEmptyTitle: 'មិនទាន់មានកំណត់ត្រាទេ',
     patternsEmptyBody:
@@ -255,13 +255,31 @@ const INSIGHT_DAYS = 28;
               </div>
             }
 
-            <a class="link" [routerLink]="['/screening/result', latest.id]">
-              {{ copy().fullResult }} →
-            </a>
+            <div class="band-actions-row">
+              <a class="link" [routerLink]="['/screening/result', latest.id]">
+                {{ copy().fullResult }} →
+              </a>
+              <a
+                class="link retake-link"
+                routerLink="/welcome"
+                [queryParams]="{ childId: childId(), retake: 'true' }"
+              >
+                {{ copy().retake }} ↺
+              </a>
+            </div>
           } @else {
             <!-- The next-step card above already carries the button. -->
             <h2 id="band-heading">{{ copy().notAssessedTitle }}</h2>
             <p class="band-line">{{ copy().notAssessedBody }}</p>
+            <div class="band-actions-row">
+              <a
+                class="primary-action-btn"
+                routerLink="/welcome"
+                [queryParams]="{ childId: childId(), retake: 'true' }"
+              >
+                {{ copy().retake }} →
+              </a>
+            </div>
           }
         </section>
 
@@ -536,13 +554,48 @@ const INSIGHT_DAYS = 28;
         font-size: 15px;
       }
 
-      .link {
+      .band-actions-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
         margin-top: auto;
-        padding-top: 4px;
+        padding-top: 8px;
+      }
+
+      .link {
         color: var(--a-primary);
         font-weight: 700;
         font-size: 14px;
         text-decoration: none;
+      }
+
+      .retake-link {
+        color: var(--a-muted);
+        font-weight: 600;
+        transition: color var(--ac-motion-fast);
+      }
+
+      .retake-link:hover {
+        color: var(--a-primary);
+      }
+
+      .primary-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: var(--ac-radius-md);
+        background: var(--a-primary);
+        color: var(--ac-color-white);
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        transition: opacity var(--ac-motion-fast);
+      }
+
+      .primary-action-btn:hover {
+        opacity: 0.9;
       }
 
       .link:hover {

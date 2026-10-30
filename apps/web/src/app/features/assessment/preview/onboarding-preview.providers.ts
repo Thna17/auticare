@@ -11,6 +11,7 @@ import type {
 import { delay, of } from 'rxjs';
 import { ChildrenApi } from '../../children/data-access/children.api';
 import { ScreeningApi } from '../../screening/data-access/screening.api';
+import { MCHAT_QUESTIONS_DATA } from '../../screening/mchat-questions.data';
 import { OnboardingState } from '../onboarding-state';
 
 /**
@@ -23,47 +24,12 @@ const now = () => new Date().toISOString();
 /** A short pause so loading states show the way they do against a real API. */
 const LATENCY = 250;
 
-const QUESTIONS: ScreeningQuestionResponse[] = [
-  ['When you say their name, does your child look at you?', 'Social Interaction', 'REVERSE'],
-  ['Does your child point at things they want you to look at?', 'Social Interaction', 'REVERSE'],
-  [
-    'Does your child bring things to show you, like a toy or a picture?',
-    'Social Interaction',
-    'REVERSE',
-  ],
-  [
-    'Does your child smile or show pleasure when you play together?',
-    'Social Interaction',
-    'REVERSE',
-  ],
-  [
-    'Does your child use words, sounds or gestures to tell you what they want?',
-    'Communication',
-    'REVERSE',
-  ],
-  ['Does your child copy things you do, like waving or clapping?', 'Play & Imagination', 'REVERSE'],
-  [
-    'Does your child play with toys in the way they are meant to be used?',
-    'Play & Imagination',
-    'REVERSE',
-  ],
-  [
-    'Does your child get very upset when a familiar routine changes?',
-    'Flexibility & Routine',
-    'DIRECT',
-  ],
-  [
-    'Does your child cover their ears, or react strongly to everyday sounds?',
-    'Sensory Processing',
-    'DIRECT',
-  ],
-  ['Does your child rock, spin or flap their hands over and over?', 'Behaviour Patterns', 'DIRECT'],
-].map(([questionText, category, polarity], index) => ({
-  id: `preview-q${index + 1}`,
-  questionText: questionText as string,
-  category: category as string,
-  displayOrder: index + 1,
-  polarity: polarity as 'DIRECT' | 'REVERSE',
+const QUESTIONS: ScreeningQuestionResponse[] = MCHAT_QUESTIONS_DATA.map((q) => ({
+  id: `preview-q${q.id}`,
+  questionText: q.questionEn,
+  category: q.category,
+  displayOrder: q.id,
+  polarity: q.polarity,
   formKind: 'SHORT' as const,
 }));
 

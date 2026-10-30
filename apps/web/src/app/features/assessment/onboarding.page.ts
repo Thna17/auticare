@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { findMchatQuestion, type MchatQuestionDefinition } from '../screening/mchat-questions.data';
 import type {
   ChildResponse,
   ScreeningQuestionResponse,
@@ -53,17 +54,18 @@ const COPY = {
         years >= 1 ? `${years} years ${months} months old` : `${months} months old`,
     },
     intro: {
-      eyebrow: (name: string) => `${name}'s first check-in`,
-      title: 'A few questions. About three minutes.',
-      body: 'Ten short questions about what you see day to day. There are no right answers, and you can go back to change one.',
+      eyebrow: (name: string) => `${name}'s M-CHAT-R check-in`,
+      title: 'Official M-CHAT-R Screening',
+      body: 'Twenty short questions from the Modified Checklist for Autism in Toddlers (M-CHAT-R). Keep in mind how your child usually behaves day to day.',
       points: [
-        'Ten questions, roughly three minutes',
-        'Answer for the last few weeks, not only today',
-        'You can answer again or skip and come back later',
+        '20 clinical questions, roughly five minutes',
+        'Answer based on how your child usually behaves, not just today',
+        'Evaluates Social Communication (Domain A) and Repetitive Behaviors (Domain B)',
+        'You can answer again or retake anytime from your dashboard',
       ],
       notice:
-        'This gives you an indication of concern. It is not a diagnosis — only a qualified clinician can diagnose autism.',
-      start: 'Start',
+        'This provides a clinical indicator of concern. It is not a formal diagnosis — only a qualified clinician can diagnose autism.',
+      start: 'Start M-CHAT-R screening',
       skip: 'Skip for now',
     },
     questions: {
@@ -146,17 +148,18 @@ const COPY = {
         years >= 1 ? `អាយុ ${years} ឆ្នាំ ${months} ខែ` : `អាយុ ${months} ខែ`,
     },
     intro: {
-      eyebrow: (name: string) => `ការពិនិត្យដំបូងរបស់ ${name}`,
-      title: 'សំណួរពីរបី។ ប្រហែលបីនាទី។',
-      body: 'សំណួរខ្លីៗដប់ អំពីអ្វីដែលអ្នកឃើញជារៀងរាល់ថ្ងៃ។ គ្មានចម្លើយត្រូវ ឬខុសទេ ហើយអ្នកអាចត្រឡប់ក្រោយដើម្បីកែបាន។',
+      eyebrow: (name: string) => `ការវាយតម្លៃ M-CHAT-R របស់ ${name}`,
+      title: 'ការវាយតម្លៃអូទីសឹមផ្លូវការ M-CHAT-R',
+      body: 'សំណួរខ្លីៗចំនួន ២០ ពីតារាងត្រួតពិនិត្យអូទីសឹមកុមារកម្រិតស្រាល (M-CHAT-R)។ សូមគិតអំពីអាកប្បកិរិយាធម្មតារបស់កូនអ្នកជារៀងរាល់ថ្ងៃ។',
       points: [
-        'សំណួរដប់ ប្រហែលបីនាទី',
-        'ឆ្លើយសម្រាប់រយៈពេលប៉ុន្មានសប្តាហ៍ចុងក្រោយ មិនមែនតែថ្ងៃនេះទេ',
-        'អ្នកអាចឆ្លើយម្តងទៀត ឬរំលង ហើយត្រឡប់មកវិញនៅពេលក្រោយ',
+        'សំណួរចំនួន ២០ ប្រហែល ៥ នាទី',
+        'ឆ្លើយដោយផ្អែកលើអាកប្បកិរិយាធម្មតារបស់កូនអ្នក មិនមែនតែថ្ងៃនេះទេ',
+        'វាយតម្លៃផ្នែកទំនាក់ទំនងសង្គម (ដែន A) និងគំរូអាកប្បកិរិយាដដែលៗ (ដែន B)',
+        'អ្នកអាចឆ្លើយម្តងទៀតនៅពេលណាក៏បានពីផ្ទាំងគ្រប់គ្រងរបស់អ្នក',
       ],
       notice:
-        'នេះជាការបង្ហាញពីកម្រិតនៃការព្រួយបារម្ភ។ វាមិនមែនជាការធ្វើរោគវិនិច្ឆ័យទេ — មានតែគ្រូពេទ្យជំនាញប៉ុណ្ណោះដែលអាចធ្វើរោគវិនិច្ឆ័យអូទីសឹមបាន។',
-      start: 'ចាប់ផ្តើម',
+        'នេះជាការបង្ហាញពីកម្រិតនៃការព្រួយបារម្ភផ្នែកគ្លីនិក។ វាមិនមែនជាការធ្វើរោគវិនិច្ឆ័យទេ — មានតែគ្រូពេទ្យជំនាញប៉ុណ្ណោះដែលអាចធ្វើរោគវិនិច្ឆ័យអូទីសឹមបាន។',
+      start: 'ចាប់ផ្តើមការវាយតម្លៃ M-CHAT-R',
       skip: 'រំលងសិន',
     },
     questions: {
@@ -228,6 +231,25 @@ const COPY = {
  * answers live in memory until submit. Splitting it into routes would mean
  * persisting a half-finished draft or losing it on a refresh.
  */
+export const MCHAT_SCALE: readonly AnswerScaleOption[] = [
+  {
+    label: 'Yes',
+    labelEn: 'Yes',
+    labelKm: 'បាទ / ចាស (Yes)',
+    value: 4,
+    description: 'Usually, consistently, or observed as expected',
+    descriptionKm: 'កើតឡើងជាប្រចាំ ឬស្ទើរតែគ្រប់ពេលវេលា',
+  },
+  {
+    label: 'No',
+    labelKm: 'ទេ (No)',
+    labelEn: 'No',
+    value: 0,
+    description: 'Rarely, inconsistently, or never observed',
+    descriptionKm: 'កម្រ ឬមិនដែលសង្កេតឃើញទាល់តែសោះ',
+  },
+];
+
 @Component({
   standalone: true,
   imports: [
@@ -375,7 +397,19 @@ const COPY = {
           <!-- ── Step 3: the questions ─────────────────────────────────────── -->
           @if (step() === 'questions' && currentQuestion(); as question) {
             <section class="question-step" aria-labelledby="question-title">
-              <h1 id="question-title" class="question">{{ question.questionText }}</h1>
+              @if (localizedDomainTag(question); as tag) {
+                <div class="question-domain-badge">
+                  <span class="domain-pill">{{ tag.domain }}</span>
+                  <span class="subdomain-pill">{{ tag.subDomain }}</span>
+                </div>
+              }
+              <h1 id="question-title" class="question">{{ localizedQuestionText(question) }}</h1>
+              @if (localizedExample(question); as example) {
+                <p class="question-example">
+                  <span class="example-icon" aria-hidden="true">💡</span>
+                  <span>{{ example }}</span>
+                </p>
+              }
               <p class="hint">{{ copy().questions.hint }}</p>
 
               <div class="options" role="radiogroup" aria-labelledby="question-title">
@@ -390,7 +424,12 @@ const COPY = {
                       (change)="answer(option.value)"
                     />
                     <span class="radio" aria-hidden="true"></span>
-                    <span class="option-label">{{ optionLabel(option) }}</span>
+                    <div class="option-text">
+                      <span class="option-label">{{ optionLabel(option) }}</span>
+                      @if (optionDescription(option); as desc) {
+                        <span class="option-desc">{{ desc }}</span>
+                      }
+                    </div>
                   </label>
                 }
               </div>
@@ -833,6 +872,64 @@ const COPY = {
         margin-top: 20px;
       }
 
+      .question-domain-badge {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .domain-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-brand-100);
+        color: var(--ac-brand-800);
+      }
+
+      .subdomain-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface-info);
+        color: var(--ac-color-info-text);
+      }
+
+      .question-example {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 12px 0 6px;
+        padding: 10px 14px;
+        font-size: 14px;
+        line-height: 1.5;
+        border-radius: 8px;
+        background: var(--ac-color-surface-raised);
+        border-left: 3px solid var(--ac-color-action);
+        color: var(--ac-color-text-body);
+      }
+
+      .option-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .option-desc {
+        font-size: 13px;
+        font-weight: 400;
+        color: var(--ac-color-text-muted);
+        line-height: 1.4;
+      }
+
       .option {
         position: relative;
         display: flex;
@@ -1157,13 +1254,48 @@ const COPY = {
 export class OnboardingPage implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
   private readonly childrenApi = inject(ChildrenApi);
   private readonly screeningApi = inject(ScreeningApi);
   private readonly onboarding = inject(OnboardingState);
 
-  /** Never … Always, the same 0–4 scale as the full screening. */
-  protected readonly scale = defaultAnswerScale;
+  /** M-CHAT-R binary Yes / No scale with clinical descriptions. */
+  protected readonly scale = MCHAT_SCALE;
+
+  protected optionDescription(option: AnswerScaleOption): string {
+    return this.i18n.currentLang() === 'km'
+      ? (option.descriptionKm ?? option.description ?? '')
+      : (option.description ?? '');
+  }
+
+  protected localizedQuestionText(question: ScreeningQuestionResponse | null): string {
+    if (!question) return '';
+    if (this.currentLang() === 'km') {
+      const def = findMchatQuestion(question.questionText);
+      return def?.questionKm ?? question.questionText;
+    }
+    return question.questionText;
+  }
+
+  protected localizedExample(question: ScreeningQuestionResponse | null): string | null {
+    if (!question) return null;
+    const def = findMchatQuestion(question.questionText);
+    if (!def) return null;
+    return this.currentLang() === 'km' ? def.exampleKm : def.exampleEn;
+  }
+
+  protected localizedDomainTag(
+    question: ScreeningQuestionResponse | null,
+  ): { domain: string; subDomain: string } | null {
+    if (!question) return null;
+    const def = findMchatQuestion(question.questionText);
+    if (!def) return null;
+    return {
+      domain: this.currentLang() === 'km' ? def.domainNameKm : def.domainNameEn,
+      subDomain: this.currentLang() === 'km' ? def.subDomainKm : def.subDomainEn,
+    };
+  }
 
   protected optionLabel(option: AnswerScaleOption): string {
     return this.i18n.currentLang() === 'km'
@@ -1227,14 +1359,24 @@ export class OnboardingPage implements OnInit {
   );
 
   ngOnInit(): void {
+    const targetChildId = this.route.snapshot.queryParamMap.get('childId');
+    const shouldRetake = this.route.snapshot.queryParamMap.get('retake') === 'true';
+
     // A parent who already has a child goes straight to the explanation. The
     // child step exists only because nothing else in the app works without one.
     this.childrenApi.listChildren().subscribe({
       next: (children) => {
-        const existing = children[0];
+        let existing = targetChildId ? children.find((c) => c.id === targetChildId) : children[0];
+        if (!existing && children.length > 0) {
+          existing = children[0];
+        }
         if (existing) {
           this.child.set(existing);
           this.step.set('intro');
+          if (shouldRetake) {
+            this.answers.set({});
+            this.index.set(0);
+          }
         }
       },
       error: () => {

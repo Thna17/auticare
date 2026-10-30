@@ -66,21 +66,21 @@ describe('OnboardingPage questions', () => {
     );
   });
 
-  it('lists the five answers as radio rows and waits for a choice', () => {
+  it('lists the M-CHAT-R binary answers as radio rows and waits for a choice', () => {
     const { el } = setup();
     expect(el.querySelector('#question-title')?.textContent?.trim()).toBe(
       'Does your child point at things?',
     );
     const radios = el.querySelectorAll<HTMLInputElement>('.option input[type="radio"]');
-    expect(radios).toHaveLength(5);
+    expect(radios).toHaveLength(2);
     expect(el.querySelector<HTMLButtonElement>('.round.next')?.disabled).toBe(true);
     expect(el.querySelector('.step-label')?.textContent?.trim()).toBe('Question 1 of 2');
   });
 
   it('marks the chosen row and moves on with the next button', () => {
     const { fixture, el } = setup();
-    const third = el.querySelectorAll<HTMLInputElement>('.option input')[2]!;
-    third.click();
+    const first = el.querySelectorAll<HTMLInputElement>('.option input')[0]!;
+    first.click();
     fixture.detectChanges();
     expect(el.querySelectorAll('.option.selected')).toHaveLength(1);
 
