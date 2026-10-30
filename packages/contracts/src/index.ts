@@ -269,6 +269,10 @@ export const hospitalResponseSchema = z.object({
   city: z.string(),
   address: z.string(),
   services: z.string(),
+  // Public directory details; null when the hospital has not provided them.
+  description: z.string().nullable(),
+  phone: z.string().nullable(),
+  website: z.string().nullable(),
   isFavorite: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -523,6 +527,7 @@ export type SchoolListResponse = z.infer<typeof schoolListResponseSchema>;
 // (login credentials live on the Parent/SchoolStaff records, never here).
 export const schoolDetailResponseSchema = schoolResponseSchema.extend({
   email: z.string().nullable(),
+  phone: z.string().nullable(),
   website: z.string().nullable(),
   admissionRequirements: z.string().nullable(),
   operatingHours: z.string().nullable(),

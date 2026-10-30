@@ -743,7 +743,8 @@ export class FindSupportPage implements OnInit {
     this.error.set(null);
 
     forkJoin({
-      schools: this.schoolsApi.listSchools(),
+      // The directory shows every school on one page; 100 is the API's maximum.
+      schools: this.schoolsApi.listSchools({ limit: 100 }),
       hospitals: this.hospitalsApi.listHospitals(),
     }).subscribe({
       next: ({ schools, hospitals }) => {

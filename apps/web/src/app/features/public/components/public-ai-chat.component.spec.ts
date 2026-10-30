@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // @vitest-environment jsdom
 import '@angular/compiler';
 import { provideHttpClient } from '@angular/common/http';

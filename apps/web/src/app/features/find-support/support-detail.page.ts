@@ -801,7 +801,7 @@ export class SupportDetailPage implements OnInit {
                 ? school.specializations
                 : ['Inclusive Education', 'Sensory Support', 'Speech & Social Programs'],
             ageGroups: school.waitlistEstimate ? `Waitlist: ${school.waitlistEstimate}` : null,
-            phone: null,
+            phone: school.phone ?? null,
             email: school.email,
             website: school.website,
             isVerified: Boolean(school.isVerified),
@@ -831,12 +831,13 @@ export class SupportDetailPage implements OnInit {
             city: hospital.city,
             address: hospital.address,
             description:
+              hospital.description ||
               'Healthcare facility offering pediatric medical assessments, diagnostics, and family consultations.',
             services: serviceList,
             ageGroups: null,
-            phone: null,
+            phone: hospital.phone ?? null,
             email: null,
-            website: null,
+            website: hospital.website ?? null,
             isVerified: false,
             isFavorite: Boolean((hospital as { isFavorite?: boolean }).isFavorite),
           });

@@ -17,6 +17,7 @@ describe('SupportDetailPage', () => {
     name: 'Hope Bridge Academy',
     city: 'Phnom Penh',
     address: '77 Norodom Blvd',
+    phone: null,
     description: 'Inclusive education center.',
     logoUrl: null,
     coverImageUrl: null,

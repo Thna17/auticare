@@ -582,6 +582,37 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
               </div>
             </div>
 
+            @if (getSafetyNote(selected.activity); as safety) {
+              <div class="modal-section">
+                <h3 class="section-title">
+                  {{ currentLang() === 'km' ? 'សុវត្ថិភាព' : 'Safety' }}
+                </h3>
+                <p class="section-summary">{{ safety }}</p>
+              </div>
+            }
+
+            @if (getVideoUrl(selected.activity); as videoUrl) {
+              <div class="modal-section">
+                <h3 class="section-title">
+                  {{ currentLang() === 'km' ? 'វីដេអូបង្ហាញ' : 'Watch how it is done' }}
+                </h3>
+                <p class="section-hint">
+                  {{
+                    currentLang() === 'km'
+                      ? 'វីដេអូនេះជាភាសាអង់គ្លេស ហើយបើកនៅលើ YouTube។'
+                      : 'This video is in English and opens on YouTube.'
+                  }}
+                </p>
+                <a class="video-link" [href]="videoUrl" target="_blank" rel="noopener noreferrer">
+                  {{
+                    currentLang() === 'km'
+                      ? 'មើលវីដេអូ (បើកក្នុងផ្ទាំងថ្មី)'
+                      : 'Watch the video (opens in a new tab)'
+                  }}
+                </a>
+              </div>
+            }
+
             <!-- Completion & Progress Action -->
             <div class="modal-section completion-section">
               <h3 class="section-title">
@@ -1325,6 +1356,29 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         color: var(--ac-color-text-muted);
       }
 
+      .video-link {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 18px;
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+      }
+
+      .video-link:hover {
+        background: var(--ac-color-action-deep);
+      }
+
+      .video-link:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
+      }
+
       /* Materials Checklist */
       .materials-list {
         display: grid;
@@ -1844,6 +1898,8 @@ export class ActivitiesPage implements OnInit {
   }
 
   getDuration(activity: ActivityResponse): string {
+    const minutes = findCambodianActivity(activity)?.durationMinutes;
+    if (minutes !== undefined) return `${minutes}m`;
     const title = activity.title.toLowerCase();
     if (title.includes('quick') || title.includes('card') || title.includes('mirror')) {
       return '15m';
@@ -1864,6 +1920,16 @@ export class ActivitiesPage implements OnInit {
       return `${minutes} នាទី`;
     }
     return d;
+  }
+
+  getVideoUrl(activity: ActivityResponse): string | null {
+    return findCambodianActivity(activity)?.videoUrl ?? null;
+  }
+
+  getSafetyNote(activity: ActivityResponse): string | null {
+    const cambodian = findCambodianActivity(activity);
+    const note = this.currentLang() === 'km' ? cambodian?.safetyKm : cambodian?.safetyEn;
+    return note ?? null;
   }
 
   getActivityTitle(activity: ActivityResponse): string {

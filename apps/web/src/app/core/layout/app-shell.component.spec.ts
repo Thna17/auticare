@@ -585,6 +585,10 @@ describe('AppShellComponent', () => {
 
   it('renders accessible language toggle pill in topbar and toggles between Khmer and English', () => {
     const el = fixture.nativeElement as HTMLElement;
+    const profileBtn = el.querySelector('.profile-chip') as HTMLButtonElement;
+    profileBtn.click();
+    fixture.detectChanges();
+
     const toggleBtn = el.querySelector('.topbar-lang-toggle') as HTMLButtonElement;
     expect(toggleBtn).toBeTruthy();
     expect(toggleBtn.textContent).toContain('ភាសាខ្មែរ');

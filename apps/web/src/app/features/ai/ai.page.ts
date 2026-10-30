@@ -2,12 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  ElementRef,
   inject,
   signal,
   ViewChild,
 } from '@angular/core';
-import type { OnInit } from '@angular/core';
+import type { ElementRef, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
 import type {
@@ -21,7 +20,6 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { ChildrenApi } from '../children/data-access/children.api';
 import { AiApi } from './data-access/ai.api';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
-import { GuidanceBrowserComponent } from '../guidance/guidance-browser.component';
 
 type AssistantTab = 'chat' | 'saved';
 
@@ -33,10 +31,10 @@ const COPY = {
       'About your child, about autism, about what to do tonight. Answers are general guidance, never a diagnosis.',
     chatTab: 'Chat',
     savedTab: 'Saved answers',
-    placeholder: 'Type your question…',
+    placeholder: 'Ask anything…',
     send: 'Send',
     sending: 'Thinking…',
-    newConversation: 'New conversation',
+    newConversation: 'New chat',
     history: 'Earlier conversations',
     noHistory: 'No earlier conversations yet.',
     suggestions: [
@@ -86,7 +84,7 @@ const COPY = {
       'អំពីកូនរបស់អ្នក អំពីអូទីសឹម អំពីអ្វីដែលត្រូវធ្វើនៅយប់នេះ។ ចម្លើយជាការណែនាំទូទៅ មិនមែនជាការវិនិច្ឆ័យរោគឡើយ។',
     chatTab: 'ការសន្ទនា',
     savedTab: 'ចម្លើយដែលបានរក្សាទុក',
-    placeholder: 'វាយបញ្ចូលសំណួររបស់អ្នក…',
+    placeholder: 'សួរសំណួរណាមួយ…',
     send: 'ផ្ញើ',
     sending: 'កំពុងគិត…',
     newConversation: 'ការសន្ទនាថ្មី',
@@ -134,583 +132,948 @@ const COPY = {
   },
 };
 
-/**
- * The assistant tab.
- *
- * Three things are visible by design rather than hidden in a settings screen:
- * the daily allowance, the standing "we do not diagnose" line, and the sources an
- * answer drew on. A parent trusting this most is exactly why it should show its
- * own limits.
- */
 @Component({
+  selector: 'ac-ai-page',
   standalone: true,
-  imports: [RouterLink, SlicePipe, UiSpinnerComponent, GuidanceBrowserComponent],
+  imports: [RouterLink, SlicePipe, UiSpinnerComponent],
   template: `
-    <header class="page-head">
-      <div>
-        <p class="eyebrow">{{ copy().eyebrow }}</p>
-        <h1>{{ copy().title }}</h1>
-        <p class="subtitle">{{ copy().subtitle }}</p>
+    <!-- Modern Minimalist Chat Topbar (Aligned with 1200px column) -->
+    <header class="chat-header">
+      <div class="chat-header-left">
+        <span class="ai-spark-badge" aria-hidden="true">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93" />
+          </svg>
+        </span>
+        <span class="chat-header-title">AutiCare AI</span>
+        @if (status()?.model; as model) {
+          <span class="model-badge">{{ model }}</span>
+        }
       </div>
-      <div class="head-actions">
-        @if (conversation() && activeTab() === 'chat') {
-          <button type="button" class="ghost" (click)="startNew()">
-            {{ copy().newConversation }}
+
+      <div class="chat-header-right">
+        <!-- Tab Switcher: Chat / Saved -->
+        <div class="header-nav-pills" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            class="nav-pill"
+            [class.active]="activeTab() === 'chat'"
+            [attr.aria-selected]="activeTab() === 'chat'"
+            (click)="setTab('chat')"
+            [attr.aria-label]="copy().chatTab"
+            [title]="copy().chatTab"
+          >
+            <svg
+              class="pill-icon"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="pill-label">{{ copy().chatTab }}</span>
           </button>
-          <button type="button" class="ghost" (click)="clearConversation()" [disabled]="sending()">
-            {{ copy().deleteConversation }}
+          <button
+            type="button"
+            role="tab"
+            class="nav-pill"
+            [class.active]="activeTab() === 'saved'"
+            [attr.aria-selected]="activeTab() === 'saved'"
+            (click)="setTab('saved')"
+            [attr.aria-label]="copy().savedTab"
+            [title]="copy().savedTab"
+          >
+            <svg
+              class="pill-icon"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="pill-label">{{ copy().savedTab }}</span>
+            <span class="pill-count">({{ savedMessages().length }})</span>
+          </button>
+        </div>
+
+        @if (activeTab() === 'chat' && (conversation() || messages().length > 0)) {
+          <button
+            type="button"
+            class="btn-new-chat"
+            (click)="startNew()"
+            [title]="copy().newConversation"
+            [attr.aria-label]="copy().newConversation"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span class="btn-new-chat-text">{{ copy().newConversation }}</span>
           </button>
         }
       </div>
     </header>
 
-    <!-- Tab navigation -->
-    <div class="tabs-bar" role="tablist">
-      <button
-        type="button"
-        role="tab"
-        class="tab-btn"
-        [class.active]="activeTab() === 'chat'"
-        [attr.aria-selected]="activeTab() === 'chat'"
-        (click)="setTab('chat')"
-      >
-        💬 {{ copy().chatTab }}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        class="tab-btn"
-        [class.active]="activeTab() === 'saved'"
-        [attr.aria-selected]="activeTab() === 'saved'"
-        (click)="setTab('saved')"
-      >
-        ⭐ {{ copy().savedTab }} ({{ savedMessages().length }})
-      </button>
-    </div>
-
     @if (activeTab() === 'saved') {
-      <section class="saved-section" aria-label="Saved Answers">
-        @if (loadingSaved()) {
-          <ac-ui-spinner [label]="copy().sending" />
-        } @else if (savedMessages().length === 0) {
-          <div class="saved-empty">
-            <h3>{{ copy().savedEmptyTitle }}</h3>
-            <p>{{ copy().savedEmptyBody }}</p>
+      <!-- Saved Answers View -->
+      <section class="saved-viewport" aria-label="Saved Answers">
+        <div class="saved-inner">
+          <div class="saved-header-row">
+            <h2>{{ copy().savedTab }}</h2>
+            <button type="button" class="back-to-chat-btn" (click)="setTab('chat')">
+              ← {{ copy().chatTab }}
+            </button>
           </div>
-        } @else {
-          <div class="saved-list">
-            @for (item of savedMessages(); track item.id) {
-              <article class="saved-card">
-                <div class="saved-card-head">
-                  <span class="saved-time">{{ item.createdAt | slice: 0 : 10 }}</span>
-                  <button type="button" class="unsave-btn" (click)="unsave(item)">
-                    ★ {{ copy().savedAnswer }}
-                  </button>
-                </div>
-                <p class="saved-content">{{ item.content }}</p>
-              </article>
-            }
-          </div>
-        }
+
+          @if (loadingSaved()) {
+            <div class="center-spinner">
+              <ac-ui-spinner [label]="copy().sending" />
+            </div>
+          } @else if (savedMessages().length === 0) {
+            <div class="saved-empty">
+              <h3>{{ copy().savedEmptyTitle }}</h3>
+              <p>{{ copy().savedEmptyBody }}</p>
+            </div>
+          } @else {
+            <div class="saved-list">
+              @for (item of savedMessages(); track item.id) {
+                <article class="saved-card">
+                  <div class="saved-card-head">
+                    <span class="saved-time">{{ item.createdAt | slice: 0 : 10 }}</span>
+                    <button type="button" class="unsave-btn" (click)="unsave(item)">
+                      {{ copy().savedAnswer }}
+                    </button>
+                  </div>
+                  <p class="saved-content">{{ item.content }}</p>
+                </article>
+              }
+            </div>
+          }
+        </div>
       </section>
     } @else {
       @if (status(); as state) {
         @if (!state.configured) {
-          <section class="setup" role="status">
-            <h2>{{ copy().notConfiguredTitle }}</h2>
-            <p>{{ copy().notConfiguredBody }}</p>
-          </section>
-        } @else {
-          <div class="status-bar">
-            <p class="usage">{{ copy().usage(state.usedToday, state.dailyLimit) }}</p>
-            @if (children().length > 0) {
-              <label class="context-toggle">
-                <input
-                  type="checkbox"
-                  [checked]="includeChildContext()"
-                  (change)="includeChildContext.set(!includeChildContext())"
-                />
-                <span
-                  >{{ copy().childContextToggle }} ({{ childName() }})<small>{{
-                    copy().childContextHint
-                  }}</small></span
-                >
-              </label>
-            }
-          </div>
-        }
-      }
-
-      @if (conversations().length > 0) {
-        <details class="history">
-          <summary>{{ copy().history }}</summary>
-          <ul>
-            @for (item of conversations(); track item.id) {
-              <li>
-                <button type="button" class="history-item" (click)="open(item.id)">
-                  <span class="history-title">{{ item.title }}</span>
-                  <span class="history-count">{{ item.messageCount }}</span>
-                </button>
-              </li>
-            }
-          </ul>
-        </details>
-      }
-
-      <section #thread class="thread" aria-live="polite">
-        @if (loading()) {
-          <ac-ui-spinner [label]="copy().sending" />
-        } @else if (messages().length === 0) {
-          <div class="intro">
-            <p class="suggestions-label">{{ copy().suggestionsLabel }}</p>
-            <div class="suggestions">
-              @for (suggestion of copy().suggestions; track suggestion) {
-                <button
-                  type="button"
-                  class="suggestion"
-                  [disabled]="sending()"
-                  (click)="ask(suggestion)"
-                >
-                  {{ suggestion }}
-                </button>
-              }
-            </div>
+          <div class="setup-wrapper">
+            <section class="setup-card" role="status">
+              <h2>{{ copy().notConfiguredTitle }}</h2>
+              <p>{{ copy().notConfiguredBody }}</p>
+            </section>
           </div>
         } @else {
-          @for (message of messages(); track message.id) {
-            @if (message.role === 'USER') {
-              <div class="bubble user">
-                <p>{{ message.content }}</p>
-              </div>
-            } @else {
-              <div class="bubble assistant" [class.crisis]="message.kind === 'CRISIS'">
-                @if (message.kind === 'CRISIS') {
-                  <p class="kind-label">{{ copy().crisisTitle }}</p>
-                }
-                <p class="answer">{{ message.content }}</p>
-
-                @if (message.kind === 'CRISIS') {
-                  <a class="crisis-link" routerLink="/crisis">{{ copy().crisisLink }}</a>
-                }
-                @if (message.kind === 'MEDICATION') {
-                  <span class="badge">{{ copy().medicationBadge }}</span>
-                }
-                @if (message.sources.length > 0) {
-                  <div class="sources">
-                    <p class="sources-label">{{ copy().sources }}</p>
-                    <ul>
-                      @for (source of message.sources; track source.url) {
-                        <li>
-                          <a [href]="source.url" target="_blank" rel="noopener noreferrer">
-                            {{ source.title }}
-                          </a>
-                          <span class="publisher">• {{ source.publisher }}</span>
-                        </li>
-                      }
-                    </ul>
+          <!-- Chat Message Thread (Spacious, fills 1200px viewport) -->
+          <main #thread class="chat-viewport" aria-live="polite">
+            <div class="chat-viewport-inner">
+              @if (loading()) {
+                <div class="center-spinner">
+                  <ac-ui-spinner [label]="copy().sending" />
+                </div>
+              } @else if (messages().length === 0) {
+                <!-- Empty State Hero: ChatGPT / Gemini Style -->
+                <div class="empty-chat-hero">
+                  <div class="empty-hero-icon" aria-hidden="true">
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93" />
+                    </svg>
                   </div>
-                }
+                  <h1 class="empty-hero-title">{{ copy().title }}</h1>
+                  <p class="empty-hero-subtitle">{{ copy().subtitle }}</p>
 
-                <!-- Related Activities -->
-                @if (message.relatedActivities && message.relatedActivities.length > 0) {
-                  <div class="related-activities">
-                    <p class="rel-label">{{ copy().relatedActivities }}</p>
-                    <div class="rel-grid">
-                      @for (act of message.relatedActivities; track act.id) {
-                        <div class="rel-card">
-                          <span class="rel-cat">{{ act.category }}</span>
-                          <h4 class="rel-title">{{ act.title }}</h4>
-                          @if (act.description) {
-                            <p class="rel-desc">{{ act.description }}</p>
-                          }
-                          <a routerLink="/activities" class="rel-link"
-                            >{{ copy().viewActivity }} →</a
+                  <div class="suggestions-grid">
+                    @for (suggestion of copy().suggestions; track suggestion) {
+                      <button
+                        type="button"
+                        class="suggestion-card"
+                        [disabled]="sending()"
+                        (click)="ask(suggestion)"
+                      >
+                        <span class="suggestion-text">{{ suggestion }}</span>
+                        <span class="suggestion-arrow" aria-hidden="true">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
                           >
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
-
-                <!-- Message Actions: Save & Feedback -->
-                <div class="msg-footer">
-                  <button
-                    type="button"
-                    class="save-msg-btn"
-                    (click)="copyResponse(message)"
-                    [attr.aria-label]="
-                      copiedMessageId() === message.id ? copy().copiedResponse : copy().copyResponse
-                    "
-                  >
-                    {{
-                      copiedMessageId() === message.id ? copy().copiedResponse : copy().copyResponse
-                    }}
-                  </button>
-                  <button
-                    type="button"
-                    class="save-msg-btn"
-                    [class.saved]="!!message.savedAt"
-                    (click)="toggleSave(message)"
-                    [attr.aria-label]="message.savedAt ? copy().savedAnswer : copy().saveAnswer"
-                  >
-                    {{ message.savedAt ? '★ ' + copy().savedAnswer : '☆ ' + copy().saveAnswer }}
-                  </button>
-
-                  <div class="feedback-group">
-                    <button
-                      type="button"
-                      class="fb-btn"
-                      [class.active]="message.feedback === 'HELPFUL'"
-                      (click)="sendFeedback(message, 'HELPFUL')"
-                      [attr.aria-label]="copy().helpful"
-                    >
-                      👍 {{ copy().helpful }}
-                    </button>
-                    <button
-                      type="button"
-                      class="fb-btn"
-                      [class.active]="message.feedback === 'NOT_HELPFUL'"
-                      (click)="sendFeedback(message, 'NOT_HELPFUL')"
-                      [attr.aria-label]="copy().notHelpful"
-                    >
-                      👎 {{ copy().notHelpful }}
-                    </button>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                          </svg>
+                        </span>
+                      </button>
+                    }
                   </div>
                 </div>
+              } @else {
+                <!-- Messages List -->
+                <div class="messages-list">
+                  @for (message of messages(); track message.id) {
+                    @if (message.role === 'USER') {
+                      <div class="message-row user-row">
+                        <div class="user-bubble">
+                          <p>{{ message.content }}</p>
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="message-row assistant-row">
+                        <div class="assistant-avatar" aria-hidden="true">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path
+                              d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"
+                            />
+                          </svg>
+                        </div>
+                        <div class="assistant-body">
+                          <div class="assistant-name-bar">
+                            <span class="assistant-name">AutiCare Assistant</span>
+                          </div>
+
+                          @if (message.kind === 'CRISIS') {
+                            <div class="crisis-card">
+                              <p class="crisis-title">{{ copy().crisisTitle }}</p>
+                              <a class="crisis-link" routerLink="/crisis"
+                                >{{ copy().crisisLink }} →</a
+                              >
+                            </div>
+                          }
+
+                          <div class="assistant-content">
+                            {{ message.content }}
+                          </div>
+
+                          @if (message.kind === 'MEDICATION') {
+                            <div class="med-badge-row">
+                              <span class="medication-badge">{{ copy().medicationBadge }}</span>
+                            </div>
+                          }
+
+                          @if (message.sources.length > 0) {
+                            <div class="sources-card">
+                              <p class="sources-title">{{ copy().sources }}</p>
+                              <ul class="sources-list">
+                                @for (source of message.sources; track source.url) {
+                                  <li>
+                                    <a
+                                      [href]="source.url"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {{ source.title }}
+                                    </a>
+                                    <span class="publisher">· {{ source.publisher }}</span>
+                                  </li>
+                                }
+                              </ul>
+                            </div>
+                          }
+
+                          @if (message.relatedActivities && message.relatedActivities.length > 0) {
+                            <div class="related-activities-section">
+                              <p class="rel-title-label">{{ copy().relatedActivities }}</p>
+                              <div class="rel-grid">
+                                @for (act of message.relatedActivities; track act.id) {
+                                  <div class="rel-card">
+                                    <span class="rel-cat">{{ act.category }}</span>
+                                    <h4 class="rel-name">{{ act.title }}</h4>
+                                    @if (act.description) {
+                                      <p class="rel-desc">{{ act.description }}</p>
+                                    }
+                                    <a routerLink="/activities" class="rel-link"
+                                      >{{ copy().viewActivity }} →</a
+                                    >
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          }
+
+                          <!-- Action Toolbar -->
+                          <div class="assistant-toolbar">
+                            <button
+                              type="button"
+                              class="tool-btn"
+                              (click)="copyResponse(message)"
+                              [attr.aria-label]="
+                                copiedMessageId() === message.id
+                                  ? copy().copiedResponse
+                                  : copy().copyResponse
+                              "
+                            >
+                              <svg
+                                width="13"
+                                height="13"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path
+                                  d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                ></path>
+                              </svg>
+                              <span>{{
+                                copiedMessageId() === message.id
+                                  ? copy().copiedResponse
+                                  : copy().copyResponse
+                              }}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              class="tool-btn"
+                              [class.active]="!!message.savedAt"
+                              (click)="toggleSave(message)"
+                              [attr.aria-label]="
+                                message.savedAt ? copy().savedAnswer : copy().saveAnswer
+                              "
+                            >
+                              <svg
+                                width="13"
+                                height="13"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                              </svg>
+                              <span>{{
+                                message.savedAt ? copy().savedAnswer : copy().saveAnswer
+                              }}</span>
+                            </button>
+
+                            <div class="feedback-cluster">
+                              <button
+                                type="button"
+                                class="tool-btn icon-only"
+                                [class.active]="message.feedback === 'HELPFUL'"
+                                (click)="sendFeedback(message, 'HELPFUL')"
+                                [attr.aria-label]="copy().helpful"
+                                [title]="copy().helpful"
+                              >
+                                <svg
+                                  width="13"
+                                  height="13"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path
+                                    d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                                  ></path>
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                class="tool-btn icon-only"
+                                [class.active]="message.feedback === 'NOT_HELPFUL'"
+                                (click)="sendFeedback(message, 'NOT_HELPFUL')"
+                                [attr.aria-label]="copy().notHelpful"
+                                [title]="copy().notHelpful"
+                              >
+                                <svg
+                                  width="13"
+                                  height="13"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path
+                                    d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"
+                                  ></path>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  }
+
+                  @if (sending()) {
+                    <div class="message-row assistant-row typing-row">
+                      <div class="assistant-avatar" aria-hidden="true">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93" />
+                        </svg>
+                      </div>
+                      <div class="typing-bubble">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="sr">{{ copy().sending }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </main>
+
+          <!-- Modern Bottom Composer Bar (Aligned with 1200px column) -->
+          <footer class="composer-container">
+            @if (error()) {
+              <div class="error-banner" role="alert">
+                <span class="error-text">{{ error() }}</span>
+                @if (draft().trim()) {
+                  <button type="button" class="retry-btn" (click)="retry()">
+                    {{ copy().retry }}
+                  </button>
+                }
               </div>
             }
-          }
-        }
 
-        @if (sending()) {
-          <div class="bubble assistant typing">
-            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-            <span class="sr">{{ copy().sending }}</span>
-          </div>
-        }
-      </section>
+            <form class="composer-box" (submit)="submit($event)">
+              <label class="sr" for="ai-input">{{ copy().placeholder }}</label>
+              <textarea
+                id="ai-input"
+                rows="1"
+                maxlength="2000"
+                [placeholder]="copy().placeholder"
+                [value]="draft()"
+                [disabled]="sending()"
+                (input)="onInput($event)"
+                (keydown.enter)="onEnter($any($event))"
+              ></textarea>
+              <button
+                type="submit"
+                class="send-btn"
+                aria-label="Send message"
+                [disabled]="sending() || draft().trim() === ''"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="19" x2="12" y2="5"></line>
+                  <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+              </button>
+            </form>
 
-      @if (error()) {
-        <div class="error" role="alert">
-          {{ error() }}
-          @if (draft().trim()) {
-            <button type="button" class="ghost" (click)="retry()">{{ copy().retry }}</button>
-          }
-        </div>
+            <p class="composer-disclaimer">
+              {{ copy().disclaimer }}
+              <span class="sr">{{ copy().privacyNote }}</span>
+            </p>
+          </footer>
+        }
       }
-
-      <p class="privacy-note">{{ copy().privacyNote }}</p>
-      <form class="composer" (submit)="submit($event)">
-        <label class="sr" for="ai-input">{{ copy().placeholder }}</label>
-        <textarea
-          id="ai-input"
-          rows="1"
-          maxlength="2000"
-          [placeholder]="copy().placeholder"
-          [value]="draft()"
-          [disabled]="sending()"
-          (input)="onInput($event)"
-          (keydown.enter)="onEnter($any($event))"
-        ></textarea>
-        <button type="submit" class="primary" [disabled]="sending() || draft().trim() === ''">
-          {{ sending() ? copy().sending : copy().send }}
-        </button>
-      </form>
-
-      <ac-guidance-browser />
     }
-
-    <p class="disclaimer">{{ copy().disclaimer }}</p>
   `,
   styles: [
     `
       :host {
         display: flex;
         flex-direction: column;
-        min-height: calc(100vh - 160px);
-        max-width: 820px;
-        margin: 0 auto;
-        padding: 32px 16px 80px;
+        flex: 1;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+        background: transparent;
+        box-sizing: border-box;
+        position: relative;
+        font-family: inherit;
       }
 
-      .page-head {
+      /* ─── CHAT TOPBAR (Consistent 1200px width alignment) ─── */
+      .chat-header {
+        flex: 0 0 auto;
+        height: 52px;
+        width: 100%;
         display: flex;
+        align-items: center;
         justify-content: space-between;
-        align-items: flex-start;
-        gap: 16px;
-        margin-bottom: 20px;
+        padding: 0;
+        border-bottom: 1px solid var(--ac-color-border);
+        box-sizing: border-box;
+        z-index: 10;
       }
 
-      .eyebrow {
-        margin: 0 0 6px;
-        font-size: var(--ac-type-meta);
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+      .chat-header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .ai-spark-badge {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-brand-100);
+        color: var(--ac-color-action);
+      }
+
+      .chat-header-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ac-color-text-strong);
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+      }
+
+      .model-badge {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ac-color-action);
+        background: color-mix(in srgb, var(--ac-color-action) 10%, transparent);
+        padding: 3px 10px;
+        border-radius: var(--ac-radius-pill);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
+
+      .chat-header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+
+      .header-nav-pills {
+        display: inline-flex;
+        align-items: center;
+        background: var(--ac-color-surface-slate);
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-pill);
+        padding: 3px;
+        gap: 3px;
+      }
+
+      .nav-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 16px;
+        border-radius: var(--ac-radius-pill);
+        border: none;
+        background: transparent;
         color: var(--ac-color-text-muted);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
       }
 
-      h1 {
+      .pill-icon {
+        display: none;
+      }
+
+      .pill-label {
+        display: inline;
+        white-space: nowrap;
+      }
+
+      .pill-count {
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .nav-pill:hover {
+        color: var(--ac-color-text-strong);
+      }
+
+      .nav-pill.active {
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--ac-color-black) 8%, transparent);
+      }
+
+      .btn-new-chat {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 16px;
+        border-radius: var(--ac-radius-pill);
+        border: 1px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .btn-new-chat-text {
+        white-space: nowrap;
+      }
+
+      .btn-new-chat:hover {
+        background: var(--ac-brand-50);
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action);
+      }
+
+      /* ─── CHAT VIEWPORT (Spacious, consistent 1200px width) ─── */
+      .chat-viewport {
+        flex: 1 1 0%;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 20px 0 16px;
+        box-sizing: border-box;
+        scroll-behavior: smooth;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--ac-color-text-muted) 35%, transparent) transparent;
+      }
+
+      .chat-viewport::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .chat-viewport::-webkit-scrollbar-thumb {
+        border-radius: var(--ac-radius-pill);
+        background: color-mix(in srgb, var(--ac-color-text-muted) 35%, transparent);
+      }
+
+      .chat-viewport-inner {
+        width: 100%;
+        max-width: 100%;
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+      }
+
+      .center-spinner {
+        display: grid;
+        place-items: center;
+        padding: 60px 20px;
+        margin: auto;
+      }
+
+      /* ─── EMPTY STATE (Matching typography and scale of other pages) ─── */
+      .empty-chat-hero {
+        margin: auto 0;
+        padding: 32px 0 24px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      .empty-hero-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--ac-brand-100), var(--ac-brand-200));
+        color: var(--ac-color-action);
+        display: grid;
+        place-items: center;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 14px color-mix(in srgb, var(--ac-color-action) 15%, transparent);
+      }
+
+      .empty-hero-title {
         margin: 0 0 8px;
-        font-size: clamp(24px, 3.2vw, 32px);
+        font-size: var(--ac-type-page-title);
+        font-weight: 800;
+        color: var(--ac-color-text-strong);
+        letter-spacing: -0.02em;
+        line-height: var(--ac-line-tight);
+      }
+
+      .empty-hero-subtitle {
+        margin: 0 0 28px;
+        max-width: 680px;
+        font-size: var(--ac-type-page-subtitle);
+        color: var(--ac-color-text-muted);
+        line-height: var(--ac-line-body);
+      }
+
+      .suggestions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+      }
+
+      .suggestion-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 20px;
+        border-radius: var(--ac-radius-md);
+        border: 1px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-text-strong);
+        font: inherit;
+        font-size: 15.5px;
+        line-height: 1.5;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--ac-color-black) 3%, transparent);
+      }
+
+      .suggestion-card:hover:not(:disabled) {
+        border-color: var(--ac-color-action);
+        background: var(--ac-brand-50);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--ac-color-action) 10%, transparent);
+      }
+
+      .suggestion-card:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .suggestion-arrow {
+        color: var(--ac-color-action);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      /* ─── MESSAGES LIST ─── */
+      .messages-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+        margin-top: auto;
+      }
+
+      .message-row {
+        display: flex;
+        width: 100%;
+      }
+
+      /* User Message (Right-aligned bubble, comfortable 16px font size) */
+      .user-row {
+        justify-content: flex-end;
+      }
+
+      .user-bubble {
+        max-width: min(85%, 760px);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        border-radius: 20px 20px 4px 20px;
+        padding: 14px 20px;
+        font-size: 16px;
+        line-height: 1.6;
+        word-break: break-word;
+        box-shadow: 0 1px 2px color-mix(in srgb, var(--ac-color-black) 6%, transparent);
+      }
+
+      .user-bubble p {
+        margin: 0;
+      }
+
+      /* Assistant Message (Comfortable 16px font size, line-height 1.68) */
+      .assistant-row {
+        justify-content: flex-start;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .assistant-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-brand-100);
+        color: var(--ac-color-action);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .assistant-body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .assistant-name-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .assistant-name {
+        font-size: 15px;
         font-weight: 700;
         color: var(--ac-color-text-strong);
       }
 
-      .subtitle {
-        margin: 0;
-        color: var(--ac-color-text-muted);
-        line-height: 1.5;
-      }
-
-      .tabs-bar {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 20px;
-        border-bottom: 1px solid var(--ac-color-border);
-        padding-bottom: 8px;
-      }
-
-      .tab-btn {
-        padding: 8px 16px;
-        border-radius: var(--ac-radius-pill);
-        border: 1px solid transparent;
-        background: transparent;
-        color: var(--ac-color-text-muted);
-        font: inherit;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .tab-btn.active {
-        background: var(--ac-color-surface-slate);
+      .assistant-content {
+        font-size: 16px;
+        line-height: 1.68;
         color: var(--ac-color-text-strong);
-        border-color: var(--ac-color-border);
+        white-space: pre-wrap;
+        word-break: break-word;
       }
 
-      .status-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-
-      .usage {
-        margin: 0;
-        font-size: var(--ac-type-meta);
-        color: var(--ac-color-text-muted);
-      }
-
-      .context-toggle {
-        display: flex;
-        align-items: center;
-        max-width: 430px;
-        gap: 8px;
-        font-size: var(--ac-type-meta);
-        color: var(--ac-color-text-strong);
-        cursor: pointer;
-      }
-
-      .context-toggle small {
-        display: block;
-        margin-top: 3px;
-        color: var(--ac-color-text-muted);
-        line-height: 1.35;
-      }
-
-      .history {
-        margin-bottom: 16px;
-        padding: 10px 14px;
-        border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface);
-        border: 1px solid var(--ac-color-border);
-        font-size: var(--ac-type-meta);
-      }
-
-      .history summary {
-        cursor: pointer;
-        font-weight: 600;
-        color: var(--ac-color-text-strong);
-      }
-
-      .history ul {
-        list-style: none;
-        margin: 10px 0 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .history-item {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        padding: 6px 8px;
-        border-radius: var(--ac-radius-sm);
-        border: none;
-        background: transparent;
-        color: var(--ac-color-text-strong);
-        font: inherit;
-        cursor: pointer;
-        text-align: left;
-      }
-
-      .history-item:hover {
-        background: var(--ac-color-surface-slate);
-      }
-
-      .history-title {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .history-count {
-        color: var(--ac-color-text-muted);
-        margin-left: 8px;
-      }
-
-      .thread {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        margin-bottom: 24px;
-        max-height: min(58vh, 680px);
-        overflow-y: auto;
-        scroll-behavior: smooth;
-      }
-
-      .privacy-note {
-        margin: 0 0 10px;
-        color: var(--ac-color-text-muted);
-        font-size: var(--ac-type-meta);
-        line-height: 1.45;
-      }
-
-      .error {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 10px;
-        color: var(--ac-color-alert-text);
-      }
-
-      .intro {
-        padding: 32px 16px;
-        text-align: center;
-      }
-
-      .suggestions-label {
-        margin: 0 0 12px;
-        font-weight: 600;
-        color: var(--ac-color-text-muted);
-      }
-
-      .suggestions {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        max-width: 480px;
-        margin: 0 auto;
-      }
-
-      .suggestion {
-        padding: 10px 16px;
-        border-radius: var(--ac-radius-md);
-        border: 1px solid var(--ac-color-border);
-        background: var(--ac-color-surface);
-        color: var(--ac-color-text-strong);
-        font: inherit;
-        font-size: 14px;
-        cursor: pointer;
-        text-align: left;
-        line-height: 1.4;
-      }
-
-      .suggestion:hover:not(:disabled) {
-        background: var(--ac-color-surface-slate);
-      }
-
-      .bubble {
-        max-width: 85%;
-        padding: 14px 18px;
-        border-radius: var(--ac-radius-lg);
-        line-height: 1.55;
-      }
-
-      .bubble.user {
-        align-self: flex-end;
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-        border-bottom-right-radius: 4px;
-      }
-
-      .bubble.user p {
-        margin: 0;
-      }
-
-      .bubble.assistant {
-        align-self: flex-start;
-        background: var(--ac-color-surface);
-        color: var(--ac-color-text-strong);
-        border: 1px solid var(--ac-color-border);
-        border-bottom-left-radius: 4px;
-      }
-
-      .bubble.assistant.crisis {
-        border-color: var(--ac-color-alert-strong);
+      /* Crisis Alert */
+      .crisis-card {
         background: color-mix(in srgb, var(--ac-color-alert-strong) 8%, var(--ac-color-surface));
+        border: 1px solid var(--ac-color-alert-strong);
+        border-left: 4px solid var(--ac-color-alert-strong);
+        border-radius: var(--ac-radius-sm);
+        padding: 14px 18px;
+        margin-top: 4px;
       }
 
-      .kind-label {
-        margin: 0 0 8px;
+      .crisis-title {
+        margin: 0 0 6px;
+        font-size: 15px;
         font-weight: 700;
         color: var(--ac-color-alert-text);
       }
 
       .crisis-link {
-        display: inline-block;
-        margin-top: 10px;
+        font-size: 14.5px;
         font-weight: 700;
         color: var(--ac-color-alert-text);
+        text-decoration: none;
       }
 
-      .badge {
-        display: inline-block;
-        margin-top: 8px;
-        padding: 4px 10px;
+      .crisis-link:hover {
+        text-decoration: underline;
+      }
+
+      /* Medication Badge */
+      .med-badge-row {
+        margin-top: 4px;
+      }
+
+      .medication-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
         border-radius: var(--ac-radius-pill);
         background: var(--ac-color-surface-slate);
+        border: 1px solid var(--ac-color-border);
         font-size: var(--ac-type-meta);
+        font-weight: 500;
         color: var(--ac-color-text-muted);
       }
 
-      .sources {
-        margin-top: 12px;
-        padding-top: 10px;
-        border-top: 1px solid var(--ac-color-border);
-        font-size: var(--ac-type-meta);
+      /* Sources */
+      .sources-card {
+        margin-top: 8px;
+        padding: 12px 16px;
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
+        font-size: 14px;
       }
 
-      .sources-label {
-        margin: 0 0 4px;
-        font-weight: 600;
+      .sources-title {
+        margin: 0 0 6px;
+        font-weight: 700;
         color: var(--ac-color-text-muted);
+        text-transform: uppercase;
+        font-size: 12.5px;
+        letter-spacing: 0.05em;
       }
 
-      .sources ul {
+      .sources-list {
         list-style: none;
         margin: 0;
         padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
 
-      .sources a {
+      .sources-list a {
         color: var(--ac-color-action);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .sources-list a:hover {
         text-decoration: underline;
       }
 
@@ -719,127 +1082,323 @@ const COPY = {
         margin-left: 6px;
       }
 
-      .related-activities {
-        margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px solid var(--ac-color-border);
+      /* Related Activities */
+      .related-activities-section {
+        margin-top: 10px;
       }
 
-      .rel-label {
+      .rel-title-label {
         margin: 0 0 8px;
-        font-size: var(--ac-type-meta);
+        font-size: 13px;
         font-weight: 700;
-        color: var(--ac-color-text-strong);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--ac-color-text-muted);
       }
 
       .rel-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 12px;
       }
 
       .rel-card {
-        padding: 10px 14px;
-        border-radius: var(--ac-radius-sm);
-        background: var(--ac-color-surface-slate);
         border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-md);
+        background: var(--ac-color-surface);
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
 
       .rel-cat {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.04em;
         color: var(--ac-color-action);
       }
 
-      .rel-title {
-        margin: 2px 0 4px;
-        font-size: 14px;
+      .rel-name {
+        margin: 0;
+        font-size: 15px;
         font-weight: 600;
         color: var(--ac-color-text-strong);
       }
 
       .rel-desc {
-        margin: 0 0 6px;
-        font-size: var(--ac-type-meta);
+        margin: 0;
+        font-size: 14px;
         color: var(--ac-color-text-muted);
+        line-height: 1.45;
       }
 
       .rel-link {
-        font-size: var(--ac-type-meta);
+        margin-top: 6px;
+        font-size: 14px;
         font-weight: 600;
         color: var(--ac-color-action);
+        text-decoration: none;
       }
 
-      .msg-footer {
+      .rel-link:hover {
+        text-decoration: underline;
+      }
+
+      /* Action Toolbar */
+      .assistant-toolbar {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: 8px;
+        margin-top: 8px;
         flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 12px;
-        padding-top: 8px;
-        border-top: 1px solid var(--ac-color-border);
       }
 
-      .save-msg-btn {
-        padding: 4px 10px;
+      .tool-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
         border-radius: var(--ac-radius-pill);
         border: 1px solid var(--ac-color-border);
-        background: transparent;
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-muted);
         font: inherit;
-        font-size: var(--ac-type-meta);
+        font-size: 13px;
         cursor: pointer;
+        transition: all 0.15s ease;
       }
 
-      .save-msg-btn.saved {
-        background: color-mix(in srgb, var(--ac-color-action) 12%, transparent);
-        color: var(--ac-color-action);
-        border-color: var(--ac-color-action);
-      }
-
-      .feedback-group {
-        display: flex;
-        gap: 6px;
-      }
-
-      .fb-btn {
-        padding: 3px 8px;
-        border-radius: var(--ac-radius-sm);
-        border: 1px solid var(--ac-color-border);
-        background: transparent;
-        color: var(--ac-color-text-muted);
-        font: inherit;
-        font-size: 12px;
-        cursor: pointer;
-      }
-
-      .fb-btn.active {
+      .tool-btn:hover {
         background: var(--ac-color-surface-slate);
         color: var(--ac-color-text-strong);
-        border-color: var(--ac-color-text-strong);
+        border-color: var(--ac-color-border);
       }
 
-      .saved-section {
-        margin-bottom: 24px;
+      .tool-btn.active {
+        background: var(--ac-brand-50);
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action);
+      }
+
+      .tool-btn.icon-only {
+        padding: 5px;
+      }
+
+      .feedback-cluster {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 4px;
+      }
+
+      /* Typing indicator */
+      .typing-row {
+        align-items: center;
+      }
+
+      .typing-bubble {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 14px;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-pill);
+      }
+
+      .typing-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ac-color-text-muted);
+        animation: typingBlink 1.3s infinite both;
+      }
+
+      .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes typingBlink {
+        0%,
+        80%,
+        100% {
+          opacity: 0.3;
+          transform: scale(0.85);
+        }
+        40% {
+          opacity: 1;
+          transform: scale(1.15);
+        }
+      }
+
+      /* ─── COMPOSER BAR (Consistent width aligned with 1200px) ─── */
+      .composer-container {
+        flex: 0 0 auto;
+        width: 100%;
+        padding: 8px 0 16px;
+        background: linear-gradient(180deg, transparent 0%, var(--ac-color-tint-blue-faint) 35%);
+        box-sizing: border-box;
+        z-index: 5;
+      }
+
+      .error-banner {
+        width: 100%;
+        margin: 0 auto 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 14px;
+        border-radius: var(--ac-radius-md);
+        background: color-mix(in srgb, var(--ac-color-alert-strong) 10%, var(--ac-color-surface));
+        border: 1px solid var(--ac-color-alert-strong);
+        color: var(--ac-color-alert-text);
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+
+      .retry-btn {
+        padding: 4px 12px;
+        border-radius: var(--ac-radius-pill);
+        border: 1px solid var(--ac-color-alert-strong);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-alert-text);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .composer-box {
+        width: 100%;
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        padding: 10px 12px 10px 20px;
+        border-radius: 28px;
+        border: 1.5px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        box-shadow: 0 3px 14px color-mix(in srgb, var(--ac-color-black) 4%, transparent);
+        box-sizing: border-box;
+        transition:
+          border-color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+
+      .composer-box:focus-within {
+        border-color: var(--ac-color-action);
+        box-shadow: 0 4px 20px color-mix(in srgb, var(--ac-color-action) 12%, transparent);
+      }
+
+      .composer-box textarea {
+        flex: 1;
+        padding: 6px 0;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--ac-color-text-strong);
+        font: inherit;
+        font-size: 16px;
+        line-height: 1.55;
+        resize: none;
+        min-height: 26px;
+        max-height: 160px;
+      }
+
+      .send-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        border: none;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.15s ease;
+      }
+
+      .send-btn:hover:not(:disabled) {
+        background: var(--ac-color-action-mid);
+        transform: scale(1.04);
+      }
+
+      .send-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      .composer-disclaimer {
+        margin: 8px auto 0;
+        width: 100%;
+        font-size: 13px;
+        color: var(--ac-color-text-muted);
+        text-align: center;
+      }
+
+      /* ─── SAVED VIEWPORT ─── */
+      .saved-viewport {
+        flex: 1 1 0%;
+        overflow-y: auto;
+        padding: 20px 0;
+        box-sizing: border-box;
+      }
+
+      .saved-inner {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .saved-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .saved-header-row h2 {
+        margin: 0;
+        font-size: var(--ac-type-card-title);
+        font-weight: 700;
+        color: var(--ac-color-text-strong);
+      }
+
+      .back-to-chat-btn {
+        padding: 6px 14px;
+        border-radius: var(--ac-radius-pill);
+        border: 1px solid var(--ac-color-border);
+        background: var(--ac-color-surface);
+        color: var(--ac-color-action);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
       }
 
       .saved-empty {
-        padding: 40px 20px;
+        padding: 48px 20px;
         text-align: center;
         border: 1.5px dashed var(--ac-color-border);
         border-radius: var(--ac-radius-lg);
+        background: var(--ac-color-surface);
       }
 
       .saved-empty h3 {
-        margin: 0 0 8px;
+        margin: 0 0 6px;
         color: var(--ac-color-text-strong);
       }
 
       .saved-empty p {
         margin: 0;
         color: var(--ac-color-text-muted);
+        font-size: 15.5px;
       }
 
       .saved-list {
@@ -849,10 +1408,11 @@ const COPY = {
       }
 
       .saved-card {
-        padding: 16px;
+        padding: 16px 18px;
         border-radius: var(--ac-radius-md);
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--ac-color-black) 3%, transparent);
       }
 
       .saved-card-head {
@@ -868,116 +1428,53 @@ const COPY = {
       }
 
       .unsave-btn {
-        padding: 3px 8px;
+        padding: 4px 12px;
         border-radius: var(--ac-radius-pill);
         border: 1px solid var(--ac-color-action);
-        background: color-mix(in srgb, var(--ac-color-action) 12%, transparent);
+        background: color-mix(in srgb, var(--ac-color-action) 10%, transparent);
         color: var(--ac-color-action);
         font: inherit;
-        font-size: 11px;
+        font-size: 12.5px;
+        font-weight: 600;
         cursor: pointer;
       }
 
       .saved-content {
         margin: 0;
         color: var(--ac-color-text-strong);
-        line-height: 1.55;
+        line-height: 1.65;
+        font-size: 16px;
         white-space: pre-wrap;
       }
 
-      .composer {
-        display: flex;
-        gap: 12px;
-        align-items: flex-end;
-        padding: 12px;
+      /* ─── SETUP STATE ─── */
+      .setup-wrapper {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        padding: 24px 0;
+      }
+
+      .setup-card {
+        max-width: 480px;
+        padding: 28px;
         border-radius: var(--ac-radius-lg);
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
-      }
-
-      .composer textarea {
-        flex: 1;
-        padding: 8px 12px;
-        border-radius: var(--ac-radius-sm);
-        border: none;
-        background: transparent;
-        color: var(--ac-color-text-strong);
-        font: inherit;
-        resize: none;
-        min-height: 40px;
-        max-height: 180px;
-      }
-
-      .composer textarea:focus-visible {
-        outline: 2px solid var(--ac-color-focus);
-        outline-offset: 2px;
-      }
-
-      .primary {
-        padding: 10px 20px;
-        border-radius: var(--ac-radius-pill);
-        border: none;
-        background: var(--ac-color-action);
-        color: var(--ac-color-text-on-action);
-        font: inherit;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .ghost {
-        padding: 8px 16px;
-        border-radius: var(--ac-radius-pill);
-        border: 1px solid var(--ac-color-border);
-        background: transparent;
-        color: var(--ac-color-text-strong);
-        font: inherit;
-        font-size: 14px;
-        cursor: pointer;
-      }
-
-      .disclaimer {
-        margin-top: 24px;
-        font-size: var(--ac-type-meta);
-        color: var(--ac-color-text-muted);
         text-align: center;
       }
 
-      .typing {
-        display: flex;
-        gap: 4px;
-        align-items: center;
-        padding: 12px 18px;
+      .setup-card h2 {
+        margin: 0 0 10px;
+        font-size: 20px;
+        color: var(--ac-color-text-strong);
       }
 
-      .typing .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--ac-color-text-muted);
-        animation: blink 1.2s infinite both;
-      }
-
-      .typing .dot:nth-child(2) {
-        animation-delay: 0.2s;
-      }
-      .typing .dot:nth-child(3) {
-        animation-delay: 0.4s;
-      }
-
-      @keyframes blink {
-        0%,
-        80%,
-        100% {
-          opacity: 0.3;
-        }
-        40% {
-          opacity: 1;
-        }
+      .setup-card p {
+        margin: 0;
+        font-size: 15.5px;
+        color: var(--ac-color-text-muted);
+        line-height: 1.5;
       }
 
       .sr {
@@ -992,35 +1489,227 @@ const COPY = {
         border: 0;
       }
 
-      @media (max-width: 600px) {
+      /* ─── MOBILE RESPONSIVE ADAPTATIONS ─── */
+      @media (max-width: 860px) {
         :host {
-          padding: 20px 12px 40px;
-        }
-        .page-head {
-          flex-direction: column;
-        }
-        .head-actions {
+          position: fixed;
+          top: 64px;
+          left: 0;
+          right: 0;
+          bottom: calc(68px + max(env(safe-area-inset-bottom, 0px), 8px));
+          width: 100vw;
+          height: auto;
+          z-index: 20;
+          padding: 0 16px;
+          box-sizing: border-box;
           display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          background: var(--ac-color-tint-blue-faint);
+        }
+
+        .chat-header {
+          height: 48px;
+          max-width: 1200px;
+          margin: 0 auto;
+          white-space: nowrap;
+        }
+
+        .model-badge {
+          display: none;
+        }
+
+        .pill-icon {
+          display: inline-block;
+        }
+
+        .pill-label {
+          display: none;
+        }
+
+        .pill-count {
+          font-size: 11px;
+        }
+
+        .btn-new-chat-text {
+          display: none;
+        }
+
+        .btn-new-chat {
+          width: 34px;
+          height: 34px;
+          padding: 0;
+          border-radius: var(--ac-radius-pill);
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+        }
+
+        .nav-pill {
+          padding: 6px 10px;
+          font-size: 12px;
+          gap: 4px;
+        }
+
+        .chat-viewport {
+          padding: 10px 0 6px;
+          max-width: 1200px;
+          margin: 0 auto;
           width: 100%;
+        }
+
+        .composer-container {
+          padding: 4px 0 6px;
+          max-width: 1200px;
+          margin: 0 auto;
+          width: 100%;
+          background: var(--ac-color-tint-blue-faint);
+        }
+
+        .composer-box {
+          padding: 6px 8px 6px 14px;
+          border-radius: 22px;
           gap: 8px;
-          flex-wrap: wrap;
+          box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-black) 6%, transparent);
         }
-        .thread {
-          max-height: 56vh;
+
+        .composer-box textarea {
+          font-size: 14.5px;
+          min-height: 22px;
+          max-height: 80px;
+          line-height: 1.4;
+          padding: 4px 0;
         }
-        .bubble {
-          max-width: 94%;
+
+        .send-btn {
+          width: 34px;
+          height: 34px;
+          flex-shrink: 0;
         }
-        .composer {
-          align-items: stretch;
+
+        .composer-disclaimer {
+          font-size: 11px;
+          margin: 3px auto 0;
+          line-height: 1.3;
+        }
+
+        .empty-chat-hero {
+          padding: 16px 0 12px;
+        }
+
+        .empty-hero-icon {
+          width: 40px;
+          height: 40px;
+          margin-bottom: 10px;
+          border-radius: 10px;
+        }
+
+        .empty-hero-title {
+          font-size: 1.3rem;
+          margin-bottom: 4px;
+        }
+
+        .empty-hero-subtitle {
+          font-size: 13.5px;
+          margin-bottom: 14px;
+        }
+
+        .suggestions-grid {
+          grid-template-columns: 1fr;
           gap: 8px;
-          padding: 8px;
         }
-        .composer textarea {
-          min-width: 0;
+
+        .suggestion-card {
+          padding: 11px 14px;
+          font-size: 13.5px;
         }
-        .composer .primary {
+
+        .messages-list {
+          gap: 12px;
+        }
+
+        .user-bubble {
+          max-width: 90%;
           padding: 10px 14px;
+          font-size: 14.5px;
+          line-height: 1.5;
+          border-radius: 16px 16px 4px 16px;
+        }
+
+        .assistant-row {
+          gap: 8px;
+        }
+
+        .assistant-avatar {
+          width: 26px;
+          height: 26px;
+        }
+
+        .assistant-name {
+          font-size: 13.5px;
+        }
+
+        .assistant-content {
+          font-size: 14.5px;
+          line-height: 1.55;
+        }
+
+        .crisis-card {
+          padding: 10px 12px;
+        }
+
+        .sources-card {
+          padding: 10px 12px;
+          font-size: 13px;
+        }
+
+        .rel-grid {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .rel-card {
+          padding: 10px 12px;
+        }
+
+        .assistant-toolbar {
+          gap: 4px;
+          margin-top: 6px;
+        }
+
+        .tool-btn {
+          padding: 3px 8px;
+          font-size: 11.5px;
+        }
+
+        .saved-header-row h2 {
+          font-size: 16px;
+        }
+
+        .saved-card {
+          padding: 12px 14px;
+        }
+
+        .saved-content {
+          font-size: 14.5px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        :host {
+          padding: 0 10px;
+        }
+
+        .chat-header-title {
+          font-size: 14px;
+        }
+
+        .nav-pill {
+          padding: 5px 8px;
+        }
+
+        .composer-box {
+          padding: 6px 6px 6px 12px;
         }
       }
     `,

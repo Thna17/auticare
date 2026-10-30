@@ -499,7 +499,8 @@ describe('ActivitiesPage', () => {
   });
 
   it('matches all 5 culturally adapted Cambodian home sensory play routines', () => {
-    expect(CAMBODIAN_HOME_ACTIVITIES.length).toBe(5);
+    // 5 culturally adapted routines, then 10 from the home activity video directory.
+    expect(CAMBODIAN_HOME_ACTIVITIES.length).toBe(15);
 
     // 1. Sensory Rice & Grain Bin
     const riceAct = CAMBODIAN_HOME_ACTIVITIES[0];
@@ -535,6 +536,30 @@ describe('ActivitiesPage', () => {
     expect(rhymeAct.title).toContain('ល្បែងទះដៃ និងចង្វាក់ភ្លេងខ្មែរ');
     expect(rhymeAct.category).toBe('Social');
     expect(findCambodianActivity(rhymeAct)).toBeDefined();
+  });
+
+  it('matches every activity to its own entry by id, never to another by title keyword', () => {
+    for (const item of CAMBODIAN_HOME_ACTIVITIES) {
+      expect(findCambodianActivity({ ...item, title: 'Rice bubble clapping' })?.id).toBe(item.id);
+    }
+  });
+
+  it('offers the video and a safety note in the chosen language for directory activities', () => {
+    const waterPlay = CAMBODIAN_HOME_ACTIVITIES.find((a) => a.id === 'dir-activity-water-play')!;
+    expect(component.getVideoUrl(waterPlay)).toBe('https://www.youtube.com/watch?v=2wfaY95MdeE');
+    expect(component.getSafetyNote(waterPlay)).toContain('check the temperature');
+    expect(component.getDuration(waterPlay)).toBe('8m');
+
+    const i18n = TestBed.inject(I18nService);
+    i18n.setLanguage('km');
+    expect(component.getSafetyNote(waterPlay)).toContain('ពិនិត្យកម្តៅទឹក');
+    i18n.setLanguage('en');
+
+    // An activity with no matching video shows no video link.
+    const icePainting = CAMBODIAN_HOME_ACTIVITIES.find(
+      (a) => a.id === 'dir-activity-ice-painting',
+    )!;
+    expect(component.getVideoUrl(icePainting)).toBeNull();
   });
 
   it('provides authentic Khmer step-by-step instructions and materials checklist for Cambodian activities', () => {
@@ -608,7 +633,7 @@ describe('ActivitiesPage', () => {
     component['load']();
     fixture.detectChanges();
 
-    expect(component['activities']().length).toBe(5);
+    expect(component['activities']().length).toBe(CAMBODIAN_HOME_ACTIVITIES.length);
     const titles = component['activities']().map((a) => a.title);
     expect(titles.some((t) => t.includes('Sensory Rice & Grain Bin'))).toBe(true);
     expect(titles.some((t) => t.includes('Banana Leaf & Paper Folding'))).toBe(true);

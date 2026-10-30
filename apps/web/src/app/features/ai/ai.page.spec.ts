@@ -2,7 +2,6 @@
 // @vitest-environment jsdom
 import '@angular/compiler';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
@@ -19,8 +18,6 @@ import type {
   AiStatusResponse,
   ChildResponse,
 } from '@auticare/contracts';
-
-TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
 
 describe('AiPage', () => {
   let fixture: ComponentFixture<AiPage>;

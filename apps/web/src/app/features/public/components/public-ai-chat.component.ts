@@ -1,7 +1,7 @@
+import type { ElementRef } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   computed,
   inject,
   signal,
@@ -187,8 +187,8 @@ const COPY = {
         overflow: hidden;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 24px;
-        background: #fff;
-        box-shadow: 0 16px 40px rgb(19 48 46 / 8%);
+        background: var(--ac-color-surface);
+        box-shadow: 0 16px 40px color-mix(in srgb, var(--ac-brand-900) 8%, transparent);
       }
       .chat-head {
         display: flex;
@@ -243,8 +243,8 @@ const COPY = {
         cursor: pointer;
       }
       .language button.selected {
-        background: #fff;
-        box-shadow: 0 1px 5px rgb(0 0 0 / 10%);
+        background: var(--ac-color-surface);
+        box-shadow: 0 1px 5px color-mix(in srgb, var(--ac-color-black) 10%, transparent);
       }
       .new-chat {
         border: 1px solid var(--ac-color-border-slate);
@@ -261,7 +261,7 @@ const COPY = {
         gap: 14px;
         overflow: auto;
         padding: 12px 22px;
-        background-color: #fff;
+        background-color: var(--ac-color-surface);
         background-image: radial-gradient(var(--ac-color-border-slate) 1px, transparent 1px);
         background-size: 18px 18px;
       }
@@ -290,7 +290,7 @@ const COPY = {
       }
       .message.assistant {
         border: 1px solid var(--ac-color-border-slate);
-        background: #fff;
+        background: var(--ac-color-surface);
         color: var(--ac-color-text-body);
       }
       .message.user {
@@ -372,7 +372,7 @@ const COPY = {
         height: 44px;
         border: 0;
         border-radius: 50%;
-        color: #fff;
+        color: var(--ac-color-text-on-action);
         background: var(--ac-color-action);
         font-size: 21px;
         cursor: pointer;

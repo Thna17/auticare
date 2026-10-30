@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { PARENT_GUIDES } from './parent-guides.data';
 
 type Shelf = {
   readonly key: string;
@@ -16,6 +17,10 @@ const COPY = {
     title: 'Everything you have collected',
     subtitle:
       'Schools, hospitals, activities and appointments in one place, instead of scattered across the app.',
+    guidesTitle: 'Guides to read',
+    guidesIntro:
+      'Free guides from trusted organisations. They are in English and open on the publisher’s website.',
+    guideCta: 'Open guide (new tab)',
     shelves: [
       {
         key: 'school',
@@ -52,6 +57,10 @@ const COPY = {
     title: 'អ្វីៗដែលអ្នកបានប្រមូលទុក',
     subtitle:
       'សាលារៀន មន្ទីរពេទ្យ សកម្មភាព និងការណាត់ជួប នៅកន្លែងតែមួយ ជំនួសឱ្យការខ្ចាត់ខ្ចាយពេញក្នុងកម្មវិធី។',
+    guidesTitle: 'ឯកសារណែនាំសម្រាប់អាន',
+    guidesIntro:
+      'ឯកសារណែនាំឥតគិតថ្លៃពីអង្គការដែលគួរឱ្យទុកចិត្ត។ ឯកសារទាំងនេះជាភាសាអង់គ្លេស ហើយបើកនៅលើគេហទំព័ររបស់អ្នកបោះពុម្ព។',
+    guideCta: 'បើកឯកសារ (ផ្ទាំងថ្មី)',
     shelves: [
       {
         key: 'school',
@@ -90,6 +99,9 @@ const COPY = {
  * existed. Nothing was rebuilt to make this page — which is the point of the
  * restructure. The app was organised by feature; it is now organised by what the
  * parent is looking for.
+ *
+ * Below the shelves, a reading list of free guides from trusted publishers
+ * (parent-guides.data.ts). Each one links out to the publisher's own copy.
  */
 @Component({
   standalone: true,
@@ -111,6 +123,30 @@ const COPY = {
         </a>
       }
     </div>
+
+    <section class="guides" aria-labelledby="guides-heading">
+      <h2 id="guides-heading" class="guides-title">{{ copy().guidesTitle }}</h2>
+      <p class="subtitle">{{ copy().guidesIntro }}</p>
+
+      <ul class="guide-list">
+        @for (guide of guides(); track guide.id) {
+          <li class="guide">
+            <p class="guide-topic">{{ guide.topic }}</p>
+            <h3>{{ guide.title }}</h3>
+            <p class="guide-source">
+              {{ guide.publisher }}
+              @if (guide.year) {
+                · {{ guide.year }}
+              }
+            </p>
+            <p>{{ guide.summary }}</p>
+            <a class="cta" [href]="guide.url" target="_blank" rel="noopener noreferrer">
+              {{ copy().guideCta }} →
+            </a>
+          </li>
+        }
+      </ul>
+    </section>
   `,
   styles: [
     `
@@ -268,6 +304,70 @@ const COPY = {
         height: 18px;
         background: var(--ac-color-action-deep);
       }
+
+      .guides {
+        margin-top: 40px;
+      }
+
+      .guides-title {
+        margin: 0 0 8px;
+        font-size: var(--ac-type-section-title);
+      }
+
+      .guide-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+        margin: 20px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .guide {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 22px;
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-lg);
+      }
+
+      .guide h3 {
+        margin: 0;
+        font-size: var(--ac-type-card-title);
+        color: var(--ac-color-text-strong);
+        line-height: 1.35;
+      }
+
+      .guide .guide-topic {
+        flex: none;
+        font-size: var(--ac-type-label);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ac-color-action);
+      }
+
+      .guide .guide-source {
+        flex: none;
+        font-size: var(--ac-type-meta);
+      }
+
+      .guide .cta {
+        align-self: flex-start;
+        text-decoration: none;
+      }
+
+      .guide .cta:hover {
+        text-decoration: underline;
+      }
+
+      .guide .cta:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -277,4 +377,12 @@ export class DocumentsPage {
 
   protected readonly copy = computed(() => COPY[this.i18n.currentLang()]);
   protected readonly shelves = computed<readonly Shelf[]>(() => this.copy().shelves);
+  protected readonly guides = computed(() => {
+    const isKm = this.i18n.currentLang() === 'km';
+    return PARENT_GUIDES.map((guide) => ({
+      ...guide,
+      topic: isKm ? guide.topicKm : guide.topicEn,
+      summary: isKm ? guide.summaryKm : guide.summaryEn,
+    }));
+  });
 }

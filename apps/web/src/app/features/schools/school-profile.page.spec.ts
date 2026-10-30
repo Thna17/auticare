@@ -25,6 +25,7 @@ describe('SchoolProfilePage', () => {
     name: 'Horizon Autism Center',
     city: 'Jakarta Selatan',
     address: 'Jl. Kemang Raya No. 12',
+    phone: null,
     description: 'Comprehensive developmental programs and sensory integration.',
     logoUrl: null,
     coverImageUrl: null,

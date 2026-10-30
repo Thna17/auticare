@@ -41,6 +41,9 @@ describe('FindSupportPage', () => {
       city: 'Siem Reap',
       address: '12 River Road',
       services: 'Pediatric Care, Screening',
+      description: null,
+      phone: null,
+      website: null,
       isFavorite: true,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
@@ -70,8 +73,10 @@ describe('FindSupportPage', () => {
   it('loads and combines schools and hospitals directory', () => {
     fixture.detectChanges();
 
-    const reqSchools = httpTesting.expectOne('/api/v1/schools');
+    const reqSchools = httpTesting.expectOne((r) => r.url === '/api/v1/schools');
     expect(reqSchools.request.method).toBe('GET');
+    // The whole directory on one page, not the API's default of 20.
+    expect(reqSchools.request.params.get('limit')).toBe('100');
     reqSchools.flush({
       data: { schools: mockSchools, pagination: { total: 1, page: 1, limit: 10, totalPages: 1 } },
     });
@@ -88,9 +93,11 @@ describe('FindSupportPage', () => {
   it('filters by type and favorites', () => {
     fixture.detectChanges();
 
-    httpTesting.expectOne('/api/v1/schools').flush({
-      data: { schools: mockSchools, pagination: { total: 1, page: 1, limit: 10, totalPages: 1 } },
-    });
+    httpTesting
+      .expectOne((r) => r.url === '/api/v1/schools')
+      .flush({
+        data: { schools: mockSchools, pagination: { total: 1, page: 1, limit: 10, totalPages: 1 } },
+      });
     httpTesting.expectOne('/api/v1/hospitals').flush({ data: mockHospitals });
 
     component.selectedType.set('HOSPITAL');

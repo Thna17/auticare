@@ -59,6 +59,7 @@ export class SchoolsApi {
       specializations?: string;
       isFavorite?: boolean;
       page?: number;
+      limit?: number;
     } = {},
   ) {
     return this.http

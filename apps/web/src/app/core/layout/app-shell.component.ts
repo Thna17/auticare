@@ -246,23 +246,6 @@ export type NavSection = {
         </div>
 
         <div class="topbar-actions">
-          <button
-            type="button"
-            class="topbar-lang-toggle"
-            (click)="toggleLanguage()"
-            [attr.aria-label]="
-              currentLang() === 'km' ? shellTexts().switchToEnglish : shellTexts().switchToKhmer
-            "
-            [title]="
-              currentLang() === 'km' ? shellTexts().switchToEnglish : shellTexts().switchToKhmer
-            "
-          >
-            <span class="lang-flag" aria-hidden="true">{{
-              currentLang() === 'km' ? '🇰🇭' : '🇬🇧'
-            }}</span>
-            <span class="lang-text">{{ currentLang() === 'km' ? 'ភាសាខ្មែរ' : 'English' }}</span>
-          </button>
-
           <a
             [routerLink]="notificationPath()"
             class="topbar-icon-btn notification-btn"
@@ -301,7 +284,6 @@ export type NavSection = {
               aria-haspopup="menu"
               [attr.aria-label]="shellTexts().userAccountMenu"
             >
-              <span class="avatar-circle" aria-hidden="true">{{ initials() }}</span>
               <div class="profile-info">
                 <strong class="user-display-name">{{ accountName() }}</strong>
                 <span class="user-role-tag">{{ roleLabel() }}</span>
@@ -330,12 +312,34 @@ export type NavSection = {
                 [attr.aria-label]="shellTexts().userAccountMenu"
               >
                 <div class="popover-header">
-                  <span class="popover-avatar" aria-hidden="true">{{ initials() }}</span>
                   <div class="popover-details">
                     <strong class="popover-name">{{ accountName() }}</strong>
                     <span class="popover-role">{{ roleLabel() }}</span>
                   </div>
                 </div>
+                <div class="popover-divider"></div>
+                <button
+                  type="button"
+                  class="popover-item topbar-lang-toggle"
+                  (click)="toggleLanguage()"
+                  [attr.aria-label]="
+                    currentLang() === 'km'
+                      ? shellTexts().switchToEnglish
+                      : shellTexts().switchToKhmer
+                  "
+                  [title]="
+                    currentLang() === 'km'
+                      ? shellTexts().switchToEnglish
+                      : shellTexts().switchToKhmer
+                  "
+                >
+                  <span class="lang-text">{{
+                    currentLang() === 'km' ? 'ភាសាខ្មែរ' : 'English'
+                  }}</span>
+                  <span class="lang-switch-hint">{{
+                    currentLang() === 'km' ? 'Switch to English' : 'ប្តូរជាភាសាខ្មែរ'
+                  }}</span>
+                </button>
                 <div class="popover-divider"></div>
                 <a
                   class="popover-item"
@@ -343,7 +347,6 @@ export type NavSection = {
                   [routerLink]="profileSettingsPath()"
                   (click)="closeProfileMenu()"
                 >
-                  <span class="popover-icon" aria-hidden="true">⚙️</span>
                   <span>{{ shellTexts().accountSettings }}</span>
                 </a>
                 <a
@@ -352,7 +355,6 @@ export type NavSection = {
                   routerLink="/support"
                   (click)="closeProfileMenu()"
                 >
-                  <span class="popover-icon" aria-hidden="true">❓</span>
                   <span>{{ shellTexts().helpCenter }}</span>
                 </a>
                 <a
@@ -361,7 +363,6 @@ export type NavSection = {
                   routerLink="/crisis"
                   (click)="closeProfileMenu()"
                 >
-                  <span class="popover-icon" aria-hidden="true">🛡️</span>
                   <span>{{ shellTexts().crisisSupport }}</span>
                 </a>
                 <div class="popover-divider"></div>
@@ -371,7 +372,6 @@ export type NavSection = {
                   type="button"
                   (click)="logout()"
                 >
-                  <span class="popover-icon" aria-hidden="true">🚪</span>
                   <span>{{ shellTexts().signOut }}</span>
                 </button>
               </div>
@@ -1209,8 +1209,8 @@ export type NavSection = {
         background: color-mix(in srgb, var(--ac-color-white) 90%, transparent);
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 4px 12px 4px 5px;
+        gap: 8px;
+        padding: 6px 14px;
         cursor: pointer;
         transition:
           background var(--ac-motion-fast),
@@ -1352,6 +1352,7 @@ export type NavSection = {
       .popover-item {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 10px;
         padding: 9px 12px;
         border: 0;
@@ -1366,6 +1367,15 @@ export type NavSection = {
         text-align: left;
         width: 100%;
         transition: background var(--ac-motion-fast);
+      }
+
+      .lang-switch-hint {
+        font-size: 11px;
+        color: var(--ac-color-action);
+        font-weight: var(--ac-font-weight-semibold);
+        background: var(--ac-color-surface-info);
+        padding: 2px 8px;
+        border-radius: var(--ac-radius-pill);
       }
 
       .popover-item:hover {
@@ -1399,6 +1409,42 @@ export type NavSection = {
         margin: 0 auto;
       }
 
+      .shell:has(ac-ai-page) {
+        height: 100svh;
+        height: 100dvh;
+        max-height: 100svh;
+        max-height: 100dvh;
+        overflow: hidden;
+      }
+
+      .shell-body:has(ac-ai-page) {
+        padding: 0;
+        height: calc(100svh - 64px);
+        height: calc(100dvh - 64px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 0%;
+        min-height: 0;
+      }
+
+      .shell-body:has(ac-ai-page) .content-container {
+        max-width: 1200px;
+        height: 100%;
+        margin: 0 auto;
+        padding: 0 36px;
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 0%;
+        min-height: 0;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+
+      .shell-body:has(ac-ai-page) ac-announcement-banner {
+        display: none;
+      }
+
       /* ─── MOBILE BOTTOM NAV ─── */
       .mobile-nav {
         display: none;
@@ -1426,12 +1472,23 @@ export type NavSection = {
           padding: 24px 16px calc(88px + env(safe-area-inset-bottom, 0px));
         }
 
+        .shell-body:has(ac-ai-page) {
+          padding: 0;
+          height: auto;
+          overflow: visible;
+        }
+
+        .shell-body:has(ac-ai-page) .content-container {
+          padding: 0;
+          height: auto;
+        }
+
         .topbar-actions {
           gap: 8px;
         }
 
         .profile-chip {
-          padding: 3px 8px 3px 4px;
+          padding: 6px 12px;
           gap: 6px;
         }
 

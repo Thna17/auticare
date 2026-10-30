@@ -65,6 +65,7 @@ export const toSchoolDetailResponse = (
 ): SchoolDetailResponse => ({
   ...toSchoolResponse(school, rating),
   email: school.email,
+  phone: school.phone,
   website: school.website,
   admissionRequirements: school.admissionRequirements,
   operatingHours: school.operatingHours,

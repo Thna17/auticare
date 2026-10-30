@@ -55,6 +55,8 @@ const publicSchoolFields = [
   'createdAt',
   'updatedAt',
   'email',
+  // The school's public contact number, not a staff member's own.
+  'phone',
   'website',
   'admissionRequirements',
   'operatingHours',

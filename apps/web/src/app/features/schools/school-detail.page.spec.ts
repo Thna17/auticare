@@ -19,6 +19,7 @@ describe('SchoolDetailPage', () => {
     name: 'Phnom Penh Early Steps',
     city: 'Phnom Penh',
     address: '123 Monivong Blvd',
+    phone: null,
     description: 'Specialized inclusive early education.',
     email: 'contact@earlysteps.edu.kh',
     logoUrl: null,

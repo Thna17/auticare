@@ -1,6 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { screeningDisclaimer } from '@auticare/contracts';
 import { PasswordService } from '../src/modules/auth/password.service.js';
+import {
+  directoryActivities,
+  directoryHospitals,
+  directorySchools,
+  directoryUpdatesForExistingRows,
+} from './directory.seed-data.js';
 
 const prisma = new PrismaClient();
 const passwordService = new PasswordService();
@@ -813,6 +819,27 @@ async function main() {
     },
   ];
   for (const activity of demoActivities) {
+    const { id, ...fields } = activity;
+    await prisma.activity.upsert({ where: { id }, update: fields, create: { id, ...fields } });
+  }
+
+  // The Cambodian support directory (see directory.seed-data.ts). Upserted on
+  // stable ids, like the rows above, so re-seeding never duplicates them.
+  for (const s of directorySchools) {
+    const { id, ...fields } = s;
+    await prisma.school.upsert({ where: { id }, update: fields, create: { id, ...fields } });
+  }
+  for (const h of directoryHospitals) {
+    const { id, ...fields } = h;
+    await prisma.hospital.upsert({ where: { id }, update: fields, create: { id, ...fields } });
+  }
+  for (const [id, fields] of Object.entries(directoryUpdatesForExistingRows.school)) {
+    await prisma.school.update({ where: { id }, data: fields });
+  }
+  for (const [id, fields] of Object.entries(directoryUpdatesForExistingRows.hospital)) {
+    await prisma.hospital.update({ where: { id }, data: fields });
+  }
+  for (const activity of directoryActivities) {
     const { id, ...fields } = activity;
     await prisma.activity.upsert({ where: { id }, update: fields, create: { id, ...fields } });
   }

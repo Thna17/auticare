@@ -375,6 +375,7 @@ model School {
   description             String?                  @db.Text
   // Public contact / media
   email                   String?
+  phone                   String?
   website                 String?                  @db.Text
   logoUrl                 String?                  @db.Text
   coverImageUrl           String?                  @db.Text
@@ -584,6 +585,11 @@ model Hospital {
   city         String
   address      String
   services     String                @db.Text
+  // Public directory details shown on Find Support. Not the staff contact
+  // number, which stays on the staff member's own account.
+  description  String?               @db.Text
+  phone        String?
+  website      String?               @db.Text
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
   doctors      Doctor[]

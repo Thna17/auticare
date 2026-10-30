@@ -911,7 +911,7 @@ export class FreeCheckinComponent {
     if (!report) return;
     const escape = (value: string) =>
       value.replace(
-        /[&<>\"]/g,
+        /[&<>"]/g,
         (character) =>
           ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[character] ?? character,
       );
