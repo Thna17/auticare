@@ -74,6 +74,9 @@ const COPY = {
     copyResponse: 'Copy response',
     copiedResponse: 'Copied',
     copyError: 'This response could not be copied. Please select and copy it instead.',
+    assistantRole: 'AutiCare Assistant',
+    careSupportBadge: 'Care Guidance',
+    nonDiagnosticTag: 'Non-diagnostic guidance',
     privacyNote:
       'Messages are stored in your AutiCare account until you delete the conversation. The latest 10 messages are sent to the configured AI provider as context. Child context is shared only when you opt in below; only approximate age and recent observation count are sent. Names, notes, school records, and questionnaire results are not sent.',
   },
@@ -127,6 +130,9 @@ const COPY = {
     copyResponse: 'ចម្លងចម្លើយ',
     copiedResponse: 'បានចម្លង',
     copyError: 'មិនអាចចម្លងចម្លើយនេះបានទេ។ សូមជ្រើសរើស ហើយចម្លងវាដោយខ្លួនឯង។',
+    assistantRole: 'ជំនួយការ AutiCare',
+    careSupportBadge: 'ការណែនាំថែទាំ',
+    nonDiagnosticTag: 'ការណែនាំមិនមែនរោគវិនិច្ឆ័យ',
     privacyNote:
       'សារត្រូវបានរក្សាទុកក្នុងគណនី AutiCare របស់អ្នក រហូតដល់អ្នកលុបការសន្ទនា។ សារចុងក្រោយចំនួន ១០ ត្រូវបានផ្ញើទៅអ្នកផ្តល់សេវា AI ដែលបានកំណត់ ដើម្បីធ្វើជាបរិបទ។ ព័ត៌មានកូនត្រូវបានចែករំលែកតែពេលអ្នកយល់ព្រមខាងក្រោមប៉ុណ្ណោះ ដោយផ្ញើតែអាយុប្រហាក់ប្រហែល និងចំនួនកំណត់ត្រាសង្កេតថ្មីៗ។ មិនផ្ញើឈ្មោះ កំណត់ចំណាំ កំណត់ត្រាសាលា ឬលទ្ធផលសំណួរវាយតម្លៃទេ។',
   },
@@ -361,8 +367,8 @@ const COPY = {
                       <div class="message-row assistant-row">
                         <div class="assistant-avatar" aria-hidden="true">
                           <svg
-                            width="16"
-                            height="16"
+                            width="18"
+                            height="18"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -376,178 +382,348 @@ const COPY = {
                           </svg>
                         </div>
                         <div class="assistant-body">
-                          <div class="assistant-name-bar">
-                            <span class="assistant-name">AutiCare Assistant</span>
-                          </div>
-
-                          @if (message.kind === 'CRISIS') {
-                            <div class="crisis-card">
-                              <p class="crisis-title">{{ copy().crisisTitle }}</p>
-                              <a class="crisis-link" routerLink="/crisis"
-                                >{{ copy().crisisLink }} →</a
-                              >
-                            </div>
-                          }
-
-                          <div class="assistant-content">
-                            {{ message.content }}
-                          </div>
-
-                          @if (message.kind === 'MEDICATION') {
-                            <div class="med-badge-row">
-                              <span class="medication-badge">{{ copy().medicationBadge }}</span>
-                            </div>
-                          }
-
-                          @if (message.sources.length > 0) {
-                            <div class="sources-card">
-                              <p class="sources-title">{{ copy().sources }}</p>
-                              <ul class="sources-list">
-                                @for (source of message.sources; track source.url) {
-                                  <li>
-                                    <a
-                                      [href]="source.url"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      {{ source.title }}
-                                    </a>
-                                    <span class="publisher">· {{ source.publisher }}</span>
-                                  </li>
-                                }
-                              </ul>
-                            </div>
-                          }
-
-                          @if (message.relatedActivities && message.relatedActivities.length > 0) {
-                            <div class="related-activities-section">
-                              <p class="rel-title-label">{{ copy().relatedActivities }}</p>
-                              <div class="rel-grid">
-                                @for (act of message.relatedActivities; track act.id) {
-                                  <div class="rel-card">
-                                    <span class="rel-cat">{{ act.category }}</span>
-                                    <h4 class="rel-name">{{ act.title }}</h4>
-                                    @if (act.description) {
-                                      <p class="rel-desc">{{ act.description }}</p>
-                                    }
-                                    <a routerLink="/activities" class="rel-link"
-                                      >{{ copy().viewActivity }} →</a
-                                    >
-                                  </div>
-                                }
+                          <article class="assistant-card">
+                            <header class="assistant-card-header">
+                              <div class="assistant-name-group">
+                                <span class="assistant-name">{{ copy().assistantRole }}</span>
+                                <span class="assistant-badge">
+                                  <svg
+                                    width="11"
+                                    height="11"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                  </svg>
+                                  {{ copy().careSupportBadge }}
+                                </span>
                               </div>
-                            </div>
-                          }
+                              @if (message.model || status()?.model) {
+                                <span class="assistant-model-tag">
+                                  {{ message.model || status()?.model }}
+                                </span>
+                              }
+                            </header>
 
-                          <!-- Action Toolbar -->
-                          <div class="assistant-toolbar">
-                            <button
-                              type="button"
-                              class="tool-btn"
-                              (click)="copyResponse(message)"
-                              [attr.aria-label]="
-                                copiedMessageId() === message.id
-                                  ? copy().copiedResponse
-                                  : copy().copyResponse
-                              "
-                            >
-                              <svg
-                                width="13"
-                                height="13"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                              >
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path
-                                  d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                                ></path>
-                              </svg>
-                              <span>{{
-                                copiedMessageId() === message.id
-                                  ? copy().copiedResponse
-                                  : copy().copyResponse
-                              }}</span>
-                            </button>
+                            @if (message.kind === 'CRISIS') {
+                              <div class="crisis-card" role="alert">
+                                <div class="crisis-head">
+                                  <svg
+                                    class="crisis-icon"
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                                    ></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                  </svg>
+                                  <p class="crisis-title">{{ copy().crisisTitle }}</p>
+                                </div>
+                                <a class="crisis-link" routerLink="/crisis">
+                                  {{ copy().crisisLink }}
+                                  <span aria-hidden="true">→</span>
+                                </a>
+                              </div>
+                            }
 
-                            <button
-                              type="button"
-                              class="tool-btn"
-                              [class.active]="!!message.savedAt"
-                              (click)="toggleSave(message)"
-                              [attr.aria-label]="
-                                message.savedAt ? copy().savedAnswer : copy().saveAnswer
-                              "
-                            >
-                              <svg
-                                width="13"
-                                height="13"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                              >
-                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                              </svg>
-                              <span>{{
-                                message.savedAt ? copy().savedAnswer : copy().saveAnswer
-                              }}</span>
-                            </button>
+                            <div
+                              class="assistant-content prose-container"
+                              [innerHTML]="formatResponseHtml(message.content)"
+                            ></div>
 
-                            <div class="feedback-cluster">
-                              <button
-                                type="button"
-                                class="tool-btn icon-only"
-                                [class.active]="message.feedback === 'HELPFUL'"
-                                (click)="sendFeedback(message, 'HELPFUL')"
-                                [attr.aria-label]="copy().helpful"
-                                [title]="copy().helpful"
-                              >
-                                <svg
-                                  width="13"
-                                  height="13"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
+                            @if (message.kind === 'MEDICATION') {
+                              <div class="med-badge-row">
+                                <span class="medication-badge">
+                                  <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                  </svg>
+                                  {{ copy().medicationBadge }}
+                                </span>
+                              </div>
+                            }
+
+                            @if (message.sources.length > 0) {
+                              <div class="sources-card">
+                                <p class="sources-title">
+                                  <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path
+                                      d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+                                    ></path>
+                                  </svg>
+                                  {{ copy().sources }}
+                                </p>
+                                <ul class="sources-list">
+                                  @for (source of message.sources; track source.url) {
+                                    <li>
+                                      <a
+                                        [href]="source.url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="source-item-link"
+                                      >
+                                        <span>{{ source.title }}</span>
+                                        <svg
+                                          width="11"
+                                          height="11"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          stroke-width="2"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          aria-hidden="true"
+                                        >
+                                          <path
+                                            d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                                          ></path>
+                                          <polyline points="15 3 21 3 21 9"></polyline>
+                                          <line x1="10" y1="14" x2="21" y2="3"></line>
+                                        </svg>
+                                      </a>
+                                      <span class="publisher">· {{ source.publisher }}</span>
+                                    </li>
+                                  }
+                                </ul>
+                              </div>
+                            }
+
+                            @if (
+                              message.relatedActivities && message.relatedActivities.length > 0
+                            ) {
+                              <div class="related-activities-section">
+                                <p class="rel-title-label">
+                                  <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                  </svg>
+                                  {{ copy().relatedActivities }}
+                                </p>
+                                <div class="rel-grid">
+                                  @for (act of message.relatedActivities; track act.id) {
+                                    <div class="rel-card">
+                                      <div class="rel-card-top">
+                                        <span class="rel-cat">{{ act.category }}</span>
+                                      </div>
+                                      <h4 class="rel-name">{{ act.title }}</h4>
+                                      @if (act.description) {
+                                        <p class="rel-desc">{{ act.description }}</p>
+                                      }
+                                      <a routerLink="/activities" class="rel-link">
+                                        {{ copy().viewActivity }}
+                                        <span aria-hidden="true">→</span>
+                                      </a>
+                                    </div>
+                                  }
+                                </div>
+                              </div>
+                            }
+
+                            <!-- Action Toolbar -->
+                            <footer class="assistant-toolbar">
+                              <div class="toolbar-primary-actions">
+                                <button
+                                  type="button"
+                                  class="tool-btn copy-btn"
+                                  [class.copied]="copiedMessageId() === message.id"
+                                  (click)="copyResponse(message)"
+                                  [attr.aria-label]="
+                                    copiedMessageId() === message.id
+                                      ? copy().copiedResponse
+                                      : copy().copyResponse
+                                  "
                                 >
-                                  <path
-                                    d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
-                                  ></path>
-                                </svg>
-                              </button>
-                              <button
-                                type="button"
-                                class="tool-btn icon-only"
-                                [class.active]="message.feedback === 'NOT_HELPFUL'"
-                                (click)="sendFeedback(message, 'NOT_HELPFUL')"
-                                [attr.aria-label]="copy().notHelpful"
-                                [title]="copy().notHelpful"
-                              >
-                                <svg
-                                  width="13"
-                                  height="13"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
+                                  @if (copiedMessageId() === message.id) {
+                                    <svg
+                                      width="13"
+                                      height="13"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2.5"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                  } @else {
+                                    <svg
+                                      width="13"
+                                      height="13"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                      <path
+                                        d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                      ></path>
+                                    </svg>
+                                  }
+                                  <span>{{
+                                    copiedMessageId() === message.id
+                                      ? copy().copiedResponse
+                                      : copy().copyResponse
+                                  }}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  class="tool-btn bookmark-btn"
+                                  [class.active]="!!message.savedAt"
+                                  (click)="toggleSave(message)"
+                                  [attr.aria-label]="
+                                    message.savedAt ? copy().savedAnswer : copy().saveAnswer
+                                  "
                                 >
-                                  <path
-                                    d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"
-                                  ></path>
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
+                                  <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    [attr.fill]="message.savedAt ? 'currentColor' : 'none'"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"
+                                    ></path>
+                                  </svg>
+                                  <span>{{
+                                    message.savedAt ? copy().savedAnswer : copy().saveAnswer
+                                  }}</span>
+                                </button>
+
+                                <div
+                                  class="feedback-cluster"
+                                  role="group"
+                                  [attr.aria-label]="copy().feedbackThanks"
+                                >
+                                  <button
+                                    type="button"
+                                    class="tool-btn icon-only"
+                                    [class.active]="message.feedback === 'HELPFUL'"
+                                    (click)="sendFeedback(message, 'HELPFUL')"
+                                    [attr.aria-label]="copy().helpful"
+                                    [title]="copy().helpful"
+                                  >
+                                    <svg
+                                      width="13"
+                                      height="13"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <path
+                                        d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                                      ></path>
+                                    </svg>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    class="tool-btn icon-only"
+                                    [class.active]="message.feedback === 'NOT_HELPFUL'"
+                                    (click)="sendFeedback(message, 'NOT_HELPFUL')"
+                                    [attr.aria-label]="copy().notHelpful"
+                                    [title]="copy().notHelpful"
+                                  >
+                                    <svg
+                                      width="13"
+                                      height="13"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <path
+                                        d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"
+                                      ></path>
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div class="toolbar-advisory-hint">
+                                <span class="hint-pill">
+                                  <svg
+                                    width="11"
+                                    height="11"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                  </svg>
+                                  {{ copy().nonDiagnosticTag }}
+                                </span>
+                              </div>
+                            </footer>
+                          </article>
                         </div>
                       </div>
                     }
@@ -557,8 +733,8 @@ const COPY = {
                     <div class="message-row assistant-row typing-row">
                       <div class="assistant-avatar" aria-hidden="true">
                         <svg
-                          width="16"
-                          height="16"
+                          width="18"
+                          height="18"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -947,23 +1123,26 @@ const COPY = {
         margin: 0;
       }
 
-      /* Assistant Message (Comfortable 16px font size, line-height 1.68) */
+      /* Assistant Message (Modern Elevated Card, Line-height 1.7) */
       .assistant-row {
         justify-content: flex-start;
         align-items: flex-start;
-        gap: 12px;
+        gap: 14px;
+        width: 100%;
       }
 
       .assistant-avatar {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
         border-radius: var(--ac-radius-pill);
-        background: var(--ac-brand-100);
+        background: linear-gradient(135deg, var(--ac-brand-50), var(--ac-brand-100));
+        border: 1.5px solid var(--ac-brand-200);
         color: var(--ac-color-action);
         display: grid;
         place-items: center;
         flex-shrink: 0;
         margin-top: 2px;
+        box-shadow: 0 2px 6px color-mix(in srgb, var(--ac-color-action) 12%, transparent);
       }
 
       .assistant-body {
@@ -971,27 +1150,177 @@ const COPY = {
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 8px;
       }
 
-      .assistant-name-bar {
+      /* Elevated Assistant Response Card */
+      .assistant-card {
+        background: var(--ac-color-surface);
+        border: 1px solid var(--ac-color-border);
+        border-radius: 18px;
+        border-top-left-radius: 4px;
+        padding: 20px 24px;
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--ac-color-border) 45%, transparent);
+        max-width: min(840px, 100%);
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        transition:
+          border-color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+
+      .assistant-card:hover {
+        border-color: color-mix(in srgb, var(--ac-color-action) 25%, var(--ac-color-border));
+      }
+
+      /* Card Header */
+      .assistant-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid
+          var(--ac-color-border-subtle, color-mix(in srgb, var(--ac-color-border) 60%, transparent));
+        flex-wrap: wrap;
+      }
+
+      .assistant-name-group {
         display: flex;
         align-items: center;
         gap: 8px;
+        flex-wrap: wrap;
       }
 
       .assistant-name {
-        font-size: 15px;
+        font-size: 14.5px;
+        font-weight: 700;
+        color: var(--ac-color-text-strong);
+        letter-spacing: -0.01em;
+      }
+
+      .assistant-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-brand-50);
+        border: 1px solid var(--ac-brand-200);
+        color: var(--ac-color-action);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .assistant-model-tag {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--ac-color-text-muted);
+        background: var(--ac-color-surface-slate);
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-pill);
+        padding: 2px 8px;
+        font-family: inherit;
+      }
+
+      /* Structured Prose Content */
+      .assistant-content {
+        font-size: 15.5px;
+        line-height: 1.7;
+        color: var(--ac-color-text-strong);
+        word-break: break-word;
+      }
+
+      .assistant-content .response-p {
+        margin: 0 0 14px 0;
+      }
+
+      .assistant-content .response-p:last-child {
+        margin-bottom: 0;
+      }
+
+      .assistant-content strong {
         font-weight: 700;
         color: var(--ac-color-text-strong);
       }
 
-      .assistant-content {
-        font-size: 16px;
-        line-height: 1.68;
+      .assistant-content code {
+        font-family: monospace;
+        font-size: 13.5px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: var(--ac-color-surface-slate);
+        border: 1px solid var(--ac-color-border);
+        color: var(--ac-color-action);
+      }
+
+      /* Bullet List Styling */
+      .assistant-content .response-list {
+        margin: 8px 0 14px 0;
+        padding-left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .assistant-content .response-list li {
+        position: relative;
+        padding-left: 4px;
+        line-height: 1.65;
+      }
+
+      .assistant-content .response-list li::marker {
+        color: var(--ac-color-action);
+      }
+
+      /* Numbered List Styling */
+      .assistant-content .response-numbered-list {
+        margin: 8px 0 14px 0;
+        padding-left: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .assistant-content .response-numbered-list li {
+        padding-left: 4px;
+        line-height: 1.65;
+      }
+
+      .assistant-content .response-numbered-list li::marker {
+        font-weight: 700;
+        color: var(--ac-color-action);
+      }
+
+      /* Clinical Advisory Callout inside Content */
+      .advisory-callout {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        margin: 12px 0;
+        border-radius: var(--ac-radius-md);
+        background: color-mix(in srgb, var(--ac-color-action) 6%, var(--ac-color-surface));
+        border: 1px solid color-mix(in srgb, var(--ac-color-action) 20%, transparent);
+        border-left: 3px solid var(--ac-color-action);
+      }
+
+      .advisory-icon {
+        color: var(--ac-color-action);
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        margin-top: 2px;
+      }
+
+      .advisory-body {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.55;
         color: var(--ac-color-text-strong);
-        white-space: pre-wrap;
-        word-break: break-word;
       }
 
       /* Crisis Alert */
@@ -1001,21 +1330,37 @@ const COPY = {
         border-left: 4px solid var(--ac-color-alert-strong);
         border-radius: var(--ac-radius-sm);
         padding: 14px 18px;
-        margin-top: 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .crisis-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .crisis-icon {
+        color: var(--ac-color-alert-text);
+        flex-shrink: 0;
       }
 
       .crisis-title {
-        margin: 0 0 6px;
+        margin: 0;
         font-size: 15px;
         font-weight: 700;
         color: var(--ac-color-alert-text);
       }
 
       .crisis-link {
-        font-size: 14.5px;
+        font-size: 14px;
         font-weight: 700;
         color: var(--ac-color-alert-text);
         text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
       }
 
       .crisis-link:hover {
@@ -1024,13 +1369,14 @@ const COPY = {
 
       /* Medication Badge */
       .med-badge-row {
-        margin-top: 4px;
+        margin-top: 2px;
       }
 
       .medication-badge {
         display: inline-flex;
         align-items: center;
-        padding: 3px 10px;
+        gap: 5px;
+        padding: 4px 10px;
         border-radius: var(--ac-radius-pill);
         background: var(--ac-color-surface-slate);
         border: 1px solid var(--ac-color-border);
@@ -1041,21 +1387,23 @@ const COPY = {
 
       /* Sources */
       .sources-card {
-        margin-top: 8px;
         padding: 12px 16px;
         border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface);
+        background: var(--ac-color-surface-slate);
         border: 1px solid var(--ac-color-border);
-        font-size: 14px;
+        font-size: 13.5px;
       }
 
       .sources-title {
-        margin: 0 0 6px;
+        margin: 0 0 8px;
         font-weight: 700;
         color: var(--ac-color-text-muted);
         text-transform: uppercase;
-        font-size: 12.5px;
+        font-size: 12px;
         letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
 
       .sources-list {
@@ -1064,56 +1412,71 @@ const COPY = {
         padding: 0;
         display: flex;
         flex-direction: column;
+        gap: 6px;
+      }
+
+      .source-item-link {
+        color: var(--ac-color-action);
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
         gap: 4px;
       }
 
-      .sources-list a {
-        color: var(--ac-color-action);
-        text-decoration: none;
-        font-weight: 500;
-      }
-
-      .sources-list a:hover {
+      .source-item-link:hover {
         text-decoration: underline;
       }
 
       .publisher {
         color: var(--ac-color-text-muted);
         margin-left: 6px;
+        font-size: 12.5px;
       }
 
       /* Related Activities */
       .related-activities-section {
-        margin-top: 10px;
+        margin-top: 4px;
       }
 
       .rel-title-label {
-        margin: 0 0 8px;
-        font-size: 13px;
+        margin: 0 0 10px;
+        font-size: 12.5px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         color: var(--ac-color-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
 
       .rel-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
         gap: 12px;
       }
 
       .rel-card {
         border: 1px solid var(--ac-color-border);
         border-radius: var(--ac-radius-md);
-        background: var(--ac-color-surface);
-        padding: 12px 14px;
+        background: var(--ac-color-surface-slate);
+        padding: 14px 16px;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
+        transition:
+          border-color 0.15s ease,
+          background 0.15s ease;
+      }
+
+      .rel-card:hover {
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-surface);
       }
 
       .rel-cat {
-        font-size: 12px;
+        font-size: 11.5px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;
@@ -1122,50 +1485,64 @@ const COPY = {
 
       .rel-name {
         margin: 0;
-        font-size: 15px;
+        font-size: 14.5px;
         font-weight: 600;
         color: var(--ac-color-text-strong);
       }
 
       .rel-desc {
         margin: 0;
-        font-size: 14px;
+        font-size: 13.5px;
         color: var(--ac-color-text-muted);
         line-height: 1.45;
       }
 
       .rel-link {
         margin-top: 6px;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
         color: var(--ac-color-action);
         text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
       }
 
       .rel-link:hover {
         text-decoration: underline;
       }
 
-      /* Action Toolbar */
+      /* Modern Action Toolbar */
       .assistant-toolbar {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding-top: 14px;
+        border-top: 1px solid
+          var(--ac-color-border-subtle, color-mix(in srgb, var(--ac-color-border) 60%, transparent));
+        flex-wrap: wrap;
+      }
+
+      .toolbar-primary-actions {
+        display: flex;
+        align-items: center;
         gap: 8px;
-        margin-top: 8px;
         flex-wrap: wrap;
       }
 
       .tool-btn {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
         padding: 5px 12px;
         border-radius: var(--ac-radius-pill);
         border: 1px solid var(--ac-color-border);
         background: var(--ac-color-surface);
         color: var(--ac-color-text-muted);
         font: inherit;
-        font-size: 13px;
+        font-size: 12.5px;
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.15s ease;
       }
@@ -1173,66 +1550,96 @@ const COPY = {
       .tool-btn:hover {
         background: var(--ac-color-surface-slate);
         color: var(--ac-color-text-strong);
-        border-color: var(--ac-color-border);
+        border-color: color-mix(in srgb, var(--ac-color-action) 35%, var(--ac-color-border));
       }
 
       .tool-btn.active {
         background: var(--ac-brand-50);
         border-color: var(--ac-color-action);
         color: var(--ac-color-action);
+        font-weight: 600;
+      }
+
+      .tool-btn.copied {
+        background: color-mix(in srgb, var(--ac-color-action) 12%, var(--ac-color-surface));
+        border-color: var(--ac-color-action);
+        color: var(--ac-color-action);
+        font-weight: 600;
       }
 
       .tool-btn.icon-only {
-        padding: 5px;
+        padding: 5px 8px;
       }
 
       .feedback-cluster {
         display: flex;
         align-items: center;
         gap: 4px;
-        margin-left: 4px;
+        margin-left: 2px;
+        padding-left: 6px;
+        border-left: 1px solid var(--ac-color-border);
+      }
+
+      .toolbar-advisory-hint {
+        display: flex;
+        align-items: center;
+      }
+
+      .hint-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11.5px;
+        color: var(--ac-color-text-muted);
+        padding: 2px 6px;
       }
 
       /* Typing indicator */
       .typing-row {
-        align-items: center;
+        align-items: flex-start;
       }
 
       .typing-bubble {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 8px 14px;
         background: var(--ac-color-surface);
         border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-pill);
+        border-radius: 16px;
+        border-top-left-radius: 4px;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 6px color-mix(in srgb, var(--ac-color-border) 40%, transparent);
       }
 
       .typing-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--ac-color-text-muted);
-        animation: typingBlink 1.3s infinite both;
+        width: 7px;
+        height: 7px;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-action);
+        opacity: 0.4;
+        animation: typingBounce 1.4s infinite ease-in-out both;
       }
 
+      .typing-dot:nth-child(1) {
+        animation-delay: -0.32s;
+      }
       .typing-dot:nth-child(2) {
-        animation-delay: 0.2s;
+        animation-delay: -0.16s;
       }
       .typing-dot:nth-child(3) {
-        animation-delay: 0.4s;
+        animation-delay: 0s;
       }
 
-      @keyframes typingBlink {
+      @keyframes typingBounce {
         0%,
         80%,
         100% {
-          opacity: 0.3;
-          transform: scale(0.85);
+          transform: scale(0.6);
+          opacity: 0.35;
         }
         40% {
+          transform: scale(1);
           opacity: 1;
-          transform: scale(1.15);
         }
       }
 
@@ -1637,12 +2044,23 @@ const COPY = {
         }
 
         .assistant-row {
-          gap: 8px;
+          gap: 10px;
         }
 
         .assistant-avatar {
-          width: 26px;
-          height: 26px;
+          width: 28px;
+          height: 28px;
+        }
+
+        .assistant-card {
+          padding: 14px 16px;
+          border-radius: 14px;
+          border-top-left-radius: 4px;
+          gap: 12px;
+        }
+
+        .assistant-card-header {
+          padding-bottom: 8px;
         }
 
         .assistant-name {
@@ -1651,7 +2069,11 @@ const COPY = {
 
         .assistant-content {
           font-size: 14.5px;
-          line-height: 1.55;
+          line-height: 1.6;
+        }
+
+        .assistant-content .response-p {
+          margin-bottom: 10px;
         }
 
         .crisis-card {
@@ -1673,13 +2095,17 @@ const COPY = {
         }
 
         .assistant-toolbar {
-          gap: 4px;
-          margin-top: 6px;
+          padding-top: 10px;
+          gap: 8px;
         }
 
         .tool-btn {
-          padding: 3px 8px;
-          font-size: 11.5px;
+          padding: 4px 10px;
+          font-size: 12px;
+        }
+
+        .toolbar-advisory-hint {
+          display: none;
         }
 
         .saved-header-row h2 {
@@ -1957,6 +2383,91 @@ export class AiPage implements OnInit {
     } catch {
       this.error.set(this.copy().copyError);
     }
+  }
+
+  /** Formats assistant raw text into professional structured HTML with safe escaping */
+  protected formatResponseHtml(content: string): string {
+    if (!content) return '';
+    const text = content.replace(/\r\n/g, '\n').trim();
+    const blocks = text.split(/\n\s*\n/);
+
+    return blocks
+      .map((block) => {
+        const trimmed = block.trim();
+        if (!trimmed) return '';
+
+        // Check if paragraph is a clinical disclaimer / advisory notice
+        const isDisclaimer =
+          /(?:not a (?:doctor|diagnosis)|can(?:'t|not) diagnose|qualified clinician|general guidance|AutiCare does not diagnose|មិនធ្វើរោគវិនិច្ឆ័យ|គ្លីនិកជំនាញ)/i.test(
+            trimmed,
+          ) && trimmed.length < 360;
+
+        const lines = trimmed
+          .split('\n')
+          .map((l) => l.trim())
+          .filter(Boolean);
+
+        // Entire block is bullet list
+        if (lines.length > 0 && lines.every((l) => /^[-*•]\s+/.test(l))) {
+          const items = lines
+            .map((l) => `<li>${this.formatInline(l.replace(/^[-*•]\s+/, ''))}</li>`)
+            .join('');
+          return `<ul class="response-list">${items}</ul>`;
+        }
+
+        // Entire block is numbered list
+        if (lines.length > 0 && lines.every((l) => /^\d+[.)]\s+/.test(l))) {
+          const items = lines
+            .map((l) => `<li>${this.formatInline(l.replace(/^\d+[.)]\s+/, ''))}</li>`)
+            .join('');
+          return `<ol class="response-numbered-list">${items}</ol>`;
+        }
+
+        // Text followed by bullet points
+        const bulletIdx = lines.findIndex((l) => /^[-*•]\s+/.test(l));
+        if (bulletIdx > 0) {
+          const intro = lines.slice(0, bulletIdx).join(' ');
+          const listLines = lines.slice(bulletIdx);
+          if (listLines.every((l) => /^[-*•]\s+/.test(l))) {
+            const introHtml = `<p class="response-p">${this.formatInline(intro)}</p>`;
+            const items = listLines
+              .map((l) => `<li>${this.formatInline(l.replace(/^[-*•]\s+/, ''))}</li>`)
+              .join('');
+            return `${introHtml}<ul class="response-list">${items}</ul>`;
+          }
+        }
+
+        const formattedBody = this.formatInline(trimmed).replace(/\n/g, '<br/>');
+
+        if (isDisclaimer) {
+          return `
+            <div class="advisory-callout" role="note">
+              <span class="advisory-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+              </span>
+              <p class="advisory-body">${formattedBody}</p>
+            </div>
+          `;
+        }
+
+        return `<p class="response-p">${formattedBody}</p>`;
+      })
+      .filter(Boolean)
+      .join('');
+  }
+
+  private formatInline(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.+?)__/g, '<strong>$1</strong>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>');
   }
 
   private scrollToLatest(): void {

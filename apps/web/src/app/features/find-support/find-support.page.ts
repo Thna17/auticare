@@ -14,6 +14,7 @@ import { HospitalsApi } from '../hospitals/data-access/hospitals.api';
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../design-system/components/ui-empty-state.component';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { getFacilityImageUrl } from './find-support-images';
 
 export interface SupportDirectoryItem {
   id: string;
@@ -24,6 +25,7 @@ export interface SupportDirectoryItem {
   servicesSnippet: string;
   isVerified: boolean;
   isFavorite: boolean;
+  imageUrl?: string | null;
 }
 
 export type SupportTypeFilter = 'ALL' | 'SCHOOL' | 'HOSPITAL';
@@ -206,7 +208,7 @@ const COPY = {
         </div>
 
         <section class="directory-panel" [attr.aria-label]="copy().directoryLabel">
-          <ul class="support-list">
+          <ul class="support-grid">
             @for (item of filteredItems(); track item.type + '-' + item.id) {
               <li
                 class="support-card"
@@ -216,42 +218,164 @@ const COPY = {
                 role="button"
                 [attr.aria-label]="item.name + ', ' + item.city"
               >
-                <div class="card-main">
-                  <div class="card-top">
-                    <div class="type-badges">
-                      <span class="type-badge" [class.hospital-badge]="item.type === 'hospital'">
+                <div class="card-media">
+                  @if (item.imageUrl) {
+                    <img
+                      [src]="item.imageUrl"
+                      [alt]="item.name"
+                      class="facility-photo"
+                      loading="lazy"
+                    />
+                  } @else {
+                    <div
+                      class="media-fallback"
+                      [class.hospital-fallback]="item.type === 'hospital'"
+                      aria-hidden="true"
+                    >
+                      <div class="fallback-icon-wrap">
+                        @if (item.type === 'school') {
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path
+                              d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"
+                            ></path>
+                            <path d="M6 6h10"></path>
+                            <path d="M6 10h10"></path>
+                            <path d="M6 14h6"></path>
+                          </svg>
+                        } @else {
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M3 21h18"></path>
+                            <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                            <path d="M9 10h6"></path>
+                            <path d="M12 7v6"></path>
+                          </svg>
+                        }
+                      </div>
+                      <span class="fallback-label">
                         {{ item.type === 'school' ? copy().schoolTag : copy().healthcareTag }}
                       </span>
-                      @if (item.isVerified) {
-                        <span class="verified-badge">{{ copy().verifiedPartner }}</span>
-                      }
                     </div>
-                  </div>
+                  }
 
-                  <div class="card-body">
+                  <div class="media-badges">
+                    <span class="type-badge" [class.hospital-badge]="item.type === 'hospital'">
+                      {{ item.type === 'school' ? copy().schoolTag : copy().healthcareTag }}
+                    </span>
+                    @if (item.isVerified) {
+                      <span class="verified-badge">
+                        <svg
+                          class="verified-icon"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>{{ copy().verifiedPartner }}</span>
+                      </span>
+                    }
+                  </div>
+                </div>
+
+                <div class="card-content">
+                  <div class="card-main">
                     <h2 class="item-name">{{ item.name }}</h2>
+
                     <div class="item-city">
+                      <svg
+                        class="city-pin-icon"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
                       <span class="city-name">{{ item.city }}</span>
                       @if (item.address) {
                         <span class="location-sep" aria-hidden="true">&bull;</span>
                         <span class="address-text">{{ item.address }}</span>
                       }
                     </div>
+
                     <p class="services-snippet">{{ item.servicesSnippet }}</p>
                   </div>
-                </div>
 
-                <div class="card-actions">
-                  <button
-                    type="button"
-                    class="heart-toggle-btn"
-                    [class.favorited]="item.isFavorite"
-                    (click)="toggleFavorite(item, $event)"
-                    [attr.aria-label]="item.isFavorite ? copy().removeFavorite : copy().addFavorite"
-                  >
-                    {{ item.isFavorite ? copy().savedBtn : copy().saveBtn }}
-                  </button>
-                  <span class="link-label" aria-hidden="true">{{ copy().viewDetails }} &rarr;</span>
+                  <div class="card-footer">
+                    <button
+                      type="button"
+                      class="heart-toggle-btn"
+                      [class.favorited]="item.isFavorite"
+                      (click)="toggleFavorite(item, $event)"
+                      [attr.aria-label]="
+                        item.isFavorite ? copy().removeFavorite : copy().addFavorite
+                      "
+                    >
+                      <svg
+                        class="heart-icon"
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        [attr.fill]="item.isFavorite ? 'currentColor' : 'none'"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+                        ></path>
+                      </svg>
+                      <span>{{ item.isFavorite ? copy().savedBtn : copy().saveBtn }}</span>
+                    </button>
+                    <span class="link-label" aria-hidden="true">
+                      <span>{{ copy().viewDetails }}</span>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </span>
+                  </div>
                 </div>
               </li>
             }
@@ -457,17 +581,15 @@ const COPY = {
         color: var(--ac-color-text-muted);
       }
 
-      /* Unified list panel with row dividers, avoiding card overload */
+      /* Directory Grid */
       .directory-panel {
-        border: 1px solid var(--ac-color-border);
-        border-radius: var(--ac-radius-lg);
-        background: var(--ac-color-surface);
-        overflow: clip;
+        display: block;
       }
 
-      .support-list {
-        display: flex;
-        flex-direction: column;
+      .support-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: var(--ac-space-5);
         list-style: none;
         margin: 0;
         padding: 0;
@@ -475,82 +597,159 @@ const COPY = {
 
       .support-card {
         display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: var(--ac-space-4);
-        padding: var(--ac-space-4) var(--ac-space-5);
-        border-top: 1px solid var(--ac-color-border);
+        flex-direction: column;
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-lg);
         background: var(--ac-color-surface);
+        overflow: hidden;
         cursor: pointer;
-        transition: background var(--ac-motion-fast);
-      }
-
-      .support-card:first-child {
-        border-top: none;
+        box-shadow: var(--ac-shadow-sm);
+        transition:
+          transform var(--ac-motion-fast),
+          box-shadow var(--ac-motion-fast),
+          border-color var(--ac-motion-fast);
       }
 
       .support-card:hover {
-        background: var(--ac-color-surface-info);
+        transform: translateY(-2px);
+        border-color: var(--ac-color-action-mid);
+        box-shadow: var(--ac-shadow-md);
       }
 
       .support-card:focus-visible {
         outline: 2px solid var(--ac-color-focus);
-        outline-offset: -2px;
+        outline-offset: 2px;
       }
 
-      .card-main {
-        flex: 1;
-        min-width: 0;
+      /* Card Media Header */
+      .card-media {
+        position: relative;
+        width: 100%;
+        height: 180px;
+        background: var(--ac-brand-50);
+        overflow: hidden;
+      }
+
+      .facility-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+        transition: transform var(--ac-motion-fast);
+      }
+
+      .support-card:hover .facility-photo {
+        transform: scale(1.04);
+      }
+
+      .media-fallback {
+        width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
         gap: var(--ac-space-2);
+        background: linear-gradient(
+          135deg,
+          var(--ac-brand-50) 0%,
+          color-mix(in srgb, var(--ac-brand-100) 70%, var(--ac-color-surface)) 100%
+        );
+        color: var(--ac-brand-700);
       }
 
-      .card-top {
-        display: flex;
-        align-items: center;
-        gap: var(--ac-space-2);
+      .media-fallback.hospital-fallback {
+        background: linear-gradient(
+          135deg,
+          var(--ac-color-surface-info) 0%,
+          color-mix(in srgb, var(--ac-color-ice-blue-border) 60%, var(--ac-color-surface)) 100%
+        );
+        color: var(--ac-color-ice-blue-text);
       }
 
-      .type-badges {
+      .fallback-icon-wrap {
         display: flex;
-        flex-wrap: wrap;
-        gap: var(--ac-space-2);
         align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        border-radius: var(--ac-radius-pill);
+        background: color-mix(in srgb, var(--ac-color-surface) 80%, transparent);
+        box-shadow: var(--ac-shadow-sm);
+      }
+
+      .fallback-label {
+        font-size: var(--ac-type-meta);
+        font-weight: var(--ac-font-weight-semibold);
+        letter-spacing: 0.02em;
+        opacity: 0.85;
+      }
+
+      .media-badges {
+        position: absolute;
+        top: var(--ac-space-3);
+        left: var(--ac-space-3);
+        right: var(--ac-space-3);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--ac-space-2);
+        pointer-events: none;
       }
 
       .type-badge {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
         font-size: 0.75rem;
         font-weight: var(--ac-font-weight-semibold);
-        padding: 2px 8px;
+        padding: 4px 10px;
         border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-ice-blue-soft);
+        background: color-mix(in srgb, var(--ac-color-surface) 92%, transparent);
         color: var(--ac-brand-800);
-        border: 1px solid var(--ac-color-ice-blue-border);
+        border: 1px solid var(--ac-color-border);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--ac-shadow-sm);
       }
 
       .type-badge.hospital-badge {
-        background: var(--ac-color-surface-info);
         color: var(--ac-brand-900);
-        border-color: var(--ac-brand-300);
+        border-color: var(--ac-color-border);
       }
 
       .verified-badge {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
         font-size: 0.75rem;
         font-weight: var(--ac-font-weight-semibold);
-        padding: 2px 8px;
+        padding: 4px 10px;
         border-radius: var(--ac-radius-pill);
-        background: var(--ac-color-green-tint-50);
+        background: color-mix(in srgb, var(--ac-color-surface) 95%, transparent);
         color: var(--ac-color-green-dark);
         border: 1px solid var(--ac-color-green-border-soft);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--ac-shadow-sm);
       }
 
-      .card-body {
+      .verified-icon {
+        flex-shrink: 0;
+      }
+
+      /* Card Content */
+      .card-content {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: var(--ac-space-1);
+        justify-content: space-between;
+        padding: var(--ac-space-4) var(--ac-space-4) var(--ac-space-3);
+        gap: var(--ac-space-3);
+      }
+
+      .card-main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ac-space-2);
       }
 
       .item-name {
@@ -564,14 +763,30 @@ const COPY = {
       .item-city {
         display: flex;
         align-items: center;
-        gap: var(--ac-space-2);
+        gap: var(--ac-space-1);
         font-size: var(--ac-type-meta);
         color: var(--ac-color-text-muted);
         flex-wrap: wrap;
       }
 
+      .city-pin-icon {
+        color: var(--ac-color-action-mid);
+        flex-shrink: 0;
+      }
+
+      .city-name {
+        font-weight: var(--ac-font-weight-medium);
+      }
+
       .location-sep {
         color: var(--ac-color-border-grey);
+      }
+
+      .address-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
       }
 
       .services-snippet {
@@ -585,18 +800,21 @@ const COPY = {
         overflow: hidden;
       }
 
-      .card-actions {
+      /* Card Footer */
+      .card-footer {
         display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: var(--ac-space-3);
-        flex-shrink: 0;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: var(--ac-space-3);
+        border-top: 1px solid var(--ac-color-border);
+        gap: var(--ac-space-2);
       }
 
       .heart-toggle-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 6px;
         min-height: 36px;
         padding: 0 var(--ac-space-3);
         border: 1px solid var(--ac-color-border);
@@ -624,11 +842,19 @@ const COPY = {
         border-color: var(--ac-color-amber-tint-sand);
       }
 
+      .heart-icon {
+        flex-shrink: 0;
+      }
+
       .link-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
         font-size: var(--ac-type-meta);
         font-weight: var(--ac-font-weight-semibold);
         color: var(--ac-color-action-mid);
         white-space: nowrap;
+        transition: color var(--ac-motion-fast);
       }
 
       .support-card:hover .link-label {
@@ -669,6 +895,21 @@ const COPY = {
       button:focus-visible {
         outline: 2px solid var(--ac-color-focus);
         outline-offset: 2px;
+      }
+
+      @media (max-width: 640px) {
+        .support-grid {
+          grid-template-columns: 1fr;
+          gap: var(--ac-space-4);
+        }
+
+        .card-media {
+          height: 160px;
+        }
+
+        .address-text {
+          max-width: 180px;
+        }
       }
     `,
   ],
@@ -760,6 +1001,7 @@ export class FindSupportPage implements OnInit {
               : s.description || 'Inclusive learning & developmental programs',
           isVerified: Boolean(s.isVerified),
           isFavorite: Boolean(s.isFavorite),
+          imageUrl: getFacilityImageUrl(s.name, s.id) || s.coverImageUrl || s.logoUrl || null,
         }));
 
         const mappedHospitals: SupportDirectoryItem[] = (hospitals || []).map((h) => ({
@@ -771,6 +1013,7 @@ export class FindSupportPage implements OnInit {
           servicesSnippet: h.services || 'Pediatric & developmental health services',
           isVerified: false,
           isFavorite: (h as { isFavorite?: boolean }).isFavorite ?? false,
+          imageUrl: getFacilityImageUrl(h.name, h.id) || null,
         }));
 
         const combined = [...mappedSchools, ...mappedHospitals].sort((a, b) =>
