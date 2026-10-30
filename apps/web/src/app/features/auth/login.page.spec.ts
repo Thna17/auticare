@@ -45,26 +45,9 @@ describe('LoginPage', () => {
     return { fixture, component };
   };
 
-  it('initializes with default PARENT role and hidden password', () => {
+  it('initializes with hidden password', () => {
     const { component } = createComponent();
-    expect(component.selectedRole()).toBe('PARENT');
     expect(component.showPassword()).toBe(false);
-  });
-
-  it('updates selected role when switching role chips', () => {
-    const { component } = createComponent();
-
-    component.selectRole('SCHOOL');
-    expect(component.selectedRole()).toBe('SCHOOL');
-
-    component.selectRole('HOSPITAL');
-    expect(component.selectedRole()).toBe('HOSPITAL');
-
-    component.selectRole('ADMIN');
-    expect(component.selectedRole()).toBe('ADMIN');
-
-    component.selectRole('PARENT');
-    expect(component.selectedRole()).toBe('PARENT');
   });
 
   it('toggles password visibility state', () => {

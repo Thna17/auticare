@@ -8,8 +8,6 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 
-export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL' | 'ADMIN';
-
 @Component({
   standalone: true,
   imports: [
@@ -32,127 +30,6 @@ export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL' | 'ADMIN';
             <h1 id="login-title">Welcome back</h1>
             <p>Sign in to continue supporting your child and clinical team.</p>
           </header>
-
-          <div class="role-selector" role="radiogroup" aria-label="Sign in role perspective">
-            <span class="role-selector-label">I am signing in as:</span>
-            <div class="role-chips">
-              <button
-                type="button"
-                role="radio"
-                class="role-chip"
-                [class.active]="selectedRole() === 'PARENT'"
-                [attr.aria-checked]="selectedRole() === 'PARENT'"
-                (click)="selectRole('PARENT')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M12 21s-7-4.4-9.1-8.3C.9 8 .7 4.8 3.2 3.2c2.2-1.4 5-.6 6.4 1.5L12 8l2.4-3.3c1.5-2.1 4.2-2.9 6.4-1.5 2.5 1.6 2.3 4.8.3 8.5C19 15.6 12 20 12 20Z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                </svg>
-                <span>Parent / Caregiver</span>
-              </button>
-
-              <button
-                type="button"
-                role="radio"
-                class="role-chip"
-                [class.active]="selectedRole() === 'SCHOOL'"
-                [attr.aria-checked]="selectedRole() === 'SCHOOL'"
-                (click)="selectRole('SCHOOL')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M22 10v6M2 10l10-5 10 5-10 5z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                  <path
-                    d="M6 12v5c3 3 9 3 12 0v-5"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                </svg>
-                <span>School Staff</span>
-              </button>
-
-              <button
-                type="button"
-                role="radio"
-                class="role-chip"
-                [class.active]="selectedRole() === 'HOSPITAL'"
-                [attr.aria-checked]="selectedRole() === 'HOSPITAL'"
-                (click)="selectRole('HOSPITAL')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M22 12h-4l-3 9L9 3l-3 9H2"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                </svg>
-                <span>Hospital Coordinator</span>
-              </button>
-
-              <button
-                type="button"
-                role="radio"
-                class="role-chip"
-                [class.active]="selectedRole() === 'ADMIN'"
-                [attr.aria-checked]="selectedRole() === 'ADMIN'"
-                (click)="selectRole('ADMIN')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  />
-                </svg>
-                <span>System Admin</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="role-hint" role="note">
-            @if (selectedRole() === 'PARENT') {
-              <p>
-                <strong>Family Care Portal:</strong> Access developmental screenings, appointments,
-                and sensory home activities.
-              </p>
-            } @else if (selectedRole() === 'SCHOOL') {
-              <p>
-                <strong>Education Portal:</strong> Manage student enrollments, developmental
-                observation reports, and classroom adaptations.
-              </p>
-            } @else if (selectedRole() === 'HOSPITAL') {
-              <p>
-                <strong>Clinical Portal:</strong> Oversee specialist doctor schedules, clinic triage
-                queues, and patient consultations.
-              </p>
-            } @else {
-              <p>
-                <strong>System Administration:</strong> Manage institutions, audit school and
-                hospital registrations, and review platform telemetry.
-              </p>
-            }
-          </div>
 
           <form
             class="login-form"
@@ -418,79 +295,7 @@ export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL' | 'ADMIN';
       }
 
       /* Role Selector Chips */
-      .role-selector {
-        display: grid;
-        gap: 8px;
-        margin-bottom: 16px;
-      }
 
-      .role-selector-label {
-        font-size: var(--ac-type-label);
-        font-weight: var(--ac-font-weight-semibold);
-        color: var(--ac-color-text-muted);
-      }
-
-      .role-chips {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 8px;
-      }
-
-      .role-chip {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 10px 4px;
-        border: 1px solid var(--ac-color-border-grey);
-        border-radius: 12px;
-        background: var(--ac-color-surface);
-        color: var(--ac-color-text-body);
-        font-size: 11.5px;
-        font-weight: var(--ac-font-weight-semibold);
-        cursor: pointer;
-        text-align: center;
-        line-height: 1.2;
-        transition:
-          background 160ms ease,
-          border-color 160ms ease,
-          color 160ms ease,
-          box-shadow 160ms ease;
-      }
-
-      .role-chip svg {
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-      }
-
-      .role-chip:hover {
-        border-color: var(--ac-color-action);
-        background: var(--ac-color-surface-info);
-      }
-
-      .role-chip.active {
-        border-color: var(--ac-color-action);
-        background: var(--ac-color-surface-info);
-        color: var(--ac-color-action-deep);
-        box-shadow: 0 0 0 2px var(--ac-color-tint-blue);
-      }
-
-      .role-hint {
-        border-radius: 10px;
-        background: var(--ac-color-blue-tint-wash);
-        border: 1px solid var(--ac-color-border-info);
-        padding: 10px 14px;
-        margin-bottom: 24px;
-        font-size: 13px;
-        line-height: 1.45;
-        color: var(--ac-color-text-body);
-      }
-
-      .role-hint strong {
-        color: var(--ac-color-text-strong);
-      }
       /* Form */
       .login-form {
         display: grid;
@@ -855,29 +660,6 @@ export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL' | 'ADMIN';
           font-size: 26px;
         }
 
-        .role-chips {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 8px;
-        }
-
-        .role-chip {
-          flex-direction: row;
-          justify-content: flex-start;
-          align-items: center;
-          padding: 10px 12px;
-          min-height: 48px;
-          font-size: 12px;
-          text-align: left;
-          gap: 8px;
-        }
-
-        .role-chip span {
-          min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          line-height: 1.25;
-        }
-
         .login-footer {
           flex-direction: column;
           gap: 12px;
@@ -910,17 +692,6 @@ export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL' | 'ADMIN';
 
         .login-header p {
           font-size: 14px;
-        }
-
-        .role-chip {
-          padding: 9px 10px;
-          font-size: 11.5px;
-        }
-
-        .role-hint {
-          padding: 10px 12px;
-          margin-bottom: 20px;
-          font-size: 12.5px;
         }
 
         input {
@@ -974,13 +745,6 @@ export type AuthRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL' | 'ADMIN';
       }
 
       @media (max-width: 360px) {
-        .role-chips {
-          grid-template-columns: 1fr;
-        }
-
-        .role-chip {
-          padding: 10px 12px;
-        }
       }
     `,
   ],
@@ -995,7 +759,6 @@ export class LoginPage {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly showPassword = signal(false);
-  readonly selectedRole = signal<AuthRoleOption>('PARENT');
   readonly currentYear = new Date().getFullYear();
 
   readonly form = this.fb.nonNullable.group({
@@ -1003,10 +766,6 @@ export class LoginPage {
     email: ['', [Validators.required, Validators.maxLength(254)]],
     password: ['', Validators.required],
   });
-
-  selectRole(role: AuthRoleOption) {
-    this.selectedRole.set(role);
-  }
 
   submit() {
     this.error.set(null);

@@ -15,6 +15,10 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'about',
+    loadComponent: () => import('./features/about/about.page').then((m) => m.AboutPage),
+  },
+  {
     path: 'privacy',
     loadComponent: () => import('./features/public/privacy.page').then((m) => m.PrivacyPage),
   },
