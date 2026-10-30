@@ -38,11 +38,11 @@ const PUBLIC_CHROME_STYLES = `
       /* ==================== FLOATING PILL NAVBAR ==================== */
       .site-header {
         position: sticky;
-        top: 18px;
+        top: 0;
         z-index: 1000;
         width: 100%;
-        /* Keep clear space between the pill and the screen edges. */
-        padding: 0 max(var(--lp-x), clamp(16px, 3vw, 64px));
+        /* Keep clear space between the pill and the screen edges, and above it. */
+        padding: 18px max(var(--lp-x), clamp(16px, 3vw, 64px)) 0;
         background: transparent;
         pointer-events: none;
       }
@@ -1984,7 +1984,7 @@ const PUBLIC_CHROME_STYLES = `
         }
 
         .site-header {
-          top: 12px;
+          padding-top: 12px;
         }
 
         .nav-shell {
@@ -2022,7 +2022,7 @@ const PUBLIC_CHROME_STYLES = `
         }
 
         .site-header {
-          top: 14px;
+          padding-top: 14px;
         }
 
         .nav-shell {
