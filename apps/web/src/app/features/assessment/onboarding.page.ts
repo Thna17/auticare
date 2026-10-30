@@ -34,6 +34,8 @@ type Step = 'child' | 'intro' | 'questions' | 'result';
  */
 const COPY = {
   en: {
+    brand: 'AutiCare',
+    privacy: 'Private to your family',
     child: {
       eyebrow: 'Getting started',
       title: 'Who are we supporting?',
@@ -125,6 +127,8 @@ const COPY = {
     },
   },
   km: {
+    brand: 'AutiCare',
+    privacy: 'ឯកជនសម្រាប់គ្រួសារអ្នក',
     child: {
       eyebrow: 'ចាប់ផ្តើម',
       title: 'តើយើងកំពុងជួយកុមារណា?',
@@ -240,6 +244,40 @@ const COPY = {
       </aside>
 
       <div class="pane">
+        <header class="topbar">
+          <span class="brand">
+            <span class="brand-mark" aria-hidden="true">A</span>
+            {{ copy().brand }}
+          </span>
+          <div class="topbar-actions">
+            <div
+              class="language-switch"
+              role="group"
+              [attr.aria-label]="currentLang() === 'km' ? 'ជ្រើសរើសភាសា' : 'Choose language'"
+            >
+              <button
+                type="button"
+                [class.active]="currentLang() === 'en'"
+                [attr.aria-pressed]="currentLang() === 'en'"
+                (click)="setLanguage('en')"
+              >
+                English
+              </button>
+              <button
+                type="button"
+                [class.active]="currentLang() === 'km'"
+                [attr.aria-pressed]="currentLang() === 'km'"
+                (click)="setLanguage('km')"
+              >
+                ខ្មែរ
+              </button>
+            </div>
+            <span class="privacy">
+              <span class="lock" aria-hidden="true"></span>
+              {{ copy().privacy }}
+            </span>
+          </div>
+        </header>
         <main class="stage" [attr.aria-busy]="saving()">
           @if (error()) {
             <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
@@ -518,6 +556,95 @@ const COPY = {
         flex-direction: column;
         min-width: 0;
         padding: 0 clamp(24px, 5vw, 80px) 48px;
+      }
+
+      .topbar {
+        width: 100%;
+        max-width: 560px;
+        box-sizing: border-box;
+        margin: 0 auto;
+        padding: 22px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--ac-color-text-strong);
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .brand-mark {
+        display: inline-flex;
+        width: 30px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+      }
+
+      .language-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 3px;
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-pill);
+        background: var(--ac-color-surface);
+      }
+
+      .language-switch button {
+        min-height: 32px;
+        padding: 5px 11px;
+        border: 0;
+        border-radius: var(--ac-radius-pill);
+        background: transparent;
+        color: var(--ac-color-text-muted);
+        font: inherit;
+        font-size: var(--ac-type-meta);
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .language-switch button.active {
+        background: var(--ac-color-action);
+        color: var(--ac-color-text-on-action);
+      }
+
+      .language-switch button:focus-visible {
+        outline: 3px solid var(--ac-color-focus);
+        outline-offset: 2px;
+      }
+
+      .privacy {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--ac-color-text-muted);
+        font-size: var(--ac-type-meta);
+      }
+
+      .lock {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--ac-color-green-teal);
       }
 
       .stage {
@@ -993,6 +1120,16 @@ const COPY = {
       }
 
       @media (max-width: 640px) {
+        .topbar {
+          align-items: flex-start;
+        }
+
+        .topbar-actions {
+          flex-direction: column-reverse;
+          align-items: flex-end;
+          gap: 8px;
+        }
+
         .question-foot {
           margin-top: 36px;
         }
@@ -1034,7 +1171,12 @@ export class OnboardingPage implements OnInit {
       : (option.labelEn ?? option.label);
   }
 
+  protected setLanguage(language: 'en' | 'km'): void {
+    this.i18n.setLanguage(language);
+  }
+
   protected readonly copy = computed(() => COPY[this.i18n.currentLang()]);
+  protected readonly currentLang = this.i18n.currentLang;
   protected readonly today = new Date().toISOString().slice(0, 10);
 
   protected readonly step = signal<Step>('child');
