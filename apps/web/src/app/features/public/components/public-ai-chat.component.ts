@@ -152,13 +152,14 @@ const COPY = {
       <form class="composer" (submit)="submit($event)">
         <label class="sr-only" for="public-chat-input">{{ copy().placeholder }}</label>
         <textarea
+          #input
           id="public-chat-input"
           rows="1"
           maxlength="2000"
           [value]="draft()"
           [placeholder]="copy().placeholder"
           [disabled]="sending()"
-          (input)="draft.set($any($event.target).value)"
+          (input)="onInput($any($event.target))"
           (keydown)="onKeydown($event)"
         ></textarea>
         <button
@@ -348,16 +349,27 @@ const COPY = {
         gap: 10px;
         padding: 12px 18px 8px;
       }
+      /* Grows with the text (see fitInput) instead of a drag handle. 16px keeps
+         iOS from zooming in when the box is tapped. */
       .composer textarea {
         flex: 1;
         min-width: 0;
-        max-height: 120px;
-        resize: vertical;
+        box-sizing: border-box;
+        min-height: 48px;
+        max-height: 140px;
+        resize: none;
+        overflow-y: hidden;
         padding: 12px 16px;
         border: 1px solid var(--ac-color-border-slate);
         border-radius: 24px;
         font: inherit;
+        font-size: 16px;
         line-height: 1.4;
+      }
+      .composer textarea::placeholder {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .composer textarea:focus-visible,
       .composer button:focus-visible,
@@ -368,8 +380,8 @@ const COPY = {
       }
       .composer button {
         flex: none;
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
         border: 0;
         border-radius: 50%;
         color: var(--ac-color-text-on-action);
@@ -446,6 +458,7 @@ export class PublicAiChatComponent {
   private readonly apiBaseUrl = inject(API_BASE_URL);
   private readonly i18n = inject(I18nService);
   private readonly threadElement = viewChild<ElementRef<HTMLElement>>('thread');
+  private readonly inputElement = viewChild<ElementRef<HTMLTextAreaElement>>('input');
   protected readonly currentLang = this.i18n.currentLang;
   protected readonly copy = computed(() => COPY[this.currentLang() === 'km' ? 'km' : 'en']);
   protected readonly messages = signal<ChatMessage[]>([]);
@@ -461,6 +474,24 @@ export class PublicAiChatComponent {
     this.messages.set([]);
     this.draft.set('');
     this.error.set('');
+    this.fitInput(true);
+  }
+  protected onInput(field: HTMLTextAreaElement): void {
+    this.draft.set(field.value);
+    this.fitInput();
+  }
+  /** Size the box to its text, up to its max-height; scroll only past that. */
+  private fitInput(reset = false): void {
+    const field = this.inputElement()?.nativeElement;
+    if (!field) return;
+    field.style.height = '';
+    field.style.overflowY = '';
+    if (reset || !field.value) return;
+    const borders = field.offsetHeight - field.clientHeight;
+    const max = parseFloat(getComputedStyle(field).maxHeight) || Infinity;
+    const wanted = field.scrollHeight + borders;
+    field.style.height = `${Math.min(wanted, max)}px`;
+    if (wanted > max) field.style.overflowY = 'auto';
   }
   protected onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -499,6 +530,7 @@ export class PublicAiChatComponent {
             { id: this.makeId(), role: 'ASSISTANT', content: data.message, sources: data.sources },
           ]);
           this.draft.set('');
+          this.fitInput(true);
           this.sending.set(false);
           this.scrollToLatest();
         },
