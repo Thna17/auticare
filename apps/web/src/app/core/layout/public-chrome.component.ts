@@ -2428,7 +2428,7 @@ const PUBLIC_CHROME_STYLES = `
             >{{ currentLang() === 'km' ? 'អំពីយើង' : 'About us' }}</a
           >
           <a href="/#about-autism" (click)="scrollToSection('about-autism', $event)">{{
-            currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism'
+            currentLang() === 'km' ? 'អំពីអូទីស្សឹម' : 'About autism'
           }}</a>
           <a href="/#pricing" (click)="scrollToSection('pricing', $event)">{{
             currentLang() === 'km' ? 'តម្លៃ' : 'Pricing'
@@ -2695,7 +2695,7 @@ const PUBLIC_CHROME_STYLES = `
               </svg>
             </span>
             <span class="drawer-label">{{
-              currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism'
+              currentLang() === 'km' ? 'អំពីអូទីស្សឹម' : 'About autism'
             }}</span>
             <span class="drawer-arrow" aria-hidden="true">
               <svg
@@ -2908,7 +2908,7 @@ export class PublicHeaderComponent {
           }}</a>
           <a routerLink="/about">{{ currentLang() === 'km' ? 'អំពីយើង' : 'About us' }}</a>
           <a href="/#about-autism" (click)="scrollToSection('about-autism', $event)">{{
-            currentLang() === 'km' ? 'អំពីអូទីសឹម' : 'About autism'
+            currentLang() === 'km' ? 'អំពីអូទីស្សឹម' : 'About autism'
           }}</a>
           <a href="/#pricing" (click)="scrollToSection('pricing', $event)">{{
             currentLang() === 'km' ? 'តម្លៃ' : 'Pricing'

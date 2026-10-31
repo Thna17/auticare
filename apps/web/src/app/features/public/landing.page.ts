@@ -81,7 +81,7 @@ const KM_FEATURES: readonly LandingFeature[] = [
   {
     title: 'ការណែនាំដែលអាចទុកចិត្តបាន',
     description:
-      'ទម្លាប់ និងយុទ្ធសាស្ត្រដែលដកស្រង់ពីធនធានអូទីសឹមដែលបានពិនិត្យ ហើយនីមួយៗបង្ហាញប្រភពរបស់វា។',
+      'ទម្លាប់ និងយុទ្ធសាស្ត្រដែលដកស្រង់ពីធនធានអូទីស្សឹមដែលបានពិនិត្យ ហើយនីមួយៗបង្ហាញប្រភពរបស់វា។',
     icon: 'shield',
   },
 ];
@@ -112,7 +112,7 @@ const KM_STEPS = [
   },
   {
     title: 'ធ្វើការពិនិត្យខ្លី',
-    description: 'ប្រហែលបីនាទី ហើយអ្នកនឹងឃើញស្ថានភាពយ៉ាងច្បាស់។',
+    description: 'ប្រហែលបីនាទី នោះអ្នកនឹងឃើញស្ថានភាពយ៉ាងច្បាស់។',
   },
   {
     title: 'កត់ត្រាអ្វីដែលអ្នកឃើញ',
@@ -601,7 +601,7 @@ const KM_TRUST_POINTS = [
                   <ac-nav-icon name="trend" />
                   {{
                     currentLang() === 'km'
-                      ? 'យប់ពិបាកកើតឡើងបន្ទាប់ពីថ្ងៃមានសំឡេងខ្លាំង'
+                      ? 'ថ្ងៃណាមានសំឡេងរំខានច្រើន យប់នោះកូនគេងពិបាក'
                       : 'Hard nights follow noisy days'
                   }}
                 </p>
@@ -3077,7 +3077,7 @@ const KM_TRUST_POINTS = [
         }
 
         .product-preview {
-          padding: 16px 0 56px;
+          padding: 16px 0;
         }
 
         .product-preview::before {
@@ -3097,10 +3097,15 @@ const KM_TRUST_POINTS = [
           transform: none;
         }
 
+        /* Too narrow to float over the window without hiding a card, so the
+           assistant sits under it instead. */
         .pv-chat {
-          left: 12px;
-          bottom: 0;
-          width: min(240px, 80%);
+          position: relative;
+          left: auto;
+          bottom: auto;
+          width: auto;
+          margin: 12px 12px 0;
+          transform: none;
         }
 
         .cta-section {

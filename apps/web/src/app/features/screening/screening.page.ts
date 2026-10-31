@@ -23,7 +23,7 @@ import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.co
     <section class="intro">
       <header class="head">
         <div class="head-text">
-          <h1>{{ isKm() ? 'ការវាយតម្លៃអូទីសឹម' : 'Autism Screening' }}</h1>
+          <h1>{{ isKm() ? 'ការវាយតម្លៃអូទីស្សឹម' : 'Autism Screening' }}</h1>
           <p class="subtitle">
             {{
               isKm()

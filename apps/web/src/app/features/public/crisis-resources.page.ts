@@ -35,7 +35,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
     description:
       'Cambodia’s foremost mental health and trauma support NGO providing confidential crisis counseling, psychological first aid, and neurodiversity-informed emotional care in Khmer and English.',
     descriptionKm:
-      'អង្គការឈានមុខគេនៅកម្ពុជាផ្តល់ការប្រឹក្សាវិបត្តិផ្លូវចិត្ត ការសង្គ្រោះបឋមផ្លូវចិត្ត និងការគាំទ្រដល់ក្រុមគ្រួសារកុមារមានអូទីសឹមជាភាសាខ្មែរ និងអង់គ្លេស។',
+      'អង្គការឈានមុខគេនៅកម្ពុជាផ្តល់ការប្រឹក្សាវិបត្តិផ្លូវចិត្ត ការសង្គ្រោះបឋមផ្លូវចិត្ត និងការគាំទ្រដល់ក្រុមគ្រួសារកុមារមានអូទីស្សឹមជាភាសាខ្មែរ និងអង់គ្លេស។',
     actionText: 'Call 023 63 66 991',
     actionTextKm: 'ហៅទៅលេខ 023 63 66 991',
     actionHref: 'tel:0236366991',
@@ -66,7 +66,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
     description:
       'Cambodia’s leading national referral hospital on Russian Federation Blvd, Phnom Penh, offering child neurology, autism developmental screening, speech therapy, and pediatric psychiatric triage.',
     descriptionKm:
-      'មន្ទីរពេទ្យជាតិឯកទេសកុមារនៅមហាវិថីសហព័ន្ធរុស្ស៊ី រាជធានីភ្នំពេញ ផ្តល់សេវាពិនិត្យប្រព័ន្ធប្រសាទកុមារ ការវាយតម្លៃការលូតលាស់អូទីសឹម និងព្យាបាលការនិយាយ។',
+      'មន្ទីរពេទ្យជាតិឯកទេសកុមារនៅមហាវិថីសហព័ន្ធរុស្ស៊ី រាជធានីភ្នំពេញ ផ្តល់សេវាពិនិត្យប្រព័ន្ធប្រសាទកុមារ ការវាយតម្លៃការលូតលាស់អូទីស្សឹម និងព្យាបាលការនិយាយ។',
     actionText: 'Call 023 880 475',
     actionTextKm: 'ហៅទៅលេខ 023 880 475',
     actionHref: 'tel:023880475',
@@ -96,7 +96,7 @@ const CAMBODIA_CRISIS_HOTLINES: CrisisHotline[] = [
     description:
       'Pioneer Cambodian non-profit organization providing specialized early intervention, autism classrooms, vocational skills, and parental behavioral counseling across Phnom Penh, Kandal, and Siem Reap.',
     descriptionKm:
-      'អង្គការមិនស្វែងរកប្រាក់ចំណេញឈានមុខគេ ផ្តល់ការអប់រំពិសេស ថ្នាក់រៀនសម្រាប់កុមារមានអូទីសឹម និងការប្រឹក្សាអាកប្បកិរិយាដល់មាតាបិតា។',
+      'អង្គការមិនស្វែងរកប្រាក់ចំណេញឈានមុខគេ ផ្តល់ការអប់រំពិសេស ថ្នាក់រៀនសម្រាប់កុមារមានអូទីស្សឹម និងការប្រឹក្សាអាកប្បកិរិយាដល់មាតាបិតា។',
     actionText: 'Call 023 214 747',
     actionTextKm: 'ហៅទៅលេខ 023 214 747',
     actionHref: 'tel:023214747',

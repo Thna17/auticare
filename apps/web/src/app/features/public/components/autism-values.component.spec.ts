@@ -43,6 +43,6 @@ describe('AutismValuesComponent', () => {
     const pieces = Array.from(el.querySelectorAll('h2 .char')).map((c) => c.textContent ?? '');
     // A piece never starts with a combining mark or the Khmer subscript sign.
     expect(pieces.every((p) => !/^[ា-៓]/.test(p))).toBe(true);
-    expect(el.querySelector('.kicker')?.textContent?.trim()).toBe('អំពីអូទីសឹម');
+    expect(el.querySelector('.kicker')?.textContent?.trim()).toBe('អំពីអូទីស្សឹម');
   });
 });

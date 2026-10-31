@@ -2070,7 +2070,7 @@ export class AppShellComponent {
           {
             label:
               this.currentLang() === 'km'
-                ? 'ការវាយតម្លៃអូទីសឹម (M-CHAT-R)'
+                ? 'ការវាយតម្លៃអូទីស្សឹម (M-CHAT-R)'
                 : 'Autism Screening (M-CHAT-R)',
             path: '/screening',
             icon: 'checklist',

@@ -625,7 +625,7 @@ export type MilestoneFeedItem = {
                   <h3>
                     {{
                       currentLang() === 'km'
-                        ? 'ការវាយតម្លៃស្គ្រីនីងអូទីសឹម'
+                        ? 'ការវាយតម្លៃស្គ្រីនីងអូទីស្សឹម'
                         : 'Autism Screening Assessment'
                     }}
                   </h3>
@@ -1874,7 +1874,7 @@ export class ChildProfilePage implements OnInit {
           id: `session-${session.id}`,
           type: 'SCREENING',
           title: isKm
-            ? `ការវាយតម្លៃស្គ្រីនីងអូទីសឹម (${session.ageBand || 'កុមារ'})`
+            ? `ការវាយតម្លៃស្គ្រីនីងអូទីស្សឹម (${session.ageBand || 'កុមារ'})`
             : `Autism Screening Assessment (${session.ageBand || 'Pediatric'})`,
           date: this.formatDate(session.submittedAt || session.startedAt),
           domain: isKm ? 'ការវាយតម្លៃគ្លីនិក' : 'Clinical Screening',

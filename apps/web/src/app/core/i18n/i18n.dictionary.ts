@@ -602,7 +602,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
     },
     dashboard: {
       welcomeTitle: 'សូមស្វាគមន៍មកកាន់ AutiCare',
-      welcomeSubtitle: 'វេទិកាគាំទ្រកុមារមានអូទីសឹម និងការលូតលាស់ប្រព័ន្ធប្រសាទនៅកម្ពុជា',
+      welcomeSubtitle: 'វេទិកាគាំទ្រកុមារមានអូទីស្សឹម និងការលូតលាស់ប្រព័ន្ធប្រសាទនៅកម្ពុជា',
       startScreening: 'ចាប់ផ្តើមការវាយតម្លៃ',
       bookSpecialist: 'កក់ការពិគ្រោះយោបល់',
       sensoryPlay: 'សកម្មភាពលេងកម្សាន្ត',
@@ -684,7 +684,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
     },
     appointments: {
       bookingTitle: 'កក់ការពិគ្រោះយោបល់ជាមួយអ្នកជំនាញ',
-      bookingSubtitle: 'ជ្រើសរើសវេជ្ជបណ្ឌិត ឬអ្នកព្យាបាលឯកទេសអូទីសឹម',
+      bookingSubtitle: 'ជ្រើសរើសវេជ្ជបណ្ឌិត ឬអ្នកព្យាបាលឯកទេសអូទីស្សឹម',
       doctorSpecialties: {
         developmentalPediatrician: 'វេជ្ជបណ្ឌិតឯកទេសការលូតលាស់កុមារ',
         speechTherapist: 'អ្នកព្យាបាលការនិយាយ',
@@ -710,7 +710,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
     },
     schools: {
       directoryTitle: 'សាលារៀន និងមជ្ឈមណ្ឌលអប់រំបរិយាបន្ន',
-      directorySubtitle: 'ស្វែងរកសាលាដែលគាំទ្រកុមារមានអូទីសឹម និងតម្រូវការពិសេសនៅកម្ពុជា',
+      directorySubtitle: 'ស្វែងរកសាលាដែលគាំទ្រកុមារមានអូទីស្សឹម និងតម្រូវការពិសេសនៅកម្ពុជា',
       searchPlaceholder: 'ស្វែងរកតាមឈ្មោះសាលា ឬទីតាំង...',
       provinces: {
         phnomPenh: 'រាជធានីភ្នំពេញ',
@@ -745,7 +745,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
       addObservation: 'បន្ថែមកំណត់ត្រាសង្កេត',
     },
     landing: {
-      heroTitle: 'វេទិកាគាំទ្រកុមារមានអូទីសឹម និងការលូតលាស់នៅកម្ពុជា',
+      heroTitle: 'វេទិកាគាំទ្រកុមារមានអូទីស្សឹម និងការលូតលាស់នៅកម្ពុជា',
       heroSubtitle:
         'ការវាយតម្លៃការលូតលាស់ផ្អែកលើភស្តុតាង សកម្មភាពលេងបែបវិញ្ញាណ និងការតភ្ជាប់ដោយផ្ទាល់ជាមួយសាលារៀន និងមន្ទីរពេទ្យកុមារ។',
       getStarted: 'ចាប់ផ្តើមប្រើប្រាស់ឥតគិតថ្លៃ',
@@ -760,7 +760,7 @@ export const DICTIONARY: Record<SupportedLanguage, TranslationDictionary> = {
         step3Desc: 'កក់ការពិគ្រោះយោបល់ជាមួយវេជ្ជបណ្ឌិតឯកទេសការលូតលាស់ និងអ្នកព្យាបាលការនិយាយ។',
         step4Title: 'ការអប់រំបរិយាបន្ននៅសាលារៀន',
         step4Desc:
-          'ស្វែងរកសាលាគាំទ្រកុមារមានអូទីសឹម និងតាមដានរបាយការណ៍សកម្មភាពជាមួយលោកគ្រូអ្នកគ្រូ។',
+          'ស្វែងរកសាលាគាំទ្រកុមារមានអូទីស្សឹម និងតាមដានរបាយការណ៍សកម្មភាពជាមួយលោកគ្រូអ្នកគ្រូ។',
       },
       trustBadges: {
         evidenceTitle: 'ស្តង់ដារផ្អែកលើភស្តុតាង',
