@@ -248,7 +248,7 @@ model Child {
 
 model ScreeningQuestion {
   id           String            @id @default(cuid())
-  questionText String
+  questionText String            @db.Text
   // Free-form category label, e.g. "Social Interaction", "Play & Imagination",
   // "Flexibility & Routine". No enum constraint — the toddler and preschool bands
   // use overlapping-but-different category sets.
