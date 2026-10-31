@@ -201,6 +201,26 @@ describe('ActivitiesPage', () => {
     expect(compiled.textContent).toContain('Completed');
   });
 
+  it('lists the research documents as links that open in a new tab, in both languages', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = Array.from(compiled.querySelectorAll<HTMLAnchorElement>('.research-link'));
+    expect(links).toHaveLength(6);
+    for (const link of links) {
+      expect(link.getAttribute('href')).toMatch(/^https:\/\//);
+      expect(link.getAttribute('target')).toBe('_blank');
+      expect(link.getAttribute('rel')).toContain('noopener');
+    }
+    expect(compiled.querySelector('#research-heading')?.textContent).toContain(
+      'Research & reading',
+    );
+
+    TestBed.inject(I18nService).setLanguage('km');
+    fixture.detectChanges();
+    expect(compiled.querySelector('#research-heading')?.textContent).toContain(
+      'ការស្រាវជ្រាវ និងឯកសារអាន',
+    );
+  });
+
   it('filters activities by keyword search', () => {
     // Initial: all 3 rows visible
     expect(component['rows']().length).toBe(3);

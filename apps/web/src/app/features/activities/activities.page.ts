@@ -17,6 +17,7 @@ import { UiMessageComponent } from '../../design-system/components/ui-message.co
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiDialogComponent } from '../../design-system/components/ui-dialog.component';
 import { CAMBODIAN_HOME_ACTIVITIES, findCambodianActivity } from './cambodia-activities.data';
+import { RESEARCH_DOCUMENTS } from './research-documents.data';
 
 interface ChildOption {
   readonly id: string;
@@ -770,6 +771,38 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         </ac-ui-dialog>
       }
     }
+
+    <!-- Further reading: shown to every family, with or without a child added. -->
+    <section class="research" aria-labelledby="research-heading">
+      <h2 id="research-heading">
+        {{ currentLang() === 'km' ? 'ការស្រាវជ្រាវ និងឯកសារអាន' : 'Research & reading' }}
+      </h2>
+      <p class="research-intro">
+        {{
+          currentLang() === 'km'
+            ? 'ឯកសារស្រាវជ្រាវពីស្ថាប័នដែលគួរឱ្យទុកចិត្ត សម្រាប់អ្នកដែលចង់ស្វែងយល់បន្ថែមអំពីអូទីស្សឹម។ ឯកសារទាំងនេះជាភាសាអង់គ្លេស ហើយបើកនៅលើគេហទំព័រផ្សេង។'
+            : 'Research from trusted organisations, for anyone who wants to read more about autism. These documents are in English and open on another website.'
+        }}
+      </p>
+      <ul class="research-list">
+        @for (doc of researchDocuments; track doc.url) {
+          <li class="research-item">
+            <p class="research-source">{{ doc.source }}</p>
+            <h3 class="research-title">{{ doc.title }}</h3>
+            <p class="research-focus">
+              {{ currentLang() === 'km' ? doc.focusKm : doc.focusEn }}
+            </p>
+            <a class="research-link" [href]="doc.url" target="_blank" rel="noopener noreferrer">
+              {{ currentLang() === 'km' ? 'បើកឯកសារ' : 'Open document' }}
+              <span class="visually-hidden">{{
+                currentLang() === 'km' ? '(បើកក្នុងផ្ទាំងថ្មី)' : '(opens in a new tab)'
+              }}</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </section>
   `,
   styles: [
     `
@@ -814,6 +847,81 @@ const matchesDomain = (activityCategory: string, screeningCategory: string): boo
         clip: rect(0 0 0 0);
         white-space: nowrap;
         border: 0;
+      }
+
+      /* Further reading, below the activities. */
+      .research {
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid var(--ac-color-border);
+      }
+
+      .research h2 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        color: var(--ac-color-text-strong);
+      }
+
+      .research-intro {
+        margin: 0;
+        max-width: 72ch;
+        color: var(--ac-color-text-body);
+        line-height: 1.55;
+      }
+
+      .research-list {
+        list-style: none;
+        margin: 18px 0 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr));
+        gap: 16px;
+      }
+
+      .research-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 18px;
+        border: 1px solid var(--ac-color-border);
+        border-radius: var(--ac-radius-lg);
+        background: var(--ac-color-surface);
+      }
+
+      .research-source {
+        margin: 0;
+        color: var(--ac-color-action);
+        font-size: 12px;
+        font-weight: var(--ac-font-weight-bold);
+      }
+
+      .research-title {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.35;
+        color: var(--ac-color-text-strong);
+      }
+
+      .research-focus {
+        margin: 0;
+        flex: 1;
+        color: var(--ac-color-text-body);
+        line-height: 1.5;
+      }
+
+      .research-link {
+        align-self: flex-start;
+        margin-top: 6px;
+        color: var(--ac-color-action);
+        font-weight: var(--ac-font-weight-semibold);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .research-link:focus-visible {
+        outline: 2px solid var(--ac-color-action);
+        outline-offset: 3px;
+        border-radius: var(--ac-radius-xs);
       }
 
       /* Toolbar: search, child, and the Filters disclosure on one line. */
@@ -1661,6 +1769,8 @@ export class ActivitiesPage implements OnInit {
   private readonly childrenApi = inject(ChildrenApi);
   private readonly screeningApi = inject(ScreeningApi);
   private readonly route = inject(ActivatedRoute);
+
+  protected readonly researchDocuments = RESEARCH_DOCUMENTS;
 
   protected readonly currentLang = this.i18n.currentLang;
 
