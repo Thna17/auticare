@@ -1527,10 +1527,7 @@ export type NavSection = {
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           display: grid;
-          /* One column per item, however many the role has, so the bar never
-             wraps onto a second row. */
-          grid-auto-flow: column;
-          grid-auto-columns: minmax(0, 1fr);
+          grid-template-columns: 1fr 1fr 64px 1fr 1fr;
           align-items: center;
           box-shadow: 0 -4px 20px color-mix(in srgb, var(--ac-color-shadow) 8%, transparent);
           box-sizing: border-box;
@@ -2137,11 +2134,6 @@ export class AppShellComponent {
     }
     return [
       { label: s.overview, path: '/dashboard', icon: 'grid' },
-      {
-        label: this.currentLang() === 'km' ? 'ការវាយតម្លៃ' : 'Screening',
-        path: '/screening',
-        icon: 'checklist',
-      },
       { label: s.aiAssistant, path: '/ai', icon: 'ai' },
       { label: s.documents, path: '/documents', icon: 'checklist' },
       { label: s.profile, path: '/profile', icon: 'person' },
