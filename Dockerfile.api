@@ -85,4 +85,8 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:3000/health/live || exit 1
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["node", "dist/server.js"]
+# Apply any pending migrations before the server starts. Hosts like Render's free
+# tier have no shell to run `db:deploy` by hand, so without this the database
+# falls behind the code and queries fail on missing columns. `migrate deploy`
+# only runs migrations that have not been applied yet; it never resets data.
+CMD ["sh", "-c", "prisma migrate deploy && node dist/server.js"]
