@@ -5,7 +5,12 @@ import { aiClient, AiProviderError } from './ai.client.js';
 import type { AiClient } from './ai.client.js';
 import type { GroundingProvider } from './ai.grounding.js';
 import { GuidanceService } from '../guidance/guidance.service.js';
-import { buildConversationMessages, buildSystemPrompt } from './ai.prompt.js';
+import {
+  answerTokenLimit,
+  buildConversationMessages,
+  buildSystemPrompt,
+  replyLanguage,
+} from './ai.prompt.js';
 import {
   classifyParentMessage,
   crisisReply,
@@ -24,7 +29,8 @@ export class PublicChatService {
     message: string;
     sources: { title: string; publisher: string; url: string }[];
   }> {
-    const language: AiLanguage = input.language;
+    // Answer in the language the parent wrote in; the switch is only a fallback.
+    const language: AiLanguage = replyLanguage(input.content, input.language);
     const classification = classifyParentMessage(input.content);
     if (classification === 'CRISIS') return { message: crisisReply(language), sources: [] };
     if (classification === 'MEDICATION') return { message: medicationReply(language), sources: [] };
@@ -47,7 +53,7 @@ export class PublicChatService {
           ...history,
           { role: 'user', content: input.content },
         ],
-        maxTokens: 700,
+        maxTokens: answerTokenLimit(language),
       });
       const message = ensureReferral(softenDiagnosisClaims(completion.content), language);
       const cited = new Set<number>();

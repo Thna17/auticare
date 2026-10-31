@@ -81,6 +81,27 @@ export const buildSystemPrompt = (input: {
 }): string =>
   `${RULES}\n\nWrite your entire answer in ${languageName(input.language)}. Do not answer in another language, and do not provide a translation.${formatContext(input.context)}${formatPassages(input.passages)}`;
 
+/**
+ * The language to answer in: the one the parent wrote in, not the site's language
+ * switch. Someone browsing in Khmer who types in English wants English back, and
+ * the other way round. Only a message with no letters to go on ("ok", "?", a
+ * number) falls back to the language the parent selected.
+ */
+export const replyLanguage = (message: string, selected: AiLanguage): AiLanguage => {
+  const khmer = (message.match(/[ក-៿]/g) ?? []).length;
+  const latin = (message.match(/[A-Za-z]/g) ?? []).length;
+  if (khmer + latin < 3) return selected;
+  return khmer >= latin ? 'km' : 'en';
+};
+
+/**
+ * Room for one answer. The rules already ask for three to six sentences; this is
+ * only the ceiling. Khmer script costs several times more tokens than English for
+ * the same sentence, and at 700 an ordinary Khmer answer was cut off mid-word
+ * (5 of 30 in the AI evaluation), so Khmer gets more room.
+ */
+export const answerTokenLimit = (language: AiLanguage): number => (language === 'km' ? 1800 : 700);
+
 /** Recent turns only: a long transcript is neither needed nor cheap. */
 export const buildConversationMessages = (
   history: readonly { role: 'USER' | 'ASSISTANT'; content: string }[],

@@ -17,7 +17,13 @@ import { GuidanceService } from '../guidance/guidance.service.js';
 import type { ConversationSummaryResponse } from './ai.mapper.js';
 import { toAiMessageResponse, toConversationSummary } from './ai.mapper.js';
 import type { ChildContext, GroundingPassage } from './ai.prompt.js';
-import { buildConversationMessages, buildSystemPrompt, titleFromMessage } from './ai.prompt.js';
+import {
+  answerTokenLimit,
+  buildConversationMessages,
+  buildSystemPrompt,
+  replyLanguage,
+  titleFromMessage,
+} from './ai.prompt.js';
 import { assertWithinDailyBudget, startOfUtcDay } from './ai.budget.js';
 import { prisma } from '../../database/prisma.js';
 import type { FeedbackAiMessageRequest, AiMessageResponse } from '@auticare/contracts';
@@ -192,6 +198,8 @@ export class AiService {
       await this.repository.setLanguage(conversationId, language);
     }
     const classification = classifyParentMessage(content);
+    // Answer in the language the parent wrote in; the switch is only a fallback.
+    const replyIn = replyLanguage(content, language);
 
     // Calls that the safety layer answers itself need no provider, so they work
     // even before a model is configured. A parent in distress must never be told
@@ -206,7 +214,7 @@ export class AiService {
         conversationId,
         role: 'ASSISTANT',
         kind: classification,
-        content: classification === 'CRISIS' ? crisisReply(language) : medicationReply(language),
+        content: classification === 'CRISIS' ? crisisReply(replyIn) : medicationReply(replyIn),
       });
       await this.renameFromFirstMessage(conversation.title, conversationId, language, content);
       await this.repository.touchConversation(conversationId);
@@ -250,11 +258,14 @@ export class AiService {
 
     const [context, passages] = await Promise.all([
       this.buildChildContext(contextChildId),
-      this.grounding.retrieve({ query: content, language }),
+      this.grounding.retrieve({ query: content, language: replyIn }),
     ]);
 
     const messages = [
-      { role: 'system' as const, content: buildSystemPrompt({ language, context, passages }) },
+      {
+        role: 'system' as const,
+        content: buildSystemPrompt({ language: replyIn, context, passages }),
+      },
       ...buildConversationMessages(
         conversation.messages.map((message) => ({ role: message.role, content: message.content })),
       ),
@@ -263,7 +274,10 @@ export class AiService {
 
     let completion;
     try {
-      completion = await this.client.complete({ messages, maxTokens: 700 });
+      completion = await this.client.complete({
+        messages,
+        maxTokens: answerTokenLimit(replyIn),
+      });
     } catch (error) {
       const message =
         error instanceof AiProviderError ? error.message : 'The assistant could not answer.';
@@ -272,7 +286,7 @@ export class AiService {
       throw new AppError('INTERNAL_ERROR', message, 502);
     }
 
-    const answer = ensureReferral(softenDiagnosisClaims(completion.content), language);
+    const answer = ensureReferral(softenDiagnosisClaims(completion.content), replyIn);
     const sources = citedIndexes(answer)
       .map((index) => passages[index - 1])
       .filter((passage): passage is GroundingPassage => passage !== undefined)

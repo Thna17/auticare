@@ -35,6 +35,44 @@ describe('PublicChatService', () => {
     ]);
   });
 
+  it('gives Khmer answers more room so they are not cut off mid-word', async () => {
+    const complete = vi.fn().mockResolvedValue({
+      content: 'សាកល្បងសកម្មភាពស្ងាត់ៗ។',
+      model: 'test-model',
+      tokensIn: 20,
+      tokensOut: 10,
+      latencyMs: 5,
+    });
+    const client: AiClient = { configured: true, model: 'test-model', complete };
+    const service = new PublicChatService(client, grounding);
+    await service.answer({ content: 'Quiet activities?', language: 'en', history: [] });
+    await service.answer({ content: 'សកម្មភាពស្ងាត់ៗ?', language: 'km', history: [] });
+    const enLimit = complete.mock.calls[0]?.[0].maxTokens as number;
+    const kmLimit = complete.mock.calls[1]?.[0].maxTokens as number;
+    expect(kmLimit).toBeGreaterThan(enLimit);
+  });
+
+  it('answers in the language the message is written in, not the site setting', async () => {
+    const complete = vi.fn().mockResolvedValue({
+      content: 'Try a quiet activity.',
+      model: 'test-model',
+      tokensIn: 20,
+      tokensOut: 10,
+      latencyMs: 5,
+    });
+    const client: AiClient = { configured: true, model: 'test-model', complete };
+    const service = new PublicChatService(client, grounding);
+    await service.answer({ content: 'What can I try at bedtime?', language: 'km', history: [] });
+    await service.answer({ content: 'តើខ្ញុំអាចសាកល្បងអ្វី?', language: 'en', history: [] });
+    await service.answer({ content: 'ok', language: 'km', history: [] });
+    const systemPrompt = (call: number) =>
+      (complete.mock.calls[call]?.[0].messages[0] as { content: string }).content;
+    expect(systemPrompt(0)).toContain('Write your entire answer in English');
+    expect(systemPrompt(1)).toContain('Write your entire answer in Khmer');
+    // Too short to tell: falls back to the selected language.
+    expect(systemPrompt(2)).toContain('Write your entire answer in Khmer');
+  });
+
   it('answers urgent safety and medication requests without a provider call', async () => {
     const complete = vi.fn();
     const client: AiClient = { configured: true, model: 'test-model', complete };

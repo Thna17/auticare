@@ -89,7 +89,31 @@ describe('AiService parent assistant', () => {
     service = new AiService(repository as unknown as AiRepository, client, grounding);
   });
 
-  it('uses the selected language and recent conversation turns for follow-up replies', async () => {
+  it('answers in the language the parent wrote in, with recent conversation turns', async () => {
+    await service.sendMessage(parent, 'conversation-1', {
+      content: 'តើមានគំនិតផ្សេងទៀតទេ?',
+      language: 'en',
+    });
+    expect(repository.setLanguage).not.toHaveBeenCalled();
+    expect(grounding.retrieve).toHaveBeenCalledWith({
+      query: 'តើមានគំនិតផ្សេងទៀតទេ?',
+      language: 'km',
+    });
+    expect(providerMessages[0]).toMatchObject({
+      role: 'system',
+      content: expect.stringContaining('Khmer (ភាសាខ្មែរ)'),
+    });
+    expect(providerMessages).toContainEqual({
+      role: 'user',
+      content: 'What are some calming ideas?',
+    });
+    expect(providerMessages.at(-1)).toEqual({
+      role: 'user',
+      content: 'តើមានគំនិតផ្សេងទៀតទេ?',
+    });
+  });
+
+  it('answers an English message in English even when the site is set to Khmer', async () => {
     await service.sendMessage(parent, 'conversation-1', {
       content: 'Can you give another idea?',
       language: 'km',
@@ -97,11 +121,11 @@ describe('AiService parent assistant', () => {
     expect(repository.setLanguage).toHaveBeenCalledWith('conversation-1', 'km');
     expect(grounding.retrieve).toHaveBeenCalledWith({
       query: 'Can you give another idea?',
-      language: 'km',
+      language: 'en',
     });
     expect(providerMessages[0]).toMatchObject({
       role: 'system',
-      content: expect.stringContaining('Khmer (ភាសាខ្មែរ)'),
+      content: expect.stringContaining('Write your entire answer in English'),
     });
     expect(providerMessages).toContainEqual({
       role: 'user',
