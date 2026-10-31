@@ -788,6 +788,13 @@ export class LoginPage {
         void this.router.navigateByUrl(target);
       },
       error: (err: unknown) => {
+        // Right password, unconfirmed email: a code has just been emailed.
+        if (isEmailNotVerified(err)) {
+          void this.router.navigate(['/verify-email'], {
+            queryParams: { email: this.form.getRawValue().email.trim() },
+          });
+          return;
+        }
         this.error.set(describeLoginError(err));
         this.loading.set(false);
       },
@@ -804,6 +811,11 @@ export class LoginPage {
  * credentials were rejected — network failures and server errors (e.g. the
  * database being unreachable) should not be reported as a wrong password.
  */
+export const isEmailNotVerified = (err: unknown): boolean =>
+  err instanceof HttpErrorResponse &&
+  err.status === 403 &&
+  err.error?.error?.code === 'EMAIL_NOT_VERIFIED';
+
 export const describeLoginError = (err: unknown): string => {
   if (err instanceof HttpErrorResponse) {
     if (err.status === 401) return 'Log in failed. Check your email and password.';

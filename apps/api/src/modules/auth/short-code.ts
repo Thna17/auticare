@@ -17,7 +17,7 @@ import crypto from 'node:crypto';
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODE_LENGTH = 8;
 
-export type ShortCodePurpose = 'staff-setup' | 'school-connection';
+export type ShortCodePurpose = 'staff-setup' | 'school-connection' | 'email-verification';
 
 /** A new code, formatted for display as `XXXX-XXXX`. */
 export const createShortCode = (): string => {

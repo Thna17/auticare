@@ -6,11 +6,15 @@ import type {
   PasswordResetRequest,
   PasswordResetResponse,
   RegisterRequest,
+  ResendVerificationRequest,
+  ResendVerificationResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
   StaffSetupRequest,
   UserRole,
   UpdateMyProfileRequest,
+  VerificationPendingResponse,
+  VerifyEmailRequest,
 } from '@auticare/contracts';
 import { AppError, forbidden, unauthorized } from '../../common/errors/app-error.js';
 import { env, isProduction } from '../../config/env.js';
@@ -19,6 +23,7 @@ import { AuthRepository } from './auth.repository.js';
 import { toParentResponse } from './auth.mapper.js';
 import { PasswordService } from './password.service.js';
 import { PasswordResetMailer } from './password-reset-mailer.js';
+import { EmailVerificationService, needsEmailVerification } from './email-verification.service.js';
 import { TokenService } from './token.service.js';
 import { hashShortCode } from './short-code.js';
 import { isStaffPlaceholderEmail } from '../schools/staff-usernames.js';
@@ -32,9 +37,14 @@ export class AuthService {
     private readonly passwordService = new PasswordService(),
     private readonly tokenService = new TokenService(),
     private readonly passwordResetMailer = new PasswordResetMailer(),
+    private readonly emailVerification = new EmailVerificationService(),
   ) {}
 
-  async register(input: RegisterRequest): Promise<AuthSession> {
+  /**
+   * When email verification is on, a new parent gets no session yet: a code is
+   * emailed, and verifyEmail() signs them in once they enter it.
+   */
+  async register(input: RegisterRequest): Promise<AuthSession | VerificationPendingResponse> {
     const existing = await this.repository.findParentByEmail(input.email.toLowerCase());
     if (existing) throw new AppError('CONFLICT', 'An account with this email already exists.', 409);
     const passwordHash = await this.passwordService.hash(input.password);
@@ -44,7 +54,21 @@ export class AuthService {
       firstName: input.firstName,
       lastName: input.lastName,
     });
+    if (this.emailVerification.required) {
+      await this.emailVerification.sendCode(parent);
+      return { verificationRequired: true, email: parent.email };
+    }
     return this.issueSession(parent.id, parent.role, { parent: toParentResponse(parent) });
+  }
+
+  /** The code from the email: verifies the address and signs the parent in. */
+  async verifyEmail(input: VerifyEmailRequest): Promise<AuthSession> {
+    const parent = await this.emailVerification.verify(input.email, input.code);
+    return this.issueSession(parent.id, parent.role, { parent: toParentResponse(parent) });
+  }
+
+  async resendVerification(input: ResendVerificationRequest): Promise<ResendVerificationResponse> {
+    return this.emailVerification.resend(input.email);
   }
 
   /**
@@ -60,6 +84,15 @@ export class AuthService {
     const valid = await this.passwordService.verify(parent.passwordHash, input.password);
     if (!valid) throw unauthorized();
     await this.assertNotDeactivated(parent.id, parent.role);
+    // Only after the password is right, so this cannot reveal which emails exist.
+    if (this.emailVerification.required && needsEmailVerification(parent)) {
+      await this.emailVerification.sendCode(parent);
+      throw new AppError(
+        'EMAIL_NOT_VERIFIED',
+        'Confirm your email address first. We have emailed you a 6-digit code.',
+        403,
+      );
+    }
     return this.issueSession(parent.id, parent.role, { parent: toParentResponse(parent) });
   }
 

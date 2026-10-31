@@ -1,4 +1,10 @@
-import type { Parent, PasswordResetToken, Prisma, RefreshToken } from '@prisma/client';
+import type {
+  EmailVerificationCode,
+  Parent,
+  PasswordResetToken,
+  Prisma,
+  RefreshToken,
+} from '@prisma/client';
 import { prisma } from '../../database/prisma.js';
 
 type RefreshTokenWithParent = RefreshToken & { parent: Parent };
@@ -217,5 +223,50 @@ export class AuthRepository {
       },
       { isolationLevel: 'ReadCommitted' as Prisma.TransactionIsolationLevel },
     );
+  }
+
+  /** The newest verification code for an account, used or not. */
+  findLatestVerificationCode(parentId: string): Promise<EmailVerificationCode | null> {
+    return prisma.emailVerificationCode.findFirst({
+      where: { parentId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /** A new code replaces every earlier one: only the latest email's code works. */
+  async createVerificationCode(input: {
+    parentId: string;
+    codeHash: string;
+    expiresAt: Date;
+  }): Promise<void> {
+    await prisma.$transaction([
+      prisma.emailVerificationCode.updateMany({
+        where: { parentId: input.parentId, usedAt: null },
+        data: { usedAt: new Date() },
+      }),
+      prisma.emailVerificationCode.create({ data: input }),
+    ]);
+  }
+
+  recordFailedVerificationAttempt(codeId: string): Promise<EmailVerificationCode> {
+    return prisma.emailVerificationCode.update({
+      where: { id: codeId },
+      data: { attempts: { increment: 1 } },
+    });
+  }
+
+  /** Spends the code and marks the address verified, together. */
+  async completeEmailVerification(codeId: string, parentId: string): Promise<Parent> {
+    const [, parent] = await prisma.$transaction([
+      prisma.emailVerificationCode.update({
+        where: { id: codeId },
+        data: { usedAt: new Date() },
+      }),
+      prisma.parent.update({
+        where: { id: parentId },
+        data: { emailVerifiedAt: new Date() },
+      }),
+    ]);
+    return parent;
   }
 }

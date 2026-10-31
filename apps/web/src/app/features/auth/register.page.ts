@@ -1229,7 +1229,13 @@ export class RegisterPage {
 
     this.loading.set(true);
     this.auth.register({ firstName, lastName, email, password }).subscribe({
-      next: () => void this.router.navigateByUrl('/dashboard'),
+      next: (result) => {
+        if ('verificationRequired' in result) {
+          void this.router.navigate(['/verify-email'], { queryParams: { email: result.email } });
+          return;
+        }
+        void this.router.navigateByUrl('/dashboard');
+      },
       error: (err: unknown) => {
         this.error.set(describeRegisterError(err));
         this.loading.set(false);

@@ -150,11 +150,17 @@ model Parent {
   // session; nothing else about it changes, and reactivating clears these.
   suspendedAt             DateTime?
   suspendedReason         String?                  @db.Text
+  // When the parent proved they own the email address with a code. Null means
+  // not yet; only self-registered parent accounts are asked (see
+  // email-verification.service.ts). Accounts that existed before verification
+  // were marked verified by the migration that added this column.
+  emailVerifiedAt         DateTime?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   preference              ParentPreference?
   refreshTokens           RefreshToken[]
   passwordResetTokens     PasswordResetToken[]
+  emailVerificationCodes  EmailVerificationCode[]
   invitations             AccountInvitation[]
   children                Child[]
   favoriteSchools         FavoriteSchool[]
@@ -201,6 +207,21 @@ model PasswordResetToken {
   usedAt    DateTime?
   createdAt DateTime  @default(now())
   parent    Parent    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+}
+
+/// A six-digit code emailed to confirm an address. Only an HMAC is stored.
+model EmailVerificationCode {
+  id        String    @id @default(cuid())
+  parentId  String
+  codeHash  String
+  // Wrong guesses against this code; at the limit it stops working.
+  attempts  Int       @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  parent    Parent    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, createdAt])
 }
 
 model ParentPreference {

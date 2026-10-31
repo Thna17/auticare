@@ -175,6 +175,28 @@ describe('LoginPage', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard');
   });
 
+  it('sends a parent with an unconfirmed email to the code page', () => {
+    const { component } = createComponent();
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    authServiceMock.login.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 403,
+            error: { error: { code: 'EMAIL_NOT_VERIFIED', message: 'Confirm your email.' } },
+          }),
+      ),
+    );
+    component.form.setValue({ email: ' parent@auticare.test ', password: 'SecurePassword123' });
+
+    component.submit();
+
+    expect(navigate).toHaveBeenCalledWith(['/verify-email'], {
+      queryParams: { email: 'parent@auticare.test' },
+    });
+    expect(component.error()).toBeNull();
+  });
+
   it('honors valid returnUrl parameter', () => {
     const { component } = createComponent('/appointments/book');
 

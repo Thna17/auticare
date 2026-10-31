@@ -188,6 +188,21 @@ export const openApiDocument: Record<string, unknown> = {
           email: { type: 'string', format: 'email', example: 'user@example.com' },
         },
       },
+      VerifyEmailRequest: {
+        type: 'object',
+        required: ['email', 'code'],
+        properties: {
+          email: { type: 'string', format: 'email', example: 'parent@example.com' },
+          code: { type: 'string', pattern: '^\\d{6}$', example: '042913' },
+        },
+      },
+      ResendVerificationRequest: {
+        type: 'object',
+        required: ['email'],
+        properties: {
+          email: { type: 'string', format: 'email', example: 'parent@example.com' },
+        },
+      },
       ResetPasswordRequest: {
         type: 'object',
         required: ['token', 'password'],
@@ -1040,7 +1055,7 @@ export const openApiDocument: Record<string, unknown> = {
         tags: ['Auth'],
         summary: 'Register parent account',
         description:
-          'Creates a new parent account with secure argon2 password hashing and establishes an authenticated session.',
+          'Creates a new parent account with secure argon2 password hashing. When email verification is on (EMAIL_VERIFICATION, on by default once an email provider is configured), no session is created: a 6-digit code is emailed and the response is { verificationRequired: true, email }; POST /auth/verify-email then signs the parent in. Otherwise an authenticated session is established and the response carries the parent.',
         requestBody: {
           required: true,
           content: {
@@ -1106,6 +1121,13 @@ export const openApiDocument: Record<string, unknown> = {
           },
           '401': {
             description: 'Invalid credentials',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '403': {
+            description:
+              'EMAIL_NOT_VERIFIED: the password was right but the email is not confirmed yet. A code has been emailed; finish with POST /auth/verify-email.',
             content: {
               'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
             },
@@ -1216,6 +1238,72 @@ export const openApiDocument: Record<string, unknown> = {
             description: 'Validation error',
             content: {
               'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/verify-email': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Verify email with the emailed code',
+        description:
+          'Checks the 6-digit code emailed at sign-up (or at a login attempt before verifying). A code works once, for 15 minutes, and five wrong guesses spend it. On success the address is marked verified and an authenticated session is established. Shares the login rate limit.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/VerifyEmailRequest' } },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Email verified and signed in',
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    data: {
+                      properties: { parent: { $ref: '#/components/schemas/ParentResponse' } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Code wrong, expired or already used',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+          '429': {
+            description: 'Too many attempts',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiErrorEnvelope' } },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/verify-email/resend': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Send a new verification code',
+        description:
+          'Emails a fresh code if the account is waiting to be verified, at most once a minute; earlier codes stop working. The response is the same whether or not the account exists.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ResendVerificationRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Request accepted',
+            content: {
+              'application/json': { schema: { properties: { data: { type: 'object' } } } },
             },
           },
         },

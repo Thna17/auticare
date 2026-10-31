@@ -59,6 +59,13 @@ const envSchema = z
     MAILJET_SECRET_KEY: optionalTrimmedString,
     EMAIL_FROM: optionalTrimmedString,
     /**
+     * Whether new parent accounts must confirm their email with a code before
+     * they can sign in. `auto` (the default) asks only when an email provider is
+     * configured, so an installation that cannot send email never locks people
+     * out. `off` is the switch to pull if delivery is failing.
+     */
+    EMAIL_VERIFICATION: z.enum(['auto', 'on', 'off']).default('auto'),
+    /**
      * Child profiles allowed on the Free plan. The number is an open product
      * decision, so it is unset (no limit) unless someone deliberately chooses one.
      */

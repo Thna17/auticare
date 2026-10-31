@@ -43,6 +43,9 @@ export const errorCodes = [
   'AI_UNAVAILABLE',
   // The account's plan does not allow this (for example a third child on Pro).
   'PLAN_LIMIT_REACHED',
+  // The password was right but the email address has not been confirmed yet; a
+  // code has been sent and the client should ask for it.
+  'EMAIL_NOT_VERIFIED',
 ] as const;
 export type ErrorCode = (typeof errorCodes)[number];
 export type ApiSuccess<TData, TMeta = Record<string, never>> = {
@@ -144,6 +147,40 @@ export const registerRequestSchema = z.object({
   lastName: z.string().min(1).max(80),
 });
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
+
+/**
+ * Registration when the email must be confirmed first: no session yet, a code
+ * has been emailed, and the client should ask for it.
+ */
+export const verificationPendingResponseSchema = z.object({
+  verificationRequired: z.literal(true),
+  email: z.string().email(),
+});
+export type VerificationPendingResponse = z.infer<typeof verificationPendingResponseSchema>;
+/** POST /auth/register: a session, or a request to confirm the email first. */
+export const registerResponseSchema = z.union([
+  authResponseSchema,
+  verificationPendingResponseSchema,
+]);
+export type RegisterResponse = z.infer<typeof registerResponseSchema>;
+
+/** POST /auth/verify-email: the six-digit code from the email. */
+export const verifyEmailRequestSchema = z.object({
+  email: z.string().trim().email(),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Enter the 6-digit code.'),
+});
+export type VerifyEmailRequest = z.infer<typeof verifyEmailRequestSchema>;
+
+/** POST /auth/verify-email/resend. The answer is the same whether or not the account exists. */
+export const resendVerificationRequestSchema = z.object({
+  email: z.string().trim().email(),
+});
+export type ResendVerificationRequest = z.infer<typeof resendVerificationRequestSchema>;
+export type ResendVerificationResponse = { message: string };
+
 /**
  * `email` carries the login identifier: an email address, or the username of
  * a school-managed teacher account (which has no real email). The field keeps

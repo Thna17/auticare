@@ -12,12 +12,15 @@ import type {
   PasswordResetRequest,
   PasswordResetResponse,
   RegisterRequest,
+  RegisterResponse,
   ResendInvitationRequest,
   ResendInvitationResponse,
+  ResendVerificationResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
   StaffSetupRequest,
   UpdateMyProfileRequest,
+  VerificationPendingResponse,
   VerifyInvitationResponse,
 } from '@auticare/contracts';
 import type { Observable } from 'rxjs';
@@ -60,11 +63,39 @@ export class AuthService {
         tap((parent) => this.state.set({ status: 'authenticated', parent })),
       );
   }
-  register(input: RegisterRequest): Observable<ParentResponse> {
-    return this.http.post<{ data: AuthResponse }>(`${this.apiBaseUrl}/auth/register`, input).pipe(
-      map((response) => response.data.parent),
-      tap((parent) => this.state.set({ status: 'authenticated', parent })),
-    );
+  /**
+   * A signed-in parent, or — when the server asks new parents to confirm their
+   * email — a pending result with no session yet; see verifyEmail().
+   */
+  register(input: RegisterRequest): Observable<ParentResponse | VerificationPendingResponse> {
+    return this.http
+      .post<{ data: RegisterResponse }>(`${this.apiBaseUrl}/auth/register`, input)
+      .pipe(
+        map((response) =>
+          'verificationRequired' in response.data ? response.data : response.data.parent,
+        ),
+        tap((result) => {
+          if (!('verificationRequired' in result)) {
+            this.state.set({ status: 'authenticated', parent: result });
+          }
+        }),
+      );
+  }
+  /** The 6-digit code from the email. Signs the parent in. */
+  verifyEmail(email: string, code: string): Observable<ParentResponse> {
+    return this.http
+      .post<{ data: AuthResponse }>(`${this.apiBaseUrl}/auth/verify-email`, { email, code })
+      .pipe(
+        map((response) => response.data.parent),
+        tap((parent) => this.state.set({ status: 'authenticated', parent })),
+      );
+  }
+  resendVerification(email: string): Observable<ResendVerificationResponse> {
+    return this.http
+      .post<{
+        data: ResendVerificationResponse;
+      }>(`${this.apiBaseUrl}/auth/verify-email/resend`, { email })
+      .pipe(map((response) => response.data));
   }
   /**
    * Update the signed-in account holder's own profile. The response carries the
