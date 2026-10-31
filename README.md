@@ -119,6 +119,13 @@ SMTP_FROM=AutiCare <your-account@gmail.com>
 
 Port `587` uses STARTTLS. Do not commit a real SMTP password, place it in screenshots, or put it in source code. Tests never send email; they keep a deterministic local reset-token flow.
 
+**On Render's free tier, SMTP does not work**: outbound SMTP ports are blocked, so Gmail settings verify but every email times out. Use an email API over HTTPS instead, set in the Render dashboard:
+
+- **Mailjet** (sends to anyone once you verify one sender address, such as your Gmail): `MAILJET_API_KEY`, `MAILJET_SECRET_KEY` and `EMAIL_FROM=AutiCare <your-verified-address>`.
+- **Resend**: `RESEND_API_KEY`, and `EMAIL_FROM` on a domain verified in Resend. Without a verified domain, Resend only delivers to your own Resend account's address.
+
+If more than one is set, Resend is used first, then Mailjet, then SMTP.
+
 ## Test the main flows
 
 ### Parent: create a child profile

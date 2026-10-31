@@ -1,5 +1,4 @@
-import nodemailer from 'nodemailer';
-import { env } from '../../config/env.js';
+import { createMailTransport } from './mail-transport.js';
 import { logger } from '../../config/logger.js';
 
 type InvitationEmail = {
@@ -10,21 +9,8 @@ type InvitationEmail = {
 };
 
 export class InvitationMailer {
-  private readonly transporter = env.SMTP_HOST
-    ? nodemailer.createTransport({
-        host: env.SMTP_HOST,
-        port: env.SMTP_PORT!,
-        secure: env.SMTP_PORT === 465,
-        requireTLS: env.SMTP_PORT === 587,
-        auth: {
-          user: env.SMTP_USER!,
-          pass: env.SMTP_PASS!,
-        },
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 5000,
-      })
-    : undefined;
+  // Resend, Mailjet or SMTP, whichever is configured (see mail-transport.ts).
+  private readonly transporter = createMailTransport();
 
   isConfigured(): boolean {
     return this.transporter !== undefined;
@@ -127,7 +113,6 @@ export class InvitationMailer {
 
     try {
       await this.transporter.sendMail({
-        from: env.SMTP_FROM ?? env.SMTP_USER,
         to: recipient,
         subject: 'Welcome to AutiCare: Set up your account',
         text,
@@ -136,7 +121,7 @@ export class InvitationMailer {
     } catch (error) {
       logger.warn(
         { err: error, recipient, role },
-        'Failed to deliver invitation email via SMTP; account provisioning completed',
+        'Failed to deliver invitation email; account provisioning completed',
       );
     }
   }
@@ -209,17 +194,13 @@ export class InvitationMailer {
 
     try {
       await this.transporter.sendMail({
-        from: env.SMTP_FROM ?? env.SMTP_USER,
         to: recipient,
         subject: 'AutiCare: Your account has been activated',
         text,
         html,
       });
     } catch (error) {
-      logger.warn(
-        { err: error, recipient },
-        'Failed to deliver account activation notice via SMTP',
-      );
+      logger.warn({ err: error, recipient }, 'Failed to deliver account activation notice');
     }
   }
 
@@ -283,17 +264,13 @@ export class InvitationMailer {
 
     try {
       await this.transporter.sendMail({
-        from: env.SMTP_FROM ?? env.SMTP_USER,
         to: recipient,
         subject: `AutiCare: Registration request received for ${schoolName}`,
         text,
         html,
       });
     } catch (error) {
-      logger.warn(
-        { err: error, recipient },
-        'Failed to deliver registration received email via SMTP',
-      );
+      logger.warn({ err: error, recipient }, 'Failed to deliver registration received email');
     }
   }
 
@@ -367,17 +344,13 @@ export class InvitationMailer {
 
     try {
       await this.transporter.sendMail({
-        from: env.SMTP_FROM ?? env.SMTP_USER,
         to: recipient,
         subject: `AutiCare: Registration request update for ${schoolName}`,
         text,
         html,
       });
     } catch (error) {
-      logger.warn(
-        { err: error, recipient },
-        'Failed to deliver registration rejection email via SMTP',
-      );
+      logger.warn({ err: error, recipient }, 'Failed to deliver registration rejection email');
     }
   }
 
@@ -441,17 +414,13 @@ export class InvitationMailer {
 
     try {
       await this.transporter.sendMail({
-        from: env.SMTP_FROM ?? env.SMTP_USER,
         to: recipient,
         subject: `AutiCare: Registration request received for ${hospitalName}`,
         text,
         html,
       });
     } catch (error) {
-      logger.warn(
-        { err: error, recipient },
-        'Failed to deliver registration received email via SMTP',
-      );
+      logger.warn({ err: error, recipient }, 'Failed to deliver registration received email');
     }
   }
 
@@ -525,17 +494,13 @@ export class InvitationMailer {
 
     try {
       await this.transporter.sendMail({
-        from: env.SMTP_FROM ?? env.SMTP_USER,
         to: recipient,
         subject: `AutiCare: Registration request update for ${hospitalName}`,
         text,
         html,
       });
     } catch (error) {
-      logger.warn(
-        { err: error, recipient },
-        'Failed to deliver registration rejection email via SMTP',
-      );
+      logger.warn({ err: error, recipient }, 'Failed to deliver registration rejection email');
     }
   }
 }

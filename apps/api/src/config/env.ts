@@ -50,6 +50,15 @@ const envSchema = z
     SMTP_PASS: optionalTrimmedString,
     SMTP_FROM: optionalTrimmedString,
     /**
+     * Email over HTTPS, for hosts that block SMTP ports (Render's free tier has
+     * since September 2025). Resend wins over Mailjet, and either wins over SMTP.
+     * EMAIL_FROM is the sender for every provider; it falls back to SMTP_FROM.
+     */
+    RESEND_API_KEY: optionalTrimmedString,
+    MAILJET_API_KEY: optionalTrimmedString,
+    MAILJET_SECRET_KEY: optionalTrimmedString,
+    EMAIL_FROM: optionalTrimmedString,
+    /**
      * Child profiles allowed on the Free plan. The number is an open product
      * decision, so it is unset (no limit) unless someone deliberately chooses one.
      */
@@ -92,6 +101,21 @@ const envSchema = z
           message: 'SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS must be configured together.',
         });
       }
+    }
+
+    if (Boolean(value.MAILJET_API_KEY) !== Boolean(value.MAILJET_SECRET_KEY)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'MAILJET_API_KEY and MAILJET_SECRET_KEY must be configured together.',
+      });
+    }
+    // Mailjet only sends from an address verified in the Mailjet account, so
+    // there is no safe default to fall back to.
+    if (value.MAILJET_API_KEY && !value.EMAIL_FROM && !value.SMTP_FROM) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Mailjet needs EMAIL_FROM set to a sender address verified in Mailjet.',
+      });
     }
 
     if (value.STORAGE_DRIVER === 's3') {

@@ -1,5 +1,4 @@
-import nodemailer from 'nodemailer';
-import { env } from '../../config/env.js';
+import { createMailTransport } from './mail-transport.js';
 import { logger } from '../../config/logger.js';
 
 type PasswordResetEmail = {
@@ -9,21 +8,8 @@ type PasswordResetEmail = {
 };
 
 export class PasswordResetMailer {
-  private readonly transporter = env.SMTP_HOST
-    ? nodemailer.createTransport({
-        host: env.SMTP_HOST,
-        port: env.SMTP_PORT!,
-        secure: env.SMTP_PORT === 465,
-        requireTLS: env.SMTP_PORT === 587,
-        auth: {
-          user: env.SMTP_USER!,
-          pass: env.SMTP_PASS!,
-        },
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 5000,
-      })
-    : undefined;
+  // Resend, Mailjet or SMTP, whichever is configured (see mail-transport.ts).
+  private readonly transporter = createMailTransport();
 
   isConfigured(): boolean {
     return this.transporter !== undefined;
@@ -113,7 +99,6 @@ export class PasswordResetMailer {
 
     try {
       await this.transporter.sendMail({
-        from: env.SMTP_FROM ?? env.SMTP_USER,
         to: recipient,
         subject: 'Reset your AutiCare password',
         text,
@@ -122,7 +107,7 @@ export class PasswordResetMailer {
     } catch (error) {
       logger.warn(
         { err: error, recipient },
-        'Failed to deliver password reset email via SMTP; request handled safely',
+        'Failed to deliver password reset email; request handled safely',
       );
     }
   }
