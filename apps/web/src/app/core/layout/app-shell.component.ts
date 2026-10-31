@@ -1527,7 +1527,10 @@ export type NavSection = {
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           display: grid;
-          grid-template-columns: 1fr 1fr 64px 1fr 1fr;
+          /* One column per item, however many the role has, so the bar never
+             wraps onto a second row. */
+          grid-auto-flow: column;
+          grid-auto-columns: minmax(0, 1fr);
           align-items: center;
           box-shadow: 0 -4px 20px color-mix(in srgb, var(--ac-color-shadow) 8%, transparent);
           box-sizing: border-box;
