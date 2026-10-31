@@ -36,9 +36,69 @@ describe('VerifyEmailPage', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('new.parent@example.com');
     expect(el.querySelector('input[type="email"]')).toBeNull();
-    const code = el.querySelector<HTMLInputElement>('input.code-input');
-    expect(code?.getAttribute('autocomplete')).toBe('one-time-code');
-    expect(code?.getAttribute('inputmode')).toBe('numeric');
+    const boxes = el.querySelectorAll<HTMLInputElement>('input.code-box');
+    expect(boxes).toHaveLength(6);
+    // Only the first box takes the browser's one-time-code autofill.
+    expect(boxes[0]?.getAttribute('autocomplete')).toBe('one-time-code');
+    expect(boxes[1]?.getAttribute('autocomplete')).toBe('off');
+    expect(boxes[0]?.getAttribute('inputmode')).toBe('numeric');
+    expect(boxes[5]?.getAttribute('aria-label')).toBe('Digit 6 of 6');
+  });
+
+  const boxesOf = (fixture: { nativeElement: unknown }) =>
+    Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('input.code-box'),
+    );
+
+  const type = (box: HTMLInputElement, value: string) => {
+    box.value = value;
+    box.dispatchEvent(new Event('input'));
+  };
+
+  it('moves to the next box as each digit is typed, and sends the code at the sixth', () => {
+    const { fixture, auth } = setup();
+    auth.verifyEmail.mockReturnValue(of({ id: 'p-1', role: 'PARENT' }));
+    const boxes = boxesOf(fixture);
+
+    type(boxes[0]!, '4');
+    expect(document.activeElement).toBe(boxes[1]);
+    '29130'.split('').forEach((digit, i) => type(boxes[i + 1]!, digit));
+
+    expect(auth.verifyEmail).toHaveBeenCalledWith('new.parent@example.com', '429130');
+  });
+
+  it('ignores letters typed into a box', () => {
+    const { fixture, page } = setup();
+    const [first] = boxesOf(fixture);
+    type(first!, 'a');
+    expect(first!.value).toBe('');
+    expect(page.form.controls.code.value).toBe('');
+  });
+
+  it('fills every box from a pasted code and sends it', () => {
+    const { fixture, auth } = setup();
+    auth.verifyEmail.mockReturnValue(of({ id: 'p-1', role: 'PARENT' }));
+    const boxes = boxesOf(fixture);
+    const paste = new Event('paste', { bubbles: true, cancelable: true }) as ClipboardEvent;
+    Object.defineProperty(paste, 'clipboardData', {
+      value: { getData: () => 'Your code is 123 456' },
+    });
+
+    boxes[2]!.dispatchEvent(paste);
+    fixture.detectChanges();
+
+    expect(boxes.map((box) => box.value).join('')).toBe('123456');
+    expect(auth.verifyEmail).toHaveBeenCalledWith('new.parent@example.com', '123456');
+  });
+
+  it('steps back and clears the previous box on Backspace in an empty box', () => {
+    const { fixture, page } = setup();
+    const boxes = boxesOf(fixture);
+    type(boxes[0]!, '7');
+    boxes[1]!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', cancelable: true }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(boxes[0]);
+    expect(page.form.controls.code.value).toBe('');
   });
 
   it('asks for the email too when it is not in the link', () => {

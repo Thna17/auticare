@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import type { ElementRef } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +7,7 @@ import {
   DestroyRef,
   inject,
   signal,
+  viewChildren,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -29,6 +31,7 @@ const COPY = {
     codeLabel: 'Verification code',
     codeHint: 'The code works for 15 minutes. Check your spam folder if you do not see it.',
     codeError: 'Enter the 6 digits from the email.',
+    digitLabel: (n: number) => `Digit ${n} of 6`,
     submit: 'Verify and continue',
     submitting: 'Checking…',
     resend: 'Send a new code',
@@ -51,6 +54,7 @@ const COPY = {
     codeLabel: 'លេខកូដផ្ទៀងផ្ទាត់',
     codeHint: 'លេខកូដប្រើបាន ១៥ នាទី។ ប្រសិនបើរកមិនឃើញ សូមពិនិត្យថត Spam។',
     codeError: 'សូមបញ្ចូលលេខ ៦ ខ្ទង់ពីអ៊ីមែល។',
+    digitLabel: (n: number) => `ខ្ទង់ទី ${n} ក្នុងចំណោម ៦`,
     submit: 'ផ្ទៀងផ្ទាត់ និងបន្ត',
     submitting: 'កំពុងពិនិត្យ…',
     resend: 'ផ្ញើលេខកូដថ្មី',
@@ -129,25 +133,38 @@ const COPY = {
             </ac-ui-field>
           }
 
-          <ac-ui-field
-            [label]="copy().codeLabel"
-            [hint]="copy().codeHint"
-            [required]="true"
-            [error]="
-              form.controls.code.touched && form.controls.code.invalid ? copy().codeError : null
-            "
+          <!-- Six boxes, one digit each, backed by the single "code" form control. -->
+          <fieldset
+            class="code-field"
+            [attr.aria-describedby]="showCodeError() ? 'code-hint code-error' : 'code-hint'"
           >
-            <input
-              class="code-input"
-              type="text"
-              formControlName="code"
-              inputmode="numeric"
-              autocomplete="one-time-code"
-              maxlength="6"
-              placeholder="••••••"
-              (input)="keepDigits($event)"
-            />
-          </ac-ui-field>
+            <legend>
+              {{ copy().codeLabel }} <span class="required" aria-hidden="true">*</span>
+            </legend>
+            <div class="code-boxes" (paste)="onPaste($event)">
+              @for (slot of slots; track slot) {
+                <input
+                  #digitBox
+                  class="code-box"
+                  type="text"
+                  inputmode="numeric"
+                  [attr.autocomplete]="slot === 0 ? 'one-time-code' : 'off'"
+                  [attr.aria-label]="copy().digitLabel(slot + 1)"
+                  [attr.aria-invalid]="showCodeError() ? 'true' : null"
+                  [class.filled]="digits()[slot] !== ''"
+                  [value]="digits()[slot]"
+                  [disabled]="loading()"
+                  (input)="onDigitInput(slot, $event)"
+                  (keydown)="onDigitKeydown(slot, $event)"
+                  (focus)="selectContents($event)"
+                />
+              }
+            </div>
+            <p id="code-hint" class="code-hint">{{ copy().codeHint }}</p>
+            @if (showCodeError()) {
+              <p id="code-error" class="code-error">{{ copy().codeError }}</p>
+            }
+          </fieldset>
 
           @if (error()) {
             <ac-ui-message tone="error">{{ error() }}</ac-ui-message>
@@ -303,12 +320,77 @@ const COPY = {
         padding: 0 18px;
       }
 
-      .code-input {
-        font-size: 28px;
+      .code-field {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      legend {
+        padding: 0;
+        margin-bottom: 10px;
+        font-size: 14px;
         font-weight: var(--ac-font-weight-bold);
-        letter-spacing: 0.4em;
+        color: var(--ac-color-text-strong);
+      }
+
+      .required {
+        color: var(--ac-color-red-600);
+      }
+
+      .code-boxes {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .code-box {
+        height: 60px;
+        padding: 0;
+        border-width: 1.5px;
         text-align: center;
+        font-size: 26px;
+        font-weight: var(--ac-font-weight-bold);
         font-variant-numeric: tabular-nums;
+        caret-color: var(--ac-color-action);
+        transition:
+          border-color 140ms ease,
+          box-shadow 140ms ease,
+          background 140ms ease;
+      }
+
+      .code-box.filled {
+        border-color: var(--ac-color-action);
+        background: var(--ac-color-surface-info);
+      }
+
+      .code-box[aria-invalid='true'] {
+        border-color: var(--ac-color-red-600);
+      }
+
+      .code-box:disabled {
+        opacity: 0.6;
+      }
+
+      .code-hint {
+        color: var(--ac-color-text-muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .code-error {
+        color: var(--ac-color-red-600);
+        font-size: 13px;
+        font-weight: var(--ac-font-weight-semibold);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .code-box {
+          transition: none;
+        }
       }
 
       input:focus {
@@ -393,6 +475,15 @@ const COPY = {
         h1 {
           font-size: 22px;
         }
+
+        .code-boxes {
+          gap: 6px;
+        }
+
+        .code-box {
+          height: 52px;
+          font-size: 22px;
+        }
       }
     `,
   ],
@@ -415,6 +506,16 @@ export class VerifyEmailPage {
   /** Seconds until another code may be requested; a code was just sent. */
   protected readonly cooldown = signal(RESEND_COOLDOWN_SECONDS);
 
+  protected readonly slots = [0, 1, 2, 3, 4, 5] as const;
+  /** One digit per box; joined into the code control on every change. */
+  protected readonly digits = signal<string[]>(['', '', '', '', '', '']);
+  private readonly boxes = viewChildren<ElementRef<HTMLInputElement>>('digitBox');
+  /** Set on submit, so an untouched form does not open with an error. */
+  private readonly codeTouched = signal(false);
+  protected readonly showCodeError = computed(
+    () => this.codeTouched() && !/^\d{6}$/.test(this.digits().join('')),
+  );
+
   readonly form = this.fb.nonNullable.group({
     email: [this.knownEmail(), [Validators.required, Validators.email]],
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
@@ -431,19 +532,91 @@ export class VerifyEmailPage {
     this.i18n.setLanguage(this.i18n.currentLang() === 'km' ? 'en' : 'km');
   }
 
-  /** Phones paste "123 456" or offer the code with spaces; keep the digits only. */
-  protected keepDigits(event: Event): void {
+  protected onDigitInput(slot: number, event: Event): void {
     const field = event.target as HTMLInputElement;
-    const digits = field.value.replace(/\D/g, '').slice(0, 6);
-    if (digits !== field.value) {
-      field.value = digits;
-      this.form.controls.code.setValue(digits);
+    const typed = field.value.replace(/\D/g, '');
+    if (typed.length > 2) {
+      // The browser filled in the whole code (one-time-code autofill).
+      this.fillFrom(slot, typed);
+      return;
     }
+    // Typing into a box that already had a digit: keep the new keystroke.
+    const caret = field.selectionStart ?? typed.length;
+    const digit = typed.length === 2 ? (field.value[caret - 1] ?? '').replace(/\D/g, '') : typed;
+    this.setDigit(slot, digit);
+    field.value = digit;
+    if (digit) this.focusBox(slot + 1);
+    this.submitWhenComplete();
+  }
+
+  protected onDigitKeydown(slot: number, event: KeyboardEvent): void {
+    if (event.key === 'Backspace' && !this.digits()[slot] && slot > 0) {
+      event.preventDefault();
+      this.setDigit(slot - 1, '');
+      this.focusBox(slot - 1);
+    } else if (event.key === 'ArrowLeft' && slot > 0) {
+      event.preventDefault();
+      this.focusBox(slot - 1);
+    } else if (event.key === 'ArrowRight' && slot < 5) {
+      event.preventDefault();
+      this.focusBox(slot + 1);
+    }
+  }
+
+  /** "123 456" or "Your code is 123456" pasted into any box fills them all. */
+  protected onPaste(event: ClipboardEvent): void {
+    const pasted = (event.clipboardData?.getData('text') ?? '').replace(/\D/g, '');
+    if (!pasted) return;
+    event.preventDefault();
+    this.fillFrom(pasted.length >= 6 ? 0 : this.focusedSlot(), pasted);
+  }
+
+  protected selectContents(event: FocusEvent): void {
+    (event.target as HTMLInputElement).select();
+  }
+
+  private fillFrom(start: number, value: string): void {
+    const next = [...this.digits()];
+    const chars = value.slice(0, 6 - start).split('');
+    chars.forEach((char, offset) => (next[start + offset] = char));
+    this.setDigits(next);
+    this.focusBox(Math.min(start + chars.length, 5));
+    this.submitWhenComplete();
+  }
+
+  private setDigit(slot: number, digit: string): void {
+    const next = [...this.digits()];
+    next[slot] = digit;
+    this.setDigits(next);
+  }
+
+  private setDigits(next: string[]): void {
+    this.digits.set(next);
+    this.form.controls.code.setValue(next.join(''));
+  }
+
+  private clearDigits(): void {
+    this.setDigits(['', '', '', '', '', '']);
+  }
+
+  private focusedSlot(): number {
+    const index = this.boxes().findIndex((box) => box.nativeElement === document.activeElement);
+    return index < 0 ? 0 : index;
+  }
+
+  private focusBox(slot: number): void {
+    this.boxes()[Math.max(0, Math.min(slot, 5))]?.nativeElement.focus();
+  }
+
+  /** The sixth digit sends the code; there is nothing else to wait for. */
+  private submitWhenComplete(): void {
+    if (!this.loading() && /^\d{6}$/.test(this.digits().join(''))) this.submit();
   }
 
   submit(): void {
     this.error.set(null);
     this.notice.set(null);
+    this.codeTouched.set(true);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -455,6 +628,12 @@ export class VerifyEmailPage {
       error: (err: unknown) => {
         this.loading.set(false);
         this.error.set(this.describe(err));
+        // A wrong code is retyped from the first box.
+        if (err instanceof HttpErrorResponse && err.status === 400) {
+          this.clearDigits();
+          this.codeTouched.set(false);
+          setTimeout(() => this.focusBox(0));
+        }
       },
     });
   }
@@ -472,8 +651,10 @@ export class VerifyEmailPage {
       next: () => {
         this.resending.set(false);
         this.cooldown.set(RESEND_COOLDOWN_SECONDS);
-        this.form.controls.code.reset('');
+        this.clearDigits();
+        this.codeTouched.set(false);
         this.notice.set(this.copy().resent);
+        this.focusBox(0);
       },
       error: (err: unknown) => {
         this.resending.set(false);
