@@ -9,6 +9,7 @@ import { UiFieldComponent } from '../../design-system/components/ui-field.compon
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
 import { matchingPasswords } from './accept-invitation.page';
+import { BackHomeLinkComponent } from './back-home-link.component';
 
 const COPY = {
   en: {
@@ -63,6 +64,7 @@ const COPY = {
 @Component({
   standalone: true,
   imports: [
+    BackHomeLinkComponent,
     ReactiveFormsModule,
     RouterLink,
     UiFieldComponent,
@@ -72,6 +74,7 @@ const COPY = {
   template: `
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="setup-title">
+        <ac-back-home-link />
         <a class="brand" routerLink="/" aria-label="AutiCare home">
           <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
           <span>AutiCare</span>

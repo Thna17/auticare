@@ -17,6 +17,7 @@ import { UiFieldComponent } from '../../design-system/components/ui-field.compon
 import { UiSpinnerComponent } from '../../design-system/components/ui-spinner.component';
 import { UiBadgeComponent } from '../../design-system/components/ui-badge.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
+import { BackHomeLinkComponent } from './back-home-link.component';
 
 export const matchingPasswords = (control: AbstractControl): ValidationErrors | null => {
   const password = control.get('password')?.value;
@@ -30,6 +31,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 @Component({
   standalone: true,
   imports: [
+    BackHomeLinkComponent,
     ReactiveFormsModule,
     RouterLink,
     UiMessageComponent,
@@ -41,6 +43,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
   template: `
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="invitation-title">
+        <ac-back-home-link />
         <a class="brand" routerLink="/" aria-label="AutiCare home">
           <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
           <span>AutiCare</span>

@@ -7,6 +7,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
+import { BackHomeLinkComponent } from './back-home-link.component';
 
 export type RegisterRoleOption = 'PARENT' | 'SCHOOL' | 'HOSPITAL';
 
@@ -22,6 +23,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
 @Component({
   standalone: true,
   imports: [
+    BackHomeLinkComponent,
     ReactiveFormsModule,
     RouterLink,
     UiMessageComponent,
@@ -32,6 +34,7 @@ export const matchingPasswords = (control: AbstractControl): ValidationErrors | 
     <main class="signup-page">
       <section class="form-panel" aria-labelledby="register-title">
         <div class="form-shell">
+          <ac-back-home-link />
           <a class="brand" routerLink="/" aria-label="AutiCare home">
             <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
             <span>AutiCare</span>

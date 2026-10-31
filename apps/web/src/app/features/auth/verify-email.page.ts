@@ -17,6 +17,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { UiMessageComponent } from '../../design-system/components/ui-message.component';
 import { UiFieldComponent } from '../../design-system/components/ui-field.component';
 import { AccessibleFormDirective } from '../../design-system/directives/accessible-form.directive';
+import { BackHomeLinkComponent } from './back-home-link.component';
 
 /** Matches RESEND_COOLDOWN_SECONDS on the server. */
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -77,6 +78,7 @@ const COPY = {
 @Component({
   standalone: true,
   imports: [
+    BackHomeLinkComponent,
     ReactiveFormsModule,
     RouterLink,
     UiMessageComponent,
@@ -86,6 +88,7 @@ const COPY = {
   template: `
     <main class="auth-page">
       <section class="auth-card" aria-labelledby="verify-title">
+        <ac-back-home-link />
         <div class="top-row">
           <a class="brand" routerLink="/" aria-label="AutiCare home">
             <img src="/images/auticare-logo.png" alt="" aria-hidden="true" width="36" height="36" />
